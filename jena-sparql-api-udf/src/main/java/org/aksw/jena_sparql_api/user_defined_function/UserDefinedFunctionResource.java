@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.aksw.jena_sparql_api.mapper.annotation.Iri;
+import org.aksw.jena_sparql_api.mapper.annotation.ViewAll;
 import org.apache.jena.rdf.model.Resource;
 
 public interface UserDefinedFunctionResource
@@ -21,6 +22,7 @@ public interface UserDefinedFunctionResource
 
 
 	@Iri("http://ns.aksw.org/jena/udf/definition")
+	@ViewAll
 	Set<UdfDefinition> getDefinitions();
 
 //	public default UserDefinedFunctionDefinition toJena() {

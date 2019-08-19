@@ -165,7 +165,7 @@ public class TestDynamicRDFNodeViews {
 		TypeMapper typeMapper = TypeMapper.getInstance();
 		TypeDecider typeDecider = JenaPluginUtils.getTypeDecider();
 		
-		RDFNodeMapper<?> mapper = new RDFNodeMapperImpl<>(Long.class, typeMapper, typeDecider);
+		RDFNodeMapper<?> mapper = new RDFNodeMapperImpl<>(Long.class, typeMapper, typeDecider, true);
 
 		Collection<RDFNode> backend = new SetFromPropertyValues<RDFNode>(root, RDFS.label, RDFNode.class);
 		

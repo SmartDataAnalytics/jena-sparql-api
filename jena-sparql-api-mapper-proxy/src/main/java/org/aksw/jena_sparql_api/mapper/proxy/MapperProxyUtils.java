@@ -283,7 +283,7 @@ public class MapperProxyUtils {
      * @return
      */
 	public static Function<Class<?>, Function<Property, Function<Resource, Object>>>
-		viewAsDynamicSet(Method m, boolean isIriType, TypeMapper typeMapper, TypeDecider typeDecider)
+		viewAsDynamicSet(Method m, boolean isIriType, boolean isViewAll, TypeMapper typeMapper, TypeDecider typeDecider)
 	{		
 //
 		Function<Class<?>, Function<Property, Function<Resource, Object>>> result = null;
@@ -303,7 +303,7 @@ public class MapperProxyUtils {
 
 
 		if(baseItemType != null) {
-			result = clazz -> viewAsSet(m, isIriType, clazz, typeMapper, typeDecider);
+			result = clazz -> viewAsSet(m, isIriType, isViewAll, clazz, typeMapper, typeDecider);
 		}
 		
 		return result;
@@ -311,7 +311,7 @@ public class MapperProxyUtils {
 
 
 	public static Function<Class<?>, Function<Property, Function<Resource, Object>>>
-		viewAsDynamicList(Method m, boolean isIriType, TypeMapper typeMapper, TypeDecider typeDecider)
+		viewAsDynamicList(Method m, boolean isIriType, boolean isViewAll, TypeMapper typeMapper, TypeDecider typeDecider)
 	{		
 		Function<Class<?>, Function<Property, Function<Resource, Object>>> result = null;
 
@@ -320,20 +320,20 @@ public class MapperProxyUtils {
 	
 	
 		if(baseItemType != null) {
-			result = clazz -> viewAsList(m, isIriType, clazz, typeMapper, typeDecider);
+			result = clazz -> viewAsList(m, isIriType, isViewAll, clazz, typeMapper, typeDecider);
 		}
 		
 		return result;
 	}
 
-	public static Function<Property, Function<Resource, Object>> viewAsSet(Method m, boolean isIriType, Class<?> itemType, TypeMapper typeMapper, TypeDecider typeDecider) {
+	public static Function<Property, Function<Resource, Object>> viewAsSet(Method m, boolean isIriType, boolean isViewAll, Class<?> itemType, TypeMapper typeMapper, TypeDecider typeDecider) {
 		Function<Property, Function<Resource, Object>> result = null;
 
 //		boolean isIriType = m.getAnnotation(IriType.class) != null;
 		if(String.class.isAssignableFrom(itemType) && isIriType) {
 			result = p -> s -> new SetFromMappedPropertyValues<>(s, p, NodeMappers.uriString);						
 		} else {
-			RDFNodeMapper<?> rdfNodeMapper = RDFNodeMappers.from(itemType, typeMapper, typeDecider);
+			RDFNodeMapper<?> rdfNodeMapper = RDFNodeMappers.from(itemType, typeMapper, typeDecider, isViewAll);
 
 			result = p -> s ->
 				new SetFromCollection<>(
@@ -370,7 +370,7 @@ public class MapperProxyUtils {
 	}
 	
 	public static Function<Property, Function<Resource, Object>>
-		viewAsList(Method m, boolean isIriType, Class<?> itemType, TypeMapper typeMapper, TypeDecider typeDecider)
+		viewAsList(Method m, boolean isIriType, boolean isViewAll, Class<?> itemType, TypeMapper typeMapper, TypeDecider typeDecider)
 	{
 		Function<Property, Function<Resource, Object>> result = null;
 	
@@ -381,7 +381,7 @@ public class MapperProxyUtils {
 						new ListFromRDFList(s, p),
 						new ConverterFromNodeMapperAndModel<>(s.getModel(), RDFNode.class, new ConverterFromNodeMapper<>(NodeMappers.uriString)));						
 		} else {
-			RDFNodeMapper<?> rdfNodeMapper = RDFNodeMappers.from(itemType, typeMapper, typeDecider);
+			RDFNodeMapper<?> rdfNodeMapper = RDFNodeMappers.from(itemType, typeMapper, typeDecider, isViewAll);
 
 			result = p -> s -> new ListFromConverter<>(
 					new ListFromRDFList(s, p),
@@ -582,6 +582,7 @@ public class MapperProxyUtils {
 			MethodDescriptor methodDescriptor,
 			Class<?> effectiveType,
 			boolean isIriType,
+			boolean isViewAll,
 			TypeMapper typeMapper,
 			TypeDecider typeDecider) {
 		Function<Property, Function<Resource, Object>> result = null;		
@@ -595,7 +596,7 @@ public class MapperProxyUtils {
 				
 				result = p -> s -> ResourceUtils.getPropertyValue(s, p, NodeMappers.uriString);					
 			} else {
-				RDFNodeMapper<?> rdfNodeMapper = RDFNodeMappers.from(effectiveType, typeMapper, typeDecider);
+				RDFNodeMapper<?> rdfNodeMapper = RDFNodeMappers.from(effectiveType, typeMapper, typeDecider, isViewAll);
 				result = p -> s -> ResourceUtils.getPropertyValue(s, p, (RDFNodeMapper)rdfNodeMapper);
 			}
 		}
@@ -849,6 +850,7 @@ public class MapperProxyUtils {
 			MethodDescriptor methodDescriptor,
 			Class<?> effectiveType,
 			boolean isIriType,
+			boolean isViewAll,
 			TypeMapper typeMapper,
 			TypeDecider typeDecider) {
 		// Strict setters return void, but e.g. in the case of fluent APIs return types may vary 
@@ -863,7 +865,7 @@ public class MapperProxyUtils {
 			}
 			result = p -> (s, o) -> ResourceUtils.updateProperty(s, p, (NodeMapper)NodeMappers.uriString, o);					
 		} else {
-			RDFNodeMapper<?> rdfNodeMapper = RDFNodeMappers.from(effectiveType, typeMapper, typeDecider);
+			RDFNodeMapper<?> rdfNodeMapper = RDFNodeMappers.from(effectiveType, typeMapper, typeDecider, isViewAll);
 			
 			result = p -> (s, o) -> ResourceUtils.updateProperty(s, p, (RDFNodeMapper)rdfNodeMapper, o);
 		}
@@ -1122,11 +1124,13 @@ public class MapperProxyUtils {
 			Class<?> readCollectionType = null;
 			Class<?> readItemType = null;
 			boolean isReadIriType = false;
+			boolean isReadViewAll = false;
 
 			Class<?> writeType = null;
 			Class<?> writeCollectionType = null;
 			Class<?> writeItemType = null;
 			boolean isWriteIriType = false;
+			boolean isWriteViewAll = false;
 
 			if(readMethodDescriptor != null) {
 				readType = readMethodDescriptor.getType();
@@ -1146,6 +1150,7 @@ public class MapperProxyUtils {
 			Class<?> effectiveCollectionType = getStricterType(readCollectionType, writeCollectionType);
 			Class<?> effectiveItemType = getStricterType(readItemType, writeItemType);
 			boolean  isIriType = isReadIriType || isWriteIriType;
+			boolean isViewAll = isReadViewAll || isWriteViewAll;
 			
 			Property p = ResourceFactory.createProperty(path.getNode().getURI());
 //System.out.println(p);
@@ -1190,9 +1195,9 @@ public class MapperProxyUtils {
 					if(isDynamicGetter) {
 						Function<Class<?>, Function<Property, Function<Resource, Object>>> collectionGetter;
 						if(isSetType) {
-							collectionGetter = viewAsDynamicSet(readMethod, isIriType, typeMapper, typeDecider);
+							collectionGetter = viewAsDynamicSet(readMethod, isIriType, isViewAll, typeMapper, typeDecider);
 						} else if(isListType) {
-							collectionGetter = viewAsDynamicList(readMethod, isIriType, typeMapper, typeDecider);
+							collectionGetter = viewAsDynamicList(readMethod, isIriType, isViewAll, typeMapper, typeDecider);
 						} else {
 							throw new RuntimeException("todo dynamic collection support implement");
 						}
@@ -1215,9 +1220,9 @@ public class MapperProxyUtils {
 					} else { // Non-dynamic collection handling
 						Function<Property, Function<Resource, Object>>  collectionView;
 						if(isListType) {
-							collectionView = viewAsList(readMethod, isIriType, effectiveItemType, typeMapper, typeDecider);
+							collectionView = viewAsList(readMethod, isIriType, isViewAll, effectiveItemType, typeMapper, typeDecider);
 						} else if(isSetType) {
-							collectionView = viewAsSet(readMethod, isIriType, effectiveItemType, typeMapper, typeDecider);
+							collectionView = viewAsSet(readMethod, isIriType, isViewAll, effectiveItemType, typeMapper, typeDecider);
 						} else {
 							throw new RuntimeException("Unsupported collection type");
 						}
@@ -1289,7 +1294,7 @@ public class MapperProxyUtils {
 					}
 					
 					// Scalar case
-					Function<Property, Function<Resource, Object>> getter = viewAsScalarGetter(readMethodDescriptor, effectiveType, isIriType, typeMapper, typeDecider);
+					Function<Property, Function<Resource, Object>> getter = viewAsScalarGetter(readMethodDescriptor, effectiveType, isIriType, isViewAll, typeMapper, typeDecider);
 					if(getter != null) {
 						Function<Resource, Object> g = getter.apply(p);
 						methodImplMap.put(readMethod, (o, args) -> g.apply((Resource)o)); 
@@ -1300,7 +1305,7 @@ public class MapperProxyUtils {
 						// Non collection valued case
 						// We need to find out whether the property type is
 						// directly RDFNode based or whether we need to map a Java type
-						Function<Property, BiConsumer<Resource, Object>> setter = viewAsScalarSetter(writeMethodDescriptor, effectiveType, isIriType, typeMapper, typeDecider);
+						Function<Property, BiConsumer<Resource, Object>> setter = viewAsScalarSetter(writeMethodDescriptor, effectiveType, isIriType, isViewAll, typeMapper, typeDecider);
 						
 						
 						if(setter != null) {
