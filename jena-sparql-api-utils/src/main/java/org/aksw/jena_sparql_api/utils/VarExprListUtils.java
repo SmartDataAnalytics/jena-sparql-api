@@ -84,13 +84,23 @@ public class VarExprListUtils {
 
         return result;
     }
+    
+    /**
+     * Create a projection to rename variables from key to value.
+     * 
+     * Note that given two variables ?s and ?o,
+     * for mapping ?s to ?o the projection is (?s AS ?o) and thus
+     * the invocation on the VarExprList is vel.add(?o, ?s), which can be read as
+     * ?o is defined by ?s  
+     * 
+     */
     public static VarExprList createFromVarMap(Map<Var, Var> varMap) {
         VarExprList result = new VarExprList();
         for(Entry<Var, Var> e : varMap.entrySet()) {
             Var v = e.getKey();
             Var w = e.getValue();
             
-            add(result, v, w);
+            add(result, w, v);
         }
 
         return result;
