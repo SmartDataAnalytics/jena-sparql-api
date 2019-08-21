@@ -19,7 +19,15 @@ import org.aksw.commons.collections.generator.Generator;
 import org.aksw.commons.collections.multimaps.BiHashMultimap;
 import org.aksw.commons.collections.multimaps.IBiSetMultimap;
 import org.aksw.jena_sparql_api.algebra.analysis.VarInfo;
+import org.aksw.jena_sparql_api.algebra.transform.TransformDeduplicatePatterns;
 import org.aksw.jena_sparql_api.algebra.transform.TransformDistributeJoinOverUnion;
+import org.aksw.jena_sparql_api.algebra.transform.TransformFilterFalseToEmptyTable;
+import org.aksw.jena_sparql_api.algebra.transform.TransformFilterSimplify;
+import org.aksw.jena_sparql_api.algebra.transform.TransformPromoteTableEmptyVarPreserving;
+import org.aksw.jena_sparql_api.algebra.transform.TransformPruneEmptyLeftJoin;
+import org.aksw.jena_sparql_api.algebra.transform.TransformPullFiltersIfCanMergeBGPs;
+import org.aksw.jena_sparql_api.algebra.transform.TransformPushFiltersIntoBGP;
+import org.aksw.jena_sparql_api.algebra.transform.TransformRedundantFilterRemoval;
 import org.aksw.jena_sparql_api.algebra.transform.TransformReplaceConstants;
 import org.aksw.jena_sparql_api.utils.ClauseUtils;
 import org.aksw.jena_sparql_api.utils.CnfUtils;
@@ -31,6 +39,7 @@ import org.aksw.jena_sparql_api.utils.QuadUtils;
 import org.aksw.jena_sparql_api.utils.VarGeneratorImpl2;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.graph.Node;
+import org.apache.jena.query.ARQ;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.sparql.algebra.Algebra;
@@ -45,11 +54,14 @@ import org.apache.jena.sparql.algebra.op.OpProject;
 import org.apache.jena.sparql.algebra.op.OpQuadPattern;
 import org.apache.jena.sparql.algebra.op.OpService;
 import org.apache.jena.sparql.algebra.op.OpUnion;
+import org.apache.jena.sparql.algebra.optimize.Optimize;
 import org.apache.jena.sparql.algebra.optimize.Rewrite;
+import org.apache.jena.sparql.algebra.optimize.RewriteFactory;
 import org.apache.jena.sparql.algebra.optimize.TransformMergeBGPs;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.QuadPattern;
 import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.engine.Rename;
 import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.expr.E_Equals;
 import org.apache.jena.sparql.expr.E_OneOf;
@@ -61,6 +73,7 @@ import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementService;
 import org.apache.jena.sparql.syntax.ElementSubQuery;
+import org.apache.jena.sparql.util.Context;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -87,6 +100,98 @@ public class AlgebraUtils {
     private static final Logger logger = LoggerFactory.getLogger(AlgebraUtils.class);
 
 
+	// TODO Move to Query Utils
+//	public static Query rewrite(Query query, Function<? super Op, ? extends Op> rewriter) {
+//		Op op = Algebra.compile(query);
+////System.out.println(op);
+//		op = rewriter.apply(op);
+//		
+//		Query result = OpAsQuery.asQuery(op);
+//		result.getPrefixMapping().setNsPrefixes(query.getPrefixMapping());
+//		return result;
+//	}
+
+	public static Rewrite createDefaultRewriter() {
+
+        Context context = new Context();
+        context.put(ARQ.optPromoteTableEmpty, false);
+        
+        //context.put(ARQ.optReorderBGP, true);
+        
+        context.put(ARQ.optMergeBGPs, false); // We invoke this manually
+        context.put(ARQ.optMergeExtends, true);
+
+        // false; OpAsQuery throws Not implemented: OpTopN (jena 3.8.0)
+        context.put(ARQ.optTopNSorting, false);
+
+        context.put(ARQ.optFilterPlacement, true);
+
+//        context.put(ARQ.optFilterPlacement, true);
+        context.put(ARQ.optImplicitLeftJoin, false);
+        context.put(ARQ.optFilterPlacementBGP, false);
+        context.put(ARQ.optFilterPlacementConservative, false); // with false the result looks better
+
+        // Retain E_OneOf expressions
+        context.put(ARQ.optFilterExpandOneOf, false);
+
+//        
+//
+//        // optIndexJoinStrategy mut be off ; it introduces OpConditional nodes which
+//        // cannot be transformed back into syntax
+        context.put(ARQ.optIndexJoinStrategy, false);
+//        
+        // It is important to keep optFilterEquality turned off!
+        // Otherwise it may push constants back into the quads
+        context.put(ARQ.optFilterEquality, false);
+        context.put(ARQ.optFilterInequality, false);
+        context.put(ARQ.optDistinctToReduced, false);
+        context.put(ARQ.optInlineAssignments, false);
+        context.put(ARQ.optInlineAssignmentsAggressive, false);
+        
+        // false; OpAsQuery throws Not implemented: OpDisjunction (jena 3.8.0)
+        context.put(ARQ.optFilterDisjunction, false);
+        context.put(ARQ.optFilterConjunction, true);
+        
+        context.put(ARQ.optExprConstantFolding, true);
+
+//        Rewrite rewriter = Optimize.stdOptimizationFactory.create(context);
+        RewriteFactory factory = Optimize.getFactory();
+        Rewrite core = factory.create(context);
+        
+        
+        // Wrap jena's rewriter with additional transforms
+        Rewrite  result = op -> {
+
+        		op = core.rewrite(op);
+        		
+        		// Issue with Jena 3.8.0 (possibly other versions too)
+        		// Jena's rewriter returned by Optimize.getFactory() renames variables (due to scoping)
+        		// but does not reverse the renaming - so we need to do it explicitly here
+        		// (also, without reversing, variable syntax is invalid, such as "?/0")
+        		op = Rename.reverseVarRename(op, true);
+
+        		op = FixpointIteration.apply(op, x -> {
+            		x = TransformPullFiltersIfCanMergeBGPs.transform(x);
+            		x = Transformer.transform(new TransformMergeBGPs(), x);
+            		return x;
+        		});
+
+        		op = TransformPushFiltersIntoBGP.transform(op);
+        		op = TransformDeduplicatePatterns.transform(op);        		
+        		op = TransformRedundantFilterRemoval.transform(op);
+        		op = TransformFilterSimplify.transform(op);
+
+        		op = TransformPruneEmptyLeftJoin.transform(op);
+        		
+        		op = TransformFilterFalseToEmptyTable.transform(op);
+        		op = TransformPromoteTableEmptyVarPreserving.transform(op);
+        		return op;
+        };
+        
+        return result;
+	}
+
+    
     /**
      * Wrap a node with a caching operation
      *

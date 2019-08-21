@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
 import java.util.stream.Collectors;
@@ -17,6 +16,7 @@ import java.util.stream.Stream;
 
 import org.aksw.commons.collections.generator.Generator;
 import org.aksw.commons.jena.jgrapht.PseudoGraphJenaModel;
+import org.aksw.jena_sparql_api.algebra.utils.AlgebraUtils;
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.Concept;
@@ -36,6 +36,7 @@ import org.aksw.jena_sparql_api.stmt.SparqlStmtUtils;
 import org.aksw.jena_sparql_api.util.sparql.syntax.path.PathUtils;
 import org.aksw.jena_sparql_api.util.sparql.syntax.path.SimplePath;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
+import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.aksw.jena_sparql_api.utils.VarGeneratorBlacklist;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.graph.Node;
@@ -51,6 +52,7 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.apache.jena.shared.PrefixMapping;
+import org.apache.jena.sparql.algebra.optimize.Rewrite;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.graph.GraphFactory;
 import org.apache.jena.sparql.lang.arq.ParseException;
@@ -576,6 +578,8 @@ public class ConceptPathFinderBidirectionalUtils {
 
         // TODO Make timeouts configurable
         boolean result;
+		Rewrite rewrite = AlgebraUtils.createDefaultRewriter();
+		query = QueryUtils.rewrite(query, rewrite::rewrite);
         try(QueryExecution qe = conn.query(query)) {
         	//qe.setTimeout(30, TimeUnit.SECONDS, 30, TimeUnit.SECONDS);
         	result = qe.execAsk();

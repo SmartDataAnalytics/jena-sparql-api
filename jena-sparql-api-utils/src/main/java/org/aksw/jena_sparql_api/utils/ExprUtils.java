@@ -51,6 +51,23 @@ import org.apache.jena.sparql.graph.NodeTransformLib;
 public class ExprUtils {
 
 	/**
+	 * Test whether a node and an expression represent the same value
+	 * 
+	 * @param node
+	 * @param expr
+	 * @return
+	 */
+	public static boolean isSame(Node node, Expr expr) {
+		boolean result = node.isVariable()
+				? expr.isVariable() && node.equals(expr.asVar())
+				: node.isConcrete()
+					? expr.isConstant() && node.equals(expr.getConstant().asNode())
+					: false;
+		
+		return result;
+	}
+
+	/**
 	 * Node transform version that
 	 * (a) handles blank nodes correctly; in constrast to Expr.applyNodeTransform
 	 * [disabled (b) treats null mappings as identity mapping]

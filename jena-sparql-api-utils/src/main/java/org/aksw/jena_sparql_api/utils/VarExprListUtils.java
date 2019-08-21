@@ -1,6 +1,7 @@
 package org.aksw.jena_sparql_api.utils;
 
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,17 +21,65 @@ import org.apache.jena.sparql.graph.NodeTransform;
 
 public class VarExprListUtils {
 
+	public static boolean hasExprs(VarExprList vel) {
+		VarExprList copy = VarExprListUtils.createFromMap(vel.getExprs());
+		boolean result = copy.getExprs().isEmpty();
+		return result;
+	}
+	
+	
+	/**
+	 * In place canonicalization that removes identity mappings of variables to themselves
+	 * 
+	 * @param vel
+	 * @return
+	 */
+	public static boolean canonicalize(VarExprList vel) {
+		boolean result = false;
+		Map<Var, Expr> map = vel.getExprs();
+		Iterator<Entry<Var, Expr>> it = map.entrySet().iterator();
+		while(it.hasNext()) {
+			Entry<Var, Expr> e = it.next();
+			Var v = e.getKey();
+			Expr x = e.getValue();
+			
+			if(ExprUtils.isSame(v, x)) {
+				it.remove();
+				result = true;
+			}		
+		}
+		
+		return result;
+	}
+
+	public static VarExprList add(VarExprList result, Var v, Expr e) {
+        if(e == null || ExprUtils.isSame(v, e)) {
+            result.add(v);
+        } else {
+            result.add(v, e);
+        }
+        
+        return result;
+	}
+
+	public static VarExprList add(VarExprList result, Var v, Var w) {
+	    if(v.equals(w)) {
+	        result.add(v);
+	    } else {
+	        result.add(v, new ExprVar(w));
+	    }
+        
+        return result;
+	}
+
+	
     public static VarExprList createFromMap(Map<Var, Expr> map) {
         VarExprList result = new VarExprList();
         for(Entry<Var, Expr> e : map.entrySet()) {
             Var v = e.getKey();
             Expr w = e.getValue();
 
-            if(w.isVariable() && v.equals(w.asVar())) {
-                result.add(v);
-            } else {
-                result.add(v, w);
-            }
+            add(result, v, w);
         }
 
         return result;
@@ -40,12 +89,8 @@ public class VarExprListUtils {
         for(Entry<Var, Var> e : varMap.entrySet()) {
             Var v = e.getKey();
             Var w = e.getValue();
-
-            if(v.equals(w)) {
-                result.add(w);
-            } else {
-                result.add(w, new ExprVar(v));
-            }
+            
+            add(result, v, w);
         }
 
         return result;

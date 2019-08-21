@@ -66,6 +66,7 @@ public class QueryUtils {
 			result = query.cloneQuery();
 			break;
 		case Query.QueryTypeConstruct:
+			// If the projection uses expressions, create a sub query
 			result = selectToConstruct(query, proto.getConstructTemplate());
 			break;
 		case Query.QueryTypeAsk:
@@ -133,12 +134,14 @@ public class QueryUtils {
 		Op beforeOp = Algebra.compile(beforeQuery);
 		Op afterOp = xform.apply(beforeOp);// Transformer.transform(xform, beforeOp);
 		Query result = OpAsQuery.asQuery(afterOp);
-		
-		if(beforeQuery.isConstructType()) {
-			result.setQueryConstructType();
-			Template template = beforeQuery.getConstructTemplate();
-			result.setConstructTemplate(template);
-		}
+		result.getPrefixMapping().setNsPrefixes(beforeQuery.getPrefixMapping());
+
+		restoreQueryForm(result, beforeQuery);
+//		if(beforeQuery.isConstructType()) {
+//			result.setQueryConstructType();
+//			Template template = beforeQuery.getConstructTemplate();
+//			result.setConstructTemplate(template);
+//		}
 		
 		return result;
 	}
@@ -153,7 +156,13 @@ public class QueryUtils {
 	}
 	
 	public static boolean canActAsConstruct(Query q) {
-		boolean result = !q.hasAggregators() && !q.hasGroupBy() && !q.hasValues() && !q.hasHaving();
+		boolean result =
+				!q.hasAggregators() &&
+				!q.hasGroupBy() &&
+				!q.hasValues() &&
+				!q.hasHaving() &&
+				!VarExprListUtils.hasExprs(q.getProject());
+
 		return result;
 	}
 	

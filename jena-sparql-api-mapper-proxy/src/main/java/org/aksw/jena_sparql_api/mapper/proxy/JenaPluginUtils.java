@@ -1,7 +1,6 @@
 package org.aksw.jena_sparql_api.mapper.proxy;
 
 import java.io.IOException;
-import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.Set;
 import java.util.function.BiFunction;
@@ -28,10 +27,18 @@ public class JenaPluginUtils {
 
 	private static final Logger logger = LoggerFactory.getLogger(JenaPluginUtils.class);
 
-	static { JenaSystem.init(); }
+	static {
+		JenaSystem.init();
+	}
 
-	protected static TypeDeciderImpl typeDecider = new TypeDeciderImpl();
+	/**
+	 *  If you get an exception on typeDecider such as java.lang.NullPointerException
+	 *  ensure to call JenaSystem.init() before calling methods on this class
+	 */
+	protected static final TypeDeciderImpl typeDecider = new TypeDeciderImpl();
 
+
+	
 	public static TypeDecider getTypeDecider() {
 		return typeDecider;
 	}
