@@ -25,8 +25,19 @@ public interface PathSearch<P> {
 		return setMaxResults(maxResults == null ? null : maxResults.longValue());
 	}
 
+	/**
+	 * Internal 
+	 * 
+	 * @param maxResults
+	 * @return
+	 */
 	PathSearch<P> setMaxResults(Long maxResults);
 	Long getMaxResults();
 
+	
+//	PathSearch<P> setRandom(Random random);
+	//PathSearch<P> setMaxLength(Long maxLength);
+
+	
 	Flowable<P> exec();
 }

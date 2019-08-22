@@ -156,12 +156,12 @@ public class QueryUtils {
 	}
 	
 	public static boolean canActAsConstruct(Query q) {
-		boolean result =
-				!q.hasAggregators() &&
-				!q.hasGroupBy() &&
-				!q.hasValues() &&
-				!q.hasHaving() &&
-				!VarExprListUtils.hasExprs(q.getProject());
+		boolean result = true;
+		result = result && !q.hasAggregators();
+		result = result && !q.hasGroupBy();
+		result = result && !q.hasValues();
+		result = !q.hasHaving();
+		result = result && !VarExprListUtils.hasExprs(q.getProject());
 
 		return result;
 	}

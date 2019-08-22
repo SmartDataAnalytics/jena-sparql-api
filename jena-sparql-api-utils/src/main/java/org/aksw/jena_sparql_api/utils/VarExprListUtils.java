@@ -23,7 +23,7 @@ public class VarExprListUtils {
 
 	public static boolean hasExprs(VarExprList vel) {
 		VarExprList copy = VarExprListUtils.createFromMap(vel.getExprs());
-		boolean result = copy.getExprs().isEmpty();
+		boolean result = !copy.getExprs().isEmpty();
 		return result;
 	}
 	
