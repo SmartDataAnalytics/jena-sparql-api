@@ -65,7 +65,7 @@ public class QueryExecutionDecoratorBase<T extends QueryExecution>
 
     @Override
     public Context getContext() {
-        return decoratee.getContext();
+        return decoratee == null ? null : decoratee.getContext();
     }
 
     /**

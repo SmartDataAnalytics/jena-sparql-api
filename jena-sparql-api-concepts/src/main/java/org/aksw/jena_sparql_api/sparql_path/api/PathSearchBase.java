@@ -13,7 +13,7 @@ public abstract class PathSearchBase<P>
 	}
 
 	@Override
-	public PathSearch<P> setMaxResults(Long maxResults) {
+	public PathSearch<P> setMaxInternalResultsHint(Long maxResults) {
 		this.maxResults = maxResults;
 		return this;
 	}
@@ -24,7 +24,7 @@ public abstract class PathSearchBase<P>
 	}
 
 	@Override
-	public Long getMaxResults() {
+	public Long getMaxInternalResultsHint() {
 		return maxResults;
 	}
 }

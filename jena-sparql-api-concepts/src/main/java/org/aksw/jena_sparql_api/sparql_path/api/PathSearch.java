@@ -21,8 +21,8 @@ public interface PathSearch<P> {
 	PathSearch<P> setMaxLength(Long maxLength);
 	Long getMaxLength();
 	
-	default PathSearch<P> setMaxResults(Integer maxResults) {
-		return setMaxResults(maxResults == null ? null : maxResults.longValue());
+	default PathSearch<P> setMaxInternalResultsHint(Integer maxResults) {
+		return setMaxInternalResultsHint(maxResults == null ? null : maxResults.longValue());
 	}
 
 	/**
@@ -31,8 +31,8 @@ public interface PathSearch<P> {
 	 * @param maxResults
 	 * @return
 	 */
-	PathSearch<P> setMaxResults(Long maxResults);
-	Long getMaxResults();
+	PathSearch<P> setMaxInternalResultsHint(Long maxResults);
+	Long getMaxInternalResultsHint();
 
 	
 //	PathSearch<P> setRandom(Random random);
