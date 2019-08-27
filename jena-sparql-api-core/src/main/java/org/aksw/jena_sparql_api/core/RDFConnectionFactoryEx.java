@@ -92,7 +92,7 @@ public class RDFConnectionFactoryEx {
 						FluentQueryExecutionFactory
 							.from(new QueryExecutionFactorySparqlQueryConnection(rawConn))
 							.config()
-								.withClientSideConstruct()
+								//.withClientSideConstruct()
 								.withDatasetDescription(datasetDescription)
 								.withPostProcessor(qe -> {
 									if(qe instanceof QueryEngineHTTP) {

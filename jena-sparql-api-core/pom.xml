@@ -34,10 +34,11 @@
 			<artifactId>jena-sparql-api-collections</artifactId>
 		</dependency>
 
-<!-- 		<dependency> -->
-<!-- 			<groupId>org.aksw.jena-sparql-api</groupId> -->
-<!-- 			<artifactId>jena-sparql-api-utils</artifactId> -->
-<!-- 		</dependency> -->
+<!-- Needed for QueryExecutionCompare -->
+		<dependency>
+			<groupId>org.aksw.jena-sparql-api</groupId>
+			<artifactId>jena-sparql-api-utils</artifactId>
+		</dependency>
 
 		<dependency>
 			<groupId>org.aksw.jena-sparql-api</groupId>

@@ -53,9 +53,16 @@
 
 	<dependencies>
 		<!-- Used only for IteratorClosable and NodeMapperRdfDatatype; try to get rid of this dep -->
+		<!-- Possibly also used for result set comparison -->
 		<dependency>
 			<groupId>org.aksw.jena-sparql-api</groupId>
 			<artifactId>jena-sparql-api-collections</artifactId>
+		</dependency>
+
+		<!-- Used for ResultSet comparison -->
+		<dependency>
+			<groupId>org.aksw.jena-sparql-api</groupId>
+			<artifactId>jena-sparql-api-utils</artifactId>
 		</dependency>
 
 		<dependency>

@@ -55,6 +55,12 @@ public class E_JsonPath
 //        return result;
 //    }
 
+    public static Node jsonToNode(Object o) {
+    	Gson gson = new Gson();
+    	RDFDatatype dtype = TypeMapper.getInstance().getTypeByClass(JsonElement.class);
+    	Node result = jsonToNode(o, gson, dtype);
+    	return result;
+    }
     public static Node jsonToNode(Object o, Gson gson, RDFDatatype jsonDatatype) {
         boolean isPrimitive = o instanceof Boolean || o instanceof Number || o instanceof String;
 

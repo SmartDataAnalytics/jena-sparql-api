@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.compare;
+package org.aksw.jena_sparql_api.utils.model;
 
 import java.util.HashMap;
 import java.util.Iterator;

@@ -1,6 +1,7 @@
 package org.aksw.jena_sparql_api.sparql.ext.sys;
 
 import org.aksw.jena_sparql_api.sparql.ext.benchmark.E_Benchmark;
+import org.aksw.jena_sparql_api.sparql.ext.benchmark.E_CompareResultSet;
 import org.aksw.jena_sparql_api.sparql.ext.benchmark.E_NextLong;
 import org.aksw.jena_sparql_api.sparql.ext.benchmark.PropertyFunctionFactoryBenchmark;
 import org.aksw.jena_sparql_api.sparql.ext.benchmark.PropertyFunctionFactoryExecSelect;
@@ -17,6 +18,7 @@ public class JenaExtensionSys {
 		
     	pfRegistry.put(ns + "benchmark", new PropertyFunctionFactoryBenchmark());
     	pfRegistry.put(ns + "execSelect", new PropertyFunctionFactoryExecSelect());
+    	
 
     	
         FunctionRegistry registry = FunctionRegistry.get();
@@ -24,6 +26,7 @@ public class JenaExtensionSys {
         registry.put(ns + "getenv", E_Getenv.class);
         registry.put(ns + "benchmark", E_Benchmark.class);
         registry.put(ns + "nextLong", E_NextLong.class);
+        registry.put(ns + "rscmp", E_CompareResultSet.class);
     }
     
     public static void addPrefixes(PrefixMapping pm) {
