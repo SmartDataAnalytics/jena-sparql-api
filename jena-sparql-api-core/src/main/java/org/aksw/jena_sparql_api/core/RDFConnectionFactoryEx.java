@@ -6,6 +6,7 @@ import java.util.function.Function;
 import org.aksw.jena_sparql_api.core.connection.QueryExecutionFactorySparqlQueryConnection;
 import org.aksw.jena_sparql_api.core.connection.SparqlQueryConnectionJsa;
 import org.aksw.jena_sparql_api.stmt.SparqlStmt;
+import org.aksw.jena_sparql_api.utils.Symbols;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
@@ -20,7 +21,6 @@ import org.apache.jena.riot.WebContent;
 import org.apache.jena.sparql.core.DatasetDescription;
 import org.apache.jena.sparql.engine.http.QueryEngineHTTP;
 import org.apache.jena.sparql.util.Context;
-import org.apache.jena.sparql.util.Symbol;
 import org.apache.jena.update.UpdateExecutionFactory;
 import org.apache.jena.update.UpdateProcessor;
 import org.apache.jena.update.UpdateRequest;
@@ -110,7 +110,7 @@ public class RDFConnectionFactoryEx {
 		return result;
 	}
 	
-	public static final Symbol symConnection = Symbol.create("http://jsa.aksw.org/connection");
+//	public static final Symbol symConnection = Symbol.create("http://jsa.aksw.org/connection");
 
 	
 	public static RDFConnection wrapWithQueryParser(RDFConnection rawConn, Function<String, SparqlStmt> parser) {
@@ -218,7 +218,7 @@ public class RDFConnectionFactoryEx {
 				public UpdateProcessor postProcess(UpdateProcessor qe) {
 					Context cxt = qe.getContext();
 					if(cxt != null) {
-						cxt.set(symConnection, result[0]);
+						cxt.set(Symbols.symConnection, result[0]);
 					}
 					
 					return qe;
@@ -227,7 +227,7 @@ public class RDFConnectionFactoryEx {
 				public QueryExecution postProcess(QueryExecution qe) {
 					Context cxt = qe.getContext();
 					if(cxt != null) {
-						cxt.set(symConnection, result[0]);
+						cxt.set(Symbols.symConnection, result[0]);
 					}
 					
 					return qe;

@@ -42,7 +42,7 @@ public class E_CompareResultSet
 		JsonElement j1 = o1 instanceof JsonElement ? (JsonElement)o1 : null;
 		JsonElement j2 = o2 instanceof JsonElement ? (JsonElement)o2 : null;
 
-		if(o1 != null && o2 != null) {
+		if(j1 != null && j2 != null) {
 			String s1 = j1.toString();
 			String s2 = j2.toString();
 			

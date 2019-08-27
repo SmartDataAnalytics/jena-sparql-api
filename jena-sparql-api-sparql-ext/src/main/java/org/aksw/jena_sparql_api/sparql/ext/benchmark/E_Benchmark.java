@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.aksw.jena_sparql_api.sparql.ext.json.RDFDatatypeJson;
+import org.aksw.jena_sparql_api.utils.Symbols;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
@@ -23,7 +24,6 @@ import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.function.FunctionBase1;
 import org.apache.jena.sparql.function.FunctionEnv;
 import org.apache.jena.sparql.util.Context;
-import org.apache.jena.sparql.util.Symbol;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,7 +36,7 @@ public class E_Benchmark
 	extends FunctionBase1
 {
 	private static final Logger logger = LoggerFactory.getLogger(E_Benchmark.class);
-	public static final Symbol symConnection = Symbol.create("http://jsa.aksw.org/connection");
+	
 	
 	@Override
 	protected NodeValue exec(List<NodeValue> args, FunctionEnv env) {
@@ -72,7 +72,7 @@ public class E_Benchmark
 		RDFConnection conn = null;
 		Context cxt = env.getContext();
 		if(cxt != null) {
-			conn = cxt.get(symConnection);
+			conn = cxt.get(Symbols.symConnection);
 		}
 		
 		if(conn == null) {
@@ -92,7 +92,7 @@ public class E_Benchmark
 		RDFConnection conn = null;
 		Context cxt = env.getContext();
 		if(cxt != null) {
-			conn = cxt.get(symConnection);
+			conn = cxt.get(Symbols.symConnection);
 		}
 		
 		if(conn == null) {
