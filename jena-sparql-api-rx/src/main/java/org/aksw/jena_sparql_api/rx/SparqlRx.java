@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -16,9 +17,11 @@ import org.aksw.commons.collections.SetUtils;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
 import org.aksw.jena_sparql_api.core.utils.QueryGenerationUtils;
+import org.aksw.jena_sparql_api.http.HttpExceptionUtils;
 import org.aksw.jena_sparql_api.utils.IteratorResultSetBinding;
 import org.aksw.jena_sparql_api.utils.QuadPatternUtils;
 import org.aksw.jena_sparql_api.utils.VarUtils;
+import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.ext.com.google.common.base.Objects;
 import org.apache.jena.ext.com.google.common.collect.Maps;
 import org.apache.jena.graph.Graph;
@@ -26,11 +29,14 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
+import org.apache.jena.query.QueryFactory;
 import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.rdfconnection.RDFConnection;
+import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.apache.jena.sparql.algebra.Table;
 import org.apache.jena.sparql.algebra.table.TableData;
@@ -122,7 +128,8 @@ public class SparqlRx {
 			}
 			emitter.onComplete();
 		} catch (Exception e) {
-			emitter.onError(new Throwable("Error executing " + q, e));
+			Exception f = HttpExceptionUtils.makeHumanFriendly(e);
+			emitter.onError(new Throwable("Error executing " + q, f));
 		}
 	}
 
@@ -246,6 +253,21 @@ public class SparqlRx {
 	// }
 
 	public static void main(String[] args) {
+		// Some tests for whether timeouts actually work - so far it worked...
+		String queryStr = "CONSTRUCT { ?p a ?c } { { SELECT ?p (COUNT(DISTINCT ?s) AS ?c) { ?s ?p ?o } GROUP BY ?p } }";
+		//String queryStr = "CONSTRUCT WHERE { ?s ?p ?o . ?x ?y ?z }";
+		Query query = QueryFactory.create(queryStr);
+
+		RDFConnection conn = RDFConnectionFactory.connect("http://localhost:8890/sparql");
+		List<RDFNode> rdfNodes = SparqlRx.execPartitioned(conn, Vars.p, query)
+			.timeout(300, TimeUnit.MILLISECONDS)
+			.toList()
+			.blockingGet();
+		
+		System.out.println(rdfNodes);
+	}
+	
+	public static void main2(String[] args) {
 //		List<Entry<Integer, List<Entry<Integer, Integer>>>> list = groupByOrdered(Flowable.range(0, 10).map(i -> Maps.immutableEntry((int)(i / 3), i)),
 //		e -> e.getKey())
 //		.toList().blockingGet();
