@@ -53,20 +53,27 @@ public class E_CompareResultSet
 	        Multiset<Binding> m2 = ResultSetUtils.toMultiset(r2);
 	        Multiset<Binding> both = Multisets.intersection(m1, m2);
 
-	        int m1s = m1.size();
-	        int m2s = m2.size();
-	        int boths = both.size();
+	        int relevantSize = m1.size();
+	        int retrievedSize = m2.size();
+	        int relevantAndRetrievedSize = both.size();
 	        
-	        double precision = boths / (double)m2s;
-	        double recall = boths / (double)m1s;
-	        double fmeasure = 2.0 * (precision * recall) / (precision + recall);
+	        double precision = retrievedSize == 0
+	        		? (relevantSize == 0 ? 1.0 : 0.0)
+	        		: relevantAndRetrievedSize / (double)retrievedSize;
+
+	        double recall = relevantSize == 0
+	        		? 1.0
+	        		: relevantAndRetrievedSize / (double)relevantSize;
+	        
+	        double denominator = precision + recall;
+	        double fmeasure = denominator == 0 ? 0.0 : 2.0 * (precision * recall) / denominator;
 
 	        JsonObject json = new JsonObject();
 	        json.addProperty("precision", precision);
 	        json.addProperty("recall", recall);
 	        json.addProperty("fmeasure", fmeasure);
-	        json.addProperty("expectedSize", m1s);
-	        json.addProperty("actualSize", m2s);
+	        json.addProperty("expectedSize", relevantSize);
+	        json.addProperty("actualSize", retrievedSize);
 	        
 	        result = NodeValue.makeNode(E_JsonPath.jsonToNode(json));
 			
