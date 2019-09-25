@@ -369,19 +369,24 @@ public class SparqlRx {
 //    	return result;
 //    }
 
-    public static Single<Range<Long>> fetchCountQuery(SparqlQueryConnection qef, Query query, Long itemLimit, Long rowLimit) {
+    public static Single<Range<Long>> fetchCountQueryPartition(SparqlQueryConnection qef, Query query, Collection<Var> partitionVars, Long itemLimit, Long rowLimit) {
 
         //Var outputVar = Var.alloc("_count_"); //ConceptUtils.freshVar(concept);
 
         Long xitemLimit = itemLimit == null ? null : itemLimit + 1;
         Long xrowLimit = rowLimit == null ? null : rowLimit + 1;
 
-        Entry<Var, Query> countQuery = QueryGenerationUtils.createQueryCount(query, xitemLimit, xrowLimit);
+        Entry<Var, Query> countQuery = QueryGenerationUtils.createQueryCountPartition(query, partitionVars, xitemLimit, xrowLimit);
         Var v = countQuery.getKey();
         Query q = countQuery.getValue();
         
         return SparqlRx.fetchNumber(qef, q, v)
         		.map(count -> SparqlRx.toRange(count.longValue(), xitemLimit, xrowLimit));
+    }
+
+    public static Single<Range<Long>> fetchCountQuery(SparqlQueryConnection qef, Query query, Long itemLimit, Long rowLimit) {
+    	Single<Range<Long>> result = fetchCountQueryPartition(qef, query, null, itemLimit, rowLimit);
+    	return result;
     }
 
     

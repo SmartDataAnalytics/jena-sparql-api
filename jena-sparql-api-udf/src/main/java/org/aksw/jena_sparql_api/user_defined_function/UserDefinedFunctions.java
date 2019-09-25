@@ -96,7 +96,7 @@ public class UserDefinedFunctions {
 			Resource ra = activeUdf.getAliasFor();
 
 			if(activeUdf.mapsToPropertyFunction()) {
-				System.out.println("Mapped pfn");
+				logger.debug("Mapped property function: " + ra);
 			} else if(ra != null) {
 				UserDefinedFunctionResource alias = ra.as(UserDefinedFunctionResource.class);
 				if(alias != null) {

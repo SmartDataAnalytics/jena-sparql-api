@@ -99,6 +99,12 @@ public class RDFNodeMapperImpl<T>
 			Resource r = (Resource)obj;
 			Class<?> effectiveViewClass = ResourceUtils.getMostSpecificSubclass(r, viewClass, typeDecider);
 			
+			if(effectiveViewClass == null && isViewAll) {
+				effectiveViewClass = viewClass;
+			}
+			
+			Objects.requireNonNull(effectiveViewClass);
+			
 			// If we ended up with parent of RDFNode, constrain to RDFNode 
 			if(effectiveViewClass.isAssignableFrom(RDFNode.class)) {
 				effectiveViewClass = RDFNode.class;

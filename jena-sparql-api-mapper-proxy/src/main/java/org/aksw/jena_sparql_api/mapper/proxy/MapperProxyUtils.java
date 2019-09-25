@@ -1,6 +1,7 @@
 package org.aksw.jena_sparql_api.mapper.proxy;
 
 import java.beans.Introspector;
+import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles.Lookup;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
@@ -915,8 +916,14 @@ public class MapperProxyUtils {
 	
 	public static String deriveBeanPropertyName(String methodName) {
 		// TODO Check whether the subsequent character is upper case
-		boolean isGetterOrSetter = methodName.startsWith("get") || methodName.startsWith("set") || methodName.startsWith("is");
-		String result = isGetterOrSetter ? methodName.substring(3) : methodName;
+		List<String> prefixes = Arrays.asList("get", "set", "is");
+		
+		String usedPrefix = prefixes.stream()
+				.filter(methodName::startsWith)
+				.findAny()
+				.orElse(null);
+		
+		String result = usedPrefix != null ? methodName.substring(usedPrefix.length()) : methodName;
 		
 		// TODO We may want to use the Introspector's public decapitalize method
 		result = Introspector.decapitalize(result);
@@ -1478,11 +1485,12 @@ public class MapperProxyUtils {
 			    			Lookup.class.getDeclaredConstructor(Class.class);
 		                constructor.setAccessible(true);
 
-		                r = constructor.newInstance(declaringClass)
+		                MethodHandle handle = constructor.newInstance(declaringClass)
 	                    .in(declaringClass)
 	                    .unreflectSpecial(method, declaringClass)
-	                    .bindTo(obj)
-	                    .invokeWithArguments(args);
+	                    .bindTo(obj);
+		                
+	                    r = handle.invokeWithArguments(args);
 			                
 
 			                //r = method.invoke(hack, args);

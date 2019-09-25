@@ -11,6 +11,7 @@ import org.aksw.jena_sparql_api.mapper.annotation.IriNs;
 import org.aksw.jena_sparql_api.mapper.annotation.ResourceView;
 import org.apache.jena.enhanced.BuiltinPersonalities;
 import org.apache.jena.enhanced.EnhGraph;
+import org.apache.jena.enhanced.Implementation;
 import org.apache.jena.enhanced.Personality;
 import org.apache.jena.ext.com.google.common.reflect.ClassPath;
 import org.apache.jena.ext.com.google.common.reflect.ClassPath.ClassInfo;
@@ -81,6 +82,40 @@ public class JenaPluginUtils {
 		}		
 	}
 	
+	public static void registerResourceClass(Class<? extends Resource> inter, Class<?> impl) {
+		Personality<RDFNode> p = BuiltinPersonalities.model;
+		
+		if(Resource.class.isAssignableFrom(impl)) {
+			boolean supportsProxying = supportsProxying(impl);
+			if(supportsProxying) {
+				@SuppressWarnings("unchecked")
+				Class<? extends Resource> cls = (Class<? extends Resource>)impl;
+				p.add(inter, createImplementation(cls, DefaultPrefixes.prefixes));
+			}
+		}
+	}
+	
+	public static Implementation createImplementation(Class<?> clazz, PrefixMapping pm) {
+		@SuppressWarnings("unchecked")
+		Class<? extends Resource> cls = (Class<? extends Resource>)clazz;
+		
+		logger.debug("Registering " + clazz);
+		BiFunction<Node, EnhGraph, ? extends Resource> proxyFactory = 
+				MapperProxyUtils.createProxyFactory(cls, pm, typeDecider);
+
+		
+		typeDecider.registerClasses(clazz);
+
+		BiFunction<Node, EnhGraph, ? extends Resource> proxyFactory2 = (n, m) -> {
+			Resource r = new ResourceImpl(n, m);
+			typeDecider.writeTypeTriples(r, cls);
+			
+			return proxyFactory.apply(n, m);
+		};
+		
+		Implementation result = new ProxyImplementation(proxyFactory2);
+		return result;
+	}
 	
 	public static void registerResourceClass(Class<?> clazz, Personality<RDFNode> p, PrefixMapping pm) {
 		if(Resource.class.isAssignableFrom(clazz)) {
@@ -88,22 +123,7 @@ public class JenaPluginUtils {
 			if(supportsProxying) {
 				@SuppressWarnings("unchecked")
 				Class<? extends Resource> cls = (Class<? extends Resource>)clazz;
-				
-				logger.debug("Registering " + clazz);
-				BiFunction<Node, EnhGraph, ? extends Resource> proxyFactory = 
-						MapperProxyUtils.createProxyFactory(cls, pm, typeDecider);
-
-				
-				typeDecider.registerClasses(clazz);
-
-				BiFunction<Node, EnhGraph, ? extends Resource> proxyFactory2 = (n, m) -> {
-					Resource r = new ResourceImpl(n, m);
-					typeDecider.writeTypeTriples(r, cls);
-					
-					return proxyFactory.apply(n, m);
-				};
-				
-				p.add(cls, new ProxyImplementation(proxyFactory2));
+				p.add(cls, createImplementation(cls, pm));
 			}
 		}
 	}

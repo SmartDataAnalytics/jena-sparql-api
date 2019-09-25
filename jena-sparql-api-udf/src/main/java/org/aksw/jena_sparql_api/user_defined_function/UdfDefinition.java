@@ -12,6 +12,8 @@ import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.function.user.UserDefinedFunctionDefinition;
 import org.apache.jena.sparql.util.ExprUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public interface UdfDefinition
 	extends Resource
@@ -83,7 +85,9 @@ public interface UdfDefinition
 		PrefixMapping pm = new PrefixMappingImpl();
 		r.addTo(pm);
 		
-		System.out.println(iri + ": " + pm);
+		Logger logger = LoggerFactory.getLogger(UdfDefinition.class);
+		
+		logger.debug("Processing user defined function definition: " + iri + ": " + pm);
 		
 		List<String> paramsStr = r.getParams();
 		List<Var> params = paramsStr.stream()
