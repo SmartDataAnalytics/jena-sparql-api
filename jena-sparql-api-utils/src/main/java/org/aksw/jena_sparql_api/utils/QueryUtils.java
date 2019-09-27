@@ -1,7 +1,9 @@
 package org.aksw.jena_sparql_api.utils;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -12,6 +14,7 @@ import java.util.stream.Collectors;
 import org.aksw.commons.collections.generator.Generator;
 import org.aksw.jena_sparql_api.backports.syntaxtransform.ExprTransformNodeElement;
 import org.aksw.jena_sparql_api.utils.transform.NodeTransformCollectNodes;
+import org.apache.jena.ext.com.google.common.collect.Sets;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.SortCondition;
@@ -20,30 +23,89 @@ import org.apache.jena.shared.impl.PrefixMappingImpl;
 import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.OpAsQuery;
+import org.apache.jena.sparql.algebra.OpVars;
 import org.apache.jena.sparql.algebra.op.OpSlice;
 import org.apache.jena.sparql.core.BasicPattern;
 import org.apache.jena.sparql.core.DatasetDescription;
 import org.apache.jena.sparql.core.Quad;
+import org.apache.jena.sparql.core.QuadPattern;
 import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.core.VarExprList;
 import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprTransform;
 import org.apache.jena.sparql.graph.NodeTransform;
 import org.apache.jena.sparql.graph.NodeTransformLib;
+import org.apache.jena.sparql.modify.request.QuadAcc;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementFilter;
+import org.apache.jena.sparql.syntax.ElementNamedGraph;
 import org.apache.jena.sparql.syntax.ElementSubQuery;
 import org.apache.jena.sparql.syntax.ElementVisitorBase;
 import org.apache.jena.sparql.syntax.ElementWalker;
 import org.apache.jena.sparql.syntax.PatternVars;
 import org.apache.jena.sparql.syntax.Template;
 import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransform;
+import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransformCopyBase;
+import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransformer;
 import org.apache.jena.sparql.util.ExprUtils;
 
 import com.google.common.collect.DiscreteDomain;
 import com.google.common.collect.Range;
 
 public class QueryUtils {
+	
+	public static Query applyOpTransform(Query beforeQuery, Function<? super Op, ? extends Op> transform) {
+		Op beforeOp = Algebra.compile(beforeQuery);
+		Op afterOp = transform.apply(beforeOp);
+		
+		//Set<Var> afterOpVars = OpVars.visibleVars(afterOp);
+//		Op op = NodeTransformLib.transform(new NodeTransformBNodesToVariables(), afterOp);
+		
+		Collection<Var> mentionedVars = OpVars.mentionedVars(beforeOp);		
+		Query afterQueryTmp = OpAsQuery.asQuery(afterOp);
+//		Query afterQuery = fixVarNames(afterQueryTmp);
+
+		Generator<Var> vargen = VarGeneratorBlacklist.create(mentionedVars);
+		Element eltBefore = afterQueryTmp.getQueryPattern();
+
+		// Fix blank nodes introduced as graph names by e.g. Algebra.unionDefaultGraph
+		Element eltAfter = ElementTransformer.transform(eltBefore, new ElementTransformCopyBase() {
+			protected Map<Node, Var> map = new HashMap<>();
+			
+			@Override
+			public Element transform(ElementNamedGraph el, Node gn, Element elt1) {
+				Element result;
+				if(gn.isBlank() || (gn.isVariable() && gn.getName().startsWith("?"))) {
+					Var v = map.get(gn);
+					if(v == null) {
+						v = vargen.next();
+						map.put(gn, v);
+					}
+					result = new ElementNamedGraph(v, elt1);
+				} else {
+					result = super.transform(el, gn, elt1);
+				}
+				return result;
+			}
+		});
+		afterQueryTmp.setQueryPattern(eltAfter);
+		
+		Query result = QueryUtils.restoreQueryForm(afterQueryTmp, beforeQuery);
+		
+		return result;
+	}
+	
+// Seems like Query.getResultVars already does what I wanted to do here
+//	public Set<Var> visibleVars(Query query) {
+//		Set<Var> result;
+//		if(query.isQueryResultStar()) {
+//			Op op = Algebra.compile(query);
+//			result = OpVars.visibleVars(op);
+//		} else {
+//			query.getPro
+//		}
+//	}
 	
 	/**
 	 * Restore a query form from a prototype.
@@ -64,6 +126,29 @@ public class QueryUtils {
 		switch(tgtQueryType) {
 		case Query.QueryTypeSelect:
 			result = query.cloneQuery();
+
+			Set<Var> expectedVars = new LinkedHashSet<>(proto.getProjectVars());
+			VarExprList replacement = new VarExprList();
+
+			Set<Var> actualVars = new LinkedHashSet<>(result.getProjectVars());
+			
+			Set<Var> missingVars = Sets.difference(expectedVars, actualVars);
+			Set<Var> exceedingVars = Sets.difference(actualVars, expectedVars);
+			if(!missingVars.isEmpty()) {
+				throw new RuntimeException("Missing vars: " + missingVars + ", expected: " + expectedVars + ", actual: " + actualVars);
+			}
+			
+			if(!exceedingVars.isEmpty()) {
+				VarExprList actual = result.getProject();
+				for(Var expectedVar : expectedVars) {				
+					Expr expr = actual.getExpr(expectedVar);
+					VarExprListUtils.add(replacement, expectedVar, expr);
+				}
+				
+				VarExprListUtils.replace(result.getProject(), replacement);
+				result.setQueryResultStar(false);
+				result.setResultVars();
+			}
 			break;
 		case Query.QueryTypeConstruct:
 			// If the projection uses expressions, create a sub query
@@ -175,9 +260,16 @@ public class QueryUtils {
         Template template = null;
         if(query.isConstructType()) {
         	Template tmp = query.getConstructTemplate();
-        	BasicPattern before = tmp.getBGP();
-        	BasicPattern after = NodeTransformLib.transform(nodeTransform, before);
-        	template = new Template(after);
+        	if(tmp.containsRealQuad()) {
+        		QuadPattern before = QuadPatternUtils.create(tmp.getQuads());
+//        	BasicPattern before = tmp.getBGP();
+        		QuadPattern after = NodeTransformLib.transform(nodeTransform, before);
+        		template = new Template(new QuadAcc(after.getList()));
+        	} else {
+        		BasicPattern before = tmp.getBGP();
+        		BasicPattern after = NodeTransformLib.transform(nodeTransform, before);
+        		template = new Template(after);
+        	}
         }
 
         

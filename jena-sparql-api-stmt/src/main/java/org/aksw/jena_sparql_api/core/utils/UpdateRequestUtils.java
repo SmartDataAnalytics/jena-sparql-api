@@ -12,6 +12,7 @@ import org.aksw.jena_sparql_api.utils.SetFromGraph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.core.DatasetDescription;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.Quad;
@@ -30,6 +31,24 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 
 public class UpdateRequestUtils {
+
+	public static UpdateRequest applyTransformElt(UpdateRequest updateRequest, Function<? super Element, ? extends Element> transform) {
+		UpdateRequest result = UpdateRequestUtils.copyTransform(updateRequest, update -> {
+			Update r = UpdateUtils.applyElementTransform(update, transform);
+			return r;
+		});
+
+		return result;
+	}
+
+	public static UpdateRequest applyOpTransform(UpdateRequest updateRequest, Function<? super Op, ? extends Op> transform) {
+		UpdateRequest result = UpdateRequestUtils.copyTransform(updateRequest, update -> {
+			Update r = UpdateUtils.applyOpTransform(update, transform);
+			return r;
+		});
+
+		return result;
+	}
 
     /**
      * Append operations from src to tgt

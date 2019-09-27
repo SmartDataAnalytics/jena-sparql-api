@@ -51,6 +51,7 @@ import org.apache.jena.riot.system.stream.StreamManager;
 import org.apache.jena.riot.web.HttpOp;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.shared.impl.PrefixMappingImpl;
+import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.core.Prologue;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.expr.ExprTransform;
@@ -69,6 +70,23 @@ public class SparqlStmtUtils {
 	// TODO Duplicate symbol definition; exists in E_Benchmark
 	public static final Symbol symConnection = Symbol.create("http://jsa.aksw.org/connection");
 
+	public static SparqlStmt applyOpTransform(SparqlStmt stmt, Function<? super Op, ? extends Op> transform) {
+		SparqlStmt result;
+		if(stmt.isQuery()) {
+			Query tmp = stmt.getAsQueryStmt().getQuery();
+			Query query = QueryUtils.applyOpTransform(tmp, transform);
+			result = new SparqlStmtQuery(query);
+		} else if(stmt.isUpdateRequest()) {
+			UpdateRequest tmp = stmt.getAsUpdateStmt().getUpdateRequest();
+			UpdateRequest updateRequest = UpdateRequestUtils.applyOpTransform(tmp, transform);
+			
+			result = new SparqlStmtUpdate(updateRequest);			
+		} else {
+			result = stmt;
+		}
+		
+		return result;
+	}
 
 	public static SparqlStmt applyNodeTransform(SparqlStmt stmt, NodeTransform xform) {
 		SparqlStmt result;
