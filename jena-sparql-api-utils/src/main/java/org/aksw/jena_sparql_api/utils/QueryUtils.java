@@ -218,10 +218,10 @@ public class QueryUtils {
 	public static Query rewrite(Query beforeQuery, Function<? super Op, ? extends Op> xform) {
 		Op beforeOp = Algebra.compile(beforeQuery);
 		Op afterOp = xform.apply(beforeOp);// Transformer.transform(xform, beforeOp);
-		Query result = OpAsQuery.asQuery(afterOp);
-		result.getPrefixMapping().setNsPrefixes(beforeQuery.getPrefixMapping());
+		Query afterQuery = OpAsQuery.asQuery(afterOp);
+		afterQuery.getPrefixMapping().setNsPrefixes(beforeQuery.getPrefixMapping());
 
-		restoreQueryForm(result, beforeQuery);
+		Query result = restoreQueryForm(afterQuery, beforeQuery);
 //		if(beforeQuery.isConstructType()) {
 //			result.setQueryConstructType();
 //			Template template = beforeQuery.getConstructTemplate();
