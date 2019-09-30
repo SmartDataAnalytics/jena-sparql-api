@@ -8,7 +8,7 @@ Check [this sparql script](src/main/resources/probe-endpoint-dbms.sparql) for cu
 * Command line invocation with [SPARQL integrate](https://github.com/SmartDataAnalytics/Sparqlintegrate)
 
 ```bash
-REMOTE=http://dbpedia.org/sparql sparql-integrate src/main/resources/probe-endpoint-dbms.sparql spo.sparq)
+REMOTE=http://dbpedia.org/sparql sparql-integrate src/main/resources/probe-endpoint-dbms.sparql spo.sparql
 ```
 
 
