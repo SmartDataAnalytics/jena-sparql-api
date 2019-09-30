@@ -71,6 +71,11 @@ fn:bidOf      o:definition [ o:profile p:jena ; o:aliasFor fn:afnBnode ; ] .
 fn:parseBid   o:definition [ o:profile p:jena ; o:aliasFor fn:identity ; ] .
 fn:unparseBid o:definition [ o:profile p:jena ; o:aliasFor fn:identity ; ] .
 
+# stardog
+fn:bidOf      o:definition [ o:profile p:stardog ; o:aliasFor fn:afnBnode ; ] .
+fn:parseBid   o:definition [ o:profile p:stardog ; o:aliasFor fn:identity ; ] .
+fn:unparseBid o:definition [ o:profile p:stardog ; o:aliasFor fn:identity ; ] .
+
 # virtuoso
 fn:bidOf      o:definition [ o:profile p:virtuoso ; o:aliasFor fn:str ; ] .
 fn:parseBid   o:definition [ o:profile p:virtuoso ; o:aliasFor fn:identity ; ] .

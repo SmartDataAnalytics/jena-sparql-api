@@ -43,7 +43,7 @@ public interface UdfDefinition
 	 * 
 	 * @return
 	 */
-	@Iri("http://ns.aksw.org/jena/udf/profile")
+	@Iri(UdfVocab.Strs.profile)
 	Set<Resource> getProfiles();
 
 	@Iri("http://ns.aksw.org/jena/udf/inverse")

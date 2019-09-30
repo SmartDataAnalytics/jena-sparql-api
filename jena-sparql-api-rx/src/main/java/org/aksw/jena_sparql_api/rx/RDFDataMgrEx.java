@@ -1,11 +1,16 @@
 package org.aksw.jena_sparql_api.rx;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.common.DefaultPrefixes;
 import org.aksw.jena_sparql_api.stmt.SPARQLResultSinkQuads;
+import org.aksw.jena_sparql_api.stmt.SparqlStmt;
 import org.aksw.jena_sparql_api.stmt.SparqlStmtUtils;
+import org.aksw.jena_sparql_api.utils.NodeUtils;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.rdf.model.Model;
@@ -36,16 +41,30 @@ public class RDFDataMgrEx {
 	 * @param filenameOrURI
 	 */
 	public static void execSparql(Model model, String filenameOrURI) {
+		execSparql(model, filenameOrURI, null);
+	}
+
+	public static void execSparql(Model model, String filenameOrURI, Function<String, String> envLookup) {
 		try(RDFConnection conn = RDFConnectionFactory.connect(DatasetFactory.wrap(model))) {
-			execSparql(conn, filenameOrURI);
+			execSparql(conn, filenameOrURI, envLookup);
 		}
 	}
-	
+
 	public static void execSparql(RDFConnection conn, String filenameOrURI) {
 		readConnection(conn, filenameOrURI, null);
 	}
-	
+
+	public static void execSparql(RDFConnection conn, String filenameOrURI, Function<String, String> envLookup) {
+		readConnection(conn, filenameOrURI, null, envLookup);
+	}
+
+
 	public static void readConnection(RDFConnection conn, String filenameOrURI, Consumer<Quad> quadConsumer) {
+		readConnection(conn, filenameOrURI, quadConsumer, System::getenv);
+		
+	}
+	
+	public static void readConnection(RDFConnection conn, String filenameOrURI, Consumer<Quad> quadConsumer, Function<String, String> envLookup) {
 		//Sink<Quad> sink = SparqlStmtUtils.createSink(outFormat, System.out);
 		
 		PrefixMapping pm = new PrefixMappingImpl();
@@ -59,8 +78,16 @@ public class RDFDataMgrEx {
 		pm.setNsPrefixes(DefaultPrefixes.prefixes);
 		
 		try {
-			Streams.stream(SparqlStmtUtils.processFile(pm, filenameOrURI))
-				.forEach(stmt -> SparqlStmtUtils.process(conn, stmt, new SPARQLResultSinkQuads(quadConsumer)));
+			List<SparqlStmt> stmts = Streams.stream(SparqlStmtUtils.processFile(pm, filenameOrURI))
+					.collect(Collectors.toList());
+			
+			for(SparqlStmt stmt : stmts) {
+				SparqlStmt stmt2 = envLookup == null
+					? stmt
+					: SparqlStmtUtils.applyNodeTransform(stmt, x -> NodeUtils.substWithLookup(x, envLookup));
+				SparqlStmtUtils.process(conn, stmt2, new SPARQLResultSinkQuads(quadConsumer));
+			}
+			
 		} catch (IOException | ParseException e) {
 			throw new RuntimeException(e);
 		}
