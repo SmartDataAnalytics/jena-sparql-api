@@ -11,6 +11,15 @@ Check [this sparql script](src/main/resources/probe-endpoint-dbms.sparql) for cu
 REMOTE=http://dbpedia.org/sparql sparql-integrate src/main/resources/probe-endpoint-dbms.sparql spo.sparql
 ```
 
+**Example Output**:
+```turtle
+_:Be...9 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/ns/sparql-service-description#ServiceDescription> .
+_:Be...9 <http://www.example.org/dbmsShortName> "virtuoso" .
+_:Be...9 <http://www.example.org/dbmsVersion> "07.20.3232" .
+_:Be...9 <http://www.example.org/dbmsName> "OpenLink-Virtuoso-VDB-Server" .
+_:Be...9 <http://www.example.org/dbmsId> "OpenLink-Virtuoso-VDB-Server:07.20.3232" .
+
+```
 
 * Programmatic probing
 
