@@ -156,16 +156,16 @@ public class QueryUtils {
 			break;
 		case Query.QueryTypeAsk:
 			result = query.cloneQuery();
-			query.setQueryAskType();
+			result.setQueryAskType();
 			break;
 		case Query.QueryTypeDescribe:
 			result = query.cloneQuery();
-			query.setQueryDescribeType();
+			result.setQueryDescribeType();
 			for(Node node : proto.getResultURIs()) {
-				query.addDescribeNode(node);
+				result.addDescribeNode(node);
 			}
 			for(Var var : proto.getProjectVars()) {
-				query.addDescribeNode(var);
+				result.addDescribeNode(var);
 			}
 			break;
 		default:
