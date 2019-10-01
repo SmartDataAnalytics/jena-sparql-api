@@ -1,7 +1,9 @@
 package org.aksw.jena_sparql_api.mapper.proxy;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 import java.util.function.BiFunction;
 
@@ -121,10 +123,28 @@ public class JenaPluginUtils {
 	public static void registerResourceClass(Class<?> clazz, Personality<RDFNode> p, PrefixMapping pm) {
 		if(Resource.class.isAssignableFrom(clazz)) {
 			boolean supportsProxying = supportsProxying(clazz);
-			if(supportsProxying) {
-				@SuppressWarnings("unchecked")
-				Class<? extends Resource> cls = (Class<? extends Resource>)clazz;
-				p.add(cls, createImplementation(cls, pm));
+			if(supportsProxying) {				
+				ResourceView resourceView = clazz.getAnnotation(ResourceView.class);
+				Class<?>[] rawSuperTypes = resourceView == null
+						? null
+						: resourceView.value();
+
+				// If ResourceView is used without arguments, use the annotated type itself
+				Class<?>[] superTypes = rawSuperTypes == null || rawSuperTypes.length == 0
+						? new Class<?>[] {clazz}
+						: rawSuperTypes;
+
+				List<Class<?>> effectiveTypes = new ArrayList<>(Arrays.asList(superTypes));
+				//effectiveTypes.add(clazz);
+						
+				Implementation impl = createImplementation(clazz, pm);
+				
+				for(Class<?> type : effectiveTypes) {
+					@SuppressWarnings("unchecked")
+					Class<? extends Resource> cls = (Class<? extends Resource>)type;
+					
+					p.add(cls, impl);
+				}
 			}
 		}
 	}
@@ -135,7 +155,7 @@ public class JenaPluginUtils {
 		//int mods = clazz.getModifiers();
 		//if(Modifier.isInterface(mods) || !Modifier.isAbstract(mods)) {
 			// Check if the class is annotated by @ResourceView
-			result = clazz.getAnnotationsByType(ResourceView.class).length != 0;
+			result = clazz.getAnnotation(ResourceView.class) != null;
 			
 			// Check if there ary any @Iri annotations
 			result = result || Arrays.asList(clazz.getDeclaredMethods()).stream()

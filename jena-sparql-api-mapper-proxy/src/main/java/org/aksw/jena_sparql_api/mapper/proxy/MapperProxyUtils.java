@@ -513,7 +513,7 @@ public class MapperProxyUtils {
 			
 			// Deal with (non-nested) collections first
 			if(!Iterable.class.isAssignableFrom(paramType)) {
-				boolean isFluentCompatible = clazz.isAssignableFrom(returnType);
+				boolean isFluentCompatible = returnType.isAssignableFrom(clazz);
 				
 				result = MethodDescriptor.simpleSetter(m, isFluentCompatible, paramType);
 			}
@@ -544,7 +544,7 @@ public class MapperProxyUtils {
 			// Deal with (non-nested) collections first
 			if(Iterable.class.isAssignableFrom(paramType)) {
 				Class<?> itemType = extractItemType(m.getParameters()[0].getParameterizedType());
-				boolean isFluentCompatible = clazz.isAssignableFrom(returnType);
+				boolean isFluentCompatible = returnType.isAssignableFrom(clazz);
 				
 				result = MethodDescriptor.collectionSetter(m, isFluentCompatible, paramType, itemType);
 			}
@@ -946,8 +946,8 @@ public class MapperProxyUtils {
 			String pathStr = "<" + expanded + ">";
 			
 			result = (P_Path0)PathParser.parse(pathStr, pm);
-			
-			logger.debug("Parsed path " + pathStr + " into " + result);
+
+			logger.debug("Parsed bean property RDF annotation " + pathStr + " into " + result);
 			
 			//Node p = NodeFactory.createURI(rdfPropertyStr);
 			

@@ -11,7 +11,7 @@ import java.util.Set;
 import org.aksw.jena_sparql_api.mapper.annotation.Iri;
 import org.aksw.jena_sparql_api.mapper.annotation.IriType;
 import org.aksw.jena_sparql_api.mapper.annotation.RdfType;
-import org.aksw.jena_sparql_api.mapper.proxy.JenaPluginUtils;
+import org.aksw.jena_sparql_api.mapper.annotation.ResourceView;
 import org.aksw.jena_sparql_api.rdf.collections.NodeMappers;
 import org.aksw.jena_sparql_api.rdf.collections.ResourceUtils;
 import org.apache.jena.ext.com.google.common.collect.Sets;
@@ -27,27 +27,30 @@ import org.junit.Test;
 
 public class TestMapperProxyUtils {
 	
-	public static interface TestResourceBase
+	public static interface TestResource
 		extends Resource
 	{
 		String getString();		
-		TestResourceBase setString(String str);
+		TestResource setString(String str);
 
 		String getIri();
-		TestResourceBase setIri(String str);
+		TestResource setIri(String str);
 
 		
 		Integer getInteger();
 		TestResource setInteger(Integer str);
 
 
-		TestResourceBase setList(List<String> strs);
+		TestResource setList(List<String> strs);
 		List<String> getList();
 
 		
 		<T> Collection<T> getDynamicSet(Class<T> clazz);
 		//TestResource setDynamicSet(Iterable<T> items);
 		
+		Set<String> getItems();
+		String getRandomItem();
+
 		
 //		@Iri("eg:collection")
 //		TestResource setList(List<String> strs);
@@ -61,9 +64,10 @@ public class TestMapperProxyUtils {
 //		List<?> getRDFNodes();
 	}
 
+	@ResourceView(TestResource.class)
 	@RdfType
-	public static interface TestResource
-		extends TestResourceBase
+	public static interface TestResourceDefault
+		extends TestResource
 	{
 		@Iri("rdfs:label")
 		String getString();		
@@ -106,18 +110,18 @@ public class TestMapperProxyUtils {
 	public void testTypeDecider() {
 		JenaSystem.init();
 		
-		JenaPluginUtils.registerResourceClasses(TestResource.class);
+		JenaPluginUtils.registerResourceClasses(TestResourceDefault.class);
 		TestResource sb = ModelFactory.createDefaultModel().createResource().as(TestResource.class);
 		String iri = ResourceUtils.getPropertyValue(sb, RDF.type, NodeMappers.uriString);
 //		System.out.println("Iri is " + iri);
-		Assert.assertEquals(iri, "java://" + TestResource.class.getCanonicalName());
+		Assert.assertEquals(iri, "java://" + TestResourceDefault.class.getCanonicalName());
 	}
 	
 	
 	@Test
 	public void testMixedUseOfScalarAndCollectionGetter() {
 		JenaSystem.init();
-		JenaPluginUtils.registerResourceClasses(TestResource.class);
+		JenaPluginUtils.registerResourceClasses(TestResourceDefault.class);
 		TestResource sb = ModelFactory.createDefaultModel().createResource().as(TestResource.class);
 		
 		Set<String> items = Sets.newHashSet("hello", "world");
@@ -134,7 +138,7 @@ public class TestMapperProxyUtils {
 	@Test
 	public void testScalarString() {
 		JenaSystem.init();
-		JenaPluginUtils.registerResourceClasses(TestResource.class);
+		JenaPluginUtils.registerResourceClasses(TestResourceDefault.class);
 		TestResource sb = ModelFactory.createDefaultModel().createResource().as(TestResource.class);
 		
 		Assert.assertNull(sb.getString());
@@ -147,7 +151,7 @@ public class TestMapperProxyUtils {
 	@Test
 	public void testScalarInteger() {
 		JenaSystem.init();
-		JenaPluginUtils.registerResourceClasses(TestResource.class);
+		JenaPluginUtils.registerResourceClasses(TestResourceDefault.class);
 		TestResource sb = ModelFactory.createDefaultModel().createResource().as(TestResource.class);
 
 		Assert.assertNull(sb.getInteger());
@@ -158,7 +162,7 @@ public class TestMapperProxyUtils {
 	@Test
 	public void testScalarIri() {
 		JenaSystem.init();
-		JenaPluginUtils.registerResourceClasses(TestResource.class);
+		JenaPluginUtils.registerResourceClasses(TestResourceDefault.class);
 		TestResource sb = ModelFactory.createDefaultModel().createResource().as(TestResource.class);
 		
 		
@@ -177,7 +181,7 @@ public class TestMapperProxyUtils {
 	@Test
 	public void testList() {
 		JenaSystem.init();
-		JenaPluginUtils.registerResourceClasses(TestResource.class);
+		JenaPluginUtils.registerResourceClasses(TestResourceDefault.class);
 		TestResource sb = ModelFactory.createDefaultModel().createResource().as(TestResource.class);
 		
 		
@@ -198,7 +202,7 @@ public class TestMapperProxyUtils {
 	@Test
 	public void testDynamicSet() {		
 		JenaSystem.init();
-		JenaPluginUtils.registerResourceClasses(TestResource.class);
+		JenaPluginUtils.registerResourceClasses(TestResourceDefault.class);
 		TestResource sb = ModelFactory.createDefaultModel().createResource().as(TestResource.class);
 		
 		Assert.assertEquals(Collections.emptySet(), sb.getDynamicSet(Integer.class));
