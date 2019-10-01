@@ -140,10 +140,14 @@ public class JenaPluginUtils {
 				Implementation impl = createImplementation(clazz, pm);
 				
 				for(Class<?> type : effectiveTypes) {
-					@SuppressWarnings("unchecked")
-					Class<? extends Resource> cls = (Class<? extends Resource>)type;
-					
-					p.add(cls, impl);
+					if(!type.isAssignableFrom(clazz)) {
+						logger.warn("Not a super type: Cannot register implementation for " + clazz + " with specified type " + type);
+					} else {
+						@SuppressWarnings("unchecked")
+						Class<? extends Resource> cls = (Class<? extends Resource>)type;
+						
+						p.add(cls, impl);
+					}
 				}
 			}
 		}
