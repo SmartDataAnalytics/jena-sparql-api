@@ -28,6 +28,7 @@ public class JenaPluginUtils {
 
 	private static final Logger logger = LoggerFactory.getLogger(JenaPluginUtils.class);
 
+	
 	static {
 		JenaSystem.init();
 	}

@@ -32,6 +32,8 @@
 
 		<module>jena-sparql-api-udf</module>
 
+		<module>jena-sparql-api-conjure</module>
+
 		<module>jena-sparql-api-sparql-ext</module>
 
 		<module>jena-sparql-api-mapper-annotations</module>
