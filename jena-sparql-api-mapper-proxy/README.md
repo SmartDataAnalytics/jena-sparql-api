@@ -94,11 +94,11 @@ interface MyAnnotatedResource extends MyPlainResource {
 
 In the code, this can be used as follows:
 ```java
-// Register the implementation:
-JenaPluginUtils.registerResourceClass(MyAnnotatedInterface.class);
+// Register the implementation from the annotated type:
+JenaPluginUtils.registerResourceClass(MyAnnotatedResource.class);
 
-// Use the 
-ModelFactory.createDefaultModel().createResource(MyPureInterface.class);
+// Now it is possible to request a view using the super types supplied to @ResourceView
+MyPlainResource my = ModelFactory.createDefaultModel().createResource(MyPlainResource.class);
 ```
 
 ### Dynamic polymorphic collection views
