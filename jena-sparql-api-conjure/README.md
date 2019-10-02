@@ -47,7 +47,7 @@ OpCode d = OpCode.create(c, "bzip2", false);
 Assert.assertEquals(a.getModel(), d.getModel())
 RDFDataMgr.write(System.out, d.getModel(), RDFFormat.TURTLE_PRETTY);
 
-// Polymorphism of the RDF is handled by jena-sparl-api-proxy-mapper,
+// Polymorphism of the RDF is handled by jena-sparql-api-mapper-proxy,
 // so the following assertion works:
 Assert.assertTrue(d.getSubOp() instanceof OpConvert);
 
@@ -56,7 +56,7 @@ OpVisitor<Path> executor = new OpExecutor(repository, hashStore);
 Path result = d.accept(executor);
 ```
 
-Don't forget to check out [jena-sparl-api-mapper-proxy](../jena-sparl-api-mapper-proxy) to learn about how to bridge the RDF and Java worlds using annotations instead of writing code.
+Don't forget to check out [jena-sparql-api-mapper-proxy](../jena-sparql-api-mapper-proxy) to learn about how to bridge the RDF and Java worlds using annotations instead of writing code.
 
 ### RDF dataset processing algebra
 This is an algebra for transforming (triple-based) RDF datasets with SPARQL. The operations produce datasets from the input datasets.
