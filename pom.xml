@@ -32,6 +32,7 @@
 
 		<module>jena-sparql-api-udf</module>
 
+		<module>jena-sparql-api-dcat</module>
 		<module>jena-sparql-api-conjure</module>
 
 		<module>jena-sparql-api-sparql-ext</module>
@@ -415,6 +416,12 @@
 			<dependency>
 				<groupId>org.aksw.jena-sparql-api</groupId>
 				<artifactId>jena-sparql-api-vocabs</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.aksw.jena-sparql-api</groupId>
+				<artifactId>jena-sparql-api-virtuoso</artifactId>
 				<version>${project.version}</version>
 			</dependency>
 
