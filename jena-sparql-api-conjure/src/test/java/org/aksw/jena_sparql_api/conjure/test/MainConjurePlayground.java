@@ -7,7 +7,8 @@ import java.util.function.Function;
 
 import org.aksw.jena_sparql_api.common.DefaultPrefixes;
 import org.aksw.jena_sparql_api.conjure.dataobject.api.RdfDataObject;
-import org.aksw.jena_sparql_api.conjure.dataobject.impl.DataObjects;
+import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.DataRefResource;
+import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.DataRefResourceFromSparqlEndpoint;
 import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.DataRefResourceFromUrl;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.Op;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpConstruct;
@@ -56,6 +57,13 @@ public class MainConjurePlayground {
 		HttpResourceRepositoryFromFileSystem repo = HttpResourceRepositoryFromFileSystemImpl.createDefault();		
 		OpExecutorDefault executor = new OpExecutorDefault(repo);
 
+		// Get a copy of the limbo dataset catalog via the repo so that it gets cached
+		DataRefResource dataRef = DataRefResourceFromUrl.create("https://gitlab.com/limbo-project/metadata-catalog/raw/master/catalog.all.ttl");
+		DataRefResource dataRef2 = DataRefResourceFromSparqlEndpoint.create("https://databus.dbpedia.org/repo/sparql");
+		
+		// Set up the workflow that makes a digital copy of a dataset available
+		Op basicWorkflow = OpDataRefResource.from(dataRef);
+		
 		
 		// So far so good - all we need now, is some data and we can start execution
 
@@ -68,7 +76,7 @@ public class MainConjurePlayground {
 		// Turns out both data catalogs have quality issues ;)
 		List<String> urls;
 //		try(RdfDataObject catalog = DataObjects.fromSparqlEndpoint("https://databus.dbpedia.org/repo/sparql", null, null)) {			
-		try(RdfDataObject catalog = DataObjects.fromUrl("https://gitlab.com/limbo-project/metadata-catalog/raw/master/catalog.all.ttl")) {			
+		try(RdfDataObject catalog = basicWorkflow.accept(executor)) {			
 			try(RDFConnection conn = catalog.openConnection()) {
 				urls = SparqlRx.execSelect(conn,
 //						"SELECT DISTINCT ?o { ?s <http://www.w3.org/ns/dcat#downloadURL> ?o } LIMIT 10")

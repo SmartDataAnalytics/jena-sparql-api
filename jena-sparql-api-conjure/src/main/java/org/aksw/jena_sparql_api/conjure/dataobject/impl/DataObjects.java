@@ -86,7 +86,8 @@ public class DataObjects {
 
 	
 	public static RdfDataObject fromUrl(String url) {
-		Model model = RDFDataMgr.loadModel(url);		
+		logger.info("Loading: " + url);
+		Model model = RDFDataMgr.loadModel(url);
 		RdfDataObject result = DataObjects.fromModel(model);
 		return result;
 	}
