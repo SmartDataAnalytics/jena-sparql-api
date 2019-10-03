@@ -12,6 +12,8 @@ import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.DataRefResourceFromUrl;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.Op;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpConstruct;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpDataRefResource;
+import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpUnion;
+import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpUpdateRequest;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpUtils;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpVar;
 import org.aksw.jena_sparql_api.conjure.dataset.engine.OpExecutorDefault;
@@ -36,10 +38,17 @@ public class MainConjurePlayground {
 		
 		// Set up a conjure dataset processing template
 		// Lets count predicates - 'dataRef' is a placeholder for datasets to work upon
-		Op a = OpVar.create("dataRef");
-		Op conjureWorkflow = OpConstruct.create(a, 
+		Op v = OpVar.create("dataRef");
+		Op countPredicates = OpConstruct.create(v, 
 				"CONSTRUCT { ?p <eg:numUses> ?c } WHERE { { SELECT ?p (COUNT(*) AS ?c) { ?s ?p ?o } GROUP BY ?p } }");
 
+		Op totalCount = OpConstruct.create(countPredicates, "CONSTRUCT { <urn:report> <urn:totalUses> ?t } WHERE { { SELECT (SUM(?c) AS ?t) { ?s <eg:numUses> ?c } } }");
+
+		Op reportDate = OpUpdateRequest.create(totalCount,
+				"INSERT { <urn:report> <urn:generationDate> ?d } WHERE { BIND(NOW() AS ?d) }");
+
+		Op conjureWorkflow = OpUnion.create(countPredicates, reportDate);
+		
 		// Set up a simple file-system based conjure repository and workflow executor
 		// This does HTTP caching, content type conversion and content negotiation
 		// Lots of magic, fairies and unicorns in there

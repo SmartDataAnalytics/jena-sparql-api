@@ -1,6 +1,7 @@
 package org.aksw.jena_sparql_api.conjure.dataset.algebra;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import org.aksw.jena_sparql_api.mapper.annotation.IriNs;
@@ -23,7 +24,7 @@ public interface OpUpdateRequest
 	
 	@IriNs("eg")
 	List<String> getUpdateRequests();
-	OpUpdateRequest setUpdateRequests(List<String> updateRequestStrings);
+	OpUpdateRequest setUpdateRequests(Collection<String> updateRequestStrings);
 	
 	default OpUpdateRequest addUpdateRequest(String updateRequestString) {
 		Collection<String> tmp = getUpdateRequests();
@@ -36,5 +37,20 @@ public interface OpUpdateRequest
 		T result = visitor.visit(this);
 		return result;
 	}
+	
+	public static OpUpdateRequest create(Op subOp, String updateRequestStrings) {
+		OpUpdateRequest result = create(subOp, Collections.singleton(updateRequestStrings));
+		
+		return result;
+	}
+	
+	public static OpUpdateRequest create(Op subOp, Collection<String> updateRequestStrings) {
+		OpUpdateRequest result = subOp.getModel().createResource().as(OpUpdateRequest.class)
+			.setSubOp(subOp)
+			.setUpdateRequests(updateRequestStrings);
+		
+		return result;
+	}
+
 
 }
