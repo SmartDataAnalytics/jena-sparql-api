@@ -38,7 +38,7 @@ public class DataObjects {
 				RdfHttpEntityFile entity;
 				try {
 					entity = HttpResourceRepositoryFromFileSystemImpl.get(repo,
-							url, WebContent.contentTypeNTriples, Arrays.asList(""));
+							url, WebContent.contentTypeNTriples, Arrays.asList("identity"));
 					
 				} catch (IOException e) {
 					throw new RuntimeException(e);

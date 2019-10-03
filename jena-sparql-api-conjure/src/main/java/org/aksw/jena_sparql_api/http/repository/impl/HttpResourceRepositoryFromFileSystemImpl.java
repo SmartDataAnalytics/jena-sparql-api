@@ -19,7 +19,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.aksw.dcat.ap.domain.api.Checksum;
 import org.aksw.jena_sparql_api.conjure.entity.algebra.Op;
@@ -229,8 +228,13 @@ public class HttpResourceRepositoryFromFileSystemImpl
 	public static RdfHttpEntityFile get(HttpResourceRepositoryFromFileSystem repo, String url, String contentType, List<String> encodings) throws IOException {
 		BasicHttpRequest r = new BasicHttpRequest("GET", url);
 		r.setHeader(HttpHeaders.ACCEPT, contentType);
-		String encoding = Stream.concat(encodings.stream(), Stream.of("identity;q=0"))
-				.collect(Collectors.joining(","));
+		
+		List<String> effectiveEncodings = new ArrayList<>(encodings);
+		if(!encodings.contains(IDENTITY_ENCODING)) {
+			effectiveEncodings.add("identity;q=0");
+		}
+		
+		String encoding = effectiveEncodings.stream().collect(Collectors.joining(","));
 		
 		r.setHeader(HttpHeaders.ACCEPT_ENCODING, encoding);
 
