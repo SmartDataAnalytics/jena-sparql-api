@@ -59,6 +59,8 @@ public class MainConjurePlayground {
 
 		// Get a copy of the limbo dataset catalog via the repo so that it gets cached
 		DataRefResource dataRef = DataRefResourceFromUrl.create("https://gitlab.com/limbo-project/metadata-catalog/raw/master/catalog.all.ttl");
+		
+		// Or set up a workflow that makes databus available
 		DataRefResource dataRef2 = DataRefResourceFromSparqlEndpoint.create("https://databus.dbpedia.org/repo/sparql");
 		
 		// Set up the workflow that makes a digital copy of a dataset available

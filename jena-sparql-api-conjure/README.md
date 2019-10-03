@@ -4,6 +4,7 @@
 Development is progressing rapidly:
 
 * ongoing: sansa integration
+* 2019 Oct 4: Sophisticated example prototypically working
 * 2019 Oct 3: Designed and implemented dataset algebra, assembled working prototype, ported all relevant code from dcat-suite, lots of clean up
 * 2019 Oct 1: This is work in process; entity processing is implemented, dataset processing is in the works
 

@@ -606,7 +606,9 @@ public class HttpResourceRepositoryFromFileSystemImpl
 		String ct = HttpHeaderUtils.getValue(new Header[] { entity.getContentType() }, HttpHeaders.CONTENT_TYPE);
 		
 		RdfEntityInfo meta = HttpHeaderUtils.copyMetaData(entity, null);
-		if(ct.equalsIgnoreCase(ContentType.APPLICATION_OCTET_STREAM.getMimeType())) {
+		if(ct.equalsIgnoreCase(ContentType.APPLICATION_OCTET_STREAM.getMimeType())
+				|| ct.equalsIgnoreCase(ContentType.TEXT_PLAIN.getMimeType())
+				) {
 			String uri = request.getRequestLine().getUri();
 			meta = ContentTypeUtils.deriveHeadersFromFileExtension(uri);
 		}
