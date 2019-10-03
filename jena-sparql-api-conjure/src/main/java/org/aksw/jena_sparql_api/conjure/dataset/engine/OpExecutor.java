@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.conjure.dataset.algebra;
+package org.aksw.jena_sparql_api.conjure.dataset.engine;
 
 import org.aksw.jena_sparql_api.data_client.ModelEntity;
 

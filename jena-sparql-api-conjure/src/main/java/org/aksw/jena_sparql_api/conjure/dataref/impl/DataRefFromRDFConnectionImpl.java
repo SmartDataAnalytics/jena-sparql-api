@@ -1,7 +1,6 @@
 package org.aksw.jena_sparql_api.conjure.dataref.impl;
 
 import org.aksw.jena_sparql_api.conjure.dataref.api.DataRefFromRDFConnection;
-import org.aksw.jena_sparql_api.conjure.dataref.api.DataRefVisitor;
 import org.apache.jena.rdfconnection.RDFConnection;
 
 public class DataRefFromRDFConnectionImpl

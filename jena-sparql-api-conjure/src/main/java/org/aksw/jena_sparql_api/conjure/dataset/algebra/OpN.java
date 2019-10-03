@@ -4,7 +4,6 @@ import java.util.List;
 
 import org.aksw.jena_sparql_api.mapper.annotation.Iri;
 import org.aksw.jena_sparql_api.mapper.annotation.PolymorphicOnly;
-import org.apache.jena.sparql.algebra.Op;
 
 public interface OpN
 	extends Op
