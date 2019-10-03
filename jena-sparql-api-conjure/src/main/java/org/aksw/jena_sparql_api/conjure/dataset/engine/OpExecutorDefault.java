@@ -2,7 +2,7 @@ package org.aksw.jena_sparql_api.conjure.dataset.engine;
 
 import java.util.List;
 
-import org.aksw.jena_sparql_api.conjure.dataobject.api.DataObjectRdf;
+import org.aksw.jena_sparql_api.conjure.dataobject.api.RdfDataObject;
 import org.aksw.jena_sparql_api.conjure.dataobject.impl.DataObjects;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.Op;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpConstruct;
@@ -16,71 +16,72 @@ import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdfconnection.RDFConnection;
 
 public class OpExecutorDefault
-	implements OpVisitor<DataObjectRdf>
+	implements OpVisitor<RdfDataObject>
 {
 //	protected DataObjectRdfVisitor<RDFConnection> DataObjectRdfToConnection;
 
 	
 	@Override
-	public DataObjectRdf visit(OpModel op) {
+	public RdfDataObject visit(OpModel op) {
 		throw new RuntimeException("Not implemented");
 	}
 
 	@Override
-	public DataObjectRdf visit(OpConstruct op) {
+	public RdfDataObject visit(OpConstruct op) {
+		RdfDataObject result;
+		
 		Op subOp = op.getSubOp();
-		DataObjectRdf subDataObject = subOp.accept(this);
+		try(RdfDataObject subDataObject = subOp.accept(this)) {
+			try(RDFConnection conn = subDataObject.openConnection()) {
+				String queryStr = op.getQueryString();
+				
+				Model model = conn.queryConstruct(queryStr);
 
-		Model model;
-		try {
-			
-			String queryStr = op.getQueryString();
-			
-			RDFConnection conn = subDataObject.getConnection();
-			model = conn.queryConstruct(queryStr);
-		} finally {		
-			subDataObject.release();
+				result = DataObjects.fromModel(model);				
+			}
+		} catch (Exception e) {
+			throw new RuntimeException(e);
 		}
 
-		DataObjectRdf result = DataObjects.fromModel(model);
 		return result;
 	}
 
 	@Override
-	public DataObjectRdf visit(OpUpdateRequest op) {
+	public RdfDataObject visit(OpUpdateRequest op) {
 		Op subOp = op.getSubOp();		
-		DataObjectRdf subDataObject = subOp.accept(this);
-		RDFConnection conn = subDataObject.getConnection();
+		RdfDataObject subDataObject = subOp.accept(this);
+		try(RDFConnection conn = subDataObject.openConnection()) {
 
-		for(String updateRequestStr : op.getUpdateRequests()) {
-			conn.update(updateRequestStr);
+			for(String updateRequestStr : op.getUpdateRequests()) {
+				conn.update(updateRequestStr);
+			}
 		}
 
 		return subDataObject;
 	}
 
 	@Override
-	public DataObjectRdf visit(OpUnion op) {
+	public RdfDataObject visit(OpUnion op) {
 		List<Op> subOps = op.getSubOps();
 		
 		Model model = ModelFactory.createDefaultModel();
 		for(Op subOp : subOps) {
-			DataObjectRdf subDataObject = subOp.accept(this);
-			try {
-				RDFConnection conn = subDataObject.getConnection();
-				Model contribModel = conn.queryConstruct("CONSTRUCT WHERE { ?s ?p ?o }");
-				model.add(contribModel);				
-			} finally {
-				subDataObject.release();
+			try(RdfDataObject subDataObject = subOp.accept(this)) {
+				try(RDFConnection conn = subDataObject.openConnection()) {
+					Model contribModel = conn.queryConstruct("CONSTRUCT WHERE { ?s ?p ?o }");
+					model.add(contribModel);				
+				}
+			} catch (Exception e) {
+				throw new RuntimeException(e);
 			}
 		}
 		
-		DataObjectRdf result = DataObjects.fromModel(model);
+		RdfDataObject result = DataObjects.fromModel(model);
 		return result;
 	}
 
 	@Override
-	public DataObjectRdf visit(OpPersist op) {
+	public RdfDataObject visit(OpPersist op) {
 		throw new RuntimeException("not implemented yet");
 	}
 

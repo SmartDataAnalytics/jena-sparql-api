@@ -68,6 +68,88 @@ This is an algebra for transforming (triple-based) RDF datasets with SPARQL. The
 * `OpUpdateRequest(subOp, updateRequest[1..n])`: Unary operation to derive a dataset by running a sequence of update requests
 
 
+## DataObject and Dataset Reference Abstractions
+
+A DataObject represents a means of access to a specific instance of a dataset.
+A dataset reference is a specification on which basis to create DataObjects.
+
+### Data References
+
+A dataset reference is a specification on which basis to create DataObjects - i.e. a bunch of attributes.
+
+* DataRefFromUrl: Reference an RDF dataset by a URL. A Semantic Web framework, such as Jena, should try its best to make sense from it.
+* DataRefFromSparqlDataset: URL to a SPARQL service + named graphs
+* DataRefFromDcat: Reference to a URI that is further described in an entry in a DCAT catalog. I think we can allow references to any of datasets, distributions and download urls.
+   The catalog itself may again be described with a DataRef.
+
+
+
+**Proposal:** References to Java objects (e.g. Jena Models) can be done via JNDI using DataRefFromUrl with a jndi: URI scheme.
+So with JNDI we have a standard way to bridge references to remote data and data within the JVM in a uniform way.
+
+
+#### Data Reference vs DCAT Distribution
+In my view, DCAT distributions are generally more high level than data references, but for simple cases, they may be the same thing:
+A data reference is specifically focused on covering the technical aspects of gaining access to a digital copy.
+So a dcat distribution with a downloadURL 
+can be seen as a DataRefFromUrl (which might be a use case for inferencing).
+
+For this reason, native DCAT support seems reasonable via DataRefFromDcat: A DataRef processor can examine the referenced DCAT
+record and possibly rewrite/substitute/replace the DataRefFromDcat with a DataRefFromUrl.
+
+
+DCAT distributions however may either not refer to a a concrete access mechanism
+("on this HTML page is a step by step guide for how to download the data"), or they may specify whole workflows - for example based on conjure or DEER.
+The latter part is not standardized, but from my perspective it should become one.
+
+
+### Data Objects
+A DataObject represents a specific digital copy of a dataset, and acts as the provider for means of access to it.
+A dataset is defined as an instance of a datamodel, so for a dataset there can be any
+ number of digital copies based on any type of storage and access mechanisms.
+
+DataObjects can be closed in order to indicate that no more access to the digital copy of the dataset is needed. 
+Life cycle managers for DataObjects can then trigger appropriate actions, such as freeing allocated resources.
+
+At present, there is only the RdfDataObject specialization.
+The RdfDataObject allows for obtaining a single RDFConnection at a time in order to query or modify the dataset it represents.
+
+For example, a DataObject may be backed by a SPARQL endpoint or by an in-memory Model.
+However, closing the DataObject may overwrite an existing file with the most recent state of the model. Maybe the close operation even does a git commit of the dataset.
+As another example, closing a DataObject may trigger shut down of a dockerized triple store - because it was indicated that no more access to the dataset is needed, and therefore
+allocated resources can be freed.
+
+So to emphasize the difference between a DataObject and a connection to it:
+As long as the DataObject is 'alive' many connections can be openend and closed on it.
+The connection is just a tool - a means of access - for dataset access - but it does not represent a dataset itself.
+
+Obviously, especially in the dockerized scenario, resource pooling can go on behind the scenes, such that a triple store in a docker container
+may supply multiple data objects.
+
+
+In any case, the application is decoupled from the concerns of resource deallocation - just make sure you invoke .close() when you are done.
+
+
+
+
+
+
+
+
+
+## HTTP Resource Store and Repository
+Implementation of a file-system-based HTTP Resource Store:
+The store implementation uses the file system to store content and metadata.
+
+The repository is front end allows to retrieve content using URIs and HTTP headers plus content negotiation.
+The repository actually manages three HTTP Resource stores:
+
+* The download store of actual downloaded content
+* The cache store for content generated for HTTP resources from the download store and shipped as HTTP responses, such as by converting content types (e.g. RDF/XML to turtle) and altering encoding (e.g. gzp instead of bzip2)
+* The hash store for intermediate artifacts of workflow executions - this is content that was generated to serve requestes to the repository, but that was not
+the final content being shipped to the client.
+
+
 ## Related Work
 
 The approach of this work shares similarity with the [RDF Data Enrichment Framework (DEER)](https://dice-group.github.io/deer/).

@@ -1,6 +1,8 @@
 package org.aksw.jena_sparql_api.conjure.dataobject.api;
 
-public interface DataObject {
+public interface DataObject
+	extends AutoCloseable
+{
 	/**
 	 * Whether the content of the data object can be modified
 	 * 
@@ -14,5 +16,5 @@ public interface DataObject {
 	 * DataObject x = factory.create(spec);
 	 * x.release(); // Behavior depends on the used factory
 	 */
-	void release();
+//	void close();
 }

@@ -1,10 +1,9 @@
-package org.aksw.jena_sparql_api.conjure.dataref.api;
+package org.aksw.jena_sparql_api.conjure.dataref.core.api;
 
 public interface DataRefFromUrl
 	extends DataRef
 {
-	//Path getPath();
-	String getUrl();
+	String getDataRefUrl();
 	
 	@Override
 	default <T> T accept(DataRefVisitor<T> visitor) {
