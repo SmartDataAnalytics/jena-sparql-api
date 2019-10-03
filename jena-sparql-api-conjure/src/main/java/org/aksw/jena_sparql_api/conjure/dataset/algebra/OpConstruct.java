@@ -6,7 +6,9 @@ import org.aksw.jena_sparql_api.mapper.annotation.ResourceView;
 
 @ResourceView
 @RdfType
-public interface OpConstruct {
+public interface OpConstruct
+	extends Op1
+{
 	@Iri
 	String getQueryString();
 	OpConstruct setQueryString(String queryString);

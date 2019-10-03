@@ -6,7 +6,7 @@ import java.util.function.Consumer;
 import org.apache.jena.rdf.model.Resource;
 
 public interface RdfHttpEntityFile
-//	extends RdfFileEntity
+	extends RdfHttpEntity
 {
 	// Path relative to the resource
 	Path getRelativePath(); // TODO Inherit from some file-based entity class
@@ -21,7 +21,6 @@ public interface RdfHttpEntityFile
 	
 	RdfHttpResourceFile getResource();
 
-	Resource getCombinedInfo();
 
 	void updateInfo(Consumer<? super Resource> consumer);
 }

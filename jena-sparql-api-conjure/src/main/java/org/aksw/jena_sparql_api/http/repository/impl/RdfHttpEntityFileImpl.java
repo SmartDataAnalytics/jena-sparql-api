@@ -1,6 +1,10 @@
 package org.aksw.jena_sparql_api.http.repository.impl;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.function.Consumer;
 
 import org.aksw.jena_sparql_api.http.repository.api.RdfHttpEntityFile;
@@ -48,5 +52,12 @@ public class RdfHttpEntityFileImpl
 	@Override
 	public String toString() {
 		return relPath + " via " + getAbsolutePath();
+	}
+
+	@Override
+	public InputStream open() throws IOException {
+		Path absPath = getAbsolutePath();
+		InputStream result = Files.newInputStream(absPath, StandardOpenOption.READ);
+		return result;
 	}	
 }
