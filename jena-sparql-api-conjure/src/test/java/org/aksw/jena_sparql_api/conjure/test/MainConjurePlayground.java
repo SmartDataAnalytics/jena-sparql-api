@@ -35,12 +35,15 @@ public class MainConjurePlayground {
 	public static void main(String[] args) throws Exception {
 		
 		// Set up a conjure dataset processing template
-		// Lets count predicates
+		// Lets count predicates - 'dataRef' is a placeholder for datasets to work upon
 		Op a = OpVar.create("dataRef");
 		Op conjureWorkflow = OpConstruct.create(a, 
 				"CONSTRUCT { ?p <eg:numUses> ?c } WHERE { { SELECT ?p (COUNT(*) AS ?c) { ?s ?p ?o } GROUP BY ?p } }");
 
-		// Set up a simple conjure workflow executor
+		// Set up a simple file-system based conjure repository and workflow executor
+		// This does HTTP caching, content type conversion and content negotiation
+		// Lots of magic, fairies and unicorns in there
+		// (and gears and screws one wants to configure for production use - and which may at this stage sometimes break)
 		HttpResourceRepositoryFromFileSystem repo = HttpResourceRepositoryFromFileSystemImpl.createDefault();		
 		OpExecutorDefault executor = new OpExecutorDefault(repo);
 
@@ -88,6 +91,7 @@ public class MainConjurePlayground {
 			
 			try(RdfDataObject data = effectiveWorkflow.accept(executor)) {
 				try(RDFConnection conn = data.openConnection()) {
+					// Print out the data that is the process result
 					Model model = conn.queryConstruct("CONSTRUCT WHERE { ?s ?p ?o }");
 					
 					RDFDataMgr.write(System.out, model, RDFFormat.TURTLE_PRETTY);
