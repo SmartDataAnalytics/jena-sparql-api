@@ -43,8 +43,7 @@ public class MainConjurePlayground {
 
 		System.out.println("Got: " + urls);
 
-		HttpResourceRepositoryFromFileSystem repo = HttpResourceRepositoryFromFileSystemImpl.createDefault();
-		
+		HttpResourceRepositoryFromFileSystem repo = HttpResourceRepositoryFromFileSystemImpl.createDefault();		
 		OpExecutorDefault executor = new OpExecutorDefault(repo);
 		
 		for(String url : urls) {
@@ -68,38 +67,5 @@ public class MainConjurePlayground {
 			}
 		}
 
-	}
-	
-	
-	public static void interfaceOrderMattersForDefaultMethods() {
-		DataRef test = DataRefResourceFromUrl.create("http://www.w3.org/1999/02/22-rdf-syntax-ns#");
-		String foo = test.accept(new DataRefVisitor<String>() {
-
-			@Override
-			public String visit(DataRefFromUrl dataRef) {
-				// TODO Auto-generated method stub
-				return null;
-			}
-
-			@Override
-			public String visit(DataRefFromCatalog dataRef) {
-				// TODO Auto-generated method stub
-				return null;
-			}
-
-			@Override
-			public String visit(DataRefFromSparqlEndpoint dataRef) {
-				// TODO Auto-generated method stub
-				return null;
-			}
-
-			@Override
-			public String visit(DataRefExt dataRef) {
-				// TODO Auto-generated method stub
-				return null;
-			}
-		});
-		
-		if(true) { return; }
 	}
 }
