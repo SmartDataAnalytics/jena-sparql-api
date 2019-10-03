@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
 
 import org.aksw.dcat.ap.domain.api.Checksum;
 import org.aksw.jena_sparql_api.conjure.entity.algebra.Op;
-import org.aksw.jena_sparql_api.conjure.entity.algebra.OpUtils;
+import org.aksw.jena_sparql_api.conjure.entity.algebra.ResourceTreeUtils;
 import org.aksw.jena_sparql_api.conjure.entity.engine.OpExecutor;
 import org.aksw.jena_sparql_api.conjure.entity.engine.Planner;
 import org.aksw.jena_sparql_api.conjure.entity.utils.PathCoderRegistry;
@@ -352,7 +352,7 @@ public class HttpResourceRepositoryFromFileSystemImpl
 						op = opExecutor.optimizeInPlace(op);
 						
 						
-						int numOps = OpUtils.getNumOps(op);
+						int numOps = ResourceTreeUtils.getNumOps(op, Op::getChildren);
 
 						RdfEntityInfo meta = ModelFactory.createDefaultModel().createResource()
 								.as(RdfEntityInfo.class)

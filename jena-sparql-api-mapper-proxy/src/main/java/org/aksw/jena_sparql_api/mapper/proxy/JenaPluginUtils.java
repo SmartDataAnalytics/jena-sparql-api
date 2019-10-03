@@ -11,6 +11,7 @@ import org.aksw.jena_sparql_api.common.DefaultPrefixes;
 import org.aksw.jena_sparql_api.mapper.annotation.Iri;
 import org.aksw.jena_sparql_api.mapper.annotation.IriNs;
 import org.aksw.jena_sparql_api.mapper.annotation.ResourceView;
+import org.aksw.jena_sparql_api.rdf.collections.RDFNodeMapperImpl;
 import org.apache.jena.enhanced.BuiltinPersonalities;
 import org.apache.jena.enhanced.EnhGraph;
 import org.apache.jena.enhanced.Implementation;
@@ -42,6 +43,18 @@ public class JenaPluginUtils {
 	protected static final TypeDeciderImpl typeDecider = new TypeDeciderImpl();
 
 
+	/**
+	 * Cast an RDFNode to a given view w.r.t. types registered in the global TypeDecider
+	 * 
+	 * @param <T>
+	 * @param rdfNode
+	 * @param viewClass
+	 * @return
+	 */
+	public static <T extends RDFNode> T polymorphicCast(RDFNode rdfNode, Class<T> viewClass) {
+		T result = RDFNodeMapperImpl.castRdfNode(rdfNode, viewClass, typeDecider, false);
+		return result;
+	}
 	
 	public static TypeDecider getTypeDecider() {
 		return typeDecider;
