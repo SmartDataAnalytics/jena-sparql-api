@@ -1,7 +1,6 @@
 package org.aksw.jena_sparql_api.conjure.dataref.rdf.api;
 
 import org.aksw.jena_sparql_api.conjure.dataref.core.api.DataRefFromCatalog;
-import org.aksw.jena_sparql_api.conjure.dataref.core.api.DataRefResource;
 import org.aksw.jena_sparql_api.mapper.annotation.IriNs;
 import org.aksw.jena_sparql_api.mapper.annotation.RdfType;
 import org.aksw.jena_sparql_api.mapper.annotation.ResourceView;
@@ -9,7 +8,7 @@ import org.aksw.jena_sparql_api.mapper.annotation.ResourceView;
 @ResourceView
 @RdfType
 public interface DataRefResourceFromCatalog
-	extends DataRefResource, DataRefFromCatalog
+	extends DataRefFromCatalog, DataRefResource
 {
 	@Override
 	@IriNs("eg")
@@ -19,7 +18,8 @@ public interface DataRefResourceFromCatalog
 	@IriNs("eg")
 	DataRefResourceFromCatalog setEntryId(String entryId);
 	
-	default <T> T accept(DataRefResourceVisitor<T> visitor) {
+	@Override
+	default <T> T accept2(DataRefResourceVisitor<T> visitor) {
 		T result = visitor.visit(this);
 		return result;
 	}

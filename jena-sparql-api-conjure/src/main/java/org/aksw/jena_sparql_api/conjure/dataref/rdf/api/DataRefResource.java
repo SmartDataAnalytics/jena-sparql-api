@@ -1,5 +1,6 @@
-package org.aksw.jena_sparql_api.conjure.dataref.core.api;
+package org.aksw.jena_sparql_api.conjure.dataref.rdf.api;
 
+import org.aksw.jena_sparql_api.conjure.dataref.core.api.DataRef;
 import org.apache.jena.rdf.model.Resource;
 
 /**
@@ -11,5 +12,5 @@ import org.apache.jena.rdf.model.Resource;
 public interface DataRefResource
 	extends Resource, DataRef
 {
-
+	<T> T accept2(DataRefResourceVisitor<T> visitor);
 }

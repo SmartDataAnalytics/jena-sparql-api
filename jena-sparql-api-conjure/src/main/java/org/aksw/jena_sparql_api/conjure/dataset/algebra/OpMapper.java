@@ -4,7 +4,7 @@ public class OpMapper
 	implements OpVisitor<Op>
 {
 	@Override
-	public Op visit(OpModel op) {
+	public Op visit(OpDataRefResource op) {
 		System.out.println("Op: " + op);
 		return null;
 	}
@@ -29,6 +29,12 @@ public class OpMapper
 
 	@Override
 	public Op visit(OpPersist op) {
+		System.out.println("Op: " + op);
+		return null;
+	}
+
+	@Override
+	public Op visit(OpVar op) {
 		System.out.println("Op: " + op);
 		return null;
 	}

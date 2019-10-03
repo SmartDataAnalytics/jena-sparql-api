@@ -54,7 +54,7 @@ public class Planner {
 		Checksum hashInfo = info.getHash("sha256");
 		String checksum = Optional.ofNullable(hashInfo)
 				.map(Checksum::getChecksum)
-				.orElseThrow(() -> new RuntimeException("Need content hash for planning"));		
+				.orElseThrow(() -> new RuntimeException("Planning requires content hash but none assigned to " + source.getAbsolutePath()));		
 		
 		// The var name is a reference to the source file
 		String srcRef = source.getAbsolutePath().toString();

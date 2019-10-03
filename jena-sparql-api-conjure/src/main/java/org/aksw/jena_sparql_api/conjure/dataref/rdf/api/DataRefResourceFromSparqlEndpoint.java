@@ -3,7 +3,6 @@ package org.aksw.jena_sparql_api.conjure.dataref.rdf.api;
 import java.util.List;
 
 import org.aksw.jena_sparql_api.conjure.dataref.core.api.DataRefFromSparqlEndpoint;
-import org.aksw.jena_sparql_api.conjure.dataref.core.api.DataRefResource;
 import org.aksw.jena_sparql_api.mapper.annotation.Iri;
 import org.aksw.jena_sparql_api.mapper.annotation.RdfType;
 import org.aksw.jena_sparql_api.mapper.annotation.ResourceView;
@@ -11,7 +10,7 @@ import org.aksw.jena_sparql_api.mapper.annotation.ResourceView;
 @ResourceView
 @RdfType
 public interface DataRefResourceFromSparqlEndpoint
-	extends DataRefResource, DataRefFromSparqlEndpoint
+	extends DataRefFromSparqlEndpoint, DataRefResource
 {
 	@Iri("eg:serviceUrl")
 	DataRefResourceFromSparqlEndpoint setServiceUrl(String serviceUrl);
@@ -24,7 +23,8 @@ public interface DataRefResourceFromSparqlEndpoint
 	@Iri("eg:namedGraph")
 	List<String> getDefaultGraphs();
 
-	default <T> T accept(DataRefResourceVisitor<T> visitor) {
+	@Override
+	default <T> T accept2(DataRefResourceVisitor<T> visitor) {
 		T result = visitor.visit(this);
 		return result;
 	}

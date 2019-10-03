@@ -5,4 +5,10 @@ public interface DataRefFromCatalog
 {
 	DataRef getCatalogDataRef();
 	String getEntryId();
+	
+	@Override
+	default <T> T accept(DataRefVisitor<T> visitor) {
+		T result = visitor.visit(this);
+		return result;
+	}
 }

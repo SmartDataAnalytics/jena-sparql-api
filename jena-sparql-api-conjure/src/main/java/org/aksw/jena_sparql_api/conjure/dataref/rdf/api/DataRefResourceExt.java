@@ -1,12 +1,12 @@
 package org.aksw.jena_sparql_api.conjure.dataref.rdf.api;
 
 import org.aksw.jena_sparql_api.conjure.dataref.core.api.DataRefExt;
-import org.aksw.jena_sparql_api.conjure.dataref.core.api.DataRefResource;
 
 public interface DataRefResourceExt
-	extends DataRefResource, DataRefExt
+	extends DataRefExt, DataRefResource
 {
-	default <T> T accept(DataRefResourceVisitor<T> visitor) {
+	@Override
+	default <T> T accept2(DataRefResourceVisitor<T> visitor) {
 		T result = visitor.visit(this);
 		return result;
 	}

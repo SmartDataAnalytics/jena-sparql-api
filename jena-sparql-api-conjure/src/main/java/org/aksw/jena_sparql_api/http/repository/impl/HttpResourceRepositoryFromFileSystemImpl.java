@@ -37,7 +37,7 @@ import org.aksw.jena_sparql_api.http.repository.api.RdfHttpEntityFile;
 import org.aksw.jena_sparql_api.http.repository.api.RdfHttpResourceFile;
 import org.aksw.jena_sparql_api.http.repository.api.ResourceStore;
 import org.aksw.jena_sparql_api.mapper.proxy.JenaPluginUtils;
-import org.aksw.jena_sparql_api.utils.turtle.TurtleWriterOmitBaseUri;
+import org.aksw.jena_sparql_api.utils.turtle.TurtleWriterNoBase;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHeaders;
@@ -105,7 +105,7 @@ public class HttpResourceRepositoryFromFileSystemImpl
 	
 	
 	public Collection<ResourceStore> getResourceStores() {
-		return Arrays.asList(downloadStore, cacheStore);
+		return Arrays.asList(downloadStore, cacheStore, hashStore);
 	}
 	
 	public ResourceStore getDownloadStore() {
@@ -457,6 +457,9 @@ public class HttpResourceRepositoryFromFileSystemImpl
 			plan = findBestPlanToServeRequest(request, Collections.singleton(entity), opExecutor);
 		}
 		
+		if(plan == null) {
+			throw new RuntimeException("Something went wrong in plannig how to serve an HTTP request");
+		}
 
 //		// Convert the entity to the request
 //		String bestEncoding = bestEncoding(encodings.keySet());
@@ -672,7 +675,7 @@ public class HttpResourceRepositoryFromFileSystemImpl
 	}
 	
 	public static HttpResourceRepositoryFromFileSystemImpl createDefault() throws IOException {
-		TurtleWriterOmitBaseUri.init();
+		TurtleWriterNoBase.register();
 
 		JenaPluginUtils.registerResourceClass(RdfEntityInfo.class, RdfEntityInfoDefault.class);
 		//JenaPluginUtils.registerResourceClasses(RdfGav.class);

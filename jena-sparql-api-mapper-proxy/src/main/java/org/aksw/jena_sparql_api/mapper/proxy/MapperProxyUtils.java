@@ -1473,6 +1473,12 @@ public class MapperProxyUtils {
 			enhancer.setCallback(new MethodInterceptor() {				
 			    public Object intercept(Object obj, java.lang.reflect.Method method, Object[] args,
                         MethodProxy proxy) throws Throwable {
+//			    	try {
+//			    		Method m = obj.getClass().getMethod(method.getName(), method.getParameterTypes());
+//			    		System.out.println("Found Method: " + m + " - " + m.isDefault());
+//			    	} catch(Exception e) {
+//			    		System.out.println(e);
+//			    	}
 			    	
 				    BiFunction<Object, Object[], Object> delegate = methodImplMap.get(method);
 //				    System.out.println(methodMap);

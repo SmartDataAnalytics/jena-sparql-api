@@ -14,8 +14,8 @@ public class MainTestDatasetTransformOps {
 		JenaPluginUtils.scan(Op.class);
 		
 		Model m = ModelFactory.createDefaultModel();
-		OpModel a = m.createResource().as(OpModel.class)
-				.setDatasetId("myDatasetId");
+		OpDataRefResource a = m.createResource().as(OpDataRefResource.class)
+				;//.setDatasetId("myDatasetId");
 		
 		OpUpdateRequest b = m.createResource()
 				.as(OpUpdateRequest.class)
@@ -25,7 +25,7 @@ public class MainTestDatasetTransformOps {
 		
 		RDFDataMgr.write(System.out, m, RDFFormat.TURTLE_PRETTY);
 	
-		System.out.println(b.getSubOp() instanceof OpModel); 
+		System.out.println(b.getSubOp() instanceof OpDataRefResource); 
 		
 		
 		OpVisitor<Op> visitor = new OpMapper();

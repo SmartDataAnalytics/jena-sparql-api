@@ -26,7 +26,7 @@ import org.apache.jena.sparql.util.Context;
  * @author raven
  *
  */
-public class TurtleWriterOmitBaseUri
+public class TurtleWriterNoBase
 	extends TurtleWriterBase
 {
     @Override
@@ -50,7 +50,7 @@ public class TurtleWriterOmitBaseUri
     }
 
 	
-	public static void init() {
+	public static void register() {
 	    final Lang TURTLE_NO_BASE = LangBuilder.create("ttl-nb", contentTypeTurtle + "+nb")
                 //.addAltNames("TTL")
                 //.addAltContentTypes(contentTypeTurtleAlt1, contentTypeTurtleAlt2)
@@ -64,7 +64,7 @@ public class TurtleWriterOmitBaseUri
 	        public WriterGraphRIOT create(RDFFormat serialization)
 	        {
 	            if ( Objects.equals(TURTLE_PRETTY_NO_BASE, serialization) ) {
-	                return new TurtleWriterOmitBaseUri() ;
+	                return new TurtleWriterNoBase() ;
 	        	} else {
 	        		return null;
 	        	}

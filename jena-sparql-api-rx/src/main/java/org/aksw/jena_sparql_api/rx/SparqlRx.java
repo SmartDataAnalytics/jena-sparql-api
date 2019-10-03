@@ -178,6 +178,14 @@ public class SparqlRx {
 		return execSelect(qes, ResultSet::next);
 	}
 
+	public static Flowable<QuerySolution> execSelect(RDFConnection conn, String queryStr) {
+		return execSelect(() -> conn.query(queryStr), ResultSet::next);
+	}
+
+	public static Flowable<QuerySolution> execSelect(RDFConnection conn, Query query) {
+		return execSelect(() -> conn.query(query), ResultSet::next);
+	}
+
 	public static Flowable<Triple> execConstructTriples(Supplier<QueryExecution> qes) {
 		Flowable<Triple> result = Flowable.create(emitter -> {
 			QueryExecution qe = qes.get();

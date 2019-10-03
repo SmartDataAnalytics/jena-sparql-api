@@ -10,4 +10,5 @@ public interface DataRefFromUrl
 		T result = visitor.visit(this);
 		return result;
 	}
+	
 }

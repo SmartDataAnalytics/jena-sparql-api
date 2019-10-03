@@ -53,7 +53,7 @@ public class OpExecutor
 		RdfHttpEntityFile entity = repository.getEntityForPath(path);
 
 		if(entity == null) {
-			throw new RuntimeException("Null entity; Should not happen");
+			throw new RuntimeException("Null entity; Should not happen; path=" + path);
 		}
 		
 		String pathHash = ResourceStore.readHash(entity, "sha256");
