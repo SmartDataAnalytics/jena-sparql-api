@@ -1,6 +1,11 @@
 # Conjure - Conjuring data from data
 
-**This is work in process; entity processing is implemented, dataset processing is in the works ~ 1st Oct 2019**
+## Dev Status
+Development is progressing rapidly:
+
+* ongoing: sansa integration
+* 2019 Oct 3: Designed and implemented dataset algebra, assembled working prototype, ported all relevant code from dcat-suite, lots of clean up
+* 2019 Oct 1: This is work in process; entity processing is implemented, dataset processing is in the works
 
 Conjure is an extremely powerful, light-weight, scalable, algebra-based approach to data processing workflow specifications for RDF:
 The algebraic approach enables one to specify a blue-print for the construction of a dataset in terms of references to datasets and SPARQL-queries.
