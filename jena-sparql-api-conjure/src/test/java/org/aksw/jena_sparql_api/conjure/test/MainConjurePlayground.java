@@ -48,12 +48,27 @@ public class MainConjurePlayground {
 		Op countPredicates = OpConstruct.create(v, 
 				"CONSTRUCT { ?p <eg:numUses> ?c } WHERE { { SELECT ?p (COUNT(*) AS ?c) { ?s ?p ?o } GROUP BY ?p } }");
 
+		// Let's run a CONSTRUCT query on the output of another CONSTRUCT query
+		// (because we can)
 		Op totalCount = OpConstruct.create(countPredicates, "CONSTRUCT { <urn:report> <urn:totalUses> ?t } WHERE { { SELECT (SUM(?c) AS ?t) { ?s <eg:numUses> ?c } } }");
 
 		Op reportDate = OpUpdateRequest.create(totalCount,
 				"INSERT { <urn:report> <urn:generationDate> ?d } WHERE { BIND(NOW() AS ?d) }");
 
 		Op anonymousConjureWorkflow = OpUnion.create(countPredicates, reportDate);
+		
+		
+		/* Example RDF output:
+
+			<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>
+        		<eg:numUses>  1 .
+
+			<http://www.w3.org/2000/01/rdf-schema#label>
+        		<eg:numUses>  1 .
+
+			<urn:report>  <urn:generationDate>  "2019-10-04T02:26:34.588+02:00"^^<http://www.w3.org/2001/XMLSchema#dateTime> ;
+        		<urn:totalUses>       2 .	
+		 */
 		
 		
 		// Hmm.. let's give the workflow a name and save it for use in the future
