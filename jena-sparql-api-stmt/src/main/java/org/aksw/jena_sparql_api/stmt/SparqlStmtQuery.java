@@ -79,6 +79,10 @@ public class SparqlStmtQuery
 
     @Override
     public String toString() {
-        return "SparqlStmtQuery [query=" + query + "]";
+    	String result = query != null
+    			? query.toString()
+    			: super.toString();
+
+        return result;
     }
 }

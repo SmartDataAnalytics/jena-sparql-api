@@ -5,9 +5,10 @@ import java.util.List;
 
 import org.aksw.jena_sparql_api.conjure.dataobject.api.RdfDataObject;
 import org.aksw.jena_sparql_api.conjure.dataobject.impl.DataObjects;
-import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.DataRefResource;
+import org.aksw.jena_sparql_api.conjure.dataref.core.api.DataRef;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.Op;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpConstruct;
+import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpData;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpDataRefResource;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpPersist;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpUnion;
@@ -33,10 +34,18 @@ public class OpExecutorDefault
 
 	@Override
 	public RdfDataObject visit(OpDataRefResource op) {
-		DataRefResource dataRef = op.getDataRef();
-		RdfDataObject result = DataObjects.fromDataRef(dataRef, repo);
+		DataRef dataRef = op.getDataRef();
+		RdfDataObject result = DataObjects.fromDataRef(dataRef, repo, this);
 		return result;
 	}
+
+	@Override
+	public RdfDataObject visit(OpData op) {
+		Object data = null; // TODO op.getData();
+		RdfDataObject result = DataObjects.fromData(data);
+		return result;
+	}
+
 
 	@Override
 	public RdfDataObject visit(OpConstruct op) {

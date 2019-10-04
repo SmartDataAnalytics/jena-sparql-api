@@ -12,8 +12,10 @@ import org.aksw.jena_sparql_api.conjure.dataobject.api.RdfDataObject;
 import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.DataRefResource;
 import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.DataRefResourceFromSparqlEndpoint;
 import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.DataRefResourceFromUrl;
+import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.DataRefResourceOp;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.Op;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpConstruct;
+import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpData;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpDataRefResource;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpUnion;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpUpdateRequest;
@@ -33,6 +35,7 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
+import org.apache.jena.sys.JenaSystem;
 import org.apache.jena.util.ResourceUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,18 +45,26 @@ public class MainConjurePlayground {
 	
 	public static void main(String[] args) throws Exception {
 		
+		// TODO Circular init issue with DefaultPrefixes
+		JenaSystem.init();
+		
+		// Create a SPARQL parser with preconfigured prefixes
+		// Pure luxury!
+		Function<String, SparqlStmt> parser = SparqlStmtParserImpl.create(Syntax.syntaxARQ, DefaultPrefixes.prefixes, false);
+
+		
 		// Set up a conjure dataset processing template
 		// Lets count predicates - 'dataRef' is a placeholder for datasets to work upon
 		Op v = OpVar.create("dataRef");
 		Op countPredicates = OpConstruct.create(v, 
-				"CONSTRUCT { ?p <eg:numUses> ?c } WHERE { { SELECT ?p (COUNT(*) AS ?c) { ?s ?p ?o } GROUP BY ?p } }");
+				parser.apply("CONSTRUCT { ?p <eg:numUses> ?c } WHERE { { SELECT ?p (COUNT(*) AS ?c) { ?s ?p ?o } GROUP BY ?p } }").toString());
 
 		// Let's run a CONSTRUCT query on the output of another CONSTRUCT query
 		// (because we can)
 		Op totalCount = OpConstruct.create(countPredicates, "CONSTRUCT { <urn:report> <urn:totalUses> ?t } WHERE { { SELECT (SUM(?c) AS ?t) { ?s <eg:numUses> ?c } } }");
 
 		Op reportDate = OpUpdateRequest.create(totalCount,
-				"INSERT { <urn:report> <urn:generationDate> ?d } WHERE { BIND(NOW() AS ?d) }");
+				parser.apply("INSERT { <urn:report> <urn:generationDate> ?d } WHERE { BIND(NOW() AS ?d) }").toString());
 
 		Op anonymousConjureWorkflow = OpUnion.create(countPredicates, reportDate);
 		
@@ -106,10 +117,19 @@ public class MainConjurePlayground {
 		OpExecutorDefault executor = new OpExecutorDefault(repo);
 
 		// Get a copy of the limbo dataset catalog via the repo so that it gets cached
-		DataRefResource dataRef = DataRefResourceFromUrl.create("https://gitlab.com/limbo-project/metadata-catalog/raw/master/catalog.all.ttl");
+		DataRefResource dataRef1 = DataRefResourceFromUrl.create("https://gitlab.com/limbo-project/metadata-catalog/raw/master/catalog.all.ttl");
 		
 		// Or set up a workflow that makes databus available
 		DataRefResource dataRef2 = DataRefResourceFromSparqlEndpoint.create("https://databus.dbpedia.org/repo/sparql");
+
+
+		// Create a data ref from a workflow
+		DataRefResource dataRef3 = DataRefResourceOp.create(
+				OpUpdateRequest.create(OpData.create(),
+					parser.apply("INSERT DATA { [] dataid:group eg:mygrp ; dcat:distribution [ dcat:downloadURL <file:///home/raven/tmp/test.hdt> ] }").toString()));
+
+		
+		DataRefResource dataRef = dataRef3;
 		
 		// Set up the workflow that makes a digital copy of a dataset available
 		Op basicWorkflow = OpDataRefResource.from(dataRef);
@@ -117,10 +137,6 @@ public class MainConjurePlayground {
 		
 		// So far so good - all we need now, is some data and we can start execution
 
-		
-		// Create a SPARQL parser with preconfigured prefixes
-		// Pure luxury!
-		Function<String, SparqlStmt> parser = SparqlStmtParserImpl.create(Syntax.syntaxARQ, DefaultPrefixes.prefixes, false);
 		
 		// Fetch some download urls from the databus or limbo
 		// Turns out both data catalogs have quality issues ;)
@@ -130,7 +146,7 @@ public class MainConjurePlayground {
 			try(RDFConnection conn = catalog.openConnection()) {
 				urls = SparqlRx.execSelect(conn,
 //						"SELECT DISTINCT ?o { ?s <http://www.w3.org/ns/dcat#downloadURL> ?o } LIMIT 10")
-						parser.apply("SELECT DISTINCT ?o { ?s dataid:group ?g ; dcat:distribution/dcat:downloadURL ?o ; } LIMIT 10")
+						parser.apply("SELECT DISTINCT ?o { ?s dataid:group ?g ; dcat:distribution/dcat:downloadURL ?o } LIMIT 10")
 							.getAsQueryStmt().getQuery())
 					.map(qs -> qs.get("o"))
 					.map(RDFNode::toString)

@@ -4,6 +4,7 @@ import org.aksw.dcat.ap.domain.api.Checksum;
 import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.DataRefResource;
 import org.aksw.jena_sparql_api.http.domain.api.RdfEntityInfoDefault;
 import org.aksw.jena_sparql_api.mapper.proxy.JenaPluginUtils;
+import org.aksw.jena_sparql_api.utils.turtle.JenaPluginHdt;
 import org.aksw.jena_sparql_api.utils.turtle.TurtleWriterNoBase;
 import org.apache.jena.sys.JenaSubsystemLifecycle;
 
@@ -21,6 +22,7 @@ public class JenaPluginConjure
 	
 	public static void init() {
 		TurtleWriterNoBase.register();
+		JenaPluginHdt.register();
 
 		JenaPluginUtils.scan(RdfEntityInfoDefault.class);
 		JenaPluginUtils.scan(Checksum.class);
