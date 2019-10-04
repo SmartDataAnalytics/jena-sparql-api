@@ -1,5 +1,7 @@
 package org.aksw.jena_sparql_api.conjure.test;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -20,15 +22,18 @@ import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpVar;
 import org.aksw.jena_sparql_api.conjure.dataset.engine.OpExecutorDefault;
 import org.aksw.jena_sparql_api.http.repository.api.HttpResourceRepositoryFromFileSystem;
 import org.aksw.jena_sparql_api.http.repository.impl.HttpResourceRepositoryFromFileSystemImpl;
+import org.aksw.jena_sparql_api.mapper.proxy.JenaPluginUtils;
 import org.aksw.jena_sparql_api.rx.SparqlRx;
 import org.aksw.jena_sparql_api.stmt.SparqlStmt;
 import org.aksw.jena_sparql_api.stmt.SparqlStmtParserImpl;
 import org.apache.jena.query.Syntax;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
+import org.apache.jena.util.ResourceUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,8 +53,36 @@ public class MainConjurePlayground {
 		Op reportDate = OpUpdateRequest.create(totalCount,
 				"INSERT { <urn:report> <urn:generationDate> ?d } WHERE { BIND(NOW() AS ?d) }");
 
-		Op conjureWorkflow = OpUnion.create(countPredicates, reportDate);
+		Op anonymousConjureWorkflow = OpUnion.create(countPredicates, reportDate);
 		
+		
+		// Hmm.. let's give the workflow a name and save it for use in the future
+		String workflowUri = "urn:myWorkflow";
+		Resource workflowRes = ResourceUtils.renameResource(anonymousConjureWorkflow, workflowUri);
+		
+		Path tmpFile = Files.createTempFile("workflow-", ".ttl");
+		RDFDataMgr.write(Files.newOutputStream(tmpFile), workflowRes.getModel(), RDFFormat.TURTLE_PRETTY);
+		
+		// off to sleep
+		// ZZZZzzzzzz.....____
+		// ok. enough sleep, the future is now!
+
+		Model deserializedWorkflowModel = RDFDataMgr.loadModel(tmpFile.toString());		
+		Files.delete(tmpFile);
+		Resource deserializedWorkflowRes = deserializedWorkflowModel.createResource(workflowUri);
+		
+		// Cast the Resource back to the appropriate Op sub class
+		// (The mapper-proxy plugin system knows how to do that)
+		Op conjureWorkflow = JenaPluginUtils.polymorphicCast(deserializedWorkflowRes, Op.class);
+		
+		// Print out the deserialized workflow for inspection
+		RDFDataMgr.write(System.err, conjureWorkflow.getModel(), RDFFormat.TURTLE_PRETTY);
+
+		
+		// In case you missed it because you couldn't see it: The workflow *IS* RDF:
+		// We created RDF using static factory methods, saved it to disk and loaded it again		
+		
+
 		// Set up a simple file-system based conjure repository and workflow executor
 		// This does HTTP caching, content type conversion and content negotiation
 		// Lots of magic, fairies and unicorns in there
