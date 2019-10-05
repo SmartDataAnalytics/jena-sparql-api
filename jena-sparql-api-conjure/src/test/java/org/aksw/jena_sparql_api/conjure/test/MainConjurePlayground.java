@@ -10,9 +10,9 @@ import java.util.function.Function;
 import org.aksw.jena_sparql_api.common.DefaultPrefixes;
 import org.aksw.jena_sparql_api.conjure.dataobject.api.RdfDataObject;
 import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.DataRef;
+import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.DataRefOp;
 import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.DataRefSparqlEndpoint;
 import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.DataRefUrl;
-import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.DataRefOp;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.Op;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpConstruct;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpData;
@@ -46,6 +46,7 @@ public class MainConjurePlayground {
 	public static void main(String[] args) throws Exception {
 		
 		// TODO Circular init issue with DefaultPrefixes
+		// We could use ARQConstants.getGlobalPrefixMap()
 		JenaSystem.init();
 		
 		// Create a SPARQL parser with preconfigured prefixes

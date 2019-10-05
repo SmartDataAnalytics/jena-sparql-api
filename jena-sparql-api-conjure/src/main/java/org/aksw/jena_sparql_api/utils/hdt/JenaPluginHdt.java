@@ -50,7 +50,7 @@ public class JenaPluginHdt {
 	        public WriterGraphRIOT create(RDFFormat serialization)
 	        {
 	    		WriterGraphRIOT tmp = new WriterGraphRIOT_HDT();
-	        	if ( Objects.equals(FORMAT_HDT, serialization) ) {
+	        	if (Objects.equals(FORMAT_HDT, serialization) ) {
 	                return tmp ;
 	        	} else {
 	        		return null;
