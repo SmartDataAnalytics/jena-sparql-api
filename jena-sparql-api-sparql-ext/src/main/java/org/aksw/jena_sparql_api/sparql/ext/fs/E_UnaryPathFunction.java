@@ -12,11 +12,6 @@ import org.apache.jena.sparql.function.Function;
 import org.apache.jena.sparql.function.FunctionBase1;
 import org.apache.jena.sparql.function.FunctionFactory;
 
-@FunctionalInterface
-interface PathFunction {
-	NodeValue apply(Path path) throws IOException;
-}
-
 public class E_UnaryPathFunction
 	extends FunctionBase1
 {

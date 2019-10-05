@@ -97,7 +97,8 @@ public class NodeUtils {
         return result;
     }
 
-    
+
+    @Deprecated // Use NodeFmtLib.str
     public static String toNTriplesString(Node node) {
         NodeFormatterNT formatter = new NodeFormatterNT();
         AWriter writer = new StringWriterI();

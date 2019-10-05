@@ -414,7 +414,30 @@ public class SparqlRx {
     	return execPartitioned(conn, s, q);
     }
     
-    public static Flowable<RDFNode> execPartitioned(SparqlQueryConnection conn, Node s, Query q) {
+    //public static Acc
+    
+    public static Flowable<RDFNode> execConstructGrouped(SparqlQueryConnection conn, Node s, Query query) {
+    	Template template = query.getConstructTemplate();
+    	Query clone = preprocessQueryForPartition(s, query);
+    	
+		Flowable<RDFNode> result = SparqlRx
+			// For future reference: If we get an empty results by using the query object, we probably have wrapped a variable with NodeValue.makeNode. 
+			.execSelectRaw(() -> conn.query(clone))
+			.groupBy(createGrouper((Var)s)::apply)
+			.map(group -> {
+				Node groupKey = group.getKey();
+				AccGraph acc = new AccGraph(template);
+				group.forEach(acc::accumulate);
+				Graph g = acc.getValue();
+				Model m = ModelFactory.createModelForGraph(g);
+				RDFNode r = m.asRDFNode(groupKey);
+				return r;
+			});
+		return result;
+    }
+
+    
+    public static Query preprocessQueryForPartition(Node s, Query q) {
 
     	Template template = q.getConstructTemplate();
         Set<Var> projectVars = new LinkedHashSet<>();
@@ -447,7 +470,13 @@ public class SparqlRx {
     	clone.setDistinct(true);
     	
     	logger.debug("Converted query to: " + clone);
-    	
+    	return clone;
+    }
+    
+    public static Flowable<RDFNode> execPartitioned(SparqlQueryConnection conn, Node s, Query q) {
+
+    	Template template = q.getConstructTemplate();
+    	Query clone = preprocessQueryForPartition(s, q);
     	
 		Flowable<RDFNode> result = SparqlRx
 				// For future reference: If we get an empty results by using the query object, we probably have wrapped a variable with NodeValue.makeNode. 
