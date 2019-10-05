@@ -25,9 +25,7 @@ public class JenaPluginHdt {
 	public static final RDFFormat FORMAT_HDT  = new RDFFormat(LANG_HDT, new RDFFormatVariant("default"));
 
 	/**
-	 * Register the HDT language. Especially the file extension is of use.
-	 * Note, that HDT is not registered with concrete riot readers (we could add that), because
-	 * we want to use HDT Manager 
+	 * Register the HDT language with readers and writers.
 	 * 
 	 */
 	public static void register() {
