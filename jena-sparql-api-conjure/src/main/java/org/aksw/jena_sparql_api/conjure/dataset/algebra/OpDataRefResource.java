@@ -1,6 +1,6 @@
 package org.aksw.jena_sparql_api.conjure.dataset.algebra;
 
-import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.DataRefResource;
+import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.DataRef;
 import org.aksw.jena_sparql_api.mapper.annotation.IriNs;
 import org.aksw.jena_sparql_api.mapper.annotation.PolymorphicOnly;
 import org.aksw.jena_sparql_api.mapper.annotation.RdfType;
@@ -13,8 +13,8 @@ public interface OpDataRefResource
 {
 	@PolymorphicOnly
 	@IriNs("eg")
-	DataRefResource getDataRef();
-	OpDataRefResource setDataRef(DataRefResource dataRef);
+	DataRef getDataRef();
+	OpDataRefResource setDataRef(DataRef dataRef);
 	
 	@Override
 	default <T> T accept(OpVisitor<T> visitor) {
@@ -22,7 +22,7 @@ public interface OpDataRefResource
 		return result;
 	}
 	
-	public static OpDataRefResource from(DataRefResource dataRef) {
+	public static OpDataRefResource from(DataRef dataRef) {
 		OpDataRefResource result = dataRef.getModel()
 				.createResource().as(OpDataRefResource.class)
 				.setDataRef(dataRef);

@@ -4,8 +4,8 @@ import java.util.List;
 
 import org.apache.jena.sparql.core.DatasetDescription;
 
-public interface DataRefFromSparqlEndpoint
-	extends DataRef
+public interface PlainDataRefSparqlEndpoint
+	extends PlainDataRef
 {
 	String getServiceUrl();
 	List<String> getDefaultGraphs();
@@ -24,7 +24,7 @@ public interface DataRefFromSparqlEndpoint
 	}
 	
 	@Override
-	default <T> T accept(DataRefVisitor<T> visitor) {
+	default <T> T accept(PlainDataRefVisitor<T> visitor) {
 		T result = visitor.visit(this);
 		return result;
 	}

@@ -3,21 +3,18 @@ package org.aksw.jena_sparql_api.conjure.dataobject.impl;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.List;
 import java.util.function.Supplier;
 
 import org.aksw.jena_sparql_api.conjure.dataobject.api.RdfDataObject;
-import org.aksw.jena_sparql_api.conjure.dataref.core.api.DataRef;
-import org.aksw.jena_sparql_api.conjure.dataref.core.api.DataRefFromSparqlEndpoint;
-import org.aksw.jena_sparql_api.conjure.dataref.core.api.DataRefFromUrl;
-import org.aksw.jena_sparql_api.conjure.dataref.core.api.DataRefVisitor;
+import org.aksw.jena_sparql_api.conjure.dataref.core.api.PlainDataRef;
+import org.aksw.jena_sparql_api.conjure.dataref.core.api.PlainDataRefSparqlEndpoint;
+import org.aksw.jena_sparql_api.conjure.dataref.core.api.PlainDataRefUrl;
+import org.aksw.jena_sparql_api.conjure.dataref.core.api.PlainDataRefVisitor;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpVisitor;
 import org.aksw.jena_sparql_api.http.repository.api.HttpResourceRepositoryFromFileSystem;
-import org.aksw.jena_sparql_api.http.repository.api.RdfHttpEntityFile;
-import org.aksw.jena_sparql_api.http.repository.impl.HttpResourceRepositoryFromFileSystemImpl;
 import org.aksw.jena_sparql_api.http.repository.impl.URIUtils;
-import org.aksw.jena_sparql_api.utils.turtle.JenaPluginHdt;
+import org.aksw.jena_sparql_api.utils.hdt.JenaPluginHdt;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.rdf.model.Model;
@@ -52,46 +49,18 @@ public class DataObjects {
 		return result;
 	}
 
-	public static RdfDataObject fromDataRef(DataRef dataRef, HttpResourceRepositoryFromFileSystem repo, OpVisitor<? extends RdfDataObject> opExecutor) {
+	public static RdfDataObject fromDataRef(PlainDataRef dataRef, HttpResourceRepositoryFromFileSystem repo, OpVisitor<? extends RdfDataObject> opExecutor) {
 		
-		DataRefVisitor<RdfDataObject> defaultFactory = new DataObjectFactoryImpl(opExecutor) {
-			@Override
-			public RdfDataObject visit(DataRefFromUrl dataRef) {
-				String url = dataRef.getDataRefUrl();
-
-				RdfDataObject r;
-
-				// HACK - http url checking should be done in the repository!
-				if(url.startsWith("http://") || url.startsWith("https://")) {
-					RdfHttpEntityFile entity;
-					try {
-						entity = HttpResourceRepositoryFromFileSystemImpl.get(repo,
-								url, WebContent.contentTypeNTriples, Arrays.asList("identity"));
-						
-					} catch (IOException e) {
-						throw new RuntimeException(e);
-					}
-					
-					Path absPath = entity.getAbsolutePath();
-					logger.debug("Resolved " + url + " to " + absPath);
-					
-					r = DataObjects.fromUrl(absPath.toString());
-				} else {
-					r = DataObjects.fromUrl(url);					
-				}
-
-				return r;
-			}
-		};
+		PlainDataRefVisitor<RdfDataObject> factory = new DataObjectFactoryAdvancedImpl(opExecutor, repo);
 		
 //		System.out.println("Got: " + dataRef + " - class: " + dataRef.getClass() + " inst:" + (dataRef instanceof DataRefResourceFromUrl));
-		RdfDataObject result = dataRef.accept(defaultFactory);
+		RdfDataObject result = dataRef.accept(factory);
 		return result;
 	}
 
 	
-	public static RdfDataObject fromDataRef(DataRef dataRef, OpVisitor<? extends RdfDataObject> opExecutor) {
-		DataRefVisitor<RdfDataObject> defaultFactory = new DataObjectFactoryImpl(opExecutor);
+	public static RdfDataObject fromDataRef(PlainDataRef dataRef, OpVisitor<? extends RdfDataObject> opExecutor) {
+		PlainDataRefVisitor<RdfDataObject> defaultFactory = new DataObjectFactoryImpl(opExecutor);
 		
 //		System.out.println("Got: " + dataRef + " - class: " + dataRef.getClass() + " inst:" + (dataRef instanceof DataRefResourceFromUrl));
 		RdfDataObject result = dataRef.accept(defaultFactory);
@@ -110,7 +79,7 @@ public class DataObjects {
 		};
 	}
 
-	public static RdfDataObject fromUrl(DataRefFromUrl dataRef) {
+	public static RdfDataObject fromUrl(PlainDataRefUrl dataRef) {
 		String url = dataRef.getDataRefUrl();
 		RdfDataObject result = fromUrl(url);
 		return result;
@@ -122,7 +91,7 @@ public class DataObjects {
 		
 		Lang lang = RDFLanguages.resourceNameToLang(url);
 		Model model;
-		if(JenaPluginHdt.HDT.equals(lang)) {
+		if(JenaPluginHdt.LANG_HDT.equals(lang)) {
 			// Only allow local file URLs
 			Path path = Paths.get(URIUtils.newURI(url));
 			String pathStr = path.toString();
@@ -146,7 +115,7 @@ public class DataObjects {
 		return result;
 	}
 
-	public static RdfDataObject fromSparqlEndpoint(DataRefFromSparqlEndpoint dataRef) {
+	public static RdfDataObject fromSparqlEndpoint(PlainDataRefSparqlEndpoint dataRef) {
 		String serviceUrl = dataRef.getServiceUrl();
 		//DatasetDescription dd = dataRef.getDatsetDescription();
 		

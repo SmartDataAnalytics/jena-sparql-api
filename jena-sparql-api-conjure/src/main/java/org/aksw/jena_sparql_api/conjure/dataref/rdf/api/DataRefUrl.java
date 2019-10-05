@@ -1,6 +1,6 @@
 package org.aksw.jena_sparql_api.conjure.dataref.rdf.api;
 
-import org.aksw.jena_sparql_api.conjure.dataref.core.api.DataRefFromUrl;
+import org.aksw.jena_sparql_api.conjure.dataref.core.api.PlainDataRefUrl;
 import org.aksw.jena_sparql_api.mapper.annotation.IriNs;
 import org.aksw.jena_sparql_api.mapper.annotation.RdfType;
 import org.aksw.jena_sparql_api.mapper.annotation.ResourceView;
@@ -8,20 +8,20 @@ import org.apache.jena.rdf.model.ModelFactory;
 
 @ResourceView
 @RdfType
-public interface DataRefResourceFromUrl
-	extends DataRefFromUrl, DataRefResource
+public interface DataRefUrl
+	extends PlainDataRefUrl, DataRef
 {
 	@IriNs("eg")
-	DataRefResourceFromUrl setDataRefUrl(String url);
+	DataRefUrl setDataRefUrl(String url);
 	
 	@Override
-	default <T> T accept2(DataRefResourceVisitor<T> visitor) {
+	default <T> T accept2(DataRefVisitor<T> visitor) {
 		T result = visitor.visit(this);
 		return result;
 	}
 	
-	public static DataRefResourceFromUrl create(String url) {
-		DataRefResourceFromUrl result = ModelFactory.createDefaultModel().createResource().as(DataRefResourceFromUrl.class)
+	public static DataRefUrl create(String url) {
+		DataRefUrl result = ModelFactory.createDefaultModel().createResource().as(DataRefUrl.class)
 				.setDataRefUrl(url);
 		return result;
 	}

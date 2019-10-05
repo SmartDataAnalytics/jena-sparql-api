@@ -9,10 +9,10 @@ import java.util.function.Function;
 
 import org.aksw.jena_sparql_api.common.DefaultPrefixes;
 import org.aksw.jena_sparql_api.conjure.dataobject.api.RdfDataObject;
-import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.DataRefResource;
-import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.DataRefResourceFromSparqlEndpoint;
-import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.DataRefResourceFromUrl;
-import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.DataRefResourceOp;
+import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.DataRef;
+import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.DataRefSparqlEndpoint;
+import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.DataRefUrl;
+import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.DataRefOp;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.Op;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpConstruct;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpData;
@@ -61,7 +61,7 @@ public class MainConjurePlayground {
 
 		// Let's run a CONSTRUCT query on the output of another CONSTRUCT query
 		// (because we can)
-		Op totalCount = OpConstruct.create(countPredicates, "CONSTRUCT { <urn:report> <urn:totalUses> ?t } WHERE { { SELECT (SUM(?c) AS ?t) { ?s <eg:numUses> ?c } } }");
+		Op totalCount = OpConstruct.create(countPredicates, parser.apply("CONSTRUCT { <urn:report> <urn:totalUses> ?t } WHERE { { SELECT (SUM(?c) AS ?t) { ?s <eg:numUses> ?c } } }").toString());
 
 		Op reportDate = OpUpdateRequest.create(totalCount,
 				parser.apply("INSERT { <urn:report> <urn:generationDate> ?d } WHERE { BIND(NOW() AS ?d) }").toString());
@@ -117,19 +117,20 @@ public class MainConjurePlayground {
 		OpExecutorDefault executor = new OpExecutorDefault(repo);
 
 		// Get a copy of the limbo dataset catalog via the repo so that it gets cached
-		DataRefResource dataRef1 = DataRefResourceFromUrl.create("https://gitlab.com/limbo-project/metadata-catalog/raw/master/catalog.all.ttl");
+		DataRef dataRef1 = DataRefUrl.create("https://gitlab.com/limbo-project/metadata-catalog/raw/master/catalog.all.ttl");
 		
 		// Or set up a workflow that makes databus available
-		DataRefResource dataRef2 = DataRefResourceFromSparqlEndpoint.create("https://databus.dbpedia.org/repo/sparql");
-
-
-		// Create a data ref from a workflow
-		DataRefResource dataRef3 = DataRefResourceOp.create(
-				OpUpdateRequest.create(OpData.create(),
-					parser.apply("INSERT DATA { [] dataid:group eg:mygrp ; dcat:distribution [ dcat:downloadURL <file:///home/raven/tmp/test.hdt> ] }").toString()));
+		DataRef dataRef2 = DataRefSparqlEndpoint.create("https://databus.dbpedia.org/repo/sparql");
 
 		
-		DataRefResource dataRef = dataRef3;
+		// Create a data ref from a workflow
+		DataRef dataRef3 = DataRefOp.create(
+				OpUpdateRequest.create(OpData.create(),
+//					parser.apply("INSERT DATA { [] dataid:group eg:mygrp ; dcat:distribution [ dcat:downloadURL <file:///home/raven/tmp/test.hdt> ] }").toString()));
+						parser.apply("INSERT DATA { [] dataid:group eg:mygrp ; dcat:distribution [ dcat:downloadURL <http://localhost/~raven/bib_lds_20190305.hdt.gz> ] }").toString()));
+
+		
+		DataRef dataRef = dataRef3;
 		
 		// Set up the workflow that makes a digital copy of a dataset available
 		Op basicWorkflow = OpDataRefResource.from(dataRef);
@@ -164,7 +165,7 @@ public class MainConjurePlayground {
 			logger.info("Processing: " + url);
 
 			// Create a copy of the workflow spec and substitute the variables
-			Map<String, Op> map = Collections.singletonMap("dataRef", OpDataRefResource.from(DataRefResourceFromUrl.create(url)));			
+			Map<String, Op> map = Collections.singletonMap("dataRef", OpDataRefResource.from(DataRefUrl.create(url)));			
 			Op effectiveWorkflow = OpUtils.copyWithSubstitution(conjureWorkflow, map::get);			
 			
 

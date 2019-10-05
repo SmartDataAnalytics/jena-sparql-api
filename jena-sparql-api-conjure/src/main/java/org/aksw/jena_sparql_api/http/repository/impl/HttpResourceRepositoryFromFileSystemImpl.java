@@ -54,8 +54,10 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.riot.WebContent;
+import org.apache.jena.sys.JenaSystem;
 
 import com.google.common.base.Splitter;
+import com.google.common.base.StandardSystemProperty;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
@@ -603,11 +605,15 @@ public class HttpResourceRepositoryFromFileSystemImpl
 		// the results can be verified afterwards (e.g. by Files.probeContentType)
 		// hm, since content-disposition seems to be non-standard maybe we can also just ignore it
 
-		String ct = HttpHeaderUtils.getValue(new Header[] { entity.getContentType() }, HttpHeaders.CONTENT_TYPE);
+		String ct =  HttpHeaderUtils.getValueOrNull(entity.getContentType());
 		
+		// TODO Move the logic to derive the headers we want elsewhere
+		// E.g. apache2 may return gzip files as content type instead of encoding
 		RdfEntityInfo meta = HttpHeaderUtils.copyMetaData(entity, null);
-		if(ct.equalsIgnoreCase(ContentType.APPLICATION_OCTET_STREAM.getMimeType())
+		if(ct == null
+				|| ct.equalsIgnoreCase(ContentType.APPLICATION_OCTET_STREAM.getMimeType())
 				|| ct.equalsIgnoreCase(ContentType.TEXT_PLAIN.getMimeType())
+				|| ct.equalsIgnoreCase(ContentType.parse("application/x-gzip").getMimeType())
 				) {
 			String uri = request.getRequestLine().getUri();
 			meta = ContentTypeUtils.deriveHeadersFromFileExtension(uri);
@@ -681,15 +687,8 @@ public class HttpResourceRepositoryFromFileSystemImpl
 	}
 	
 	public static HttpResourceRepositoryFromFileSystemImpl createDefault() throws IOException {
-		TurtleWriterNoBase.register();
-
-		JenaPluginUtils.registerResourceClass(RdfEntityInfo.class, RdfEntityInfoDefault.class);
-		//JenaPluginUtils.registerResourceClasses(RdfGav.class);
-		JenaPluginUtils.registerResourceClasses(Checksum.class);
-		JenaPluginUtils.scan(Op.class);
-
-
-		Path root = Paths.get("/home/raven/.dcat/test3");
+		String homeDir = StandardSystemProperty.USER_HOME.value();
+		Path root = Paths.get(homeDir).resolve(".dcat/repository");
 		Files.createDirectories(root);
 
 		HttpResourceRepositoryFromFileSystemImpl result = create(root);
@@ -698,8 +697,9 @@ public class HttpResourceRepositoryFromFileSystemImpl
 	}
 	
 	public static void main(String[] args) throws IOException {
-		//JenaSystem.init();
+		JenaSystem.init();
 
+		
 		Header[] expansionTest = new Header[] { new BasicHeader(HttpHeaders.ACCEPT, WebContent.contentTypeTurtleAlt2 + ";q=0.3")};
 //		Header[] expansionTest = new Header[] { new BasicHeader(HttpHeaders.ACCEPT, WebContent.contentTypeTurtleAlt2 + ",text/plain;q=0.5")};
 		expansionTest = ContentTypeUtils.expandAccept(expansionTest);

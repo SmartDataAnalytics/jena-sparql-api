@@ -9,7 +9,7 @@ package org.aksw.jena_sparql_api.conjure.dataref.core.api;
  *
  */
 @Deprecated
-public interface DataRefFromRDFConnection
+public interface DataRefRDFConnection
 {
 //	RDFConnection getConnection();
 //	

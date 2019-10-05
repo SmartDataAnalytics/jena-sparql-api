@@ -22,10 +22,16 @@ public class UriToPathUtils {
 		String a = Optional.ofNullable(uri.getHost()).orElse("");
 		String b = uri.getPort() == -1 ? "" : Integer.toString(uri.getPort());
 		
+		// Replace ~ (tilde) with _ because otherwise jena IRI validation will fail
+		// on file:// urls with SCHEME_PATTERN_MATCH_FAILED
+		// Tilde is common symbol with e.g. the Apache Web server's userdir mod
+		String pathStr =  Optional.ofNullable(uri.getPath()).orElse("")
+				.replaceAll("~", "_");
+		
 		Path result = Paths.get(".")
 		.resolve(a)
 		.resolve(b)
-		.resolve((a.isEmpty() && b.isEmpty() ? "" : ".") + Optional.ofNullable(uri.getPath()).orElse(""))
+		.resolve((a.isEmpty() && b.isEmpty() ? "" : ".") + pathStr)
 		.resolve(Optional.ofNullable(uri.getQuery()).orElse(""))
 		.normalize();
 		

@@ -113,6 +113,19 @@ public class HttpHeaderUtils {
 	}
 	
 	
+	public static String getValueOrNull(Header header) {
+		List<String> values = header == null
+				? null
+				: getValues(new Header[] {header}, header.getName());
+
+		if(values != null && values.size() > 1) {
+			throw new RuntimeException("At most 1 value expected, got: " + values);
+		}
+		
+		String result = values == null ? null : values.get(0);
+		return result;
+	}
+
 	
 	public static String getValue(Header[] headers, String name) {
 		List<String> contentTypes = getValues(headers, name);
@@ -142,7 +155,7 @@ public class HttpHeaderUtils {
 				: ModelFactory.createDefaultModel().createResource().as(RdfEntityInfo.class);
 		
 		List<String> encodings = getValues(src.getContentEncoding(), HttpHeaders.CONTENT_ENCODING);
-		String ct = getValue(new Header[] { src.getContentType() }, HttpHeaders.CONTENT_TYPE);
+		String ct = getValueOrNull(src.getContentType());
 		
 		tgt.setContentType(ct);
 		tgt.setContentEncodings(encodings);
@@ -169,13 +182,16 @@ public class HttpHeaderUtils {
 	
 	
 	public static List<MediaType> supportedMediaTypes() {
-		return supportedMediaTypes(RDFLanguages.getRegisteredLanguages());
+		Collection<Lang> langs = RDFLanguages.getRegisteredLanguages();
+		List<MediaType> result = supportedMediaTypes(langs);
+		return result;
 	}
 	
 	public static List<String> langToContentTypes(Lang lang) {
 		List<String> result = Stream.concat(
 				Stream.of(lang.getContentType().getContentType()),
 				lang.getAltContentTypes().stream())
+				.distinct()
 				.collect(Collectors.toList());
 		
 		return result;
