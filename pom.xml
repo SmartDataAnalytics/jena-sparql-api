@@ -757,9 +757,10 @@
 			</dependency>
 			<dependency> <!-- Used for @Configuration annotation so we can inject an ApplicationContext 
 					into servlets -->
+				<!-- Heavily used by mapper-proxy module -->
 				<groupId>cglib</groupId>
 				<artifactId>cglib-nodep</artifactId>
-				<version>3.2.12</version>
+				<version>3.3.0</version>
 			</dependency>
 
 

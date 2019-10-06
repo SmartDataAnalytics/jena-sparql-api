@@ -123,10 +123,11 @@ public class JenaPluginUtils {
 		typeDecider.registerClasses(clazz);
 
 		BiFunction<Node, EnhGraph, ? extends Resource> proxyFactory2 = (n, m) -> {
-			Resource r = new ResourceImpl(n, m);
-			typeDecider.writeTypeTriples(r, cls);
+			Resource tmp = new ResourceImpl(n, m);
+			typeDecider.writeTypeTriples(tmp, cls);
 			
-			return proxyFactory.apply(n, m);
+			Resource r = proxyFactory.apply(n, m);
+			return r;
 		};
 		
 		Implementation result = new ProxyImplementation(proxyFactory2);

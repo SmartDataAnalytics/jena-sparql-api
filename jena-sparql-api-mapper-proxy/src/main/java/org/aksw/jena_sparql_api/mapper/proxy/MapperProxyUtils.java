@@ -1525,7 +1525,15 @@ public class MapperProxyUtils {
 			});
 			
 			result = (n, g) -> {
-				Object o = enhancer.create(new Class<?>[] {Node.class, EnhGraph.class}, new Object[] {n, g});
+				Class<?>[] argTypes = new Class<?>[] {Node.class, EnhGraph.class};
+				Object[] argValues = new Object[] {n, g};
+				Object o;
+				
+				// Synchronization due to ISSUE #30 - Race condition in mapper-proxy
+				// Also see test case {@link TestMapperProxyRaceCondiditon}
+				synchronized(MapperProxyUtils.class) {
+					o = enhancer.create(argTypes, argValues);
+				}
 				return (T)o;
 			};
 		}		
