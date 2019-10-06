@@ -45,8 +45,7 @@ public class MainConjureSparkComparison {
 		
 		// TODO Circular init issue with DefaultPrefixes
 		// We could use ARQConstants.getGlobalPrefixMap()
-		JenaSystem.init();
-		
+		JenaSystem.init();	
 		Function<String, SparqlStmt> parser = SparqlStmtParserImpl.create(Syntax.syntaxARQ, DefaultPrefixes.prefixes, false);
 
 	    Query dcatQuery = parser.apply(
