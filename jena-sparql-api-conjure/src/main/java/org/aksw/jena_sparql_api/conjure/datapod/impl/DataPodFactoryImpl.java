@@ -12,25 +12,25 @@ import org.aksw.jena_sparql_api.conjure.dataref.core.api.PlainDataRefVisitor;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.Op;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpVisitor;
 
-public class DataObjectFactoryImpl
+public class DataPodFactoryImpl
 	implements PlainDataRefVisitor<RdfDataPod>
 {
 	protected OpVisitor<? extends RdfDataPod> opExecutor;
 	
-	public DataObjectFactoryImpl(OpVisitor<? extends RdfDataPod> opExecutor) {
+	public DataPodFactoryImpl(OpVisitor<? extends RdfDataPod> opExecutor) {
 		super();
 		this.opExecutor = Objects.requireNonNull(opExecutor);
 	}
 
 	@Override
 	public RdfDataPod visit(PlainDataRefUrl dataRef) {
-		RdfDataPod result = DataObjects.fromUrl(dataRef);
+		RdfDataPod result = DataPods.fromUrl(dataRef);
 		return result;
 	}
 
 	@Override
 	public RdfDataPod visit(PlainDataRefSparqlEndpoint dataRef) {
-		RdfDataPod result = DataObjects.fromSparqlEndpoint(dataRef);
+		RdfDataPod result = DataPods.fromSparqlEndpoint(dataRef);
 		return result;
 	}
 

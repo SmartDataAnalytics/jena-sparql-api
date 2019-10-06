@@ -32,9 +32,14 @@ import org.rdfhdt.hdtjena.HDTGraph;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
-public class DataObjects {
-	private static final Logger logger = LoggerFactory.getLogger(DataObjects.class);
+/**
+ * Basic DataPod factory methods
+ * 
+ * @author raven
+ *
+ */
+public class DataPods {
+	private static final Logger logger = LoggerFactory.getLogger(DataPods.class);
 	
 	public static RdfDataPod empty() {
 		RdfDataPod result = fromModel(ModelFactory.createDefaultModel());
@@ -51,7 +56,7 @@ public class DataObjects {
 
 	public static RdfDataPod fromDataRef(PlainDataRef dataRef, HttpResourceRepositoryFromFileSystem repo, OpVisitor<? extends RdfDataPod> opExecutor) {
 		
-		PlainDataRefVisitor<RdfDataPod> factory = new DataObjectFactoryAdvancedImpl(opExecutor, repo);
+		PlainDataRefVisitor<RdfDataPod> factory = new DataPodFactoryAdvancedImpl(opExecutor, repo);
 		
 //		System.out.println("Got: " + dataRef + " - class: " + dataRef.getClass() + " inst:" + (dataRef instanceof DataRefResourceFromUrl));
 		RdfDataPod result = dataRef.accept(factory);
@@ -60,7 +65,7 @@ public class DataObjects {
 
 	
 	public static RdfDataPod fromDataRef(PlainDataRef dataRef, OpVisitor<? extends RdfDataPod> opExecutor) {
-		PlainDataRefVisitor<RdfDataPod> defaultFactory = new DataObjectFactoryImpl(opExecutor);
+		PlainDataRefVisitor<RdfDataPod> defaultFactory = new DataPodFactoryImpl(opExecutor);
 		
 //		System.out.println("Got: " + dataRef + " - class: " + dataRef.getClass() + " inst:" + (dataRef instanceof DataRefResourceFromUrl));
 		RdfDataPod result = dataRef.accept(defaultFactory);
@@ -70,7 +75,7 @@ public class DataObjects {
 	public static RdfDataPod fromModel(Model model) {
 		Dataset dataset = DatasetFactory.wrap(model);
 		
-		return new RdfDataObjectBase() {
+		return new RdfDataPodBase() {
 			@Override
 			protected RDFConnection newConnection() {
 				RDFConnection result = RDFConnectionFactory.connect(dataset);
@@ -111,7 +116,7 @@ public class DataObjects {
 		}
 
 		
-		RdfDataPod result = DataObjects.fromModel(model);
+		RdfDataPod result = DataPods.fromModel(model);
 		return result;
 	}
 
@@ -140,7 +145,7 @@ public class DataObjects {
 	
 
 	public static RdfDataPod fromConnectionSupplier(Supplier<? extends RDFConnection> supplier) {
-		return new RdfDataObjectBase() {
+		return new RdfDataPodBase() {
 			@Override
 			protected RDFConnection newConnection() {
 				RDFConnection result = supplier.get();

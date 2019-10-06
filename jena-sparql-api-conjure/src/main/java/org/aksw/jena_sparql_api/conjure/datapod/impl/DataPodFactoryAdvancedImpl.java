@@ -15,14 +15,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 // DataObjectFactory with advanced handling of DataRefUrl using a repository
-public class DataObjectFactoryAdvancedImpl
-	extends DataObjectFactoryImpl {
+public class DataPodFactoryAdvancedImpl
+	extends DataPodFactoryImpl {
 	
-	private static final Logger logger = LoggerFactory.getLogger(DataObjectFactoryAdvancedImpl.class);
+	private static final Logger logger = LoggerFactory.getLogger(DataPodFactoryAdvancedImpl.class);
 
 	protected HttpResourceRepositoryFromFileSystem repo;
 
-	public DataObjectFactoryAdvancedImpl(
+	public DataPodFactoryAdvancedImpl(
 			OpVisitor<? extends RdfDataPod> opExecutor,
 			HttpResourceRepositoryFromFileSystem repo) {
 		super(opExecutor);
@@ -52,9 +52,9 @@ public class DataObjectFactoryAdvancedImpl
 			Path absPath = entity.getAbsolutePath();
 			logger.debug("Resolved " + url + " to " + absPath);
 			
-			r = DataObjects.fromUrl(absPath.toString());
+			r = DataPods.fromUrl(absPath.toString());
 		} else {
-			r = DataObjects.fromUrl(url);					
+			r = DataPods.fromUrl(url);					
 		}
 
 		return r;

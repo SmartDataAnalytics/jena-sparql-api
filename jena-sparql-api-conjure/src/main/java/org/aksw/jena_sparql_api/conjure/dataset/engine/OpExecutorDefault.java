@@ -4,7 +4,7 @@ import java.util.Collection;
 import java.util.List;
 
 import org.aksw.jena_sparql_api.conjure.datapod.api.RdfDataPod;
-import org.aksw.jena_sparql_api.conjure.datapod.impl.DataObjects;
+import org.aksw.jena_sparql_api.conjure.datapod.impl.DataPods;
 import org.aksw.jena_sparql_api.conjure.dataref.core.api.PlainDataRef;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.Op;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpConstruct;
@@ -35,14 +35,14 @@ public class OpExecutorDefault
 	@Override
 	public RdfDataPod visit(OpDataRefResource op) {
 		PlainDataRef dataRef = op.getDataRef();
-		RdfDataPod result = DataObjects.fromDataRef(dataRef, repo, this);
+		RdfDataPod result = DataPods.fromDataRef(dataRef, repo, this);
 		return result;
 	}
 
 	@Override
 	public RdfDataPod visit(OpData op) {
 		Object data = null; // TODO op.getData();
-		RdfDataPod result = DataObjects.fromData(data);
+		RdfDataPod result = DataPods.fromData(data);
 		return result;
 	}
 
@@ -52,8 +52,8 @@ public class OpExecutorDefault
 		RdfDataPod result;
 		
 		Op subOp = op.getSubOp();
-		try(RdfDataPod subDataObject = subOp.accept(this)) {
-			try(RDFConnection conn = subDataObject.openConnection()) {
+		try(RdfDataPod subDataPod = subOp.accept(this)) {
+			try(RDFConnection conn = subDataPod.openConnection()) {
 				
 				Collection<String> queryStrs = op.getQueryStrings();
 				
@@ -63,7 +63,7 @@ public class OpExecutorDefault
 					model.add(contrib);
 				}
 
-				result = DataObjects.fromModel(model);				
+				result = DataPods.fromModel(model);				
 			}
 		} catch (Exception e) {
 			throw new RuntimeException(e);
@@ -75,15 +75,15 @@ public class OpExecutorDefault
 	@Override
 	public RdfDataPod visit(OpUpdateRequest op) {
 		Op subOp = op.getSubOp();		
-		RdfDataPod subDataObject = subOp.accept(this);
-		try(RDFConnection conn = subDataObject.openConnection()) {
+		RdfDataPod subDataPod = subOp.accept(this);
+		try(RDFConnection conn = subDataPod.openConnection()) {
 
 			for(String updateRequestStr : op.getUpdateRequests()) {
 				conn.update(updateRequestStr);
 			}
 		}
 
-		return subDataObject;
+		return subDataPod;
 	}
 
 	@Override
@@ -92,8 +92,8 @@ public class OpExecutorDefault
 		
 		Model model = ModelFactory.createDefaultModel();
 		for(Op subOp : subOps) {
-			try(RdfDataPod subDataObject = subOp.accept(this)) {
-				try(RDFConnection conn = subDataObject.openConnection()) {
+			try(RdfDataPod subDataPod = subOp.accept(this)) {
+				try(RDFConnection conn = subDataPod.openConnection()) {
 					Model contribModel = conn.queryConstruct("CONSTRUCT WHERE { ?s ?p ?o }");
 					model.add(contribModel);				
 				}
@@ -102,7 +102,7 @@ public class OpExecutorDefault
 			}
 		}
 		
-		RdfDataPod result = DataObjects.fromModel(model);
+		RdfDataPod result = DataPods.fromModel(model);
 		return result;
 	}
 

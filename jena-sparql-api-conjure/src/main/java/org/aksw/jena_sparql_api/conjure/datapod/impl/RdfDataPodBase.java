@@ -4,7 +4,7 @@ import org.aksw.jena_sparql_api.conjure.datapod.api.RdfDataPod;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionWrapper;
 
-public abstract class RdfDataObjectBase
+public abstract class RdfDataPodBase
 	implements RdfDataPod
 {
 	protected RDFConnection activeConnection = null;
@@ -42,7 +42,7 @@ public abstract class RdfDataObjectBase
 			@Override
 			public void close() {
 				// Prevent from e.g. running this while e.g. DataObject.close() is called
-				synchronized(RdfDataObjectBase.this) {
+				synchronized(RdfDataPodBase.this) {
 					activeConnection = null;
 				}
 				super.close();

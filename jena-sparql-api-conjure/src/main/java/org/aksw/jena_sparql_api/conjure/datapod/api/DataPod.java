@@ -25,10 +25,10 @@ public interface DataPod
 	// <T> T hasAccessVia(Class<T> clazz, boolean allowDerived);
 	
 	/**
-	 * Indicate that the data object is no longer needed
+	 * Indicate that the data pod is no longer needed
 	 * 
 	 * 
-	 * DataObject x = factory.create(spec);
+	 * DataPod x = factory.create(spec);
 	 * x.release(); // Behavior depends on the used factory
 	 */
 }
