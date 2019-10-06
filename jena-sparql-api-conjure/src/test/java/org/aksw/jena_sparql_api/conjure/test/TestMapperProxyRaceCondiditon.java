@@ -13,9 +13,22 @@ import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.DataRefUrl;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.impl.ResourceImpl;
 import org.junit.Test;
 
 public class TestMapperProxyRaceCondiditon {
+	
+	/**
+	 * Test for ISSUE #30 where in a concurrent setting, Resource.getModel()
+	 * on a proxied resource would
+	 * occasionally return another resource's model. It is likely that any method call
+	 * via the mapper-proxy system is susceptible to getting wrongly forward. 
+	 * 
+	 * At present, a fix using synchronization is in place.
+	 * 
+	 * @throws InterruptedException
+	 * @throws ExecutionException
+	 */
 	@Test
 	public void Test() throws InterruptedException, ExecutionException {
 		

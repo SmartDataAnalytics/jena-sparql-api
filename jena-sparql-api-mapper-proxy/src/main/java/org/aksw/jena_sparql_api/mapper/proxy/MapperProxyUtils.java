@@ -1459,7 +1459,7 @@ public class MapperProxyUtils {
 
 			Enhancer enhancer = new Enhancer();
 			if(clazz.isInterface()) {
-				enhancer.setSuperclass(ResourceImpl.class);
+				enhancer.setSuperclass(ResourceProxyBase.class);
 				enhancer.setInterfaces(new Class<?>[] { clazz });
 			} else {
 				if(!Resource.class.isAssignableFrom(clazz)) {
