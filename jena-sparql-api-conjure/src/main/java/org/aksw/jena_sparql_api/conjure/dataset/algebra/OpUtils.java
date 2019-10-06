@@ -1,6 +1,7 @@
 package org.aksw.jena_sparql_api.conjure.dataset.algebra;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
@@ -17,7 +18,13 @@ import com.google.common.graph.Traverser;
 
 public class OpUtils {
 
-	public static Op copyWithSubstitution(Op op, Function<String, Op> varNameToSubst) {
+
+	public static Op copyWithSubstitution(Op op, Map<String, ? extends Op> varNameToSubst) {
+		Op result = copyWithSubstitution(op, varNameToSubst::get);
+		return result;
+	}
+	
+	public static Op copyWithSubstitution(Op op, Function<String, ? extends Op> varNameToSubst) {
 		RDFNode resourceCopy = op.inModel
 				(ModelFactory.createDefaultModel().add(op.getModel()));
 		
@@ -27,7 +34,7 @@ public class OpUtils {
 		return result;
 	}
 
-	public static Op substituteVars(Op op, Function<String, Op> varNameToSubst) {
+	public static Op substituteVars(Op op, Function<String, ? extends Op> varNameToSubst) {
 		Set<OpVar> vars = Streams.stream(Traverser.forTree(Op::getChildren).depthFirstPostOrder(op))
 			.filter(x -> x instanceof OpVar)
 			.map(x -> x.as(OpVar.class))
