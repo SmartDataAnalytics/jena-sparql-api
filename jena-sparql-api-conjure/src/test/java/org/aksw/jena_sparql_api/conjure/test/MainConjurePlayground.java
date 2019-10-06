@@ -8,7 +8,7 @@ import java.util.Map;
 import java.util.function.Function;
 
 import org.aksw.jena_sparql_api.common.DefaultPrefixes;
-import org.aksw.jena_sparql_api.conjure.dataobject.api.RdfDataObject;
+import org.aksw.jena_sparql_api.conjure.datapod.api.RdfDataPod;
 import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.DataRef;
 import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.DataRefOp;
 import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.DataRefSparqlEndpoint;
@@ -146,7 +146,7 @@ public class MainConjurePlayground {
 		// Turns out both data catalogs have quality issues ;)
 		List<String> urls;
 //		try(RdfDataObject catalog = DataObjects.fromSparqlEndpoint("https://databus.dbpedia.org/repo/sparql", null, null)) {			
-		try(RdfDataObject catalog = basicWorkflow.accept(executor)) {			
+		try(RdfDataPod catalog = basicWorkflow.accept(executor)) {			
 			try(RDFConnection conn = catalog.openConnection()) {
 				urls = SparqlRx.execSelect(conn,
 //						"SELECT DISTINCT ?o { ?s <http://www.w3.org/ns/dcat#downloadURL> ?o } LIMIT 10")
@@ -176,7 +176,7 @@ public class MainConjurePlayground {
 			logger.info("Conjure spec is:");
 			RDFDataMgr.write(System.err, effectiveWorkflow.getModel(), RDFFormat.TURTLE_PRETTY);
 			
-			try(RdfDataObject data = effectiveWorkflow.accept(executor)) {
+			try(RdfDataPod data = effectiveWorkflow.accept(executor)) {
 				try(RDFConnection conn = data.openConnection()) {
 					// Print out the data that is the process result
 					Model model = conn.queryConstruct("CONSTRUCT WHERE { ?s ?p ?o }");

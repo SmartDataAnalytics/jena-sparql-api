@@ -1,6 +1,16 @@
-package org.aksw.jena_sparql_api.conjure.dataobject.api;
+package org.aksw.jena_sparql_api.conjure.datapod.api;
 
-public interface DataObject
+
+/**
+ * A DataPod represents a specific digital copy of a dataset
+ * and acts as the provider for means of access to it.
+ *
+ * Technically, a DataPod is a possibly mutable logical view over a (sub set of a) database system
+ * 
+ * @author raven
+ *
+ */
+public interface DataPod
 	extends AutoCloseable
 {
 	/**

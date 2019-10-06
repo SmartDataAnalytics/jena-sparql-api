@@ -1,10 +1,10 @@
-package org.aksw.jena_sparql_api.conjure.dataobject.impl;
+package org.aksw.jena_sparql_api.conjure.datapod.impl;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Arrays;
 
-import org.aksw.jena_sparql_api.conjure.dataobject.api.RdfDataObject;
+import org.aksw.jena_sparql_api.conjure.datapod.api.RdfDataPod;
 import org.aksw.jena_sparql_api.conjure.dataref.core.api.PlainDataRefUrl;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpVisitor;
 import org.aksw.jena_sparql_api.http.repository.api.HttpResourceRepositoryFromFileSystem;
@@ -23,7 +23,7 @@ public class DataObjectFactoryAdvancedImpl
 	protected HttpResourceRepositoryFromFileSystem repo;
 
 	public DataObjectFactoryAdvancedImpl(
-			OpVisitor<? extends RdfDataObject> opExecutor,
+			OpVisitor<? extends RdfDataPod> opExecutor,
 			HttpResourceRepositoryFromFileSystem repo) {
 		super(opExecutor);
 
@@ -31,10 +31,10 @@ public class DataObjectFactoryAdvancedImpl
 	}
 
 	@Override
-	public RdfDataObject visit(PlainDataRefUrl dataRef) {
+	public RdfDataPod visit(PlainDataRefUrl dataRef) {
 		String url = dataRef.getDataRefUrl();
 
-		RdfDataObject r;
+		RdfDataPod r;
 
 		// HACK - http url checking should be done in the repository!
 		if(url.startsWith("http://") || url.startsWith("https://")) {

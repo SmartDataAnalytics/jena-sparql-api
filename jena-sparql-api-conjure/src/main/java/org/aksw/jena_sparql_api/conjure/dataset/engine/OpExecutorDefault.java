@@ -3,8 +3,8 @@ package org.aksw.jena_sparql_api.conjure.dataset.engine;
 import java.util.Collection;
 import java.util.List;
 
-import org.aksw.jena_sparql_api.conjure.dataobject.api.RdfDataObject;
-import org.aksw.jena_sparql_api.conjure.dataobject.impl.DataObjects;
+import org.aksw.jena_sparql_api.conjure.datapod.api.RdfDataPod;
+import org.aksw.jena_sparql_api.conjure.datapod.impl.DataObjects;
 import org.aksw.jena_sparql_api.conjure.dataref.core.api.PlainDataRef;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.Op;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpConstruct;
@@ -21,7 +21,7 @@ import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdfconnection.RDFConnection;
 
 public class OpExecutorDefault
-	implements OpVisitor<RdfDataObject>
+	implements OpVisitor<RdfDataPod>
 {
 //	protected DataObjectRdfVisitor<RDFConnection> DataObjectRdfToConnection;
 
@@ -33,26 +33,26 @@ public class OpExecutorDefault
 	}
 
 	@Override
-	public RdfDataObject visit(OpDataRefResource op) {
+	public RdfDataPod visit(OpDataRefResource op) {
 		PlainDataRef dataRef = op.getDataRef();
-		RdfDataObject result = DataObjects.fromDataRef(dataRef, repo, this);
+		RdfDataPod result = DataObjects.fromDataRef(dataRef, repo, this);
 		return result;
 	}
 
 	@Override
-	public RdfDataObject visit(OpData op) {
+	public RdfDataPod visit(OpData op) {
 		Object data = null; // TODO op.getData();
-		RdfDataObject result = DataObjects.fromData(data);
+		RdfDataPod result = DataObjects.fromData(data);
 		return result;
 	}
 
 
 	@Override
-	public RdfDataObject visit(OpConstruct op) {
-		RdfDataObject result;
+	public RdfDataPod visit(OpConstruct op) {
+		RdfDataPod result;
 		
 		Op subOp = op.getSubOp();
-		try(RdfDataObject subDataObject = subOp.accept(this)) {
+		try(RdfDataPod subDataObject = subOp.accept(this)) {
 			try(RDFConnection conn = subDataObject.openConnection()) {
 				
 				Collection<String> queryStrs = op.getQueryStrings();
@@ -73,9 +73,9 @@ public class OpExecutorDefault
 	}
 
 	@Override
-	public RdfDataObject visit(OpUpdateRequest op) {
+	public RdfDataPod visit(OpUpdateRequest op) {
 		Op subOp = op.getSubOp();		
-		RdfDataObject subDataObject = subOp.accept(this);
+		RdfDataPod subDataObject = subOp.accept(this);
 		try(RDFConnection conn = subDataObject.openConnection()) {
 
 			for(String updateRequestStr : op.getUpdateRequests()) {
@@ -87,12 +87,12 @@ public class OpExecutorDefault
 	}
 
 	@Override
-	public RdfDataObject visit(OpUnion op) {
+	public RdfDataPod visit(OpUnion op) {
 		List<Op> subOps = op.getSubOps();
 		
 		Model model = ModelFactory.createDefaultModel();
 		for(Op subOp : subOps) {
-			try(RdfDataObject subDataObject = subOp.accept(this)) {
+			try(RdfDataPod subDataObject = subOp.accept(this)) {
 				try(RDFConnection conn = subDataObject.openConnection()) {
 					Model contribModel = conn.queryConstruct("CONSTRUCT WHERE { ?s ?p ?o }");
 					model.add(contribModel);				
@@ -102,17 +102,17 @@ public class OpExecutorDefault
 			}
 		}
 		
-		RdfDataObject result = DataObjects.fromModel(model);
+		RdfDataPod result = DataObjects.fromModel(model);
 		return result;
 	}
 
 	@Override
-	public RdfDataObject visit(OpPersist op) {
+	public RdfDataPod visit(OpPersist op) {
 		throw new RuntimeException("not implemented yet");
 	}
 
 	@Override
-	public RdfDataObject visit(OpVar op) {
+	public RdfDataPod visit(OpVar op) {
 		throw new RuntimeException("no handler for variables");
 	}
 

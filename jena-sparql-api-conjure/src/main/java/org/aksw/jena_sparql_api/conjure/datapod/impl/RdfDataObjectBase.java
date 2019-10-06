@@ -1,11 +1,11 @@
-package org.aksw.jena_sparql_api.conjure.dataobject.impl;
+package org.aksw.jena_sparql_api.conjure.datapod.impl;
 
-import org.aksw.jena_sparql_api.conjure.dataobject.api.RdfDataObject;
+import org.aksw.jena_sparql_api.conjure.datapod.api.RdfDataPod;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionWrapper;
 
 public abstract class RdfDataObjectBase
-	implements RdfDataObject
+	implements RdfDataPod
 {
 	protected RDFConnection activeConnection = null;
 	protected boolean isClosed = false;
