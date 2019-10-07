@@ -1,34 +1,53 @@
 package org.aksw.jena_sparql_api.conjure.utils;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.nio.channels.FileChannel;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Iterator;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
+import java.util.stream.Stream;
 
+import org.aksw.jena_sparql_api.common.DefaultPrefixes;
+import org.aksw.jena_sparql_api.stmt.SparqlStmt;
+import org.aksw.jena_sparql_api.stmt.SparqlStmtParserImpl;
 import org.aksw.jena_sparql_api.utils.ExtendedIteratorClosable;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.graph.impl.GraphBase;
+import org.apache.jena.query.QueryExecution;
+import org.apache.jena.query.QueryExecutionFactory;
+import org.apache.jena.query.ResultSetFormatter;
+import org.apache.jena.query.Syntax;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
-import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.riot.Lang;
+import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.lang.LangNTriples;
 import org.apache.jena.riot.system.ParserProfile;
 import org.apache.jena.riot.system.RiotLib;
 import org.apache.jena.riot.tokens.Tokenizer;
 import org.apache.jena.riot.tokens.TokenizerFactory;
+import org.apache.jena.sys.JenaSystem;
 import org.apache.jena.util.iterator.ExtendedIterator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.common.base.Stopwatch;
+import com.google.common.collect.Streams;
 
 public class GraphFromFileSystem extends GraphBase {
+	private static final Logger logger = LoggerFactory.getLogger(GraphFromFileSystem.class);
+	
 	protected Path path;
-
+	
 	public GraphFromFileSystem(Path path) {
 		super();
 		this.path = path;
@@ -42,7 +61,7 @@ public class GraphFromFileSystem extends GraphBase {
 			LangNTriples parser = new LangNTriples(tokenizer, profile, null);
 			result = parser.next();
 		} catch(Exception e) {
-			throw new RuntimeException(e);
+			throw new RuntimeException("Error parsing '" + str + "'", e);
 		}
 		
 		return result;
@@ -62,17 +81,40 @@ public class GraphFromFileSystem extends GraphBase {
 			prefix = "";
 		} else if(s.isBlank()) {
 			prefix = "_:";
-		} else {
+		} else if(s.isURI() ){
 			prefix = "<" + s.getURI() + ">";
+		} else {
+			// Literal in subject position - skip
+			prefix = null;
 		}
 //		System.out.println("Prefix: " + prefix);
+		System.out.println("Sorted ntriple lookup with prefix: " + prefix);
 
-		Iterator<Triple> itTriples = searcher.search(prefix)
-//			.peek(System.out::println)
-			.map(GraphFromFileSystem::parseNtripleString)
-			.filter(triplePattern::matches)
-			.iterator();
+//		prefix = null;
+		InputStream in = searcher.search(prefix);
+//		System.out.println(IOUtils.toString(in));
+
+		//BufferedReader br = new BufferedReader(new InputStreamReader(Files.newInputStream(path)));
+		BufferedReader br = new BufferedReader(new InputStreamReader(in));
+		int lines = 0;
+		while(br.readLine() != null) {
+			++ lines;
+		}
+		System.out.println("Lines: " + lines);
+
+//		System.out.println("Lines: " + Files.lines(path).filter(line -> line.startsWith("<http")).count());
 		
+		
+
+		Stream<Triple> baseStream = Streams.stream(
+				RDFDataMgr.createIteratorTriples(in, Lang.NTRIPLES, "http://www.example.org/"));
+		
+		int i[] = {0};
+		Iterator<Triple> itTriples = baseStream
+			.peek(x -> { int v = i[0]++; if(v % 30000 == 0) { System.out.println(v); }})
+//			.map(x -> new Triple(RDF.Nodes.type, RDF.Nodes.type, RDF.Nodes.type))
+			.iterator();
+				
 		result = ExtendedIteratorClosable.create(itTriples, () -> {
 			searcher.close();
 			channel.close();
@@ -99,24 +141,52 @@ public class GraphFromFileSystem extends GraphBase {
 	
 	public static void main(String[] args) {
 		
+		JenaSystem.init();	
+		Function<String, SparqlStmt> parser = SparqlStmtParserImpl.create(Syntax.syntaxARQ, DefaultPrefixes.prefixes, false);
+
+//		Path path = Paths.get("/home/raven/Projects/Data/LSQ/wtf100k.nt");		
 		Path path = Paths.get("/home/raven/Projects/Data/LSQ/deleteme.sorted.nt");
+
+//		Path path = Paths.get("/home/raven/Projects/Data/LSQ/wtf.sorted.nt");
 		Graph graph = GraphFromFileSystem.createGraphFromSortedNtriples(path);
 		
 		Model m = ModelFactory.createModelForGraph(graph);
 
-		//Set<Resource> res = Streams.stream(m.listSubjects()).limit(1000).collect(Collectors.toSet());
+		String queryStr;
+		//queryStr = "SELECT * { ?s ?p ?o . ?o ?x ?y } LIMIT 100 OFFSET 100";
+//		queryStr = "SELECT * { <http://lsq.aksw.org/res/swdf> ?p ?o } LIMIT 10";
 		
-		Collection<Resource> res = Arrays.asList(
-				m.createResource("http://lsq.aksw.org/res/re-swdf-q-6ffab076-8ab0c230a859bbe3-02014-52-27_03:52:43")
-		);
-
-		for(Resource r: res) {
-			System.out.println(r);
-			for(Statement stmt : r.listProperties().toList()) {
-				System.out.println("  " + stmt);
-			}
-//			System.out.println(r + ": " + r.listProperties().toSet().size());
+		
+		queryStr = parser.apply("SELECT *\n" + 
+	    		"           {\n" + 
+	    		"             # TODO Allocate some URI based on the dataset id\n" + 
+	    		"             BIND(BNODE() AS ?report)\n" + 
+	    		"             { SELECT ?p (COUNT(*) AS ?numTriples) (COUNT(DISTINCT ?s) AS ?numUniqS) (COUNT(DISTINCT ?o) AS ?numUniqO) {\n" + 
+	    		"               ?s ?p ?o\n" + 
+	    		"             } GROUP BY ?p }\n" + 
+	    		"           }").toString();
+		
+		Stopwatch stopwatch = Stopwatch.createStarted();
+		try(QueryExecution qe = QueryExecutionFactory.create(queryStr, m)) {
+			System.out.println(ResultSetFormatter.asText(qe.execSelect()));
 		}
+	    System.out.println("Processed items in " + (stopwatch.stop().elapsed(TimeUnit.MILLISECONDS) * 0.001) + " seconds");
+
+		
+		
+		//Set<Resource> res = Streams.stream(m.listSubjects()).limit(1000).collect(Collectors.toSet());
+//		
+//		Collection<Resource> res = Arrays.asList(
+//				m.createResource("http://lsq.aksw.org/res/re-swdf-q-6ffab076-8ab0c230a859bbe3-02014-52-27_03:52:43")
+//		);
+//
+//		for(Resource r: res) {
+//			System.out.println(r);
+//			for(Statement stmt : r.listProperties().toList()) {
+//				System.out.println("  " + stmt);
+//			}
+////			System.out.println(r + ": " + r.listProperties().toSet().size());
+//		}
 		
 	}
 

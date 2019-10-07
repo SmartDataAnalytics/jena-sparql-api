@@ -1,9 +1,14 @@
 package org.aksw.jena_sparql_api.conjure.utils;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
+import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
+import java.nio.channels.ReadableByteChannel;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -27,7 +32,7 @@ import com.google.common.primitives.Ints;
 public class BinarySearchForSortedFiles
 	implements AutoCloseable
 {
-	int pageSize = 4096;
+	int pageSize = 8192;
 	byte delimiter = (byte)'\n';
 	
 	// Note sure whether we need a cache or whether the OS does it
@@ -49,13 +54,238 @@ public class BinarySearchForSortedFiles
 		pageCache.invalidateAll();
 	}
 	
-	public Stream<String> search(String prefix) {
+	public Stream<String> searchSlow(String prefix) {
 		Stream<String> result;
 		try {
 			result = searchCore(prefix);
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
+		return result;
+	}
+	
+	class State {
+		long size;
+		long firstPos;
+		long matchDelimPos;
+		byte[] prefixBytes;
+	}
+	
+	public long nextKnownDelimPos(long currentDelimPos, State state) throws IOException, ExecutionException {
+
+		boolean hasExceededEnd = currentDelimPos + 1 >= state.size;						
+		long result;
+		if(hasExceededEnd) {
+			result = Long.MIN_VALUE;
+		} else if(currentDelimPos < state.matchDelimPos) {
+			result = state.matchDelimPos;
+		} else {
+			int prefixLength = state.prefixBytes.length;
+			if(prefixLength == 0 || compareToPrefix(currentDelimPos + 1, state.prefixBytes) == 0) {
+				result = findFollowingDelimiter(currentDelimPos + prefixLength + state.prefixBytes.length + 1, delimiter);
+			} else {
+				result = Long.MIN_VALUE;
+			}
+		}
+					
+		return result;
+	}
+	
+	class MyReadableByteChannel
+		implements ReadableByteChannel {
+
+		protected boolean isOpen;
+		
+		protected State state;
+		protected long currentPos;
+		protected long nextKnownDelimPos;
+		
+		public MyReadableByteChannel(State state) {
+			this.isOpen = true;
+			this.state = state;
+
+			this.currentPos = Math.max(state.firstPos, 0);
+			this.nextKnownDelimPos = currentPos;
+
+		}
+		
+		@Override
+		public int read(ByteBuffer dst) throws IOException {
+
+			int result = 0;
+
+			while(true) {
+				int wanted = dst.remaining();
+				
+				if(wanted == 0) {
+					break;
+				}
+
+				long currentPage = getPageForPos(currentPos);
+				int currentIndex = getIndexForPos(currentPos);
+
+				// Check whether we can forward the current page as is, or
+				// whether we need to cut it short
+				long nextKnownPage;
+				long checkPos;
+	
+				long satisfied = 0; // number of bytes we can satisfy of the request using nextKnownDelimPos
+	
+				do {
+					try {
+						checkPos = nextKnownDelimPos(nextKnownDelimPos, state);
+					} catch (IOException | ExecutionException e) {
+						throw new RuntimeException(e);
+					}
+					if(checkPos == Long.MIN_VALUE) {
+						break;
+					}
+					nextKnownDelimPos = checkPos;
+					nextKnownPage = getPageForPos(nextKnownDelimPos);
+					satisfied = nextKnownDelimPos - currentPos;
+				} while(currentPage == nextKnownPage && satisfied < wanted);
+	
+				MappedByteBuffer rawBuf = getBufferForPageUnsafe(currentPage, true);
+				ByteBuffer buffer = rawBuf.duplicate();
+
+				int available = buffer.remaining() - currentIndex;
+				int n = Math.min(available, wanted);
+
+				if(n == 0) {
+					// If we were not able to obtain result bytes, we have reached the
+					// end of the stream
+					if(result == 0) {
+						result = -1;
+					}
+					break;
+				}
+
+
+				buffer.position(currentIndex);
+				buffer.limit(currentIndex + n);
+
+				dst.put(buffer);
+
+				result += n;
+				currentPos += n;
+			}
+			
+			return result;
+		}
+	
+		@Override
+		public boolean isOpen() {
+			return isOpen;
+		}
+	
+		@Override
+		public void close() throws IOException {
+			isOpen = false;
+		}		
+	}
+
+	public InputStream newInputStream(State state) {
+		ReadableByteChannel channel = new MyReadableByteChannel(state);
+		InputStream result = Channels.newInputStream(channel);
+
+		return result;
+	}
+
+	//public InputStream newInputStream(long start, long end) {
+	public InputStream newInputStreamOld(State state) {
+		ReadableByteChannelSimple byteChannel[] = {null}; 
+
+		Thread thread = new Thread(() -> {
+			long currentPos = Math.max(state.firstPos, 0);
+			int currentIndex = getIndexForPos(currentPos);
+			long nextKnownDelimPos = currentPos;
+
+			while(!Thread.interrupted()) {
+				long currentPage = getPageForPos(currentPos);
+				
+				// Check whether we can forward the current page as is, or
+				// whether we need to cut it short
+				long nextKnownPage;
+				long checkPos;
+
+				do {
+					try {
+						checkPos = nextKnownDelimPos(nextKnownDelimPos, state);
+					} catch (IOException | ExecutionException e) {
+						throw new RuntimeException(e);
+					}
+					if(checkPos == Long.MIN_VALUE) {
+						break;
+					}
+					nextKnownDelimPos = checkPos;
+					nextKnownPage = getPageForPos(nextKnownDelimPos);
+				} while(currentPage == nextKnownPage);
+
+				MappedByteBuffer rawBuf = getBufferForPageUnsafe(currentPage, true);
+				ByteBuffer buffer = rawBuf.duplicate();
+
+				int available = buffer.remaining() - currentIndex;
+				int wanted = Ints.saturatedCast(nextKnownDelimPos - currentPos);
+				if(wanted == 0) {
+					byteChannel[0].complete();
+					break;
+				}
+				
+				int n = Math.min(available, wanted);
+
+				buffer.position(currentIndex);
+				buffer.limit(currentIndex + n);
+
+				byteChannel[0].put(buffer);
+
+				currentPos += n;
+				currentIndex = 0;
+			}
+		});
+		
+		byteChannel[0] = new ReadableByteChannelSimple(() -> thread.interrupt());
+
+		thread.start();
+		
+		
+		InputStream result = Channels.newInputStream(byteChannel[0]);
+		return result;
+	}
+
+	public InputStream search(String prefix) {
+		try {
+			return prefix == null ? new ByteArrayInputStream(new byte[0]) : searchCore2(prefix);
+		} catch (IOException | ExecutionException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	public InputStream searchCore2(String prefix) throws IOException, ExecutionException {
+		long size = channel.size();
+
+		byte[] prefixBytes = prefix.getBytes();
+		
+		// -1 is the position of the delimiter before the file start
+		// jump to the beginning of the file if the prefix is empty
+		long matchDelimPos = prefixBytes.length == 0
+			? -1
+			: binarySearch(-1, size, prefixBytes);
+		
+		InputStream result;
+		if(matchDelimPos != Long.MIN_VALUE) {
+			long posOfFirstMatch = getPosOfFirstMatch(matchDelimPos, prefixBytes);
+
+			State state = new State();
+			state.size = size;
+			state.matchDelimPos = matchDelimPos;
+			state.firstPos = posOfFirstMatch;
+			state.prefixBytes = prefixBytes;
+
+			result = newInputStream(state);
+		} else {
+			result = new ByteArrayInputStream(new byte[0]);
+		}
+		
 		return result;
 	}
 	
@@ -73,41 +303,15 @@ public class BinarySearchForSortedFiles
 		Stream<String> result;
 		
 		if(matchDelimPos != Long.MIN_VALUE) {
-			long tmp[] = { getPosOfFirstMatch(matchDelimPos, prefixBytes) };
+			long posOfFirstMatch = getPosOfFirstMatch(matchDelimPos, prefixBytes);
 
-			Supplier<String> nextLineSupp = () -> {
-				try {
-					long currentDelimPos = tmp[0];
-					
-					boolean exceededEnd = currentDelimPos >= size;
-					boolean isValidLine = exceededEnd
-							? false
-							// Lines not at the end must start with the prefix
-							: currentDelimPos <= matchDelimPos // Do not recheck lines before the binary search location
-								? true
-								: compareToPrefix(currentDelimPos + 1, prefixBytes) == 0;
-	
-					String r;
-					if(isValidLine) {
-						long endPos = findFollowingDelimiter(currentDelimPos + 1, delimiter);
-						int len = Ints.checkedCast(endPos - currentDelimPos);
-
-						// Cut off the delimiter if we are not at the end
-						if(endPos != size) {
-							--len; 
-						}
-//						System.err.println("Endpos: " + endPos + " size: " + size + " len: " + len + " sum: " + (currentDelimPos + 1 + len));
-						r = readString(currentDelimPos + 1, len);
-						tmp[0] = endPos;
-					} else {
-						r = null;
-					}
-					
-					return r;
-				} catch(Exception e) {
-					throw new RuntimeException(e);
-				}
-			};
+			State state = new State();
+			state.size = size;
+			state.matchDelimPos = matchDelimPos;
+			state.firstPos = posOfFirstMatch;
+			state.prefixBytes = prefixBytes;
+			
+			Supplier<String> nextLineSupp = () -> nextMatchingString(state);
 
 			Iterator<String> it = new AbstractIterator<String>() {
 				@Override
@@ -124,6 +328,46 @@ public class BinarySearchForSortedFiles
 		}
 		
 		return result;
+	}
+
+	private String nextMatchingString(State state) {
+		long tmp[] = { state.firstPos };
+
+		try {
+			long currentDelimPos = tmp[0];
+			
+			boolean exceededEnd = currentDelimPos + 1 >= state.size;
+
+			int prefixLength = state.prefixBytes.length;
+			boolean isValidLine = exceededEnd
+					? false
+					// Lines not at the end must start with the prefix
+					: currentDelimPos <= state.matchDelimPos // Do not recheck lines before the binary search location
+						? true
+						: prefixLength == 0
+							? true
+							: compareToPrefix(currentDelimPos + 1, state.prefixBytes) == 0;
+
+			String r;
+			if(isValidLine) {
+				long endPos = findFollowingDelimiter(currentDelimPos + prefixLength + 1, delimiter);
+				int len = Ints.checkedCast(endPos - currentDelimPos);
+
+				// Cut off the delimiter if we are not at the end
+				if(endPos != state.size) {
+					--len; 
+				}
+//						System.err.println("Endpos: " + endPos + " size: " + size + " len: " + len + " sum: " + (currentDelimPos + 1 + len));
+				r = readString(currentDelimPos + 1, len);
+				tmp[0] = endPos;
+			} else {
+				r = null;
+			}
+			
+			return r;
+		} catch(Exception e) {
+			throw new RuntimeException(e);
+		}
 	}
 		
 		//System.out.println(matchPos);
@@ -199,8 +443,18 @@ public class BinarySearchForSortedFiles
 		
 		return result;
 	}
-	
-	public MappedByteBuffer getBufferForPage(long page) throws IOException, ExecutionException {
+
+	public MappedByteBuffer getBufferForPageUnsafe(long page, boolean useCache)  {
+		MappedByteBuffer result;
+		try {
+			result = getBufferForPage(page, useCache);
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+		return result;
+	}
+
+	public MappedByteBuffer getBufferForPage(long page, boolean useCache) throws IOException, ExecutionException {
 		long eof = channel.size();
 
         long start = page * pageSize;
@@ -209,7 +463,9 @@ public class BinarySearchForSortedFiles
         
         MappedByteBuffer result = length <= 0
         		? null
-        		: pageCache.get(page, () -> channel.map(MapMode.READ_ONLY, start, length));
+        		: useCache
+        			? pageCache.get(page, () -> channel.map(MapMode.READ_ONLY, start, length))
+        			: channel.map(MapMode.READ_ONLY, start, length);
         return result;
 
 	}
@@ -226,7 +482,7 @@ public class BinarySearchForSortedFiles
 	
 	public MappedByteBuffer getBufferForPos(long pos) throws IOException, ExecutionException {
         long page = getPageForPos(pos);
-        MappedByteBuffer result = getBufferForPage(page);
+        MappedByteBuffer result = getBufferForPage(page, true);
 		return result;
 	}
 	
@@ -241,7 +497,7 @@ public class BinarySearchForSortedFiles
 		
 		int result = 0;
 		MappedByteBuffer buffer;
-		outer: for(long p = page; (buffer = getBufferForPage(p)) != null && x < n; ++p) {
+		outer: for(long p = page; x < n && (buffer = getBufferForPage(p, true)) != null; ++p) {
 			int r = buffer.remaining();
 			for(int i = index; i < r && x < n; ++i, ++x) {
 				byte a = buffer.get(i);
@@ -271,7 +527,7 @@ public class BinarySearchForSortedFiles
 		
 		int x = 0;
 		MappedByteBuffer buffer;
-		for(long p = page; (buffer = getBufferForPage(p)) != null && x < n; ++p) {
+		for(long p = page; (buffer = getBufferForPage(p, true)) != null && x < n; ++p) {
 			int r = buffer.remaining();
 			for(int i = index; i < r && x < n; ++i, ++x) {
 				byte b = buffer.get(i);
@@ -295,7 +551,7 @@ public class BinarySearchForSortedFiles
 		List<Byte> list = new ArrayList<Byte>();
 		
 		MappedByteBuffer buffer;
-		outer: for(long p = page; (buffer = getBufferForPage(p)) != null; ++p) {
+		outer: for(long p = page; (buffer = getBufferForPage(p, true)) != null; ++p) {
 			int r = buffer.remaining();
 			for(int i = index; i < r; ++i) {
 				byte a = buffer.get(i);
@@ -324,7 +580,7 @@ public class BinarySearchForSortedFiles
 		MappedByteBuffer buffer;
 		long p;
 		int i = index;
-		outer: for(p = page; (buffer = getBufferForPage(p)) != null; ++p) {
+		outer: for(p = page; (buffer = getBufferForPage(p, true)) != null; ++p) {
 			int r = buffer.remaining();
 			for(i = index; i < r; ++i) {
 				byte a = buffer.get(i);
@@ -348,7 +604,7 @@ public class BinarySearchForSortedFiles
 		long p;
         int i = index;
         outer: for(p = page; p >=0; --p) {
-            MappedByteBuffer buffer = getBufferForPage(p);
+            MappedByteBuffer buffer = getBufferForPage(p, true);
 
 	        for(i = index; i >= 0; --i) {
 	            byte c = buffer.get(i);
