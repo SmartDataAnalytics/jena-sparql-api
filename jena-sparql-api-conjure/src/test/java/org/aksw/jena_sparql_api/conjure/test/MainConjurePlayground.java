@@ -28,8 +28,7 @@ import org.aksw.jena_sparql_api.mapper.proxy.JenaPluginUtils;
 import org.aksw.jena_sparql_api.rx.SparqlRx;
 import org.aksw.jena_sparql_api.stmt.SparqlStmt;
 import org.aksw.jena_sparql_api.stmt.SparqlStmtParserImpl;
-import org.apache.jena.graph.Node;
-import org.apache.jena.graph.NodeFactory;
+import org.aksw.jena_sparql_api.utils.model.RDFNodeJsonUtils;
 import org.apache.jena.query.Syntax;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
@@ -41,6 +40,9 @@ import org.apache.jena.sys.JenaSystem;
 import org.apache.jena.util.ResourceUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 public class MainConjurePlayground {
 	private static final Logger logger = LoggerFactory.getLogger(MainConjurePlayground.class);
@@ -71,6 +73,12 @@ public class MainConjurePlayground {
 
 		Op anonymousConjureWorkflow = OpUnion.create(countPredicates, reportDate);
 		
+		Gson gson = new GsonBuilder().setPrettyPrinting().create();
+		String str = RDFNodeJsonUtils.toJsonNodeString(anonymousConjureWorkflow, gson);
+		System.out.println(str);
+		RDFNode tmp = RDFNodeJsonUtils.toRDFNode(str, gson);
+		
+		anonymousConjureWorkflow = JenaPluginUtils.polymorphicCast(tmp, Op.class);
 		
 		/* Example RDF output:
 
