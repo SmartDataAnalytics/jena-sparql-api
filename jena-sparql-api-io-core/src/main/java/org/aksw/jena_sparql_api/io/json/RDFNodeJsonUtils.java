@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.utils.model;
+package org.aksw.jena_sparql_api.io.json;
 
 import java.io.OutputStream;
 import java.util.Arrays;

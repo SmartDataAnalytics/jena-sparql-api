@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.conjure.utils;
+package org.aksw.jena_sparql_api.io.binseach;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -11,6 +11,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.aksw.commons.collections.collectors.CollectorUtils;
+import org.aksw.jena_sparql_api.conjure.utils.HttpHeaderUtils;
+import org.aksw.jena_sparql_api.conjure.utils.MapPair;
 import org.aksw.jena_sparql_api.http.domain.api.RdfEntityInfo;
 import org.apache.http.Header;
 import org.apache.http.HttpHeaders;

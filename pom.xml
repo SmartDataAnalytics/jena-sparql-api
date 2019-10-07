@@ -25,6 +25,8 @@
 
 		<module>jena-sparql-api-resources-sparqlqc</module>
 
+		<module>jena-sparql-api-io-core</module>
+
 		<module>jena-sparql-api-collections</module>
 		<!-- <module>jena-sparql-api-jgrapht</module> -->
 

@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.conjure.utils;
+package org.aksw.jena_sparql_api.io.binseach;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -42,12 +42,19 @@ import org.slf4j.LoggerFactory;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.Streams;
 
-public class GraphFromFileSystem extends GraphBase {
-	private static final Logger logger = LoggerFactory.getLogger(GraphFromFileSystem.class);
+/**
+ * 
+ * TODO Check whether Graph is the appropriate abstraction
+ * 
+ * @author raven
+ *
+ */
+public class GraphFromPrefixMatcher extends GraphBase {
+	private static final Logger logger = LoggerFactory.getLogger(GraphFromPrefixMatcher.class);
 	
 	protected Path path;
 	
-	public GraphFromFileSystem(Path path) {
+	public GraphFromPrefixMatcher(Path path) {
 		super();
 		this.path = path;
 	}
@@ -69,7 +76,7 @@ public class GraphFromFileSystem extends GraphBase {
 	protected ExtendedIterator<Triple> graphBaseFindCore(Triple triplePattern) throws Exception {
 		ExtendedIterator<Triple> result;
 		FileChannel channel = FileChannel.open(path, StandardOpenOption.READ);
-		BinarySearchForSortedFiles searcher = BinarySearchForSortedFiles.create(channel);
+		BinarySearchOverSortedFiles searcher = BinarySearchOverSortedFiles.create(channel);
 
 		// Construct the prefix from the subject
 		// Because whitespaces between subject and predicate may differ, do not include
@@ -135,7 +142,7 @@ public class GraphFromFileSystem extends GraphBase {
 	}
 
 	public static Graph createGraphFromSortedNtriples(Path path) {
-		Graph result = new GraphFromFileSystem(path);
+		Graph result = new GraphFromPrefixMatcher(path);
 		return result;
 	}
 
@@ -154,7 +161,7 @@ public class GraphFromFileSystem extends GraphBase {
 		Path path = Paths.get("/home/raven/Projects/Data/LSQ/deleteme.sorted.nt");
 
 //		Path path = Paths.get("/home/raven/Projects/Data/LSQ/wtf.sorted.nt");
-		Graph graph = GraphFromFileSystem.createGraphFromSortedNtriples(path);
+		Graph graph = GraphFromPrefixMatcher.createGraphFromSortedNtriples(path);
 		
 		Model m = ModelFactory.createModelForGraph(graph);
 

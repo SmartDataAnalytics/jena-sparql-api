@@ -26,7 +26,6 @@ import org.aksw.jena_sparql_api.conjure.entity.algebra.ResourceTreeUtils;
 import org.aksw.jena_sparql_api.conjure.entity.engine.OpExecutor;
 import org.aksw.jena_sparql_api.conjure.entity.engine.Planner;
 import org.aksw.jena_sparql_api.conjure.entity.utils.PathCoderRegistry;
-import org.aksw.jena_sparql_api.conjure.utils.ContentTypeUtils;
 import org.aksw.jena_sparql_api.conjure.utils.FileUtils;
 import org.aksw.jena_sparql_api.conjure.utils.HttpHeaderUtils;
 import org.aksw.jena_sparql_api.http.domain.api.RdfEntityInfo;
@@ -35,6 +34,7 @@ import org.aksw.jena_sparql_api.http.repository.api.HttpResourceRepositoryFromFi
 import org.aksw.jena_sparql_api.http.repository.api.RdfHttpEntityFile;
 import org.aksw.jena_sparql_api.http.repository.api.RdfHttpResourceFile;
 import org.aksw.jena_sparql_api.http.repository.api.ResourceStore;
+import org.aksw.jena_sparql_api.io.binseach.ContentTypeUtils;
 import org.aksw.jena_sparql_api.mapper.proxy.JenaPluginUtils;
 import org.aksw.jena_sparql_api.utils.turtle.TurtleWriterNoBase;
 import org.apache.http.Header;

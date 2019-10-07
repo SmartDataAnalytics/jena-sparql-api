@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.conjure.utils;
+package org.aksw.jena_sparql_api.io.binseach;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -12,7 +12,6 @@ import java.nio.channels.ReadableByteChannel;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
@@ -28,42 +27,60 @@ import com.google.common.primitives.Ints;
 /**
  * Binary search over sorted files with memory mapped IO
  * 
+ * TODO Move to a separate project as this is of general use
+ * TODO Allow cache to be shared between concurrent readers
+ * 
  * @author raven
  *
  */
-public class BinarySearchForSortedFiles
+public class BinarySearchOverSortedFiles
 	implements AutoCloseable
 {
-	// Small block sizes give bad performance
-	// scanning 10M triples without prefix gives me 8K: 12sec, 16M: 8sec
-	
-	//int pageSize = 8192;
-	
+	/**
+	 * Small block sizes give worse performance
+	 * 
+	 * Scanning 10M lines on Dell XPS13 9360 (I7) with empty string prefix gave me 8K: 12sec, 16M: 8sec
+	 */
 	int pageSize = 1024 * 1024 * 16;
 	protected byte delimiter = (byte)'\n';
 	
-	// Note sure whether we need a cache or whether the OS does it
-	// In any case, the cache should be cleared when done:
-	// https://stackoverflow.com/questions/25238110/how-to-properly-close-mappedbytebuffer?lq=1
+	/**
+	 * The cache is crucial to the implementation.
+	 * Setting its size to 0 will cause excessive allocation of pages and thus a timely
+	 * OutOfMemory error.
+	 * 
+	 */
 	protected Cache<Long, MappedByteBuffer> pageCache = CacheBuilder.newBuilder()
 			.expireAfterAccess(10, TimeUnit.SECONDS)
 			.maximumSize(64)
 			.build();
 	
 	protected FileChannel channel;
+
+	/**
+	 * We rely on the channel's size being constant.
+	 * A growing size should work, a shrinking one will cause exceptions.
+	 * 
+	 */
+	protected long channelSize;
 	
-	protected long size;
-	
-	public BinarySearchForSortedFiles(FileChannel channel, long size) {
+	public BinarySearchOverSortedFiles(FileChannel channel, long size) {
 		this.channel = channel;
-		this.size = size;
+		this.channelSize = size;
 	}
 	
-	public static BinarySearchForSortedFiles create(FileChannel channel) throws IOException {
+	public static BinarySearchOverSortedFiles create(FileChannel channel) throws IOException {
 		long size = channel.size();
-		return new BinarySearchForSortedFiles(channel, size);
+		return new BinarySearchOverSortedFiles(channel, size);
 	}
 	
+	/**
+	 * Remove all pages from the cache
+	 * It is recommended to not hold the system resources longer than necessary
+	 * Note, that JDK8 has no public facilities for releasing pages.
+	 * This solely relies on the GC
+	 * 
+	 */
 	@Override
 	public void close() throws Exception {
 		pageCache.invalidateAll();
@@ -86,7 +103,7 @@ public class BinarySearchForSortedFiles
 		byte[] prefixBytes;
 	}
 	
-	public long nextKnownDelimPos(long currentDelimPos, State state) throws IOException, ExecutionException {
+	public long nextKnownDelimPos(long currentDelimPos, State state) throws IOException {
 
 		long result;
 		if(currentDelimPos < state.matchDelimPos) {
@@ -105,7 +122,7 @@ public class BinarySearchForSortedFiles
 		return result;
 	}
 	
-	class MyReadableByteChannel
+	class ReadableByteChannelForLinesMatchingPrefix
 		implements ReadableByteChannel {
 
 		protected boolean isOpen;
@@ -114,7 +131,7 @@ public class BinarySearchForSortedFiles
 		protected long currentDelimPos;
 		protected long nextKnownDelimPos;
 		
-		public MyReadableByteChannel(State state) {
+		public ReadableByteChannelForLinesMatchingPrefix(State state) {
 			this.isOpen = true;
 			this.state = state;
 
@@ -148,7 +165,7 @@ public class BinarySearchForSortedFiles
 				do {
 					try {
 						checkPos = nextKnownDelimPos(nextKnownDelimPos, state);
-					} catch (IOException | ExecutionException e) {
+					} catch (IOException e) {
 						throw new RuntimeException(e);
 					}
 					if(checkPos == Long.MIN_VALUE) {
@@ -201,13 +218,19 @@ public class BinarySearchForSortedFiles
 	}
 
 	public InputStream newInputStream(State state) {
-		ReadableByteChannel channel = new MyReadableByteChannel(state);
+		ReadableByteChannel channel = new ReadableByteChannelForLinesMatchingPrefix(state);
 		InputStream result = Channels.newInputStream(channel);
 
 		return result;
 	}
 
 	//public InputStream newInputStream(long start, long end) {
+	/**
+	 * Implementation using a producer thread - kept for reference and subject for removal
+	 * 
+	 * @param state
+	 * @return
+	 */
 	public InputStream newInputStreamOld(State state) {
 		ReadableByteChannelSimple byteChannel[] = {null}; 
 
@@ -227,7 +250,7 @@ public class BinarySearchForSortedFiles
 				do {
 					try {
 						checkPos = nextKnownDelimPos(nextKnownDelimPos, state);
-					} catch (IOException | ExecutionException e) {
+					} catch (IOException e) {
 						throw new RuntimeException(e);
 					}
 					if(checkPos == Long.MIN_VALUE) {
@@ -268,15 +291,23 @@ public class BinarySearchForSortedFiles
 		return result;
 	}
 
+	/**
+	 * The high-level search method. The search result is an input stream
+	 * over the matching region. The binary search will only seek the offset of the region;
+	 * the end detection occurs on-the-fly when serving requested data. 
+	 * 
+	 * @param prefix
+	 * @return
+	 */
 	public InputStream search(String prefix) {
 		try {
 			return prefix == null ? new ByteArrayInputStream(new byte[0]) : searchCore2(prefix);
-		} catch (IOException | ExecutionException e) {
+		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
 	}
 
-	public InputStream searchCore2(String prefix) throws IOException, ExecutionException {
+	public InputStream searchCore2(String prefix) throws IOException {
 //		long size = channel.size();
 
 		byte[] prefixBytes = prefix.getBytes();
@@ -285,14 +316,14 @@ public class BinarySearchForSortedFiles
 		// jump to the beginning of the file if the prefix is empty
 		long matchDelimPos = prefixBytes.length == 0
 			? -1
-			: binarySearch(-1, size, prefixBytes);
+			: binarySearch(-1, channelSize, prefixBytes);
 		
 		InputStream result;
 		if(matchDelimPos != Long.MIN_VALUE) {
 			long posOfFirstMatch = getPosOfFirstMatch(matchDelimPos, prefixBytes);
 
 			State state = new State();
-			state.size = size;
+			state.size = channelSize;
 			state.matchDelimPos = matchDelimPos;
 			state.firstDelimPos = posOfFirstMatch;
 			state.prefixBytes = prefixBytes;
@@ -305,7 +336,7 @@ public class BinarySearchForSortedFiles
 		return result;
 	}
 	
-	public Stream<String> searchCore(String prefix) throws IOException, ExecutionException {
+	public Stream<String> searchCore(String prefix) throws IOException {
 //		long size = channel.size();
 
 		byte[] prefixBytes = prefix.getBytes();
@@ -314,7 +345,7 @@ public class BinarySearchForSortedFiles
 		// jump to the beginning of the file if the prefix is empty
 		long matchDelimPos = prefixBytes.length == 0
 			? -1
-			: binarySearch(-1, size, prefixBytes);
+			: binarySearch(-1, channelSize, prefixBytes);
 		
 		Stream<String> result;
 		
@@ -322,7 +353,7 @@ public class BinarySearchForSortedFiles
 			long posOfFirstMatch = getPosOfFirstMatch(matchDelimPos, prefixBytes);
 
 			State state = new State();
-			state.size = size;
+			state.size = channelSize;
 			state.matchDelimPos = matchDelimPos;
 			state.firstDelimPos = posOfFirstMatch;
 			state.prefixBytes = prefixBytes;
@@ -404,7 +435,7 @@ public class BinarySearchForSortedFiles
 //		
 //		System.out.println(comparePrefix(nlp + 1, "<http://lsq.aksw.org/res/q-4a68281e>".getBytes()));
 
-	public long binarySearch(long min, long max, byte[] prefix) throws IOException, ExecutionException {
+	public long binarySearch(long min, long max, byte[] prefix) throws IOException {
 		
 		long pos = (min + max) / 2;
 		long delimPos = findPrecedingDelimiter(pos, delimiter);
@@ -444,7 +475,7 @@ public class BinarySearchForSortedFiles
 	
 	// Pos should point to the delimiter
 	// the result will point to pos or a preceding delimiter
-	public long getPosOfFirstMatch(long pos, byte[] prefix) throws IOException, ExecutionException {
+	public long getPosOfFirstMatch(long pos, byte[] prefix) throws IOException {
 		long result = pos;
 		
 		while(result != -1) {
@@ -470,14 +501,19 @@ public class BinarySearchForSortedFiles
 		return result;
 	}
 
-	public MappedByteBuffer getBufferForPage(long page) throws IOException, ExecutionException {
+	public MappedByteBuffer getBufferForPage(long page) throws IOException {
         long start = page * pageSize;
-        long end = Math.min(size, start + pageSize);
+        long end = Math.min(channelSize, start + pageSize);
         long length = end - start;
         
-        MappedByteBuffer result = length <= 0
-        		? null
-        		: pageCache.get(page, () -> channel.map(MapMode.READ_ONLY, start, length));
+        MappedByteBuffer result;
+		try {
+			result = length <= 0
+					? null
+					: pageCache.get(page, () -> channel.map(MapMode.READ_ONLY, start, length));
+		} catch (ExecutionException e) {
+			throw new IOException(e);
+		}
 
         return result;
 
@@ -493,7 +529,7 @@ public class BinarySearchForSortedFiles
         return result;
 	}
 	
-	public MappedByteBuffer getBufferForPos(long pos) throws IOException, ExecutionException {
+	public MappedByteBuffer getBufferForPos(long pos) throws IOException {
         long page = getPageForPos(pos);
         MappedByteBuffer result = getBufferForPage(page);
 		return result;
@@ -501,7 +537,7 @@ public class BinarySearchForSortedFiles
 	
 	// Returns whether the bytes at pos are lower or higher than prefix
 	// with the respective results -1 and +1
-	public int compareToPrefix(long pos, byte[] prefix) throws IOException, ExecutionException {
+	public int compareToPrefix(long pos, byte[] prefix) throws IOException {
 		long page = getPageForPos(pos);
 		int index = getIndexForPos(pos);
 
@@ -528,7 +564,7 @@ public class BinarySearchForSortedFiles
 		return result;
 	}
 
-	public String readString(long pos, int n) throws IOException, ExecutionException {
+	public String readString(long pos, int n) throws IOException {
 		//long end = findFollowingDelimiter(pos, delimiter);
 
 		// TODO use this guava safe int feature
@@ -553,7 +589,7 @@ public class BinarySearchForSortedFiles
 		return result;
 	}
 
-	public String readLine(long pos, byte delimiter) throws IOException, ExecutionException {
+	public String readLine(long pos, byte delimiter) throws IOException {
 		long page = getPageForPos(pos);
 		int index = getIndexForPos(pos);
 
@@ -586,7 +622,7 @@ public class BinarySearchForSortedFiles
 
 
 	
-	public long findFollowingDelimiter(long pos, byte delimiter) throws IOException, ExecutionException {
+	public long findFollowingDelimiter(long pos, byte delimiter) throws IOException {
 		long page = getPageForPos(pos);
 		int index = getIndexForPos(pos);
 		
@@ -609,7 +645,7 @@ public class BinarySearchForSortedFiles
 	}
 	// returns pos if byteOf[pos] == delimiter
 	// returns -1 if there is none
-	public long findPrecedingDelimiter(long pos, byte delimiter) throws IOException, ExecutionException {
+	public long findPrecedingDelimiter(long pos, byte delimiter) throws IOException {
 
         long page = getPageForPos(pos);
 		int index = getIndexForPos(pos);
