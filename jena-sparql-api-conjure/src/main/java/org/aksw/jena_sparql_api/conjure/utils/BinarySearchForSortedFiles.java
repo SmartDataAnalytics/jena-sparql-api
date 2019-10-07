@@ -81,7 +81,7 @@ public class BinarySearchForSortedFiles
 	
 	class State {
 		long size;
-		long firstPos;
+		long firstDelimPos;
 		long matchDelimPos;
 		byte[] prefixBytes;
 	}
@@ -111,15 +111,15 @@ public class BinarySearchForSortedFiles
 		protected boolean isOpen;
 		
 		protected State state;
-		protected long currentPos;
+		protected long currentDelimPos;
 		protected long nextKnownDelimPos;
 		
 		public MyReadableByteChannel(State state) {
 			this.isOpen = true;
 			this.state = state;
 
-			this.currentPos = Math.max(state.firstPos, 0);
-			this.nextKnownDelimPos = currentPos;
+			this.currentDelimPos = state.firstDelimPos;//Math.max(state.firstPos, 0);
+			this.nextKnownDelimPos = currentDelimPos;
 
 		}
 		
@@ -135,8 +135,8 @@ public class BinarySearchForSortedFiles
 					break;
 				}
 
-				long currentPage = getPageForPos(currentPos);
-				int currentIndex = getIndexForPos(currentPos);
+				long currentPage = getPageForPos(currentDelimPos + 1);
+				int currentIndex = getIndexForPos(currentDelimPos + 1);
 
 				// Check whether we can forward the current page as is, or
 				// whether we need to cut it short
@@ -156,13 +156,15 @@ public class BinarySearchForSortedFiles
 					}
 					nextKnownDelimPos = checkPos;
 					nextKnownPage = getPageForPos(nextKnownDelimPos);
-					satisfied = nextKnownDelimPos - currentPos;
+					satisfied = nextKnownDelimPos - currentDelimPos;
 				} while(currentPage == nextKnownPage && satisfied < wanted);
 	
 				MappedByteBuffer rawBuf = getBufferForPageUnsafe(currentPage);
 				ByteBuffer buffer = rawBuf.duplicate();
 
-				int available = buffer.remaining() - currentIndex;
+				int availableInPage = buffer.remaining() - currentIndex;
+				int availableByNextKnownDelimPos = Ints.checkedCast(nextKnownDelimPos - currentDelimPos);
+				int available = Math.min(availableInPage, availableByNextKnownDelimPos);
 				int n = Math.min(available, wanted);
 
 				if(n == 0) {
@@ -181,7 +183,7 @@ public class BinarySearchForSortedFiles
 				dst.put(buffer);
 
 				result += n;
-				currentPos += n;
+				currentDelimPos += n;
 			}
 			
 			return result;
@@ -210,7 +212,7 @@ public class BinarySearchForSortedFiles
 		ReadableByteChannelSimple byteChannel[] = {null}; 
 
 		Thread thread = new Thread(() -> {
-			long currentPos = Math.max(state.firstPos, 0);
+			long currentPos = Math.max(state.firstDelimPos, 0);
 			int currentIndex = getIndexForPos(currentPos);
 			long nextKnownDelimPos = currentPos;
 
@@ -292,7 +294,7 @@ public class BinarySearchForSortedFiles
 			State state = new State();
 			state.size = size;
 			state.matchDelimPos = matchDelimPos;
-			state.firstPos = posOfFirstMatch;
+			state.firstDelimPos = posOfFirstMatch;
 			state.prefixBytes = prefixBytes;
 
 			result = newInputStream(state);
@@ -322,7 +324,7 @@ public class BinarySearchForSortedFiles
 			State state = new State();
 			state.size = size;
 			state.matchDelimPos = matchDelimPos;
-			state.firstPos = posOfFirstMatch;
+			state.firstDelimPos = posOfFirstMatch;
 			state.prefixBytes = prefixBytes;
 			
 			Supplier<String> nextLineSupp = () -> nextMatchingString(state);
@@ -345,7 +347,7 @@ public class BinarySearchForSortedFiles
 	}
 
 	private String nextMatchingString(State state) {
-		long tmp[] = { state.firstPos };
+		long tmp[] = { state.firstDelimPos };
 
 		try {
 			long currentDelimPos = tmp[0];

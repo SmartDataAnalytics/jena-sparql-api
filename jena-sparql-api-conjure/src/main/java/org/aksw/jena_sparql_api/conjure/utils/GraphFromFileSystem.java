@@ -110,7 +110,7 @@ public class GraphFromFileSystem extends GraphBase {
 		
 //		int i[] = {0};
 		Iterator<Triple> itTriples = baseStream
-			.peek(System.out::println)
+			//.peek(System.out::println)
 //			.peek(x -> { int v = i[0]++; if(v % 30000 == 0) { System.out.println(v); }})
 //			.map(x -> new Triple(RDF.Nodes.type, RDF.Nodes.type, RDF.Nodes.type))
 			.iterator();
@@ -163,12 +163,23 @@ public class GraphFromFileSystem extends GraphBase {
 		Iterator<String> itSubject = Files.lines(Paths.get("/home/raven/Projects/Data/LSQ/subjects.txt")).iterator();
 
 		Stopwatch stopwatch = Stopwatch.createStarted();
+		int i = 0;
 		while(itSubject.hasNext()) {
+			if(i % 100 == 0) {
+				System.out.println(i);
+			}
+			++i;
+			
 			String s = itSubject.next();
-			queryStr = "SELECT (COUNT(*) AS ?c) { " + s + " ?p ?o }";
-			System.out.println(queryStr);
+			queryStr = "SELECT * { " + s + " ?p ?o }";
+			//System.out.println(queryStr);
 			try(QueryExecution qe = QueryExecutionFactory.create(queryStr, m)) {
-				System.out.println(ResultSetFormatter.asText(qe.execSelect()));
+				long numResults = ResultSetFormatter.consume(qe.execSelect());
+				if(numResults > 0) {
+					int xxx = 5;
+				}
+				//System.out.println("Num results: " + numResults);
+				//System.out.println(ResultSetFormatter.asText(qe.execSelect()));
 			}
 		}
 	    System.out.println("Processed items in " + (stopwatch.stop().elapsed(TimeUnit.MILLISECONDS) * 0.001) + " seconds");
