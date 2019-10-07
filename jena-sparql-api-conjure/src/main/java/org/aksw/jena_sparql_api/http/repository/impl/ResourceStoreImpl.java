@@ -11,12 +11,12 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.aksw.jena_sparql_api.conjure.utils.ContentTypeUtils;
 import org.aksw.jena_sparql_api.http.domain.api.RdfEntityInfo;
 import org.aksw.jena_sparql_api.http.repository.api.PathAnnotatorRdf;
 import org.aksw.jena_sparql_api.http.repository.api.RdfHttpEntityFile;
 import org.aksw.jena_sparql_api.http.repository.api.RdfHttpResourceFile;
 import org.aksw.jena_sparql_api.http.repository.api.ResourceStore;
-import org.aksw.jena_sparql_api.io.binseach.ContentTypeUtils;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Property;
