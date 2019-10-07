@@ -1,11 +1,8 @@
 package org.aksw.jena_sparql_api.conjure.utils;
 
-import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.nio.channels.FileChannel;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
@@ -70,7 +67,7 @@ public class GraphFromFileSystem extends GraphBase {
 	protected ExtendedIterator<Triple> graphBaseFindCore(Triple triplePattern) throws Exception {
 		ExtendedIterator<Triple> result;
 		FileChannel channel = FileChannel.open(path, StandardOpenOption.READ);
-		BinarySearchForSortedFiles searcher = new BinarySearchForSortedFiles(channel);
+		BinarySearchForSortedFiles searcher = BinarySearchForSortedFiles.create(channel);
 
 		// Construct the prefix from the subject
 		// Because whitespaces between subject and predicate may differ, do not include
@@ -88,19 +85,19 @@ public class GraphFromFileSystem extends GraphBase {
 			prefix = null;
 		}
 //		System.out.println("Prefix: " + prefix);
-		System.out.println("Sorted ntriple lookup with prefix: " + prefix);
+//		System.out.println("Sorted ntriple lookup with prefix: " + prefix);
 
 //		prefix = null;
 		InputStream in = searcher.search(prefix);
 //		System.out.println(IOUtils.toString(in));
 
 		//BufferedReader br = new BufferedReader(new InputStreamReader(Files.newInputStream(path)));
-		BufferedReader br = new BufferedReader(new InputStreamReader(in));
-		int lines = 0;
-		while(br.readLine() != null) {
-			++ lines;
-		}
-		System.out.println("Lines: " + lines);
+//		BufferedReader br = new BufferedReader(new InputStreamReader(in));
+//		int lines = 0;
+//		while(br.readLine() != null) {
+//			++ lines;
+//		}
+//		System.out.println("Lines: " + lines);
 
 //		System.out.println("Lines: " + Files.lines(path).filter(line -> line.startsWith("<http")).count());
 		
@@ -109,9 +106,9 @@ public class GraphFromFileSystem extends GraphBase {
 		Stream<Triple> baseStream = Streams.stream(
 				RDFDataMgr.createIteratorTriples(in, Lang.NTRIPLES, "http://www.example.org/"));
 		
-		int i[] = {0};
+//		int i[] = {0};
 		Iterator<Triple> itTriples = baseStream
-			.peek(x -> { int v = i[0]++; if(v % 30000 == 0) { System.out.println(v); }})
+//			.peek(x -> { int v = i[0]++; if(v % 30000 == 0) { System.out.println(v); }})
 //			.map(x -> new Triple(RDF.Nodes.type, RDF.Nodes.type, RDF.Nodes.type))
 			.iterator();
 				
@@ -138,6 +135,12 @@ public class GraphFromFileSystem extends GraphBase {
 		Graph result = new GraphFromFileSystem(path);
 		return result;
 	}
+
+//	public static Graph createGraphFromSortedNtriples(Path path, int maxCacheSize, int bufferSize) {
+//		// TODO Properly pass these parameters to the search component
+//		Graph result = new GraphFromFileSystem(path);
+//		return result;
+//	}
 	
 	public static void main(String[] args) {
 		
@@ -152,10 +155,7 @@ public class GraphFromFileSystem extends GraphBase {
 		
 		Model m = ModelFactory.createModelForGraph(graph);
 
-		String queryStr;
-		//queryStr = "SELECT * { ?s ?p ?o . ?o ?x ?y } LIMIT 100 OFFSET 100";
-//		queryStr = "SELECT * { <http://lsq.aksw.org/res/swdf> ?p ?o } LIMIT 10";
-		
+		String queryStr;		
 		
 		queryStr = parser.apply("SELECT *\n" + 
 	    		"           {\n" + 
@@ -166,6 +166,9 @@ public class GraphFromFileSystem extends GraphBase {
 	    		"             } GROUP BY ?p }\n" + 
 	    		"           }").toString();
 		
+		queryStr = "SELECT * { ?s ?p ?o . ?o ?x ?y . ?y ?a ?b } LIMIT 100 OFFSET 100000";
+//		queryStr = "SELECT * { <http://lsq.aksw.org/res/swdf> ?p ?o } LIMIT 10";
+
 		Stopwatch stopwatch = Stopwatch.createStarted();
 		try(QueryExecution qe = QueryExecutionFactory.create(queryStr, m)) {
 			System.out.println(ResultSetFormatter.asText(qe.execSelect()));

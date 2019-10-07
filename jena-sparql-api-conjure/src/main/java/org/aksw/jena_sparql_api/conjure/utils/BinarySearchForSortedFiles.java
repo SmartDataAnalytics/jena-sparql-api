@@ -12,7 +12,9 @@ import java.nio.channels.ReadableByteChannel;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
@@ -32,21 +34,34 @@ import com.google.common.primitives.Ints;
 public class BinarySearchForSortedFiles
 	implements AutoCloseable
 {
-	int pageSize = 8192;
-	byte delimiter = (byte)'\n';
+	// Small block sizes give bad performance
+	// scanning 10M triples without prefix gives me 8K: 12sec, 16M: 8sec
+	
+	//int pageSize = 8192;
+	
+	int pageSize = 1024 * 1024 * 16;
+	protected byte delimiter = (byte)'\n';
 	
 	// Note sure whether we need a cache or whether the OS does it
 	// In any case, the cache should be cleared when done:
 	// https://stackoverflow.com/questions/25238110/how-to-properly-close-mappedbytebuffer?lq=1
 	protected Cache<Long, MappedByteBuffer> pageCache = CacheBuilder.newBuilder()
-			.maximumSize(1000)
+			.expireAfterAccess(10, TimeUnit.SECONDS)
+			.maximumSize(64)
 			.build();
 	
 	protected FileChannel channel;
 	
+	protected long size;
 	
-	public BinarySearchForSortedFiles(FileChannel channel) {
+	public BinarySearchForSortedFiles(FileChannel channel, long size) {
 		this.channel = channel;
+		this.size = size;
+	}
+	
+	public static BinarySearchForSortedFiles create(FileChannel channel) throws IOException {
+		long size = channel.size();
+		return new BinarySearchForSortedFiles(channel, size);
 	}
 	
 	@Override
@@ -73,12 +88,11 @@ public class BinarySearchForSortedFiles
 	
 	public long nextKnownDelimPos(long currentDelimPos, State state) throws IOException, ExecutionException {
 
-		boolean hasExceededEnd = currentDelimPos + 1 >= state.size;						
 		long result;
-		if(hasExceededEnd) {
-			result = Long.MIN_VALUE;
-		} else if(currentDelimPos < state.matchDelimPos) {
+		if(currentDelimPos < state.matchDelimPos) {
 			result = state.matchDelimPos;
+		} else if(currentDelimPos + 1 >= state.size) { // has exceeded end
+			result = Long.MIN_VALUE;
 		} else {
 			int prefixLength = state.prefixBytes.length;
 			if(prefixLength == 0 || compareToPrefix(currentDelimPos + 1, state.prefixBytes) == 0) {
@@ -145,7 +159,7 @@ public class BinarySearchForSortedFiles
 					satisfied = nextKnownDelimPos - currentPos;
 				} while(currentPage == nextKnownPage && satisfied < wanted);
 	
-				MappedByteBuffer rawBuf = getBufferForPageUnsafe(currentPage, true);
+				MappedByteBuffer rawBuf = getBufferForPageUnsafe(currentPage);
 				ByteBuffer buffer = rawBuf.duplicate();
 
 				int available = buffer.remaining() - currentIndex;
@@ -221,7 +235,7 @@ public class BinarySearchForSortedFiles
 					nextKnownPage = getPageForPos(nextKnownDelimPos);
 				} while(currentPage == nextKnownPage);
 
-				MappedByteBuffer rawBuf = getBufferForPageUnsafe(currentPage, true);
+				MappedByteBuffer rawBuf = getBufferForPageUnsafe(currentPage);
 				ByteBuffer buffer = rawBuf.duplicate();
 
 				int available = buffer.remaining() - currentIndex;
@@ -261,7 +275,7 @@ public class BinarySearchForSortedFiles
 	}
 
 	public InputStream searchCore2(String prefix) throws IOException, ExecutionException {
-		long size = channel.size();
+//		long size = channel.size();
 
 		byte[] prefixBytes = prefix.getBytes();
 		
@@ -290,7 +304,7 @@ public class BinarySearchForSortedFiles
 	}
 	
 	public Stream<String> searchCore(String prefix) throws IOException, ExecutionException {
-		long size = channel.size();
+//		long size = channel.size();
 
 		byte[] prefixBytes = prefix.getBytes();
 		
@@ -444,28 +458,25 @@ public class BinarySearchForSortedFiles
 		return result;
 	}
 
-	public MappedByteBuffer getBufferForPageUnsafe(long page, boolean useCache)  {
+	public MappedByteBuffer getBufferForPageUnsafe(long page)  {
 		MappedByteBuffer result;
 		try {
-			result = getBufferForPage(page, useCache);
+			result = getBufferForPage(page);
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
 		return result;
 	}
 
-	public MappedByteBuffer getBufferForPage(long page, boolean useCache) throws IOException, ExecutionException {
-		long eof = channel.size();
-
+	public MappedByteBuffer getBufferForPage(long page) throws IOException, ExecutionException {
         long start = page * pageSize;
-        long end = Math.min(eof, start + pageSize);
+        long end = Math.min(size, start + pageSize);
         long length = end - start;
         
         MappedByteBuffer result = length <= 0
         		? null
-        		: useCache
-        			? pageCache.get(page, () -> channel.map(MapMode.READ_ONLY, start, length))
-        			: channel.map(MapMode.READ_ONLY, start, length);
+        		: pageCache.get(page, () -> channel.map(MapMode.READ_ONLY, start, length));
+
         return result;
 
 	}
@@ -482,7 +493,7 @@ public class BinarySearchForSortedFiles
 	
 	public MappedByteBuffer getBufferForPos(long pos) throws IOException, ExecutionException {
         long page = getPageForPos(pos);
-        MappedByteBuffer result = getBufferForPage(page, true);
+        MappedByteBuffer result = getBufferForPage(page);
 		return result;
 	}
 	
@@ -497,7 +508,7 @@ public class BinarySearchForSortedFiles
 		
 		int result = 0;
 		MappedByteBuffer buffer;
-		outer: for(long p = page; x < n && (buffer = getBufferForPage(p, true)) != null; ++p) {
+		outer: for(long p = page; x < n && (buffer = getBufferForPage(p)) != null; ++p) {
 			int r = buffer.remaining();
 			for(int i = index; i < r && x < n; ++i, ++x) {
 				byte a = buffer.get(i);
@@ -527,7 +538,7 @@ public class BinarySearchForSortedFiles
 		
 		int x = 0;
 		MappedByteBuffer buffer;
-		for(long p = page; (buffer = getBufferForPage(p, true)) != null && x < n; ++p) {
+		for(long p = page; x < n && (buffer = getBufferForPage(p)) != null; ++p) {
 			int r = buffer.remaining();
 			for(int i = index; i < r && x < n; ++i, ++x) {
 				byte b = buffer.get(i);
@@ -551,7 +562,7 @@ public class BinarySearchForSortedFiles
 		List<Byte> list = new ArrayList<Byte>();
 		
 		MappedByteBuffer buffer;
-		outer: for(long p = page; (buffer = getBufferForPage(p, true)) != null; ++p) {
+		outer: for(long p = page; (buffer = getBufferForPage(p)) != null; ++p) {
 			int r = buffer.remaining();
 			for(int i = index; i < r; ++i) {
 				byte a = buffer.get(i);
@@ -580,7 +591,7 @@ public class BinarySearchForSortedFiles
 		MappedByteBuffer buffer;
 		long p;
 		int i = index;
-		outer: for(p = page; (buffer = getBufferForPage(p, true)) != null; ++p) {
+		outer: for(p = page; (buffer = getBufferForPage(p)) != null; ++p) {
 			int r = buffer.remaining();
 			for(i = index; i < r; ++i) {
 				byte a = buffer.get(i);
@@ -604,7 +615,7 @@ public class BinarySearchForSortedFiles
 		long p;
         int i = index;
         outer: for(p = page; p >=0; --p) {
-            MappedByteBuffer buffer = getBufferForPage(p, true);
+            MappedByteBuffer buffer = getBufferForPage(p);
 
 	        for(i = index; i >= 0; --i) {
 	            byte c = buffer.get(i);
