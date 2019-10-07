@@ -1,8 +1,10 @@
 package org.aksw.jena_sparql_api.conjure.utils;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.channels.FileChannel;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
@@ -108,6 +110,7 @@ public class GraphFromFileSystem extends GraphBase {
 		
 //		int i[] = {0};
 		Iterator<Triple> itTriples = baseStream
+			.peek(System.out::println)
 //			.peek(x -> { int v = i[0]++; if(v % 30000 == 0) { System.out.println(v); }})
 //			.map(x -> new Triple(RDF.Nodes.type, RDF.Nodes.type, RDF.Nodes.type))
 			.iterator();
@@ -142,7 +145,7 @@ public class GraphFromFileSystem extends GraphBase {
 //		return result;
 //	}
 	
-	public static void main(String[] args) {
+	public static void main(String[] args) throws IOException {
 		
 		JenaSystem.init();	
 		Function<String, SparqlStmt> parser = SparqlStmtParserImpl.create(Syntax.syntaxARQ, DefaultPrefixes.prefixes, false);
@@ -157,6 +160,19 @@ public class GraphFromFileSystem extends GraphBase {
 
 		String queryStr;		
 		
+		Iterator<String> itSubject = Files.lines(Paths.get("/home/raven/Projects/Data/LSQ/subjects.txt")).iterator();
+
+		Stopwatch stopwatch = Stopwatch.createStarted();
+		while(itSubject.hasNext()) {
+			String s = itSubject.next();
+			queryStr = "SELECT (COUNT(*) AS ?c) { " + s + " ?p ?o }";
+			System.out.println(queryStr);
+			try(QueryExecution qe = QueryExecutionFactory.create(queryStr, m)) {
+				System.out.println(ResultSetFormatter.asText(qe.execSelect()));
+			}
+		}
+	    System.out.println("Processed items in " + (stopwatch.stop().elapsed(TimeUnit.MILLISECONDS) * 0.001) + " seconds");
+
 		queryStr = parser.apply("SELECT *\n" + 
 	    		"           {\n" + 
 	    		"             # TODO Allocate some URI based on the dataset id\n" + 
@@ -166,14 +182,14 @@ public class GraphFromFileSystem extends GraphBase {
 	    		"             } GROUP BY ?p }\n" + 
 	    		"           }").toString();
 		
-		queryStr = "SELECT * { ?s ?p ?o . ?o ?x ?y . ?y ?a ?b } LIMIT 100 OFFSET 100000";
+//		queryStr = "SELECT * { ?s ?p ?o . ?o ?x ?y . ?y ?a ?b } LIMIT 100 OFFSET 100000";
 //		queryStr = "SELECT * { <http://lsq.aksw.org/res/swdf> ?p ?o } LIMIT 10";
 
-		Stopwatch stopwatch = Stopwatch.createStarted();
-		try(QueryExecution qe = QueryExecutionFactory.create(queryStr, m)) {
-			System.out.println(ResultSetFormatter.asText(qe.execSelect()));
-		}
-	    System.out.println("Processed items in " + (stopwatch.stop().elapsed(TimeUnit.MILLISECONDS) * 0.001) + " seconds");
+//		Stopwatch stopwatch = Stopwatch.createStarted();
+//		try(QueryExecution qe = QueryExecutionFactory.create(queryStr, m)) {
+//			System.out.println(ResultSetFormatter.asText(qe.execSelect()));
+//		}
+//	    System.out.println("Processed items in " + (stopwatch.stop().elapsed(TimeUnit.MILLISECONDS) * 0.001) + " seconds");
 
 		
 		

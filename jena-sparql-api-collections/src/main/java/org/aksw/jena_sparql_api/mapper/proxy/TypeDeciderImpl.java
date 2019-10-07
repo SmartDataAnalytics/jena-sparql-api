@@ -37,6 +37,14 @@ public class TypeDeciderImpl
     protected Map<Node, Class<?>> nodeToClass;
     protected Map<Class<?>, Node> classToNode;
 
+    @Override
+    public String toString() {
+    	return "TypeDeciderImpl ["
+    			+ "typeProperty= " + typeProperty + ", "
+    			+ "nodeToClass.size=" + nodeToClass.size() + ", "
+    			+ "classToNode.size=" + classToNode.size() + "]";
+    }
+    
     public TypeDeciderImpl() {
         this(RDF.type, new HashMap<>(), new HashMap<>(), DefaultPrefixes.prefixes);
     }
