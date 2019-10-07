@@ -160,7 +160,7 @@ public class GraphFromFileSystem extends GraphBase {
 
 		String queryStr;		
 		
-		Iterator<String> itSubject = Files.lines(Paths.get("/home/raven/Projects/Data/LSQ/subjects.txt")).iterator();
+		Iterator<String> itSubject = Files.lines(Paths.get("/home/raven/Projects/Data/LSQ/subjects.shuffled.txt")).iterator();
 
 		Stopwatch stopwatch = Stopwatch.createStarted();
 		int i = 0;

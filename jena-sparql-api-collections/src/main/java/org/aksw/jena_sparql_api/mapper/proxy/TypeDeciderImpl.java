@@ -61,12 +61,12 @@ public class TypeDeciderImpl
         this.prefixMapping = prefixMapping;
     }
 
-    public void put(Class<?> clazz, Node node) {
+    public synchronized void put(Class<?> clazz, Node node) {
         nodeToClass.put(node, clazz);
         classToNode.put(clazz, node);
     }
 
-    public void putAll(Map<Class<?>, Node> map) {
+    public synchronized void putAll(Map<Class<?>, Node> map) {
         map.entrySet().forEach(e -> put(e.getKey(), e.getValue()));
     }
 

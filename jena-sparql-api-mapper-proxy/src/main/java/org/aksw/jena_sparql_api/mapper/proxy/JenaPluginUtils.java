@@ -40,8 +40,9 @@ public class JenaPluginUtils {
 	 *  If you get an exception on typeDecider such as java.lang.NullPointerException
 	 *  ensure to call JenaSystem.init() before calling methods on this class
 	 */
-	protected static final TypeDeciderImpl typeDecider = new TypeDeciderImpl();
+	protected static TypeDeciderImpl typeDecider;
 
+	
 
 	/**
 	 * Cast an RDFNode to a given view w.r.t. types registered in the global TypeDecider
@@ -52,11 +53,15 @@ public class JenaPluginUtils {
 	 * @return
 	 */
 	public static <T extends RDFNode> T polymorphicCast(RDFNode rdfNode, Class<T> viewClass) {
+		TypeDecider typeDecider = getTypeDecider();
 		T result = RDFNodeMapperImpl.castRdfNode(rdfNode, viewClass, typeDecider, false);
 		return result;
 	}
 	
-	public static TypeDecider getTypeDecider() {
+	public static synchronized TypeDecider getTypeDecider() {
+		if(typeDecider == null) {
+			typeDecider = new TypeDeciderImpl();
+		}
 		return typeDecider;
 	}
 	
@@ -114,13 +119,15 @@ public class JenaPluginUtils {
 	public static Implementation createImplementation(Class<?> clazz, PrefixMapping pm) {
 		@SuppressWarnings("unchecked")
 		Class<? extends Resource> cls = (Class<? extends Resource>)clazz;
-		
+
+		TypeDecider typeDecider = getTypeDecider();
+
 		logger.debug("Registering " + clazz);
 		BiFunction<Node, EnhGraph, ? extends Resource> proxyFactory = 
 				MapperProxyUtils.createProxyFactory(cls, pm, typeDecider);
 
 		
-		typeDecider.registerClasses(clazz);
+		((TypeDeciderImpl)typeDecider).registerClasses(clazz);
 
 		BiFunction<Node, EnhGraph, ? extends Resource> proxyFactory2 = (n, m) -> {
 			Resource tmp = new ResourceImpl(n, m);
