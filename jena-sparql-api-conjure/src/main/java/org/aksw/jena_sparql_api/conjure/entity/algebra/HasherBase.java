@@ -7,9 +7,10 @@ import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import com.google.common.hash.HashCode;
-import com.google.common.hash.Hashing;
-import com.google.common.io.ByteSource;
+import org.apache.jena.ext.com.google.common.hash.HashCode;
+import org.apache.jena.ext.com.google.common.hash.Hashing;
+import org.apache.jena.ext.com.google.common.io.ByteSource;
+
 
 public abstract class HasherBase
 	implements OpVisitor<String>
