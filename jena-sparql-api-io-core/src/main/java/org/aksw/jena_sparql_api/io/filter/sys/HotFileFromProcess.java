@@ -122,7 +122,7 @@ public class HotFileFromProcess
 	}
 	
 	public static void main(String[] args) throws InterruptedException, IOException {
-		SysCallFn fn = new SysCallFnLbZipEncode();
+		//SysCallFn fn = new SysCallFnLbZipEncode();
 
 		Path src = Paths.get("/home/raven/Projects/Data/LSQ/deleteme.sorted.nt");
 		Path tgt = Paths.get("/tmp/data.nt");

@@ -21,23 +21,21 @@ public class FilterEngineJava
 	@Override
 	public FilterConfig forInput(Path in) {
 		return new FilterExecutionJava(processor,
-				() -> Files.newInputStream(in, StandardOpenOption.READ));
+				Single.just(() -> Files.newInputStream(in, StandardOpenOption.READ)));
 	}
 
 	@Override
 	public FilterConfig forInput(InputStreamSupplier in) {
-		return new FilterExecutionJava(processor, in);
+		return new FilterExecutionJava(processor, Single.just(in));
 	}
 
 	@Override
 	public FilterConfig forInput(Single<Path> futurePath) {
-		// TODO Auto-generated method stub
-		return null;
+		throw new RuntimeException("not implemented");
 	}
 
 	@Override
 	public FilterConfig forInput(FilterConfig in) {
-		return new FilterExecutionJava(processor,
-				() -> in.execStream());
+		return new FilterExecutionJava(processor, null);
 	}
 }

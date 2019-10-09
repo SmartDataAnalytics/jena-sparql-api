@@ -2,14 +2,10 @@ package org.aksw.jena_sparql_api.io.endpoint;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.channels.Channels;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
-
-import com.google.common.io.ByteStreams;
 
 import io.reactivex.Single;
 
@@ -17,22 +13,22 @@ public class FilterExecutionJava
 	implements FilterConfig
 {
 	protected Function<InputStream, InputStream> processor;
-	protected InputStreamSupplier inputStreamSupplier;
+	protected Single<InputStreamSupplier> inputStreamSupplier;
 
-	public FilterExecutionJava(Function<InputStream, InputStream> processor, InputStreamSupplier inputStreamSupplier) {
+	public FilterExecutionJava(Function<InputStream, InputStream> processor, Single<InputStreamSupplier> inputStreamSupplier) {
 		this.processor = processor;
 		this.inputStreamSupplier = inputStreamSupplier;
 	}
 	
-	@Override
-	public FileWritingProcess execToFile(Path path) throws IOException {
-		ConcurrentFileEndpoint out = ConcurrentFileEndpoint.create(path, StandardOpenOption.CREATE);
-		try(InputStream in = inputStreamSupplier.execStream()) {
-			ByteStreams.copy(in, Channels.newOutputStream(out));
-		}
-		
-		return null;
-	}
+//	@Override
+//	public FileWritingProcess execToFile(Path path) throws IOException {
+//		ConcurrentFileEndpoint out = ConcurrentFileEndpoint.create(path, StandardOpenOption.CREATE);
+//		try(InputStream in = inputStreamSupplier.execStream()) {
+//			ByteStreams.copy(in, Channels.newOutputStream(out));
+//		}
+//		
+//		return null;
+//	}
 
 	/**
 	 * Ideally, premature closing of the input stream should
@@ -41,9 +37,9 @@ public class FilterExecutionJava
 	 */
 	@Override
 	public Single<InputStreamSupplier> execStream() {
-		return Single.just(inputStreamSupplier).map(inSupp -> {
+		return inputStreamSupplier.map(inSupp -> {
 			return () -> {
-				InputStream in = inputStreamSupplier.execStream();
+				InputStream in = inSupp.execStream();
 				InputStream r = processor.apply(in);
 				return r;
 			};
@@ -56,11 +52,11 @@ public class FilterExecutionJava
 	 * @throws IOException 
 	 * 
 	 */
-	@Override
-	public InputStream execStream(Supplier<Path> pathRequester, BiConsumer<Path, FileWritingProcess> processCallback) throws IOException {
-		InputStream result = execStream();
-		return result;
-	}
+//	@Override
+//	public InputStream execStream(Supplier<Path> pathRequester, BiConsumer<Path, FileWritingProcess> processCallback) throws IOException {
+//		InputStream result = execStream();
+//		return result;
+//	}
 
 	@Override
 	public FilterConfig ifNeedsFileInput(Supplier<Path> pathRequester,

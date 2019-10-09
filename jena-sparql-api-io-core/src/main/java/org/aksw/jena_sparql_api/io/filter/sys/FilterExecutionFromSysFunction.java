@@ -7,7 +7,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map.Entry;
-import java.util.concurrent.ExecutionException;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
@@ -150,12 +149,12 @@ public class FilterExecutionFromSysFunction
 	 * @return
 	 */
 	public Single<HotFile> execToHotFile(Path tgtPath) {
-		Single<HotFile> result;
+		Single<HotFile> result = null;
 		
 		Destination effectiveSource = getEffectiveSource();
 
 		
-		ProcessBuilder processBuilder;
+		ProcessBuilder processBuilder = null;
 		String[] cmd;
 		if((cmd = cmdFactory.buildCmdForStreamToFile(tgtPath)) != null) {
 			// create a single that reads the input and forwards it to the process
@@ -167,22 +166,7 @@ public class FilterExecutionFromSysFunction
 		}
 		
 		if(processBuilder != null) {
-			result = effectiveSource.prepareStream().map(inSupp -> {
-				Entry<Single<Integer>, Process> e = SimpleProcessExecutor.wrap(processBuilder).executeCore();
-				Single<Integer> processSingle = e.getKey();
-				Process process = e.getValue();
-				
-				new Thread(() -> {
-					try(InputStream in = inSupp.execStream()) {
-						try(OutputStream out = process.getOutputStream()) {
-							ByteStreams.copy(in, out);
-						}
-					}
-				}).start();
-
-				HotFile r = HotFileFromProcess.createStarted(tgtPath, processSingle);
-				return r;
-			});
+			result = extracted(tgtPath, effectiveSource, processBuilder);
 		}
 
 		// If the processor could not handle stream input, try with a concrete file
@@ -215,7 +199,12 @@ public class FilterExecutionFromSysFunction
 				// We need a file but we were unable to obtain one from the destination
 				// Attempt to stream the destination to a file first
 
-				Path tmpInFile = Files.createTempFile("highperfstream-", ".dat");
+				Path tmpInFile;
+				try {
+					tmpInFile = Files.createTempFile("highperfstream-", ".dat");
+				} catch(IOException e) {
+					throw new RuntimeException(e);
+				}
 				
 				// Probe whether any combination works with the cmdFactory
 				String[] probeCmd;
@@ -226,33 +215,40 @@ public class FilterExecutionFromSysFunction
 				}
 
 				if(probeCmd != null) {
-					
-					effectiveSource.prepareStream().map(inSupp -> {
-						try(InputStream inSupp.execStream()) {
-							
-						}
-						
-					});
+					processBuilder = new ProcessBuilder(cmd);
+					// create a single that reads the input and forwards it to the process
+					processBuilder.redirectOutput(tgtPath.toFile());		
 
-					
-					DestinationFromFile d = (DestinationFromFile)effectiveSource;
-					Path inPath = d.getPath();
-					Single<FileCreation> fileCreation = Single.just(new FileCreationWrapper(inPath));
-					
-					result = fileCreationToHots(fileCreation, inPath, tgtPath);
-
-
-					
-					result = fileCreationToHots(fileCreation, inPath, tgtPath);
+					result = extracted(tgtPath, effectiveSource, processBuilder);
 				}
-
-				
-				
 			}
 			
 		}
-		
-		DestinationFromFileCreation result = new DestinationFromFileCreation(tgtPath, processSingle);
+
+		return result;
+	}
+
+
+	private Single<HotFile> extracted(Path tgtPath, Destination effectiveSource, ProcessBuilder processBuilder) {
+		Single<HotFile> result;
+		result = effectiveSource.prepareStream().map(inSupp -> {
+			Entry<Single<Integer>, Process> e = SimpleProcessExecutor.wrap(processBuilder).executeCore();
+			Single<Integer> processSingle = e.getKey();
+			Process process = e.getValue();
+			
+			new Thread(() -> {
+				try(InputStream in = inSupp.execStream()) {
+					try(OutputStream out = process.getOutputStream()) {
+						ByteStreams.copy(in, out);
+					}
+				} catch (IOException ex) {
+					throw new RuntimeException(ex);
+				}
+			}).start();
+
+			HotFile r = HotFileFromProcess.createStarted(tgtPath, processSingle);
+			return r;
+		});
 		return result;
 	}
 	
@@ -281,48 +277,44 @@ public class FilterExecutionFromSysFunction
 	}
 
 
-	public Single<Hotfile> trySourceAsNativeHotFile() {
-		
-	}
 	
-	
-	public Single<HotFile> prepareInputAsFile() {
-		
-		Path file;
-		
-		if(source instanceof DestinationFromHotFile) {
-			// Wait for the file to become ready
-			DestinationFromHotFile d = (DestinationFromHotFile)source;
-			Supplier<HotFile> supplier = d.getFileSupplier();
-			try {
-				file = supplier.get().future().get();
-			} catch(InterruptedException | ExecutionException e) {
-				throw new IOException(e);
-			}
-		}
-		
-		if(source instanceof DestinationFromFile) {
-			DestinationFromFile d = (DestinationFromFile)source;
-			file = d.getPath();
-		}
-		
-		
-		// Create a temporary file from the input
-		if(file == null) {
-			Single<InputStreamSupplier> streamCreation = source.execStream();
-			streamCreation.map(suppIn -> {
-				return (InputStreamSupplier)() -> {
-					try(InputStream in = suppIn.execStream()) {
-						// TODO Invoke the callback for a requested input file
-						//ifNeedsFileInput(pathRequester, processCallback)
-						Path tmpFile = Files.createTempFile("highperfstream", ".dat");
-						
-						Files.copy(in, tmpFile);
-					};
-				};
-			});				
-		}
-	}
+//	public Single<HotFile> prepareInputAsFile() {
+//		
+//		Path file;
+//		
+//		if(source instanceof DestinationFromFileCreation) {
+//			// Wait for the file to become ready
+//			DestinationFromFileCreation d = (DestinationFromFileCreation)source;
+//			Supplier<HotFile> supplier = d.getFileCreation();
+//			try {
+//				file = supplier.get().future().get();
+//			} catch(InterruptedException | ExecutionException e) {
+//				throw new IOException(e);
+//			}
+//		}
+//		
+//		if(source instanceof DestinationFromFile) {
+//			DestinationFromFile d = (DestinationFromFile)source;
+//			file = d.getPath();
+//		}
+//		
+//		
+//		// Create a temporary file from the input
+//		if(file == null) {
+//			Single<InputStreamSupplier> streamCreation = source.execStream();
+//			streamCreation.map(suppIn -> {
+//				return (InputStreamSupplier)() -> {
+//					try(InputStream in = suppIn.execStream()) {
+//						// TODO Invoke the callback for a requested input file
+//						//ifNeedsFileInput(pathRequester, processCallback)
+//						Path tmpFile = Files.createTempFile("highperfstream", ".dat");
+//						
+//						Files.copy(in, tmpFile);
+//					};
+//				};
+//			});				
+//		}
+//	}
 	
 	
 	/**
@@ -332,16 +324,8 @@ public class FilterExecutionFromSysFunction
 	 * 
 	 */
 	@Override
-	public Single<InputStream> execStream() throws IOException {
-		if(filterMetadata.requiresFileInput()) {
-			prepareInputAsFile();
-			
-			
-		} else { // filter does not require file
-			Single<InputStreamSupplier> in = source.execStream();
-		}
-		
-		
+	public Single<InputStreamSupplier> execStream() {
+		return null;
 	}
 
 

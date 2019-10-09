@@ -23,8 +23,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import org.aksw.jena_sparql_api.io.filter.sys.SysCallFn;
-import org.aksw.jena_sparql_api.io.filter.sys.SysCallFnLbZipEncode;
 import org.apache.jena.ext.com.google.common.io.ByteSource;
 
 import com.github.jsonldjava.shaded.com.google.common.collect.ObjectArrays;
@@ -111,7 +109,6 @@ public class ConcurrentFileEndpoint
 	
 	
 	public static void main(String[] args) throws IOException, InterruptedException {
-		SysCallFn fn = new SysCallFnLbZipEncode();
 		
 		Path file = Paths.get("/tmp/myfile.nt");
 		
