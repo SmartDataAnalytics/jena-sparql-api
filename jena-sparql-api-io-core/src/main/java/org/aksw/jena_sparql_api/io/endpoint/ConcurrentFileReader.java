@@ -84,13 +84,16 @@ public class ConcurrentFileReader
 							// Recheck open state is case it was closed before
 							// entering the synchronized block
 							if(referenceChannel.isOpen()) {
-								System.out.println("Thread #" + Thread.currentThread().getId() + ": Reader going to sleep");
+
+								//System.out.println("Thread #" + Thread.currentThread().getId() + ": Reader going to sleep");
+								
+								// Wait or poll depending on the value of pollIntervalInMs 
 								if(pollIntervalInMs == null) { 
 									referenceChannel.wait();
 								} else {
 									Thread.sleep(pollIntervalInMs);
 								}
-								System.out.println("Thread #" + Thread.currentThread().getId() + ": Reader awoke");
+								//System.out.println("Thread #" + Thread.currentThread().getId() + ": Reader awoke");
 							}
 						}
 					} catch (InterruptedException e) {
