@@ -376,9 +376,9 @@ public class FilterExecutionFromSysFunction
 		String[] probeCmd;
 		Single<InputStreamSupplier> result;
 		if((probeCmd = cmdFactory.buildCmdForFileToStream(PROBE_PATH)) != null) {
-			String[] cmd = probeCmd.clone();
 			result = fileCreation.flatMap(fc -> {
 				return Single.fromFuture(fc.future()).map(actualInPath -> {
+					String[] cmd = cmdFactory.buildCmdForFileToStream(actualInPath);
 					return () -> {
 						ProcessBuilder processBuilder;
 						processBuilder = new ProcessBuilder(cmd);
@@ -558,6 +558,13 @@ public class FilterExecutionFromSysFunction
 	public Destination outputToStream() {
 		// TODO Auto-generated method stub
 		return null;
+	}
+
+
+	@Override
+	public String toString() {
+		return "FilterExecutionFromSysFunction [cmdFactory=" + cmdFactory + ", filterMetadata=" + filterMetadata
+				+ ", source=" + source + "]";
 	}
 
 }

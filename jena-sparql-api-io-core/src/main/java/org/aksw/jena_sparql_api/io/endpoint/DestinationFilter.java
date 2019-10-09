@@ -32,5 +32,9 @@ public class DestinationFilter
 		FilterConfig result = engine.forInput(filter);
 		return result;
 	}
-	
+
+	@Override
+	public String toString() {
+		return "DestinationFilter [filter=" + filter + "]";
+	}
 }

@@ -95,5 +95,9 @@ public class FilterExecutionJava
 		return false;
 	}
 
+	@Override
+	public String toString() {
+		return "FilterExecutionJava [processor=" + processor + ", source=" + source + "]";
+	}
 
 }

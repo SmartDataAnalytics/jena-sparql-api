@@ -20,19 +20,25 @@ import io.reactivex.Single;
 
 public class MainPipeBuilder {
 	public static Function<InputStream, InputStream> createCtConverter(Lang inLang, RDFFormat outFmt, String base) {
-		return in -> {
-			Model m = ModelFactory.createDefaultModel();
-			RDFDataMgr.read(m, in, inLang);
+		return new Function<InputStream, InputStream>() {
+			@Override
+			public InputStream apply(InputStream in) {
+				Model m = ModelFactory.createDefaultModel();
+				RDFDataMgr.read(m, in, inLang);
+				
+				PipedInputStream snk = new PipedInputStream();
+				new Thread(() -> {
+					try(PipedOutputStream out = new PipedOutputStream(snk)) {
+						RDFDataMgr.write(out, m, outFmt);
+					} catch (IOException e) {
+						throw new RuntimeException(e);
+					}
+				}).start();
+				return snk;
+			}
 			
-			PipedInputStream snk = new PipedInputStream();
-			new Thread(() -> {
-				try(PipedOutputStream out = new PipedOutputStream(snk)) {
-					RDFDataMgr.write(out, m, outFmt);
-				} catch (IOException e) {
-					throw new RuntimeException(e);
-				}
-			}).start();
-			return snk;
+			@Override
+			public String toString() { return "covertCt " + inLang + " -> " + outFmt; }
 		};
 	}
 	
@@ -61,20 +67,23 @@ public class MainPipeBuilder {
 		// that the application logic has to ensure that file descriptors remain valid for a reasonable
 		// amount of time
 		
-		SysCallFn encodeBzip = new SysCallFn() {			
+		SysCallFn encodeBzipCore = new SysCallFn() {			
 			@Override
 			public String[] buildCheckCmd() { return new String[] {"/usr/bin/lbzip2", "--version"}; }
 			@Override
 			public String[] buildCmdForFileToStream(Path input) { return new String[] {"/usr/bin/lbzip2", "-czk", input.toString()}; };
+			@Override
+			public String toString() { return "encodeBzipCore"; }
 		};
 
 		SysCallFn decodeBzipCore = new SysCallFn() {			
 			@Override
 			public String[] buildCheckCmd() { return new String[] {"/usr/bin/lbzip2", "--version"}; }
-
 			@Override
 			public String[] buildCmdForFileToStream(Path input) { return new String[] {"/usr/bin/lbzip2", "-cdk", input.toString()}; };
-		};				
+			@Override
+			public String toString() { return "decodeBzipCore"; }
+		};
 				
 		
 		SysCallFn encodeGzipCore = new SysCallFn() {			
@@ -82,6 +91,8 @@ public class MainPipeBuilder {
 			public String[] buildCheckCmd() { return new String[] {"/bin/gzip", "--version"}; }
 			@Override
 			public String[] buildCmdForFileToStream(Path input) { return new String[] {"/bin/gzip", "-ck", input.toString()}; };
+			@Override
+			public String toString() { return "encodeGzipCode"; }
 		};
 
 		FilterEngine decodeBzip = new FilterEngineFromSysFunction(decodeBzipCore);

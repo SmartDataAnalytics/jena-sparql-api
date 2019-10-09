@@ -7,6 +7,9 @@ import java.util.Map.Entry;
 import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.common.collect.Maps;
 
 import io.reactivex.BackpressureStrategy;
@@ -15,6 +18,8 @@ import io.reactivex.FlowableEmitter;
 import io.reactivex.Single;
 
 public class SimpleProcessExecutor {
+	private static final Logger logger = LoggerFactory.getLogger(SimpleProcessExecutor.class);
+	
     protected ProcessBuilder processBuilder;
     protected Consumer<String> outputSink;
 
@@ -140,7 +145,10 @@ public class SimpleProcessExecutor {
     }
 
     public Entry<Single<Integer>, Process> executeCore() throws IOException, InterruptedException {
-        processBuilder.redirectErrorStream(true);
+    	logger.debug("Starting process: " + processBuilder.command());
+    	
+
+    	processBuilder.redirectErrorStream(true);
         Process p = processBuilder.start();
 
 
