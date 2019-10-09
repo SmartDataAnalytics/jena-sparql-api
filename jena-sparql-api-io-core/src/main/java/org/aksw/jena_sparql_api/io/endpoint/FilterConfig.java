@@ -1,6 +1,5 @@
 package org.aksw.jena_sparql_api.io.endpoint;
 
-import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
@@ -9,7 +8,7 @@ import io.reactivex.Single;
 
 public interface FilterConfig
 {
-	Single<InputStream> execStream();
+	Single<InputStreamSupplier> execStream();
 	
 	FilterConfig ifNeedsFileInput(Supplier<Path> pathRequester, BiConsumer<Path, FileWritingProcess> processCallback);
 	FilterConfig ifNeedsFileOutput(Supplier<Path> pathRequester, BiConsumer<Path, FileWritingProcess> processCallback);
@@ -38,8 +37,15 @@ public interface FilterConfig
 	Destination outputToStream();
 
 
+	/**
+	 * Method yields true if the filter needs to create an
+	 * intermediary output file
+	 * 
+	 * @return
+	 */
+	boolean requiresFileOutput();
 	// 
-	Destination naturalDestination();
+	//Destination naturalDestination();
 	// int naturalDestination();
 
 	/**

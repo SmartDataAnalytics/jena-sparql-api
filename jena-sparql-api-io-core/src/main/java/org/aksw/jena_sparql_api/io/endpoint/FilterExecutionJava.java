@@ -11,6 +11,8 @@ import java.util.function.Supplier;
 
 import com.google.common.io.ByteStreams;
 
+import io.reactivex.Single;
+
 public class FilterExecutionJava
 	implements FilterConfig
 {
@@ -38,10 +40,14 @@ public class FilterExecutionJava
 	 * 
 	 */
 	@Override
-	public InputStream execStream() throws IOException {
-		InputStream in = inputStreamSupplier.execStream();
-		InputStream result = processor.apply(in);
-		return result;
+	public Single<InputStreamSupplier> execStream() {
+		return Single.just(inputStreamSupplier).map(inSupp -> {
+			return () -> {
+				InputStream in = inputStreamSupplier.execStream();
+				InputStream r = processor.apply(in);
+				return r;
+			};
+		});
 	}
 
 	/**
@@ -66,6 +72,29 @@ public class FilterExecutionJava
 	public FilterConfig ifNeedsFileOutput(Supplier<Path> pathRequester,
 			BiConsumer<Path, FileWritingProcess> processCallback) {
 		return this;
+	}
+
+	@Override
+	public FilterConfig pipeInto(FilterEngine nextFilter) {
+		FilterConfig result = nextFilter.forInput(this);
+		return result;
+	}
+
+	@Override
+	public DestinationFromFileCreation outputToFile(Path path) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Destination outputToStream() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public boolean requiresFileOutput() {
+		return false;
 	}
 
 

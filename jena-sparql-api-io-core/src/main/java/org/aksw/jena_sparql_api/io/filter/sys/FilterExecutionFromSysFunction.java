@@ -5,15 +5,16 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Map.Entry;
 import java.util.concurrent.ExecutionException;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
 import org.aksw.jena_sparql_api.io.endpoint.Destination;
+import org.aksw.jena_sparql_api.io.endpoint.DestinationFilter;
 import org.aksw.jena_sparql_api.io.endpoint.DestinationFromFile;
 import org.aksw.jena_sparql_api.io.endpoint.DestinationFromFileCreation;
-import org.aksw.jena_sparql_api.io.endpoint.DestinationFromHotFile;
 import org.aksw.jena_sparql_api.io.endpoint.FileCreation;
 import org.aksw.jena_sparql_api.io.endpoint.FileWritingProcess;
 import org.aksw.jena_sparql_api.io.endpoint.FilterConfig;
@@ -21,6 +22,7 @@ import org.aksw.jena_sparql_api.io.endpoint.FilterEngine;
 import org.aksw.jena_sparql_api.io.endpoint.HotFile;
 import org.aksw.jena_sparql_api.io.endpoint.InputStreamSupplier;
 import org.aksw.jena_sparql_api.io.utils.SimpleProcessExecutor;
+import org.apache.jena.ext.com.google.common.base.StandardSystemProperty;
 
 import com.google.common.io.ByteStreams;
 
@@ -53,6 +55,86 @@ public class FilterExecutionFromSysFunction
 	
 	// Create a destination that creates a hot file
 
+	@Override
+	public boolean requiresFileOutput() {
+		Destination effectiveInput = getEffectiveSource();
+		
+		Path knownInPath = extractKnownPathFromDestination(effectiveInput);
+		
+		// Try whether for the given input we can obtain a stream
+		// If not, we asume we must create a temporary file
+		boolean result = knownInPath == null
+				? cmdFactory.buildCmdForStreamToStream() == null
+				: cmdFactory.buildCmdForFileToStream(knownInPath) == null;
+	
+
+		// Sanity check for early detection of misbehaving cmdFactories:
+		// If we cannot obtain a stream for the input, make sure that we can get the files
+		
+		Path dummyOutPath = Paths.get(StandardSystemProperty.JAVA_IO_TMPDIR.value()).resolve("sanity.check");
+		boolean expectedTrue = knownInPath == null
+				? cmdFactory.buildCmdForStreamToFile(dummyOutPath) != null
+				: cmdFactory.buildCmdForFileToFile(knownInPath, dummyOutPath) != null;
+		
+		if(expectedTrue == false) {
+			throw new RuntimeException("Assertion failed: Could neither obtain file nor stream output for given input");
+		}
+		
+		return result;
+	}
+	
+	
+	public Path extractKnownPathFromDestination(Destination destination) {
+		Path result
+			= destination instanceof DestinationFromFile
+				? ((DestinationFromFile)destination).getPath()
+			: destination instanceof DestinationFromFileCreation
+				? ((DestinationFromFileCreation)destination).getFileBeingCreated()
+			: null;
+		
+		return result;
+	}
+	
+
+	public Destination getEffectiveSource() {
+		Destination result;
+		
+		/**
+		 * If the source is a prior filter, obtain an effective source from it
+		 * as needed.
+		 * 
+		 */
+		if(source instanceof DestinationFilter) {
+			DestinationFilter d = (DestinationFilter)source;
+			FilterConfig priorFilter = d.getFilter();
+			
+			boolean requiresFileOutput = priorFilter.requiresFileOutput();
+			
+			if(requiresFileOutput) {
+				// TODO Invoke callback
+				//priorFilter.ifNeedsFileOutput(pathRequester, processCallback)
+				Path tmpOutFile;
+				try {
+					tmpOutFile = Files.createTempFile("highperfstream-", ".dat");
+				} catch(IOException e) {
+					throw new RuntimeException(e);
+				}
+				//Path path = Files.newInputStream()(tmpOutFile, StandardOpenOption.CREATE);
+				result = priorFilter.outputToFile(tmpOutFile); //outputToFile(tmpOutFile);
+			} else {
+				
+				// Note: If this filter requires file input, it will stream the
+				// output to a temp file down in the code
+				
+				result = priorFilter.outputToStream();
+			}
+		} else {
+			result = source;
+		}
+		
+		return result;
+	}
+	
 	/**
 	 * Execute the stream and write the result to a hot file
 	 * 
@@ -70,6 +152,8 @@ public class FilterExecutionFromSysFunction
 	public Single<HotFile> execToHotFile(Path tgtPath) {
 		Single<HotFile> result;
 		
+		Destination effectiveSource = getEffectiveSource();
+
 		
 		ProcessBuilder processBuilder;
 		String[] cmd;
@@ -83,7 +167,7 @@ public class FilterExecutionFromSysFunction
 		}
 		
 		if(processBuilder != null) {
-			result = source.prepareStream().map(inSupp -> {
+			result = effectiveSource.prepareStream().map(inSupp -> {
 				Entry<Single<Integer>, Process> e = SimpleProcessExecutor.wrap(processBuilder).executeCore();
 				Single<Integer> processSingle = e.getKey();
 				Process process = e.getValue();
@@ -106,8 +190,8 @@ public class FilterExecutionFromSysFunction
 		if(result == null) {
 			// Depending on the destination, we can connect obtain the info
 			// whether it will create a file upon requesting a stream
-			if(source instanceof DestinationFromFileCreation) {
-				DestinationFromFileCreation d = (DestinationFromFileCreation)source;
+			if(effectiveSource instanceof DestinationFromFileCreation) {
+				DestinationFromFileCreation d = (DestinationFromFileCreation)effectiveSource;
 				Single<FileCreation> fileCreation = d.getFileCreation();				
 				Path inPath = d.getFileBeingCreated();
 
@@ -121,8 +205,8 @@ public class FilterExecutionFromSysFunction
 					result = fileCreationToHots(fileCreation, inPath, tgtPath);
 				}
 
-			} else if(source instanceof DestinationFromFile) {
-				DestinationFromFile d = (DestinationFromFile)source;
+			} else if(effectiveSource instanceof DestinationFromFile) {
+				DestinationFromFile d = (DestinationFromFile)effectiveSource;
 				Path inPath = d.getPath();
 				Single<FileCreation> fileCreation = Single.just(new FileCreationWrapper(inPath));
 				
@@ -143,7 +227,7 @@ public class FilterExecutionFromSysFunction
 
 				if(probeCmd != null) {
 					
-					source.prepareStream().map(inSupp -> {
+					effectiveSource.prepareStream().map(inSupp -> {
 						try(InputStream inSupp.execStream()) {
 							
 						}
@@ -151,7 +235,7 @@ public class FilterExecutionFromSysFunction
 					});
 
 					
-					DestinationFromFile d = (DestinationFromFile)source;
+					DestinationFromFile d = (DestinationFromFile)effectiveSource;
 					Path inPath = d.getPath();
 					Single<FileCreation> fileCreation = Single.just(new FileCreationWrapper(inPath));
 					

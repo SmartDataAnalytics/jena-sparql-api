@@ -10,6 +10,7 @@ import io.reactivex.Single;
  * (b) a file that already exists
  * (c) a file that can be generated on request
  * (d) a file under generation and will thus exist is the future
+ * (e) a prior filter (for which no output type was yet requested)
  * 
  * In a later version we may consider replacing file with 'store' and 'reference'
  * i.e. a reference to a store that will hold the data in the future

@@ -34,4 +34,10 @@ public class FilterEngineJava
 		// TODO Auto-generated method stub
 		return null;
 	}
+
+	@Override
+	public FilterConfig forInput(FilterConfig in) {
+		return new FilterExecutionJava(processor,
+				() -> in.execStream());
+	}
 }
