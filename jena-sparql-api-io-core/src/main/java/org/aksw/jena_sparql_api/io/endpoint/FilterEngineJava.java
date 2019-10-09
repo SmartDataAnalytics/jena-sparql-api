@@ -6,6 +6,8 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.function.Function;
 
+import io.reactivex.Single;
+
 public class FilterEngineJava
 	implements FilterEngine
 {
@@ -25,5 +27,11 @@ public class FilterEngineJava
 	@Override
 	public FilterConfig forInput(InputStreamSupplier in) {
 		return new FilterExecutionJava(processor, in);
+	}
+
+	@Override
+	public FilterConfig forInput(Single<Path> futurePath) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

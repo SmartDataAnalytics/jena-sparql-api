@@ -109,7 +109,7 @@ public class HotFileFromProcess
 	}
 	
 	@Override
-	public CompletableFuture<Path> whenReady() {
+	public CompletableFuture<Path> future() {
 		return resultFuture;
 	}
 
@@ -136,8 +136,7 @@ public class HotFileFromProcess
 		Thread.sleep(1000);
 
 		System.out.println("Here");
-		file.whenReady().whenComplete((path, t) -> System.out.println("File is ready!"));
-		
+		file.future().whenComplete((path, t) -> System.out.println("File is ready!"));
 	
 		int numTasks = 1;
 		int numWorkers = 4;

@@ -68,9 +68,5 @@ public class FilterExecutionJava
 		return this;
 	}
 
-	@Override
-	public FilterExecution naturalDestination() {
-		return new DestinationFromStream(null);
-	}
 
 }

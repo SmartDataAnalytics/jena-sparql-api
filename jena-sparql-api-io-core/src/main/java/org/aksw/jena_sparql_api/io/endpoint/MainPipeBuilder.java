@@ -2,9 +2,13 @@ package org.aksw.jena_sparql_api.io.endpoint;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Paths;
 
 import org.aksw.jena_sparql_api.io.filter.sys.FilterEngineFromSysFunction;
 import org.aksw.jena_sparql_api.io.filter.sys.SysCallFn;
+import org.aksw.jena_sparql_api.io.filter.sys.SysCallFnLbZipEncode;
+
+import io.reactivex.Single;
 
 public class MainPipeBuilder {
 	public static void main(String[] main) throws IOException {
@@ -32,15 +36,14 @@ public class MainPipeBuilder {
 		// that the application logic has to ensure that file descriptors remain valid for a reasonable
 		// amount of time
 		
-		SysCallFn sysFunction = null;
+		SysCallFn sysFunction = new SysCallFnLbZipEncode();
 		FilterEngine bzip = new FilterEngineFromSysFunction(sysFunction);
 
 		FilterEngine requiresFileSource = new FilterEngineFromSysFunction(sysFunction);
 
-//		identity.forInput(foobar).bzip.forInput((Path)null).outputToFile(null)e.transferTo(identity);
+		Destination source = new DestinationFromFile(Paths.get("/tmp/data.nt"));
 		
-		FilterExecution source;
-		InputStream in = source
+		Single<InputStream> in = source
 				.transferTo(bzip)
 					.ifNeedsFileInput(null, null)
 					.ifNeedsFileOutput(null, null)
@@ -48,7 +51,14 @@ public class MainPipeBuilder {
 				//.outputToFile(null)
 				.transferTo(requiresFileSource) // should reuse the file output, registers for HotFile.whenReady()
 					.execStream();
-		
+
+		source
+				.transferTo(bzip)
+					.ifNeedsFileInput(null, null)
+					.ifNeedsFileOutput(null, null)
+				.pipeInto(bzip)
+					.execStream();
+
 		
 //		bzip.getOutput().connectWith(identity.getInput())
 		

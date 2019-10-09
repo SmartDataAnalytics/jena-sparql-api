@@ -1,14 +1,21 @@
 package org.aksw.jena_sparql_api.io.endpoint;
 
+import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
+import io.reactivex.Single;
+
 public interface FilterConfig
-	extends InputStreamSupplier
 {
+	Single<InputStream> execStream();
+	
 	FilterConfig ifNeedsFileInput(Supplier<Path> pathRequester, BiConsumer<Path, FileWritingProcess> processCallback);
 	FilterConfig ifNeedsFileOutput(Supplier<Path> pathRequester, BiConsumer<Path, FileWritingProcess> processCallback);
+
+	FilterConfig pipeInto(FilterEngine nextFilter);
+	
 
 	/**
 	 * 
@@ -20,7 +27,7 @@ public interface FilterConfig
 	 * @param path
 	 * @return
 	 */
-	FilterExecution outputToFile(Path path);
+	DestinationFromFileCreation outputToFile(Path path);
 	
 	/**
 	 * If the execution requires the generation of an intermediate file, the
@@ -28,15 +35,13 @@ public interface FilterConfig
 	 * 
 	 * @return
 	 */
-	FilterExecution outputToStream();
-	
-	int naturalDestination();
-	// lazy destination
-	//Endpoint naturalDestination();
-	
-//	FileWritingProcess execToFile(Path path) throws IOException;
-	//InputStream execStream() throws IOException;
-		
+	Destination outputToStream();
+
+
+	// 
+	Destination naturalDestination();
+	// int naturalDestination();
+
 	/**
 	 * If the filter needs to create a temporary file in order to serve the stream,
 	 * then the first argument callback can be used to provide a desired location.

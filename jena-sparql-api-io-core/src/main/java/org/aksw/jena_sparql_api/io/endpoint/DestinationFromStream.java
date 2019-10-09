@@ -1,23 +1,16 @@
 package org.aksw.jena_sparql_api.io.endpoint;
 
 public class DestinationFromStream
-	implements FilterExecution
+	implements Destination
 {
-
-	@Override
-	public boolean isFileDestination() {
-		// TODO Auto-generated method stub
-		return false;
-	}
+//	@Override
+//	public boolean isFileDestination() {
+//		// TODO Auto-generated method stub
+//		return false;
+//	}
 
 	@Override
 	public FilterConfig transferTo(FilterEngine engine) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public FileWritingProcess create() {
 		// TODO Auto-generated method stub
 		return null;
 	}

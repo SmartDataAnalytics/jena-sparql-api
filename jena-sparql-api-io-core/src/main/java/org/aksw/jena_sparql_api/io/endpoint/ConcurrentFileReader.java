@@ -12,15 +12,13 @@ import java.nio.file.StandardOpenOption;
 
 /**
  * A wrapper for a channel that blocks upon reaching the end of its channel
- * and waits for a notification from a reference channel
  * 
- * When there is no more data, the reader by default waits for a notify on referenceChannel.
- * Alternatively, a poll interval can be specified, causing the reader to sleep for the
- * given amount of time
+ * When there is no more data, the reader can either waits for a notify on referenceChannel.
+ * or a poll using a specified interval.
  * 
  * The reference channel may be a channel that actually written to
  * by the JVM, but it may also be just a 'dummy' channel that represents a write process
- * outside of the JVM (such as by a system process).
+ * outside of the JVM, such as a system process.
  * 
  * @author raven
  *
@@ -32,6 +30,14 @@ public class ConcurrentFileReader
 	protected SeekableByteChannel currentReadChannel;
 	protected Integer pollIntervalInMs;
 
+	/**
+	 * 
+	 * @param path
+	 * @param writeChannel
+	 * @param pollIntervalInMs Poll interval value or null in order to wait for notify on reference channel
+	 * @return
+	 * @throws IOException
+	 */
 	public static ConcurrentFileReader create(Path path, Channel writeChannel, Integer pollIntervalInMs) throws IOException {
 		SeekableByteChannel currentReadChannel = Files.newByteChannel(path, StandardOpenOption.READ);
 		ConcurrentFileReader result = new ConcurrentFileReader(writeChannel, currentReadChannel, pollIntervalInMs);

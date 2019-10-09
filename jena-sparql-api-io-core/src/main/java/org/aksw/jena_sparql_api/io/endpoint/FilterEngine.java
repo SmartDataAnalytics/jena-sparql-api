@@ -15,6 +15,12 @@ import io.reactivex.Single;
  *
  */
 public interface FilterEngine {
+	
+	/**
+	 * Pipe data from a prior filter into this one
+	 */
+	FilterConfig forInput(FilterConfig in);
+	
 	FilterConfig forInput(Path in);
 	FilterConfig forInput(InputStreamSupplier in);
 	

@@ -2,8 +2,6 @@ package org.aksw.jena_sparql_api.io.endpoint;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Path;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * A hot file is a file currently being written to by another thread or process.
@@ -13,7 +11,9 @@ import java.util.concurrent.CompletableFuture;
  * @author raven
  *
  */
-public interface HotFile {
+public interface HotFile
+	extends FileCreation
+{
 	/**
 	 * Get the file being written to.
 	 * The temp file may be moved to its final place using a
@@ -25,17 +25,13 @@ public interface HotFile {
 	// TODO Probably there is no use in exposing this here
 	// Path getTemporaryFile();
 	
-	/**
-	 * A single (a better version of a future) that fires once the final file is ready
-	 * 
-	 */
-	CompletableFuture<Path> whenReady();
-	//Single<Path> whenReady();
-	
-	void abort();
 	
 	/**
 	 * Open a new stream to the hot file
+	 * In the worst case, the input stream delivery may be delayed
+	 * until after the file creation is complete. 
+	 * 
+	 * TODO Add a flag to hint the methods behavior
 	 * 
 	 * @return
 	 */
