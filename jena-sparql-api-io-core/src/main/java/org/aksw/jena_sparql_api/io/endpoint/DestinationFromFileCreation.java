@@ -15,17 +15,27 @@ import io.reactivex.Single;
 public class DestinationFromFileCreation
 	implements Destination
 {
-	protected Single<FileCreation> fileCreation;
+	protected Single<? extends FileCreation> fileCreation;
 	protected Path fileBeingCreated;
 	
 	
-	public DestinationFromFileCreation(Path fileBeingCreated, Single<FileCreation> fileCreation) {
+	public DestinationFromFileCreation(Path fileBeingCreated, Single<? extends FileCreation> fileCreation) {
 		super();
 		this.fileBeingCreated = fileBeingCreated;
 		this.fileCreation = fileCreation;
 	}
+
+	/**
+	 * Cancels this destination's underlying fileCreation process and cancel it
+	 * Has no effect if the process already completed
+	 * 
+	 */
+	@Override
+	public void cancelCreation() {
+		throw new RuntimeException("Not implemented yet");
+	}
 	
-	public Single<FileCreation> getFileCreation() {
+	public Single<? extends FileCreation> getFileCreation() {
 		return fileCreation;
 	}
 	

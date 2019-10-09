@@ -1,9 +1,7 @@
 package org.aksw.jena_sparql_api.io.endpoint;
 
 import java.io.InputStream;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
 import java.util.function.Function;
 
 import io.reactivex.Single;
@@ -20,13 +18,13 @@ public class FilterEngineJava
 	
 	@Override
 	public FilterConfig forInput(Path in) {
-		return new FilterExecutionJava(processor,
-				Single.just(() -> Files.newInputStream(in, StandardOpenOption.READ)));
+		return new FilterExecutionJava(processor, Destinations.fromFile(in));
 	}
 
 	@Override
 	public FilterConfig forInput(InputStreamSupplier in) {
-		return new FilterExecutionJava(processor, Single.just(in));
+		throw new RuntimeException("not implemented");
+//		return new FilterExecutionJava(processor, Single.just(in));
 	}
 
 	@Override
@@ -36,6 +34,6 @@ public class FilterEngineJava
 
 	@Override
 	public FilterConfig forInput(FilterConfig in) {
-		return new FilterExecutionJava(processor, null);
+		return new FilterExecutionJava(processor, new DestinationFilter(in));
 	}
 }

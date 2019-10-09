@@ -2,6 +2,21 @@ package org.aksw.jena_sparql_api.io.endpoint;
 
 import io.reactivex.Single;
 
+
+/**
+ * Another attempt at defining destination:
+ * 
+ * A destination represents a future byte source.
+ * 
+ * A destination is associated with at most one generating process.
+ * 
+ * 
+ * 
+ * 
+ * 
+ */
+
+
 /**
  * Every destination must be usable as a supplier for input streams.
  * 
@@ -11,6 +26,7 @@ import io.reactivex.Single;
  * (c) a file that can be generated on request
  * (d) a file under generation and will thus exist is the future
  * (e) a prior filter (for which no output type was yet requested)
+ * 
  * 
  * In a later version we may consider replacing file with 'store' and 'reference'
  * i.e. a reference to a store that will hold the data in the future
@@ -31,6 +47,21 @@ public interface Destination {
 	
 	FilterConfig transferTo(FilterEngine engine);
 
-
-	//boolean isFileDestination();
+	
+	// Recursively unwind wrapped destinations
+	// Use to poke through 'cancelCreation' wrappers
+	// Destination unwindDestination();
+	
+	/**
+	 * Cancel the creation of a destination's byte source.
+	 * Propagates upstream unless .wrapWithoutCancel() was called
+	 * 
+	 */
+	default void cancelCreation() {}
+	
+	/**
+	 * Return a new destination whose cancelCreation method does nothing  
+	 * 
+	 */
+	// Destination wrapWithoutCancel();
 }

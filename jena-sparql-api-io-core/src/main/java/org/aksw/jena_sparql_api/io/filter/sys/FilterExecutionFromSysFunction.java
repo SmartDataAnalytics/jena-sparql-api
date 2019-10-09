@@ -30,6 +30,8 @@ import io.reactivex.Single;
 public class FilterExecutionFromSysFunction 
 	implements FilterConfig
 {
+	public static final Path PROBE_PATH = Paths.get("/tmp/probe");
+	
 	protected SysCallFn cmdFactory;
 	protected FilterMetadata filterMetadata;
 	protected Destination source;
@@ -94,6 +96,32 @@ public class FilterExecutionFromSysFunction
 		return result;
 	}
 	
+	protected Path allocateInputFile() {
+		Path result;
+		try {
+			// TODO Invoke callback
+			//priorFilter.ifNeedsFileInput(pathRequester, processCallback)
+			result = Files.createTempFile("highperfstream-input-", ".dat");
+		} catch(IOException e) {
+			throw new RuntimeException(e);
+		}
+		
+		return result;
+	}
+
+	
+	protected Path allocateOutputFile() {
+		Path result;
+		try {
+			// TODO Invoke callback
+			//priorFilter.ifNeedsFileOutput(pathRequester, processCallback)
+			result = Files.createTempFile("highperfstream-output-", ".dat");
+		} catch(IOException e) {
+			throw new RuntimeException(e);
+		}
+		
+		return result;
+	}
 
 	public Destination getEffectiveSource() {
 		Destination result;
@@ -112,12 +140,7 @@ public class FilterExecutionFromSysFunction
 			if(requiresFileOutput) {
 				// TODO Invoke callback
 				//priorFilter.ifNeedsFileOutput(pathRequester, processCallback)
-				Path tmpOutFile;
-				try {
-					tmpOutFile = Files.createTempFile("highperfstream-", ".dat");
-				} catch(IOException e) {
-					throw new RuntimeException(e);
-				}
+				Path tmpOutFile = allocateOutputFile();
 				//Path path = Files.newInputStream()(tmpOutFile, StandardOpenOption.CREATE);
 				result = priorFilter.outputToFile(tmpOutFile); //outputToFile(tmpOutFile);
 			} else {
@@ -133,6 +156,25 @@ public class FilterExecutionFromSysFunction
 		
 		return result;
 	}
+	
+//	protected Single<HotFile> tryExecToHotFile(DestinationFromFileCreation d, Path tgtPath) {
+//		//DestinationFromFileCreation d = (DestinationFromFileCreation)effectiveSource;
+//		Single<HotFile> result = null;
+//		Single<? extends FileCreation> fileCreation = d.getFileCreation();				
+//		Path inPath = d.getFileBeingCreated();
+//
+//		// Probe whether any combination works with the cmdFactory
+//		String[] probeCmd;
+//		if((probeCmd = cmdFactory.buildCmdForFileToFile(inPath, tgtPath)) != null) {
+//		} else if((probeCmd = cmdFactory.buildCmdForFileToStream(inPath)) != null) {
+//		}
+//
+//		if(probeCmd != null) {
+//			result = waitForInputFileAndFilterToFile(fileCreation, tgtPath);
+//		}
+//
+//		return result;
+//	}
 	
 	/**
 	 * Execute the stream and write the result to a hot file
@@ -166,7 +208,7 @@ public class FilterExecutionFromSysFunction
 		}
 		
 		if(processBuilder != null) {
-			result = extracted(tgtPath, effectiveSource, processBuilder);
+			result = prepareHotFile(tgtPath, effectiveSource, processBuilder);
 		}
 
 		// If the processor could not handle stream input, try with a concrete file
@@ -174,37 +216,27 @@ public class FilterExecutionFromSysFunction
 		if(result == null) {
 			// Depending on the destination, we can connect obtain the info
 			// whether it will create a file upon requesting a stream
-			if(effectiveSource instanceof DestinationFromFileCreation) {
-				DestinationFromFileCreation d = (DestinationFromFileCreation)effectiveSource;
-				Single<FileCreation> fileCreation = d.getFileCreation();				
-				Path inPath = d.getFileBeingCreated();
-
-				// Probe whether any combination works with the cmdFactory
-				String[] probeCmd;
-				if((probeCmd = cmdFactory.buildCmdForFileToFile(inPath, tgtPath)) != null) {
-				} else if((probeCmd = cmdFactory.buildCmdForFileToStream(inPath)) != null) {
-				}
-
-				if(probeCmd != null) {
-					result = fileCreationToHots(fileCreation, inPath, tgtPath);
-				}
-
-			} else if(effectiveSource instanceof DestinationFromFile) {
-				DestinationFromFile d = (DestinationFromFile)effectiveSource;
-				Path inPath = d.getPath();
-				Single<FileCreation> fileCreation = Single.just(new FileCreationWrapper(inPath));
-				
-				result = fileCreationToHots(fileCreation, inPath, tgtPath);
-			} else {
+			// TODO We should have a common class for destinations that
+			// "are or will be backed by a file"
+			
+			result = awaitOrAllocateInputFileAndFilterToFile(effectiveSource, tgtPath);
+//
+//			//result = tryExecToHotFile((DestinationFromFileCreation)effectiveSource, tgtPath);
+//
+//			if(effectiveSource instanceof DestinationFromFileCreation) {
+//				result = tryExecToHotFile((DestinationFromFileCreation)effectiveSource, tgtPath);
+//			} else if(effectiveSource instanceof DestinationFromFile) {
+//				DestinationFromFile d = (DestinationFromFile)effectiveSource;
+//				Path inPath = d.getPath();
+//				Single<FileCreation> fileCreation = Single.just(new FileCreationWrapper(inPath));
+//				
+//				result = waitForInputFileAndFilterToFile(fileCreation, inPath, tgtPath);
+			
+			if(result == null) {
 				// We need a file but we were unable to obtain one from the destination
 				// Attempt to stream the destination to a file first
 
-				Path tmpInFile;
-				try {
-					tmpInFile = Files.createTempFile("highperfstream-", ".dat");
-				} catch(IOException e) {
-					throw new RuntimeException(e);
-				}
+				Path tmpInFile = allocateInputFile();
 				
 				// Probe whether any combination works with the cmdFactory
 				String[] probeCmd;
@@ -215,11 +247,11 @@ public class FilterExecutionFromSysFunction
 				}
 
 				if(probeCmd != null) {
-					processBuilder = new ProcessBuilder(cmd);
+					processBuilder = new ProcessBuilder(probeCmd);
 					// create a single that reads the input and forwards it to the process
 					processBuilder.redirectOutput(tgtPath.toFile());		
 
-					result = extracted(tgtPath, effectiveSource, processBuilder);
+					result = prepareHotFile(tgtPath, effectiveSource, processBuilder);
 				}
 			}
 			
@@ -229,13 +261,14 @@ public class FilterExecutionFromSysFunction
 	}
 
 
-	private Single<HotFile> extracted(Path tgtPath, Destination effectiveSource, ProcessBuilder processBuilder) {
+	private Single<HotFile> prepareHotFile(Path tgtPath, Destination effectiveSource, ProcessBuilder processBuilder) {
 		Single<HotFile> result;
 		result = effectiveSource.prepareStream().map(inSupp -> {
 			Entry<Single<Integer>, Process> e = SimpleProcessExecutor.wrap(processBuilder).executeCore();
 			Single<Integer> processSingle = e.getKey();
 			Process process = e.getValue();
 			
+			// Copy the input into the process
 			new Thread(() -> {
 				try(InputStream in = inSupp.execStream()) {
 					try(OutputStream out = process.getOutputStream()) {
@@ -252,8 +285,63 @@ public class FilterExecutionFromSysFunction
 		return result;
 	}
 	
-	public Single<HotFile> fileCreationToHots(Single<? extends FileCreation> fileCreation, Path inPath, Path tgtPath) {
+	
+	private Single<InputStreamSupplier> prepareStreamToStream(Destination effectiveSource, ProcessBuilder processBuilder) {
+		Single<InputStreamSupplier> result;
+		result = effectiveSource.prepareStream().map(inSupp -> {
+			return () -> {
+				Process process;
+				try {
+					process = SimpleProcessExecutor.wrap(processBuilder).execute();
+				} catch (InterruptedException e1) {
+					throw new RuntimeException(e1);
+				}
+				
+				// Copy the input into the process
+				new Thread(() -> {
+					try(InputStream in = inSupp.execStream()) {
+						try(OutputStream out = process.getOutputStream()) {
+							ByteStreams.copy(in, out);
+						}
+					} catch (IOException ex) {
+						throw new RuntimeException(ex);
+					}
+				}).start();
+
+				return process.getInputStream();
+			};
+		});
+		return result;
+	}
+
+	
+	public Single<? extends FileCreation> tryGetFileCreation(Destination destination) {
+		Single<? extends FileCreation> result;
 		
+		if(destination instanceof DestinationFromFileCreation) {
+			result = ((DestinationFromFileCreation)destination).getFileCreation();
+		} else if(destination instanceof DestinationFromFile) {
+			DestinationFromFile d = (DestinationFromFile)destination;
+			Path inPath = d.getPath();
+			result = Single.just(new FileCreationWrapper(inPath));
+		} else {
+			result = null;
+		}
+	
+		return result;
+	}
+	
+
+//	public Single<HotFile> awaitOrAllocateInputFileAndFilterToFile(Single<? extends FileCreation> fileCreation, Path inPath, Path tgtPath) {
+
+	public Single<HotFile> awaitOrAllocateInputFileAndFilterToFile(Destination effectiveSource, Path tgtPath) {
+		
+		Single<? extends FileCreation> fileCreation = tryGetFileCreation(effectiveSource);
+		if(fileCreation == null) {
+			Path tmpInFile = allocateInputFile();
+			fileCreation = Single.just(new FileCreationWrapper(tmpInFile));
+		}
+
 		return fileCreation.flatMap(fc -> {
 			return Single.fromFuture(fc.future()).map(actualInPath -> {
 				
@@ -274,6 +362,63 @@ public class FilterExecutionFromSysFunction
 				return r;
 			});
 		});
+	}
+	
+
+	public Single<InputStreamSupplier> awaitOrAllocateInputFileAndFilterToStream(Destination effectiveSource) {
+		
+		Single<? extends FileCreation> fileCreation = tryGetFileCreation(effectiveSource);
+		if(fileCreation == null) {
+			Path tmpInFile = allocateInputFile();
+			fileCreation = Single.just(new FileCreationWrapper(tmpInFile));
+		}
+		
+		String[] probeCmd;
+		Single<InputStreamSupplier> result;
+		if((probeCmd = cmdFactory.buildCmdForFileToStream(PROBE_PATH)) != null) {
+			String[] cmd = probeCmd.clone();
+			result = fileCreation.flatMap(fc -> {
+				return Single.fromFuture(fc.future()).map(actualInPath -> {
+					return () -> {
+						ProcessBuilder processBuilder;
+						processBuilder = new ProcessBuilder(cmd);
+						Entry<Single<Integer>, Process> processSingle;
+						try {
+							processSingle = SimpleProcessExecutor.wrap(processBuilder).executeCore();
+						} catch (InterruptedException e) {
+							throw new RuntimeException();
+						}
+						Process process = processSingle.getValue();
+						
+						InputStream r = process.getInputStream();
+						return r;
+					};
+				});
+			});
+			
+		} else if((probeCmd = cmdFactory.buildCmdForFileToFile(PROBE_PATH, PROBE_PATH)) != null) {
+			
+			Path outPath = allocateOutputFile();
+			result = fileCreation.flatMap(fc -> {
+				return Single.fromFuture(fc.future()).flatMap(actualInPath -> {
+					Single<InputStreamSupplier> r;
+					String[] cmd;							
+					if((cmd = cmdFactory.buildCmdForFileToFile(actualInPath, outPath)) != null) {
+						Path outFile = allocateOutputFile();
+						r = execToHotFile(outFile).map(hotFile -> hotFile::newInputStream);
+					} else {
+						throw new RuntimeException("cmdFactory could not cope with provided arguments");
+					}
+	
+					//Single<Integer> processSingle = SimpleProcessExecutor.wrap(processBuilder).executeFuture();
+					return r;
+				});
+			});
+		} else {
+			result = null;
+		}
+		
+		return result;
 	}
 
 
@@ -316,16 +461,66 @@ public class FilterExecutionFromSysFunction
 //		}
 //	}
 	
+	// input options subset of OPTS:= { stream, path} 
+	//
+	// input option requirements (stream) -> foo, (path) > bar with foo, bar subseteq OPTS  
+	//
+	// output input  output
+	// stream stream stream
+	//
+	//
+	//
+	//
+	//
+		
+	
 	
 	/**
 	 * Actually execute the filter
+	 * 
+	 * Because we always prefer streams over files (which get passed as arguments), we check the
+	 * availability and applicability of commands of the cmdFactory in the following order:
+	 * 
+	 * - stream to stream
+	 * - stream to file (we can stream the file being generated)
+	 * - file to stream
+	 * - file to file
+	 * 
+	 * 
+	 * the 'file to stream' cases will try to reuse files under generation in the source destination
+	 * 
 	 * 
 	 * Invokes ifNeedsFileInput and ifNeedsFileOutput handlers as needed
 	 * 
 	 */
 	@Override
 	public Single<InputStreamSupplier> execStream() {
-		return null;
+		Single<InputStreamSupplier> result;
+		
+		Destination effectiveSource = getEffectiveSource();
+		
+		ProcessBuilder processBuilder = null;
+		String[] cmd;
+		
+		if((cmd = cmdFactory.buildCmdForStreamToStream()) != null) {
+			processBuilder = new ProcessBuilder(cmd);
+			result = prepareStreamToStream(effectiveSource, processBuilder);
+		} else if((cmd = cmdFactory.buildCmdForStreamToFile(PROBE_PATH)) != null) {
+			Path tmpOutFile = allocateOutputFile();
+			result = execToHotFile(tmpOutFile).map(hotFile -> hotFile::newInputStream);
+		} else {
+			
+			result = awaitOrAllocateInputFileAndFilterToStream(effectiveSource);
+
+			// We need a file as input - either reuse one being created
+			// or write an input file
+		}
+		
+		if(result == null) {
+			throw new RuntimeException("Was not able to create a stream out of input");
+		}
+
+		return result;
 	}
 
 
@@ -354,8 +549,8 @@ public class FilterExecutionFromSysFunction
 
 	@Override
 	public DestinationFromFileCreation outputToFile(Path path) {
-		// TODO Auto-generated method stub
-		return null;
+		return new DestinationFromFileCreation(path,
+				execToHotFile(path));
 	}
 
 

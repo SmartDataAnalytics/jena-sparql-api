@@ -3,6 +3,7 @@ package org.aksw.jena_sparql_api.io.endpoint;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
+import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -13,11 +14,13 @@ public class FilterExecutionJava
 	implements FilterConfig
 {
 	protected Function<InputStream, InputStream> processor;
-	protected Single<InputStreamSupplier> inputStreamSupplier;
+	//protected Single<InputStreamSupplier> inputStreamSupplier;
+	protected Destination source;
 
-	public FilterExecutionJava(Function<InputStream, InputStream> processor, Single<InputStreamSupplier> inputStreamSupplier) {
-		this.processor = processor;
-		this.inputStreamSupplier = inputStreamSupplier;
+	public FilterExecutionJava(Function<InputStream, InputStream> processor, Destination source) {//, Single<InputStreamSupplier> inputStreamSupplier) {
+		this.processor = Objects.requireNonNull(processor);
+		//this.inputStreamSupplier = Objects.requireNonNull(inputStreamSupplier);
+		this.source = source;
 	}
 	
 //	@Override
@@ -37,7 +40,7 @@ public class FilterExecutionJava
 	 */
 	@Override
 	public Single<InputStreamSupplier> execStream() {
-		return inputStreamSupplier.map(inSupp -> {
+		return source.prepareStream().map(inSupp -> {
 			return () -> {
 				InputStream in = inSupp.execStream();
 				InputStream r = processor.apply(in);
@@ -84,8 +87,7 @@ public class FilterExecutionJava
 
 	@Override
 	public Destination outputToStream() {
-		// TODO Auto-generated method stub
-		return null;
+		return new DestinationFilter(this);
 	}
 
 	@Override

@@ -11,13 +11,6 @@ import java.util.concurrent.CompletableFuture;
  */
 public interface FileCreation {
 	/**
-	 * A single (a better version of a future) that fires once the final file is ready
-	 * Canceling the future has no upstream effect, use abort for this purpose
-	 * 
-	 */
-	// removed
-	
-	/**
 	 * A completable future that fires when the file creation is complete
 	 * or an exception occurred
 	 * 
