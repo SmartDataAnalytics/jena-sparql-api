@@ -5,11 +5,12 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.function.Function;
 
-import org.aksw.commons.service.core.SimpleProcessExecutor;
+import org.aksw.jena_sparql_api.io.utils.SimpleProcessExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.reactivex.Single;
+import io.reactivex.schedulers.Schedulers;
 
 public abstract class PathCoderSysBase
 	implements PathCoder
@@ -28,7 +29,7 @@ public abstract class PathCoderSysBase
 
 		boolean result;
 		try {
-			logger.trace("Checking availability of system command 'lbzip2'");
+			logger.trace("Checking availability of system command such as 'lbzip2'");
 			Process p = SimpleProcessExecutor.wrap(processBuilder)
 	            .setOutputSink(logger::trace)	
 	            .execute();
@@ -89,7 +90,7 @@ public abstract class PathCoderSysBase
 		//System.out::println) //logger::debug)
 		Single<Integer> result;
 		try {
-			result = x.executeFuture();
+			result = x.executeFuture().subscribeOn(Schedulers.io());
 		} catch(Exception e) {
 			throw new RuntimeException(e);
 		}

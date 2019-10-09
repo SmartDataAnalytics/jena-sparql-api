@@ -1,4 +1,4 @@
-package org.aksw.commons.utils;
+package org.aksw.jena_sparql_api.io.utils;
 
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;

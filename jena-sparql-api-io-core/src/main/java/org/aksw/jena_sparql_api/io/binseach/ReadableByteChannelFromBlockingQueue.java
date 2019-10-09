@@ -6,7 +6,8 @@ import java.nio.channels.ReadableByteChannel;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
-public class ReadableByteChannelSimple
+// Not used anymore but kept for reference
+public class ReadableByteChannelFromBlockingQueue
 	implements ReadableByteChannel //, Subscriber<ByteBuffer>
 {
 	protected static final ByteBuffer POISON = ByteBuffer.wrap(new byte[0]);
@@ -20,11 +21,11 @@ public class ReadableByteChannelSimple
 	protected boolean isOpen = true;
 	protected Runnable closeAction;
 	
-	public ReadableByteChannelSimple() {
+	public ReadableByteChannelFromBlockingQueue() {
 	    super();
 	}
 	
-	public ReadableByteChannelSimple(Runnable closeAction) {
+	public ReadableByteChannelFromBlockingQueue(Runnable closeAction) {
 	    super();
 	    this.closeAction = closeAction;
 	}

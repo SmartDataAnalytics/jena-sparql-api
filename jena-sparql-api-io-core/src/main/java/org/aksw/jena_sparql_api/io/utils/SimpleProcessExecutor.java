@@ -1,4 +1,4 @@
-package org.aksw.commons.service.core;
+package org.aksw.jena_sparql_api.io.utils;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -7,9 +7,7 @@ import java.util.Map.Entry;
 import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
 
-import org.aksw.commons.utils.OmitSimilarItems;
-
-import com.github.jsonldjava.shaded.com.google.common.collect.Maps;
+import com.google.common.collect.Maps;
 
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
@@ -74,6 +72,16 @@ public class SimpleProcessExecutor {
         return this;
     }
 
+    /**
+     * Utility function that blocks until the process to end, thereby
+     * forwarding output to the configured sink and applying filtering of
+     * consecutive lines that are too similar
+     * 
+     * @param p
+     * @return
+     * @throws IOException
+     * @throws InterruptedException
+     */
     public int watchProcessOutput(Process p) throws IOException, InterruptedException {
 //        try {
             Consumer<String> sink = similarityRemover == null
@@ -102,6 +110,14 @@ public class SimpleProcessExecutor {
             return exitValue;
     }
     
+    /**
+     * Wraps process execution as a single that will hold the exit code.
+     * This which allows for waiting for the process to end as well as
+     * canceling it using e.g. timeout
+     * 
+     * @param p
+     * @param emitter
+     */
     public void run(Process p, FlowableEmitter<Integer> emitter) {
 		try {
 			int r = watchProcessOutput(p);
@@ -118,7 +134,7 @@ public class SimpleProcessExecutor {
     }
 
     public Single<Integer> executeFuture() throws IOException, InterruptedException {
-    	setService(true);
+    	//setService(true);
     	Single<Integer> result = executeCore().getKey();
     	return result;
     }
@@ -130,16 +146,18 @@ public class SimpleProcessExecutor {
 
         Single<Integer> single = Flowable.<Integer>create(emitter -> {
     		if(isService) {
-    			Thread thread = new Thread(() -> run(p, emitter));
+    			if(true) throw new RuntimeException("Do not use; use Single/Flowable.subscribeOn(Schedulers.io)");
+    			
+    			//Thread thread = new Thread(() -> run(p, emitter));
                 emitter.setCancellable(() -> {
                 	System.out.println("Destroying process...");
                 	p.destroy();
                 	//p.destroyForcibly();
                 	p.waitFor();
                 	System.out.println("Done");
-                	thread.interrupt();
+                	//thread.interrupt();
                 });
-    			thread.start();
+    			//thread.start();
     		} else {
     			emitter.setCancellable(p::destroyForcibly);
     			run(p, emitter);

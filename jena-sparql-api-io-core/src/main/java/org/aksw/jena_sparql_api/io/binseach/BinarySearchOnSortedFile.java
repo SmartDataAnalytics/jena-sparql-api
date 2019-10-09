@@ -33,7 +33,7 @@ import com.google.common.primitives.Ints;
  * @author raven
  *
  */
-public class BinarySearchOverSortedFiles
+public class BinarySearchOnSortedFile
 	implements AutoCloseable
 {
 	/**
@@ -64,14 +64,14 @@ public class BinarySearchOverSortedFiles
 	 */
 	protected long channelSize;
 	
-	public BinarySearchOverSortedFiles(FileChannel channel, long size) {
+	public BinarySearchOnSortedFile(FileChannel channel, long size) {
 		this.channel = channel;
 		this.channelSize = size;
 	}
 	
-	public static BinarySearchOverSortedFiles create(FileChannel channel) throws IOException {
+	public static BinarySearchOnSortedFile create(FileChannel channel) throws IOException {
 		long size = channel.size();
-		return new BinarySearchOverSortedFiles(channel, size);
+		return new BinarySearchOnSortedFile(channel, size);
 	}
 	
 	/**
@@ -232,7 +232,7 @@ public class BinarySearchOverSortedFiles
 	 * @return
 	 */
 	public InputStream newInputStreamOld(State state) {
-		ReadableByteChannelSimple byteChannel[] = {null}; 
+		ReadableByteChannelFromBlockingQueue byteChannel[] = {null}; 
 
 		Thread thread = new Thread(() -> {
 			long currentPos = Math.max(state.firstDelimPos, 0);
@@ -282,7 +282,7 @@ public class BinarySearchOverSortedFiles
 			}
 		});
 		
-		byteChannel[0] = new ReadableByteChannelSimple(() -> thread.interrupt());
+		byteChannel[0] = new ReadableByteChannelFromBlockingQueue(() -> thread.interrupt());
 
 		thread.start();
 		
@@ -643,6 +643,20 @@ public class BinarySearchOverSortedFiles
 		long result = (buffer == null ? p - 1 : p) * pageSize + (long)i;
 		return result;
 	}
+	
+	// TODO We could add a find preceedingToken(long pos, byte[] token)
+	// method - this way we could have makers in a text file such as
+	// # sortKey=...
+	// which we could exploit for turtle - this would give readability of a text file
+	// with the possibility of binary searches
+	// Then again, one could just use hdt and dump it as turtle
+	// especially, because there is no tool that generates this kind of turtle
+	// (although it would be easy to adjust the turtle writer - and we could use
+	// sorted n-triples as the base)
+	// But this niche where this is useful is extremely small:
+	// For files that are only a few MB in size, one can just load it into memory
+	// For files that are a few GB in ntriples, use HDT
+	
 	// returns pos if byteOf[pos] == delimiter
 	// returns -1 if there is none
 	public long findPrecedingDelimiter(long pos, byte delimiter) throws IOException {
@@ -652,7 +666,7 @@ public class BinarySearchOverSortedFiles
         
 		long p;
         int i = index;
-        outer: for(p = page; p >=0; --p) {
+        outer: for(p = page; p >= 0; --p) {
             MappedByteBuffer buffer = getBufferForPage(p);
 
 	        for(i = index; i >= 0; --i) {

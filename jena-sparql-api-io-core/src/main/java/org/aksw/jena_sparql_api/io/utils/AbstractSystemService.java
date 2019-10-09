@@ -1,4 +1,4 @@
-package org.aksw.commons.service.core;
+package org.aksw.jena_sparql_api.io.utils;
 
 import java.io.IOException;
 import java.time.Duration;

@@ -76,7 +76,7 @@ public class GraphFromPrefixMatcher extends GraphBase {
 	protected ExtendedIterator<Triple> graphBaseFindCore(Triple triplePattern) throws Exception {
 		ExtendedIterator<Triple> result;
 		FileChannel channel = FileChannel.open(path, StandardOpenOption.READ);
-		BinarySearchOverSortedFiles searcher = BinarySearchOverSortedFiles.create(channel);
+		BinarySearchOnSortedFile searcher = BinarySearchOnSortedFile.create(channel);
 
 		// Construct the prefix from the subject
 		// Because whitespaces between subject and predicate may differ, do not include
