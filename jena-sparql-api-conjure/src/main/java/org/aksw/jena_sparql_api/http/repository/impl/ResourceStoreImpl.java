@@ -1,8 +1,10 @@
 package org.aksw.jena_sparql_api.http.repository.impl;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -43,6 +45,29 @@ class ResourceSourceFileImpl
 }
 
 class ResourceUtils {
+	/**
+	 * Copies all direct outgoing properties of src to tgt
+	 * 
+	 * @param tgt
+	 * @param src
+	 * @return
+	 */
+	public static Resource copyDirectProperties(Resource tgt, Resource src) {
+		StmtIterator it = src.listProperties();
+		while(it.hasNext()) {
+			Statement stmt = it.next();
+
+			//RDFNode s = stmt.getSubject();
+			Property p = stmt.getPredicate();
+			RDFNode o = stmt.getObject();
+
+			tgt.addProperty(p, o);
+		}
+		
+		return tgt;
+	}
+
+	
 	public static Resource merge(Collection<Resource> resources) {
 		Model m = ModelFactory.createDefaultModel();
 		Resource result = m.createResource();
@@ -73,7 +98,7 @@ class ResourceUtils {
 
 
 /**
- * ResourceManager for a single folder; does not manager multiple repositories
+ * ResourceManager for a single folder; does not manage multiple repositories
  * 
  * @author raven
  *
@@ -129,6 +154,26 @@ public class ResourceStoreImpl
 		RdfHttpResourceFileImpl result = new RdfHttpResourceFileImpl(this, fullPath);
 		return result;
 	}
+	
+	/**
+	 * Put a given file into an appropriate place in the repository
+	 * using a move operation 
+	 * 
+	 * @param uri
+	 * @param file
+	 * @return
+	 * @throws IOException 
+	 */
+	public RdfHttpEntityFile putWithMove(String uri, RdfEntityInfo metadata, Path file) throws IOException {
+		RdfHttpEntityFile result = allocateEntity(uri, metadata);
+		result.updateInfo(record -> ResourceUtils.copyDirectProperties(record, metadata));
+		Path tgtFile = result.getAbsolutePath();
+		Files.move(file, tgtFile, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+		
+		return result;
+	}
+	
+	
 	
 	public RdfHttpEntityFile getEntityForPath(Path absEntityPath) {
 		RdfHttpEntityFile result;

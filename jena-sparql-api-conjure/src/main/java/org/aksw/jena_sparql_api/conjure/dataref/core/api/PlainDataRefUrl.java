@@ -4,6 +4,7 @@ public interface PlainDataRefUrl
 	extends PlainDataRef
 {
 	String getDataRefUrl();
+	Boolean hdtHeader();
 	
 	@Override
 	default <T> T accept(PlainDataRefVisitor<T> visitor) {

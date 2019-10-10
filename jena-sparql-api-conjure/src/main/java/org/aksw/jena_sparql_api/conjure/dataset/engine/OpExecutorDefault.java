@@ -2,11 +2,14 @@ package org.aksw.jena_sparql_api.conjure.dataset.engine;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Function;
 
+import org.aksw.jena_sparql_api.conjure.algebra.common.ResourceTreeUtils;
 import org.aksw.jena_sparql_api.conjure.datapod.api.RdfDataPod;
 import org.aksw.jena_sparql_api.conjure.datapod.impl.DataPods;
 import org.aksw.jena_sparql_api.conjure.dataref.core.api.PlainDataRef;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.Op;
+import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpCoalesce;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpConstruct;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpData;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpDataRefResource;
@@ -16,22 +19,39 @@ import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpUpdateRequest;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpVar;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpVisitor;
 import org.aksw.jena_sparql_api.http.repository.api.HttpResourceRepositoryFromFileSystem;
+import org.aksw.jena_sparql_api.http.repository.impl.HttpResourceRepositoryFromFileSystemImpl;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdfconnection.RDFConnection;
 
+// TODO The visitor should delegate to the executor implementation(s) instead of
+// performing operations directly
 public class OpExecutorDefault
 	implements OpVisitor<RdfDataPod>
 {
 //	protected DataObjectRdfVisitor<RDFConnection> DataObjectRdfToConnection;
 
-	protected HttpResourceRepositoryFromFileSystem repo;
+	protected HttpResourceRepositoryFromFileSystemImpl repo;
 	
 	public OpExecutorDefault(HttpResourceRepositoryFromFileSystem repo) {
 		super();
-		this.repo = repo;
+		// TODO HACK Avoid the down cast
+		this.repo = (HttpResourceRepositoryFromFileSystemImpl)repo;
 	}
 
+	/**
+	 * Check the repository for whether it can supply an entity for the hash 
+	 * 
+	 * @param hash
+	 * @return
+	 */
+	public <T extends RDFNode> RdfDataPod wrapWithGetFromHash(T op, Function<T, RdfDataPod> generator) {
+		String hash = ResourceTreeUtils.createGenericHash(op);
+		RdfDataPod result = DataPods.create(hash, repo);
+		return result;
+	}
+	
 	@Override
 	public RdfDataPod visit(OpDataRefResource op) {
 		PlainDataRef dataRef = op.getDataRef();
@@ -39,6 +59,7 @@ public class OpExecutorDefault
 		return result;
 	}
 
+	
 	@Override
 	public RdfDataPod visit(OpData op) {
 		Object data = null; // TODO op.getData();
@@ -114,6 +135,12 @@ public class OpExecutorDefault
 	@Override
 	public RdfDataPod visit(OpVar op) {
 		throw new RuntimeException("no handler for variables");
+	}
+
+	@Override
+	public RdfDataPod visit(OpCoalesce op) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

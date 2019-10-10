@@ -10,11 +10,11 @@ import org.apache.jena.rdf.model.ModelFactory;
 
 @ResourceView
 @RdfType
-public interface OpUnion
+public interface OpCoalesce
 	extends OpN
 {
 	@Override
-	OpUnion setSubOps(List<Op> subOps);
+	OpCoalesce setSubOps(List<Op> subOps);
 
 	
 	default <T> T accept(OpVisitor<T> visitor) {
@@ -23,18 +23,18 @@ public interface OpUnion
 	}
 	
 	
-	public static OpUnion create(Op ...subOps) {
+	public static OpCoalesce create(Op ...subOps) {
 		return create(Arrays.asList(subOps));
 	}
 
-	public static OpUnion create(List<Op> subOps) {
-//		Model model = subOps.size() > 0 ? subOps.get(0).getModel() : ModelFactory.createDefaultModel();
+	public static OpCoalesce create(List<Op> subOps) {
+		//Model model = subOps.size() > 0 ? subOps.get(0).getModel() : ModelFactory.createDefaultModel();
 		Model model = ModelFactory.createDefaultModel();
 		for(Op subOp : subOps) {
 			model.add(subOp.getModel());
 		}
 		
-		OpUnion result = model.createResource().as(OpUnion.class)
+		OpCoalesce result = model.createResource().as(OpCoalesce.class)
 			.setSubOps(subOps);
 		
 		return result;

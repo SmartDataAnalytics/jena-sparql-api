@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api.http.repository.api;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Optional;
@@ -20,6 +21,25 @@ public interface ResourceStore {
 
 		return result;
 	}
+	
+	/**
+	 * Archive the file in the repository and then delete the source
+	 * 
+	 * TODO This method can be considered mostly as simple convenience function:
+	 * We may want some more sophisticated API
+	 * that places a file or stream into the repository once it becomes ready and triggers
+	 * an action when the archiving has completed - something along the lines of:
+	 * 
+	 * flowableSourceOfByteSourceOrFile
+	 * 	.flatMap(repo.archivingThatProducesASingleWithInfo(byteSourceOrFile))
+	 * .subscribe(info -> info.inputFile().delete())
+	 * 
+	 * @param uri
+	 * @param metadata
+	 * @param file
+	 * @return
+	 */
+	RdfHttpEntityFile putWithMove(String uri, RdfEntityInfo metadata, Path file) throws IOException;
 	
 	/**
 	 * Bridge between paths and entities

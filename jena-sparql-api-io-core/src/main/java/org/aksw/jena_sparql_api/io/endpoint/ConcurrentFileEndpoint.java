@@ -77,7 +77,7 @@ public class ConcurrentFileEndpoint
 	/**
 	 * Only for the creating thread!
 	 * Indicate that the writing to the endpoint has been abandoned.
-	 * Must be indicated before closing the endpoint, as any readers will check the
+	 * Must be indicated before closing the endpoint, as any readers will also check the
 	 * isOpen state upon reaching the end of data, and if there is no abandon state they will assume
 	 * successful completion.
 	 * 

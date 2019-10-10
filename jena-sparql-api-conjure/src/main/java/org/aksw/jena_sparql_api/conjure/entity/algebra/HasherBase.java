@@ -38,7 +38,7 @@ public abstract class HasherBase
 
 	@Override
 	public String visit(OpCode op) {
-		String result = computeHash(
+		String result = HashUtils.computeHash(
 				(op.isDecode() ? "decode" : "encode"),
 				op.getSubOp().accept(this));
 		return result;
@@ -46,7 +46,7 @@ public abstract class HasherBase
 
 	@Override
 	public String visit(OpConvert op) {
-		String result = computeHash(
+		String result = HashUtils.computeHash(
 				op.getTargetContentType(),
 				op.getSourceContentType(),
 				op.getSubOp().accept(this));
@@ -63,22 +63,7 @@ public abstract class HasherBase
 	@Override
 	public String visit(OpValue op) {
 		Object value = op.getValue();
-		String result = computeHash("value", Objects.toString(value));
-		return result;
-	}
-
-	public static String computeHash(String opName, String ...args) {
-		String str = opName + "(" +
-				Arrays.asList(args).stream().collect(Collectors.joining(", ")) + ")";
-		
-		ByteSource bs = ByteSource.wrap(str.getBytes(StandardCharsets.UTF_8));
-		HashCode hashCode;
-		try {
-			hashCode = bs.hash(Hashing.sha256());
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
-		String result = hashCode.toString();
+		String result = HashUtils.computeHash("value", Objects.toString(value));
 		return result;
 	}
 	

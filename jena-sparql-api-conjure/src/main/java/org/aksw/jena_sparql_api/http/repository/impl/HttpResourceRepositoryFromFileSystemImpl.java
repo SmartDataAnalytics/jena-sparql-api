@@ -21,8 +21,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.aksw.dcat.ap.domain.api.Checksum;
+import org.aksw.jena_sparql_api.conjure.algebra.common.ResourceTreeUtils;
 import org.aksw.jena_sparql_api.conjure.entity.algebra.Op;
-import org.aksw.jena_sparql_api.conjure.entity.algebra.ResourceTreeUtils;
 import org.aksw.jena_sparql_api.conjure.entity.engine.OpExecutor;
 import org.aksw.jena_sparql_api.conjure.entity.engine.Planner;
 import org.aksw.jena_sparql_api.conjure.entity.utils.PathCoderRegistry;
@@ -66,17 +66,12 @@ import com.google.common.net.MediaType;
 public class HttpResourceRepositoryFromFileSystemImpl
 	implements HttpResourceRepositoryFromFileSystem
 {
-	//protected ResourceStoreImpl store;
-	
 	protected ResourceStore downloadStore;
 	protected ResourceStore cacheStore;
 	protected ResourceStore hashStore;
 	
-	//protected Function<String, Path> uriToRelPath;
-
 	public HttpResourceRepositoryFromFileSystemImpl() {
 		super();
-//		this.uriToRelPath = CatalogResolverFilesystem::resolvePath;
 	}
 
 	public static Path hashToRelPath(String hash) {

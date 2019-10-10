@@ -14,6 +14,10 @@ public interface DataRefUrl
 	@IriNs("eg")
 	DataRefUrl setDataRefUrl(String url);
 	
+	// Experimental feature adding hdt header as a first class modifier for a dataset reference
+	@IriNs("eg")
+	DataRefUrl hdtHeader(Boolean value);
+
 	@Override
 	default <T> T accept2(DataRefVisitor<T> visitor) {
 		T result = visitor.visit(this);

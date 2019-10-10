@@ -44,4 +44,10 @@ public class OpMapper
 		System.out.println("Op: " + op);
 		return null;
 	}
+
+	@Override
+	public Op visit(OpCoalesce op) {
+		System.out.println("Op: " + op);
+		return null;
+	}
 }

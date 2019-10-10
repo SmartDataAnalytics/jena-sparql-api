@@ -13,8 +13,14 @@ import org.aksw.jena_sparql_api.conjure.dataref.core.api.PlainDataRefUrl;
 import org.aksw.jena_sparql_api.conjure.dataref.core.api.PlainDataRefVisitor;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpVisitor;
 import org.aksw.jena_sparql_api.http.repository.api.HttpResourceRepositoryFromFileSystem;
+import org.aksw.jena_sparql_api.http.repository.api.RdfHttpEntityFile;
+import org.aksw.jena_sparql_api.http.repository.impl.HttpResourceRepositoryFromFileSystemImpl;
 import org.aksw.jena_sparql_api.http.repository.impl.URIUtils;
 import org.aksw.jena_sparql_api.utils.hdt.JenaPluginHdt;
+import org.apache.http.HttpHeaders;
+import org.apache.http.HttpRequest;
+import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.client.methods.RequestBuilder;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.rdf.model.Model;
@@ -121,6 +127,46 @@ public class DataPods {
 		return result;
 	}
 
+	
+	public static RdfDataPod create(String url, HttpResourceRepositoryFromFileSystem repo) {
+		RdfDataPod r;
+
+		// HACK - http url checking should be done in the repository!
+		if(url.startsWith("http://") || url.startsWith("https://")) {
+			RdfHttpEntityFile entity;
+			try {
+				HttpUriRequest baseRequest =
+						RequestBuilder.get(url)
+						.setHeader(HttpHeaders.ACCEPT, "application/x-hdt")
+						.setHeader(HttpHeaders.ACCEPT_ENCODING, "identity,bzip2,gzip")
+						.build();
+
+				HttpRequest effectiveRequest = HttpResourceRepositoryFromFileSystemImpl.expandHttpRequest(baseRequest);
+				logger.info("Expanded HTTP Request: " + effectiveRequest);
+				
+				entity = repo.get(effectiveRequest, HttpResourceRepositoryFromFileSystemImpl::resolveRequest);
+
+				logger.info("Response entity is: " + entity);
+				
+//				repo.get(, HttpResourceRepositoryFromFileSystemImpl::resolveRequest);
+				
+//				entity = HttpResourceRepositoryFromFileSystemImpl.get(repo,
+//						url, WebContent.contentTypeNTriples, Arrays.asList("identity"));
+				
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+			
+			Path absPath = entity.getAbsolutePath();
+			logger.debug("Resolved " + url + " to " + absPath);
+			
+			r = DataPods.fromUrl(absPath.toUri().toString());
+		} else {
+			r = DataPods.fromUrl(url);					
+		}
+
+		return r;
+	}
 	public static RdfDataPod fromSparqlEndpoint(PlainDataRefSparqlEndpoint dataRef) {
 		String serviceUrl = dataRef.getServiceUrl();
 		//DatasetDescription dd = dataRef.getDatsetDescription();

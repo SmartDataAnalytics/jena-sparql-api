@@ -8,6 +8,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Objects;
 
+import org.aksw.jena_sparql_api.conjure.entity.algebra.HashUtils;
 import org.aksw.jena_sparql_api.conjure.entity.algebra.HasherBase;
 import org.aksw.jena_sparql_api.conjure.entity.algebra.Op;
 import org.aksw.jena_sparql_api.conjure.entity.algebra.OpCode;
@@ -58,7 +59,7 @@ public class OpExecutor
 		
 		String pathHash = ResourceStore.readHash(entity, "sha256");
 		
-		String result = HasherBase.computeHash("path", pathHash);
+		String result = HashUtils.computeHash("path", pathHash);
 		
 		return result;
 	}
