@@ -24,7 +24,7 @@ public interface HotFile
 	 * @return
 	 */
 	InputStream newInputStream() throws IOException;
-	
+
 	
 	
 	

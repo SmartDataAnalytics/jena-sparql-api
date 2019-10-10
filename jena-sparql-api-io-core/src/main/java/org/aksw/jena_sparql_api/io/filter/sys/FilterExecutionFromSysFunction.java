@@ -7,6 +7,7 @@ import java.nio.channels.Channels;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.Map.Entry;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
@@ -358,7 +359,7 @@ public class FilterExecutionFromSysFunction
 	public static Single<? extends FileCreation> forceDestinationToFile(Single<InputStreamSupplier> xxx, Path tmpFile) {
 		ConcurrentFileEndpoint endpoint;
 		try {
-			endpoint = ConcurrentFileEndpoint.create(tmpFile);
+			endpoint = ConcurrentFileEndpoint.create(tmpFile, StandardOpenOption.CREATE);
 		} catch (IOException e1) {
 			throw new RuntimeException(e1);
 		}

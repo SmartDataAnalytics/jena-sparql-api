@@ -143,7 +143,12 @@ public class ConcurrentFileEndpoint
 		return result;
 	}
 	
-	
+
+	@Override
+	public String toString() {
+		return "ConcurrentFileEndpoint [path=" + path + ", isAbandoned=" + isAbandoned + ", isOpen()=" + isOpen() + "]";
+	}
+
 	public static void main(String[] args) throws IOException, InterruptedException {
 		
 		Path file = Paths.get("/tmp/myfile.nt");

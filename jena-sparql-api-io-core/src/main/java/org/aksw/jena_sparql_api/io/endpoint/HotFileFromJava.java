@@ -6,8 +6,6 @@ import java.nio.channels.Channels;
 import java.nio.file.Path;
 import java.util.concurrent.CompletableFuture;
 
-import io.reactivex.Single;
-
 public class HotFileFromJava
 	implements HotFile
 {
@@ -35,4 +33,8 @@ public class HotFileFromJava
 		return result;
 	}
 
+	@Override
+	public String toString() {
+		return "HotFileFromJava [endpoint=" + endpoint + "]";
+	}
 }

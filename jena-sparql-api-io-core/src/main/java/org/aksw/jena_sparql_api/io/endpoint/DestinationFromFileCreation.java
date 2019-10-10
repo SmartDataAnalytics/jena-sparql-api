@@ -5,6 +5,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 
 import io.reactivex.Single;
+import io.reactivex.disposables.Disposable;
 
 /**
  * Destination of a file that does not yet exist
@@ -16,13 +17,25 @@ public class DestinationFromFileCreation
 	implements Destination
 {
 	protected Single<? extends FileCreation> fileCreation;
+	
+	/**
+	 * The disposable of the fileCreation
+	 */
+	//protected Disposable disposable;
+	
 	protected Path fileBeingCreated;
 	
 	
+	/**
+	 * 
+	 * 
+	 * @param fileBeingCreated
+	 * @param fileCreation A single representing the file creation and whose value is CACHED!
+	 */
 	public DestinationFromFileCreation(Path fileBeingCreated, Single<? extends FileCreation> fileCreation) {
 		super();
 		this.fileBeingCreated = fileBeingCreated;
-		this.fileCreation = fileCreation;
+		this.fileCreation = fileCreation.cache();
 	}
 
 	/**
@@ -50,8 +63,7 @@ public class DestinationFromFileCreation
 	
 	@Override
 	public FilterConfig transferTo(FilterEngine engine) {
-		// TODO Auto-generated method stub
-		return null;
+		return engine.forInput(this);
 	}
 
 	@Override

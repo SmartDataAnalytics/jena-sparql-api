@@ -2,6 +2,7 @@ package org.aksw.jena_sparql_api.io.filter.sys;
 
 import java.nio.file.Path;
 
+import org.aksw.jena_sparql_api.io.endpoint.Destination;
 import org.aksw.jena_sparql_api.io.endpoint.DestinationFilter;
 import org.aksw.jena_sparql_api.io.endpoint.DestinationFromFile;
 import org.aksw.jena_sparql_api.io.endpoint.FilterConfig;
@@ -39,6 +40,11 @@ public class FilterEngineFromSysFunction
 	public FilterConfig forInput(Single<Path> futurePath) {
 		// TODO Auto-generated method stub
 		return null;
+	}
+
+	@Override
+	public FilterConfig forInput(Destination destination) {
+		return new FilterExecutionFromSysFunction(cmdFactory, destination);
 	}
 
 }

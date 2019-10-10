@@ -23,6 +23,7 @@ public interface FilterEngine {
 	
 	FilterConfig forInput(Path in);
 	FilterConfig forInput(InputStreamSupplier in);
+	FilterConfig forInput(Destination destination);
 	
 	/**
 	 * Create an input from a file that is currently written to.

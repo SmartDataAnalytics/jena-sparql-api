@@ -181,4 +181,9 @@ public class HotFileFromProcess
 
 		System.out.println("Time taken [concurrent read/write]: " + stopwatch.stop().elapsed(TimeUnit.MILLISECONDS) * 0.001f);
 	}
+
+	@Override
+	public String toString() {
+		return "HotFileFromProcess [path=" + path + "]";
+	}
 }

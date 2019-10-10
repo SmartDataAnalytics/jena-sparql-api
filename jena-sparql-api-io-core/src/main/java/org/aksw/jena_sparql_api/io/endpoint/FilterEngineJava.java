@@ -36,4 +36,9 @@ public class FilterEngineJava
 	public FilterConfig forInput(FilterConfig in) {
 		return new FilterExecutionJava(processor, new DestinationFilter(in));
 	}
+
+	@Override
+	public FilterConfig forInput(Destination destination) {
+		return new FilterExecutionJava(processor, destination);
+	}
 }

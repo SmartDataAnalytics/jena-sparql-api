@@ -2,6 +2,7 @@ package org.aksw.jena_sparql_api.io.endpoint;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.nio.file.Path;
@@ -16,8 +17,6 @@ import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
 
-import io.reactivex.Single;
-
 public class MainPipeBuilder {
 	public static Function<InputStream, InputStream> createCtConverter(Lang inLang, RDFFormat outFmt, String base) {
 		return new Function<InputStream, InputStream>() {
@@ -26,15 +25,21 @@ public class MainPipeBuilder {
 				Model m = ModelFactory.createDefaultModel();
 				RDFDataMgr.read(m, in, inLang);
 				
-				PipedInputStream snk = new PipedInputStream();
+				PipedOutputStream pout = new PipedOutputStream();
+				PipedInputStream pin;
+				try {
+					pin = new PipedInputStream(pout);
+				} catch (IOException e1) {
+					throw new RuntimeException(e1);
+				}
 				new Thread(() -> {
-					try(PipedOutputStream out = new PipedOutputStream(snk)) {
-						RDFDataMgr.write(out, m, outFmt);
+					try(OutputStream xxx = pout) {
+						RDFDataMgr.write(xxx, m, outFmt);
 					} catch (IOException e) {
 						throw new RuntimeException(e);
 					}
 				}).start();
-				return snk;
+				return pin;
 			}
 			
 			@Override
@@ -116,17 +121,39 @@ public class MainPipeBuilder {
 		Destination destForTurtle = source
 				.transferTo(decodeBzip)
 				.pipeInto(ctConverter)
-				.outputToStream();
+				.outputToFile(Paths.get("/tmp/converted.ttl"));
 		
 		
 		// Apply gzip encoding of the content
-		destForTurtle
-			.transferTo(encodeGzip)
-				.outputToFile(Paths.get("/tmp/encoded.ttl.gz"))
-				.prepareStream()
-				.subscribe();
+//		destForTurtle
+//			.transferTo(encodeGzip)
+//				.outputToFile(Paths.get("/tmp/encoded.ttl.gz"))
+//				.prepareStream()
+//				.subscribe();
 		
 		// At the same time, read the turtle
+		// ISSUE?? bzip gets started twice this way - because destForTurtle...outputToStream()
+		// does not cache the result - actually this is fine: If we do not cache the result, we will
+		// get a fresh stream - it seems reasonable for this to be intended behavior 
+		//
+		//
+		//
+		//
+		// What is needed to fix this? Do we need a subscription mechanism similar to rx?
+		// Or is this out of scope?
+		// The main scope is to have an abstraction for scala and system-call filters, so that
+		// drop in replacement becomes possible
+		//
+		// Further, certain system calls require files as arguments, so streams may need to be serialized
+		// to make it possible to pass them to the sys functions
+		//
+		// And finally, if a system call requires of a creation of a file anyway, then allow reuse of it
+		// for further streaming
+		//
+		//
+		// I'd like to avoid reinventing the wheel in that regard
+		//
+		
 		try(InputStream in = destForTurtle.prepareStream().blockingGet()
 			.execStream()) {
 			Model m = ModelFactory.createDefaultModel();
