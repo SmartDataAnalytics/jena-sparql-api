@@ -108,7 +108,7 @@ public class DataPods {
 				throw new RuntimeException(e);
 			}
 
-			// Create Jena Model on top of HDT.
+			// Create Jena Model on top of HDT
 			HDTGraph graph = new HDTGraph(hdt);
 			model = ModelFactory.createModelForGraph(graph);
 		} else {
