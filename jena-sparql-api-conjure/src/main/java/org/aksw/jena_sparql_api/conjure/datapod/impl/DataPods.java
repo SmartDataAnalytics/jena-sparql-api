@@ -97,6 +97,7 @@ public class DataPods {
 		Lang lang = RDFLanguages.resourceNameToLang(url);
 		Model model;
 		if(JenaPluginHdt.LANG_HDT.equals(lang)) {
+			logger.info("HDT file detected - using HDT graph");
 			// Only allow local file URLs
 			Path path = Paths.get(URIUtils.newURI(url));
 			String pathStr = path.toString();

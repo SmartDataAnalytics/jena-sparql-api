@@ -112,6 +112,17 @@ public class MainConjurePlayground {
 		// (The mapper-proxy plugin system knows how to do that)
 		Op conjureWorkflow = JenaPluginUtils.polymorphicCast(deserializedWorkflowRes, Op.class);
 		
+		
+	    conjureWorkflow = OpConstruct.create(v, parser.apply(
+	    	      "CONSTRUCT {\n" + 
+	    	      "	    	          <env:datasetId> <urn:count> ?c\n" + 
+	    	      "	    	        } {\n" + 
+	    	      "	    	          { SELECT (COUNT(*) AS ?c) {\n" + 
+	    	      "	    	            ?s ?p ?o\n" + 
+	    	      "	    	          } }\n" + 
+	    	      "	    	        }").toString());
+
+		
 		// Print out the deserialized workflow for inspection
 		RDFDataMgr.write(System.err, conjureWorkflow.getModel(), RDFFormat.TURTLE_PRETTY);
 
