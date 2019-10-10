@@ -461,7 +461,7 @@ public class HttpResourceRepositoryFromFileSystemImpl
 		}
 		
 		if(plan == null) {
-			throw new RuntimeException("Something went wrong in plannig how to serve an HTTP request");
+			throw new RuntimeException("Could not create a plan for how to serve an HTTP request");
 		}
 
 //		// Convert the entity to the request
