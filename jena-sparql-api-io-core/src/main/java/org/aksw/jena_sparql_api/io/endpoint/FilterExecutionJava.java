@@ -8,6 +8,8 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import org.aksw.jena_sparql_api.io.filter.sys.FilterExecutionFromSysFunction;
+
 import io.reactivex.Single;
 
 public class FilterExecutionJava
@@ -81,8 +83,8 @@ public class FilterExecutionJava
 
 	@Override
 	public DestinationFromFileCreation outputToFile(Path path) {
-		// TODO Auto-generated method stub
-		return null;
+		return new DestinationFromFileCreation(path,
+				FilterExecutionFromSysFunction.forceDestinationToFile(execStream(), path));
 	}
 
 	@Override

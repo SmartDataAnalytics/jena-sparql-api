@@ -17,6 +17,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -50,7 +51,10 @@ public class ConcurrentFileEndpoint
 	protected Path path;
 	protected SeekableByteChannel writeChannel;
 	
-	protected boolean isAborted;
+	protected boolean isAbandoned;
+	
+	//protected List<Runnable> closeListeners = new ArrayList<>();
+	protected CompletableFuture<Path> isDone = new CompletableFuture<>();
 	
 	public static ConcurrentFileEndpoint create(Path path, OpenOption ... options) throws IOException {
 		SeekableByteChannel writeChannel = Files.newByteChannel(path, ObjectArrays.concat(StandardOpenOption.WRITE, options));
@@ -62,19 +66,37 @@ public class ConcurrentFileEndpoint
 		this.writeChannel = writeChannel;
 	}
 	
-	public boolean isAborted() {
-		return isAborted;
+	public Path getPath() {
+		return path;
 	}
 	
-	public void abort() {
+	public boolean isAbandoned() {
+		return isAbandoned;
+	}
+	
+	/**
+	 * Only for the creating thread!
+	 * Indicate that the writing to the endpoint has been abandoned.
+	 * Must be indicated before closing the endpoint, as any readers will check the
+	 * isOpen state upon reaching the end of data, and if there is no abandon state they will assume
+	 * successful completion.
+	 * 
+	 */
+	public void abandon() {
 		if(isOpen()) {
-			this.isAborted = true;
+			this.isAbandoned = true;
 			try {
 				close();
 			} catch(Exception e) {
 				throw new RuntimeException(e);
+			} finally {
+				isDone.completeExceptionally(new RuntimeException("Stream aborted"));
 			}
 		}
+	}
+	
+	public CompletableFuture<Path> getIsDone() {
+		return isDone;
 	}
 	
 	@Override
@@ -83,13 +105,27 @@ public class ConcurrentFileEndpoint
 		return result;
 	}
 
+//	public void onClose(Runnable listener) {
+//		synchronized(this) {
+//			closeListeners.add(listener);
+//			if(!isOpen()) {
+//				listener.run();
+//			}
+//		}
+//	}
 
 	@Override
 	public void close() throws IOException {
-		synchronized (this) {
+		synchronized(this) {
 			writeChannel.close();
-			this.notifyAll();			
+			this.notifyAll();
+
+			isDone.complete(path);
+//			for(Runnable listener : closeListeners) {
+//				listener.run();
+//			}
 		}
+		
 	}
 
 	@Override

@@ -90,7 +90,9 @@ public class MainPipeBuilder {
 			@Override
 			public String[] buildCheckCmd() { return new String[] {"/bin/gzip", "--version"}; }
 			@Override
-			public String[] buildCmdForFileToStream(Path input) { return new String[] {"/bin/gzip", "-ck", input.toString()}; };
+			public String[] buildCmdForFileToStream(Path input) {
+				return new String[] {"/bin/gzip", "-ck", input.toString()};
+			};
 			@Override
 			public String toString() { return "encodeGzipCode"; }
 		};

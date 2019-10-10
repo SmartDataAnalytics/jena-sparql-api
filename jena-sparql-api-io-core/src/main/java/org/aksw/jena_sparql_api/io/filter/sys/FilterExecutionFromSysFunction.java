@@ -3,6 +3,7 @@ package org.aksw.jena_sparql_api.io.filter.sys;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.channels.Channels;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -10,6 +11,7 @@ import java.util.Map.Entry;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
+import org.aksw.jena_sparql_api.io.endpoint.ConcurrentFileEndpoint;
 import org.aksw.jena_sparql_api.io.endpoint.Destination;
 import org.aksw.jena_sparql_api.io.endpoint.DestinationFilter;
 import org.aksw.jena_sparql_api.io.endpoint.DestinationFromFile;
@@ -19,6 +21,7 @@ import org.aksw.jena_sparql_api.io.endpoint.FileWritingProcess;
 import org.aksw.jena_sparql_api.io.endpoint.FilterConfig;
 import org.aksw.jena_sparql_api.io.endpoint.FilterEngine;
 import org.aksw.jena_sparql_api.io.endpoint.HotFile;
+import org.aksw.jena_sparql_api.io.endpoint.HotFileFromJava;
 import org.aksw.jena_sparql_api.io.endpoint.InputStreamSupplier;
 import org.aksw.jena_sparql_api.io.utils.SimpleProcessExecutor;
 import org.apache.jena.ext.com.google.common.base.StandardSystemProperty;
@@ -219,6 +222,7 @@ public class FilterExecutionFromSysFunction
 			// TODO We should have a common class for destinations that
 			// "are or will be backed by a file"
 			
+			
 			result = awaitOrAllocateInputFileAndFilterToFile(effectiveSource, tgtPath);
 //
 //			//result = tryExecToHotFile((DestinationFromFileCreation)effectiveSource, tgtPath);
@@ -338,9 +342,83 @@ public class FilterExecutionFromSysFunction
 		
 		Single<? extends FileCreation> fileCreation = tryGetFileCreation(effectiveSource);
 		if(fileCreation == null) {
-			Path tmpInFile = allocateInputFile();
-			fileCreation = Single.just(new FileCreationWrapper(tmpInFile));
+			// TODO Ask the source to create the file
+			// effectiveSource.
+			fileCreation = forceInputFileCreation(effectiveSource);
 		}
+		
+		if(fileCreation == null) {
+			throw new RuntimeException("Should not happen");
+		}
+
+		Single<HotFile> result = awaitOrAllocateInputFileAndFilterToFileCore(fileCreation, tgtPath);
+		return result;
+	}
+	
+	public static Single<? extends FileCreation> forceDestinationToFile(Single<InputStreamSupplier> xxx, Path tmpFile) {
+		ConcurrentFileEndpoint endpoint;
+		try {
+			endpoint = ConcurrentFileEndpoint.create(tmpFile);
+		} catch (IOException e1) {
+			throw new RuntimeException(e1);
+		}
+
+		// TODO Hack
+		return xxx
+			.map(inSupp -> {
+				new Thread(() -> {
+					try(InputStream in = inSupp.execStream()) {
+						ByteStreams.copy(in, Channels.newOutputStream(endpoint));
+					} catch(Exception e) {
+						endpoint.abandon();
+					} finally {
+						try {
+							endpoint.close();
+						} catch (IOException ex) {
+							throw new RuntimeException(ex);
+						}
+					}
+				}).start();
+
+				//InputStreamSupplier r = Files.newInputStream(endpoint.getPath(), StandardOpenOption.READ);
+				return new HotFileFromJava(endpoint);
+			});
+	}
+	
+	public Single<? extends FileCreation> forceInputFileCreation(Destination effectiveSource) {
+		Single<? extends FileCreation> result;
+
+		// Try to unwrap a file creation from the source
+		result = tryGetFileCreation(effectiveSource);
+		if(result == null) {
+		
+			// If we are in a filter pipe, request the prior filter to write to file
+			if(effectiveSource instanceof DestinationFilter) {
+				FilterConfig filter = ((DestinationFilter)effectiveSource).getFilter();
+	
+				Path tmpInFile = allocateInputFile();
+				Destination tmpDest = filter.outputToFile(tmpInFile);
+				result = tryGetFileCreation(tmpDest);
+				if(result == null) {
+					throw new RuntimeException("Should not happen");
+				}
+
+			// Otherwise, obtain the destinations input stream and write it to file ourselves
+			} else {
+				Path tmpInFile = allocateInputFile();
+				result = forceDestinationToFile(effectiveSource.prepareStream(), tmpInFile);
+			}
+		}
+
+		
+		if(result == null) {
+			throw new RuntimeException("Could not force input to file");
+		}
+		
+		return result;
+	}
+	
+	public Single<HotFile> awaitOrAllocateInputFileAndFilterToFileCore(Single<? extends FileCreation> fileCreation, Path tgtPath) {
 
 		return fileCreation.flatMap(fc -> {
 			return Single.fromFuture(fc.future()).map(actualInPath -> {

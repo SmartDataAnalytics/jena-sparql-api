@@ -58,7 +58,7 @@ public class ConcurrentFileReader
 	
 	public boolean isAborted() {
 		boolean result = referenceChannel instanceof ConcurrentFileEndpoint
-				? ((ConcurrentFileEndpoint)referenceChannel).isAborted()
+				? ((ConcurrentFileEndpoint)referenceChannel).isAbandoned()
 				: false;
 			
 		return result;
