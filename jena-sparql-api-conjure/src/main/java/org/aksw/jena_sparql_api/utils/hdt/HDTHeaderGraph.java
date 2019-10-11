@@ -2,6 +2,7 @@ package org.aksw.jena_sparql_api.utils.hdt;
 
 import java.io.IOException;
 
+import org.aksw.jena_sparql_api.io.binseach.NTripleUtils;
 import org.apache.jena.graph.GraphStatisticsHandler;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.graph.impl.GraphBase;
@@ -9,13 +10,13 @@ import org.apache.jena.query.ARQ;
 import org.apache.jena.sparql.engine.main.QC;
 import org.apache.jena.sparql.engine.optimizer.reorder.ReorderTransformation;
 import org.apache.jena.util.iterator.ExtendedIterator;
+import org.apache.jena.util.iterator.WrappedIterator;
+import org.rdfhdt.hdt.exceptions.NotFoundException;
 import org.rdfhdt.hdt.hdt.HDT;
-import org.rdfhdt.hdt.triples.IteratorTripleID;
-import org.rdfhdt.hdt.triples.TripleID;
+import org.rdfhdt.hdt.triples.IteratorTripleString;
 import org.rdfhdt.hdtjena.HDTCapabilities;
 import org.rdfhdt.hdtjena.HDTStatistics;
 import org.rdfhdt.hdtjena.NodeDictionary;
-import org.rdfhdt.hdtjena.solver.HDTJenaIterator;
 import org.rdfhdt.hdtjena.solver.HDTQueryEngine;
 import org.rdfhdt.hdtjena.solver.OpExecutorHDT;
 import org.slf4j.Logger;
@@ -33,7 +34,7 @@ public class HDTHeaderGraph extends GraphBase {
 	private static final HDTCapabilities capabilities = new HDTCapabilities();
 
 	private HDT hdt;
-	private NodeDictionary nodeDictionary;
+	//private NodeDictionary nodeDictionary;
 	private ReorderTransformation reorderTransform;
 	private HDTStatistics hdtStatistics;
 	private long numSearches;
@@ -51,7 +52,7 @@ public class HDTHeaderGraph extends GraphBase {
 	
 	public HDTHeaderGraph(HDT hdt, boolean close) {
 		this.hdt = hdt;
-		this.nodeDictionary = new NodeDictionary(hdt.getDictionary());
+		///this.nodeDictionary = new NodeDictionary(hdt.getDictionary());
 		//this.hdtStatistics = new HDTStatistics(this);	// Must go after NodeDictionary created.
 		//this.reorderTransform= new ReorderTransformationHDT(this);  // Must go after Dict and Stats
 		this.closeAfter = close;
@@ -61,22 +62,36 @@ public class HDTHeaderGraph extends GraphBase {
 		return hdt;
 	}
 	
-	public NodeDictionary getNodeDictionary() {
-		return nodeDictionary;
-	}
+//	public NodeDictionary getNodeDictionary() {
+//		return nodeDictionary;
+//	}
 	
 	/* (non-Javadoc)
 	 * @see com.hp.hpl.jena.graph.impl.GraphBase#graphBaseFind(com.hp.hpl.jena.graph.TripleMatch)
 	 */
 	@Override
 	protected ExtendedIterator<Triple> graphBaseFind(Triple jenaTriple) {
-
-		TripleID triplePatID = nodeDictionary.getTriplePatID(jenaTriple);
-//		System.out.println("Triple Pattern: "+jenaTriple+" as IDs: "+triplePatID);
+		String s = NodeDictionary.nodeToStr(jenaTriple.getMatchSubject());
+		String p = NodeDictionary.nodeToStr(jenaTriple.getMatchPredicate());
+		String o = NodeDictionary.nodeToStr(jenaTriple.getMatchObject());
 		
-		IteratorTripleID hdtIterator = hdt.getTriples().search( triplePatID );
-		numSearches++;
-		return new HDTJenaIterator(nodeDictionary, hdtIterator);
+		IteratorTripleString hdtIterator;
+		try {
+			hdtIterator = hdt.getHeader().search(s, p, o);
+		} catch (NotFoundException e1) {
+			throw new RuntimeException(e1);
+		}
+		ExtendedIterator<Triple> result = WrappedIterator.create(hdtIterator)
+			.mapWith(t -> {
+				try {
+					return t.asNtriple().toString();
+				} catch (IOException e) {
+					throw new RuntimeException(e);
+				}
+			})
+			.mapWith(NTripleUtils::parseNtripleString);
+		
+		return result;
 	}
 	
 	public long getNumSearches() {

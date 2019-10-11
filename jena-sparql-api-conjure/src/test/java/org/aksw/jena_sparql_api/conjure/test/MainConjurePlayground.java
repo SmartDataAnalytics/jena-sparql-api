@@ -13,6 +13,7 @@ import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.DataRef;
 import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.DataRefOp;
 import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.DataRefSparqlEndpoint;
 import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.DataRefUrl;
+import org.aksw.jena_sparql_api.conjure.dataset.algebra.Job;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.Op;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpConstruct;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpData;
@@ -24,6 +25,8 @@ import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpVar;
 import org.aksw.jena_sparql_api.conjure.dataset.engine.OpExecutorDefault;
 import org.aksw.jena_sparql_api.conjure.fluent.ConjureBuilder;
 import org.aksw.jena_sparql_api.conjure.fluent.ConjureBuilderImpl;
+import org.aksw.jena_sparql_api.conjure.fluent.ConjureFluent;
+import org.aksw.jena_sparql_api.conjure.fluent.QLib;
 import org.aksw.jena_sparql_api.http.repository.api.HttpResourceRepositoryFromFileSystem;
 import org.aksw.jena_sparql_api.http.repository.impl.HttpResourceRepositoryFromFileSystemImpl;
 import org.aksw.jena_sparql_api.io.json.RDFNodeJsonUtils;
@@ -59,6 +62,9 @@ public class MainConjurePlayground {
 				cj.fromUrl(url).tripleCount().cache()).getOp();
 		
 
+		Job job = null;
+		
+		
 		RDFDataMgr.write(System.out, op.getModel(), RDFFormat.TURTLE_PRETTY);
 	}
 
@@ -138,11 +144,30 @@ public class MainConjurePlayground {
 	    	      "	    	          } }\n" + 
 	    	      "	    	        }").toString());
 
-		ConjureBuilder cj = new ConjureBuilderImpl(/* add query parser */);
-		conjureWorkflow = cj.coalesce(
-				cj.fromVar("dataRef").hdtHeader().everthing()).getOp();
-				//cj.fromVar("dataRef").tripleCount().cache()).getOp();
+	    
+	    
 
+		ConjureBuilder cj = new ConjureBuilderImpl(/* add query parser */);
+	    
+		// Example - Read triples from the header or fall back to actual counting
+		if (false) {
+			conjureWorkflow = cj.coalesce(
+					cj.fromVar("dataRef").hdtHeader().everthing(),
+					cj.fromVar("dataRef").construct(QLib.tripleCount()).cache()).getOp();
+	    }
+
+		// Example - Read dataset id from the header and pass it into the generated report
+		ConjureFluent dataset = cj.fromVar("dataRef");
+		conjureWorkflow =
+				cj.union(
+					dataset.hdtHeader().construct("CONSTRUCT WHERE { ?s a <http://rdfs.org/ns/void#Dataset> }"),
+					dataset.construct("CONSTRUCT { ?b a <urn:Report> ; <urn:usesProperty> ?p } { BIND(BNODE() AS ?b) { SELECT DISTINCT ?p { ?s ?p ?o } } }")
+				)
+				.update("INSERT { ?s <urn:hasReport> ?b } WHERE { ?s a <http://rdfs.org/ns/void#Dataset> . ?b a <urn:Report> }")
+					.getOp();
+		
+		
+		
 		
 		// Print out the deserialized workflow for inspection
 		RDFDataMgr.write(System.err, conjureWorkflow.getModel(), RDFFormat.TURTLE_PRETTY);

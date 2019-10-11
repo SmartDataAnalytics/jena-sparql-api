@@ -14,14 +14,29 @@ import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpVar;
 public class ConjureBuilderImpl
 	implements ConjureBuilder
 {	
+	protected ConjureContext context;
+	
+	public ConjureBuilderImpl() {
+		this(new ConjureContext());
+	}
+
+	public ConjureBuilderImpl(ConjureContext context) {
+		super();
+		this.context = context;
+	}
+
+	public ConjureFluent wrap(Op op) {
+		return new ConjureFluentImpl(context, op);
+	}
+
 	@Override
 	public ConjureFluent fromUrl(String url) {
-		return ConjureFluentImpl.wrap(OpDataRefResource.from(DataRefUrl.create(url)));
+		return wrap(OpDataRefResource.from(DataRefUrl.create(url)));
 	}
 
 	@Override
 	public ConjureFluent fromVar(String name) {
-		return ConjureFluentImpl.wrap(OpVar.create(name));
+		return wrap(OpVar.create(name));
 	}
 
 	
@@ -38,13 +53,13 @@ public class ConjureBuilderImpl
 
 	@Override
 	public ConjureFluent union(ConjureFluent... conjureFluents) {
-		return ConjureFluentImpl.wrap(OpUnion.create(toOps(conjureFluents)));
+		return wrap(OpUnion.create(toOps(conjureFluents)));
 	}
 
 
 	@Override
 	public ConjureFluent coalesce(ConjureFluent... conjureFluents) {
-		return ConjureFluentImpl.wrap(OpCoalesce.create(toOps(conjureFluents)));
+		return wrap(OpCoalesce.create(toOps(conjureFluents)));
 	}
 
 }

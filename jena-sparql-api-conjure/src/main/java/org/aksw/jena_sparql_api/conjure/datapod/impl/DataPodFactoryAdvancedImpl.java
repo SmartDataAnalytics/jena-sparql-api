@@ -4,14 +4,17 @@ import org.aksw.jena_sparql_api.conjure.datapod.api.RdfDataPod;
 import org.aksw.jena_sparql_api.conjure.dataref.core.api.PlainDataRefUrl;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpVisitor;
 import org.aksw.jena_sparql_api.http.repository.api.HttpResourceRepositoryFromFileSystem;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-// DataObjectFactory with advanced handling of DataRefUrl using a repository
+/**
+ * This class extends DataObjectFactory with advanced handling of DataRefUrl using a repository
+ * 
+ * @author raven
+ *
+ */
 public class DataPodFactoryAdvancedImpl
 	extends DataPodFactoryImpl {
 	
-	private static final Logger logger = LoggerFactory.getLogger(DataPodFactoryAdvancedImpl.class);
+	//private static final Logger logger = LoggerFactory.getLogger(DataPodFactoryAdvancedImpl.class);
 
 	protected HttpResourceRepositoryFromFileSystem repo;
 

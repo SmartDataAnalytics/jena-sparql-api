@@ -16,7 +16,7 @@ public class RdfDataPodHdtImpl
 {
 	protected Reference<HDT> hdtRef;
 	protected boolean isHeaderPod;  
-	
+
 
 	public RdfDataPodHdtImpl(Reference<HDT> hdtRef, boolean isHeaderPod) {
 		super();

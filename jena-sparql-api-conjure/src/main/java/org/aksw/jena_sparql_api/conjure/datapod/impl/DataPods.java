@@ -115,7 +115,11 @@ public class DataPods {
 			}
 			logger.info("Loading of hdt complete " + pathStr);
 
-			Reference<HDT> hdtRef = ReferenceImpl.create(hdt, () -> hdt.close(), "HDT Data Pod from " + pathStr);
+			Reference<HDT> hdtRef = ReferenceImpl.create(hdt,
+					() -> {
+						logger.debug("Closed HDT file: " + pathStr);
+						hdt.close();
+					}, "HDT Data Pod from " + pathStr);
 			result = new RdfDataPodHdtImpl(hdtRef, false);
 		} else {
 			Model model;

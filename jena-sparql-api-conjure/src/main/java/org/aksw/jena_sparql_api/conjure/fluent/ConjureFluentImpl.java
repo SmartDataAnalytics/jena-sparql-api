@@ -1,5 +1,7 @@
 package org.aksw.jena_sparql_api.conjure.fluent;
 
+import java.util.Objects;
+
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.Op;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpConstruct;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpHdtHeader;
@@ -9,26 +11,30 @@ import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpUpdateRequest;
 public class ConjureFluentImpl	
 	implements ConjureFluent
 {
+	protected ConjureContext context;
 	protected Op op;
 	
-	public ConjureFluentImpl(Op op) {
+	public ConjureFluentImpl(ConjureContext context, Op op) {
 		super();
-		this.op = op;
+		this.context = Objects.requireNonNull(context);
+		this.op = Objects.requireNonNull(op);
 	}
-
-	public static ConjureFluent wrap(Op op) {
-		return new ConjureFluentImpl(op);
+	
+	public ConjureFluent wrap(Op op) {
+		return new ConjureFluentImpl(context, op);
 	}
 
 	@Override
 	public ConjureFluent construct(String queryStr) {
-		return ConjureFluentImpl.wrap(OpConstruct.create(op, queryStr));
+		String validatedString = context.getSparqlStmtParser().apply(queryStr).toString();
+		return wrap(OpConstruct.create(op, validatedString));
 	}
 
 
 	@Override
 	public ConjureFluent update(String updateRequest) {
-		return ConjureFluentImpl.wrap(OpUpdateRequest.create(op, updateRequest));
+		String validatedString = context.getSparqlStmtParser().apply(updateRequest).toString();
+		return wrap(OpUpdateRequest.create(op, validatedString));
 	}
 
 	@Override
@@ -38,7 +44,7 @@ public class ConjureFluentImpl
 
 	@Override
 	public ConjureFluent hdtHeader() {
-		return new ConjureFluentImpl(OpHdtHeader.create(op));
+		return wrap(OpHdtHeader.create(op));
 
 //		if(op instanceof OpDataRefResource) {
 //			OpDataRefResource x = ((OpDataRefResource)op);
@@ -57,6 +63,6 @@ public class ConjureFluentImpl
 
 	@Override
 	public ConjureFluent cache() {
-		return new ConjureFluentImpl(OpPersist.create(op));
+		return wrap(OpPersist.create(op));
 	}
 }

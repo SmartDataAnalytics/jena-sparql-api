@@ -59,20 +59,6 @@ public class GraphFromPrefixMatcher extends GraphBase {
 		this.path = path;
 	}
 
-	public static Triple parseNtripleString(String str)  {
-		Triple result;
-		try(InputStream is = new ByteArrayInputStream(str.getBytes())) {			
-			ParserProfile profile = RiotLib.dftProfile();
-			Tokenizer tokenizer = TokenizerFactory.makeTokenizerUTF8(is);
-			LangNTriples parser = new LangNTriples(tokenizer, profile, null);
-			result = parser.next();
-		} catch(Exception e) {
-			throw new RuntimeException("Error parsing '" + str + "'", e);
-		}
-		
-		return result;
-	}
-
 	protected ExtendedIterator<Triple> graphBaseFindCore(Triple triplePattern) throws Exception {
 		ExtendedIterator<Triple> result;
 		FileChannel channel = FileChannel.open(path, StandardOpenOption.READ);
