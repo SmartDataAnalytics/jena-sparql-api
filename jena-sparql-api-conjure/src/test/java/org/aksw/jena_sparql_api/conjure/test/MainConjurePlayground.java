@@ -22,6 +22,8 @@ import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpUpdateRequest;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpUtils;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpVar;
 import org.aksw.jena_sparql_api.conjure.dataset.engine.OpExecutorDefault;
+import org.aksw.jena_sparql_api.conjure.fluent.ConjureBuilder;
+import org.aksw.jena_sparql_api.conjure.fluent.ConjureBuilderImpl;
 import org.aksw.jena_sparql_api.http.repository.api.HttpResourceRepositoryFromFileSystem;
 import org.aksw.jena_sparql_api.http.repository.impl.HttpResourceRepositoryFromFileSystemImpl;
 import org.aksw.jena_sparql_api.io.json.RDFNodeJsonUtils;
@@ -47,6 +49,20 @@ import com.google.gson.GsonBuilder;
 public class MainConjurePlayground {
 	private static final Logger logger = LoggerFactory.getLogger(MainConjurePlayground.class);
 	
+	public static void main2(String[] args) {
+		
+		String url = "http://localhost/~raven/test.hdt";
+
+		ConjureBuilder cj = new ConjureBuilderImpl(/* add query parser */);
+		Op op = cj.coalesce(
+				cj.fromUrl(url).hdtHeader().construct("CONSTRUCT WHERE { ?s <urn:tripleCount> ?o }"),
+				cj.fromUrl(url).tripleCount().cache()).getOp();
+		
+
+		RDFDataMgr.write(System.out, op.getModel(), RDFFormat.TURTLE_PRETTY);
+	}
+
+
 	public static void main(String[] args) throws Exception {
 		
 		// TODO Circular init issue with DefaultPrefixes
@@ -121,6 +137,11 @@ public class MainConjurePlayground {
 	    	      "	    	            ?s ?p ?o\n" + 
 	    	      "	    	          } }\n" + 
 	    	      "	    	        }").toString());
+
+		ConjureBuilder cj = new ConjureBuilderImpl(/* add query parser */);
+		conjureWorkflow = cj.coalesce(
+				cj.fromVar("dataRef").hdtHeader().everthing()).getOp();
+				//cj.fromVar("dataRef").tripleCount().cache()).getOp();
 
 		
 		// Print out the deserialized workflow for inspection

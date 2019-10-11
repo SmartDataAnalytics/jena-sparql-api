@@ -9,5 +9,7 @@ public interface OpVisitor<T> {
 	T visit(OpCoalesce op);
 	T visit(OpPersist op);
 
+	T visit(OpHdtHeader op);
+
 	T visit(OpVar op);
 }

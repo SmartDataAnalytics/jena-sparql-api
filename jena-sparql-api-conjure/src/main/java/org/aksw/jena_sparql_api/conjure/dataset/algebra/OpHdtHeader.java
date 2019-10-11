@@ -5,29 +5,29 @@ import org.aksw.jena_sparql_api.mapper.annotation.ResourceView;
 
 @ResourceView
 @RdfType
-public interface OpPersist
+public interface OpHdtHeader
 	extends Op1
 {
-	OpPersist setSubOp(Op subOp);
 	
+	@Override
+	OpHdtHeader setSubOp(Op subOp);
 	
-	// TODO Add persistence / cache control attributes
-	
+	@Override
 	default <T> T accept(OpVisitor<T> visitor) {
 		T result = visitor.visit(this);
 		return result;
 	}
 	
-//	public static OpPersist create(Op subOp) {
-//		OpPersist result = create(subOp, Collections.singleton(queryString));
+//	public static OpHdtHeader create(Op subOp) {
+//		OpHdtHeader result = create(subOp);
 //		
 //		return result;
 //	}
 	
-	public static OpPersist create(Op subOp) {
-		OpPersist result = subOp.getModel().createResource().as(OpPersist.class)
+	public static OpHdtHeader create(Op subOp) {
+		OpHdtHeader result = subOp.getModel().createResource().as(OpHdtHeader.class)
 			.setSubOp(subOp);
-		
+
 		return result;
 	}
 }

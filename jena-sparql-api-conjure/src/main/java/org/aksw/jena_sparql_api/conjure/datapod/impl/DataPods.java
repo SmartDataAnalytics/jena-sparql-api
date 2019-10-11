@@ -34,7 +34,6 @@ import org.apache.jena.riot.RDFLanguages;
 import org.apache.jena.riot.WebContent;
 import org.rdfhdt.hdt.hdt.HDT;
 import org.rdfhdt.hdt.hdt.HDTManager;
-import org.rdfhdt.hdtjena.HDTGraph;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -100,10 +99,10 @@ public class DataPods {
 	public static RdfDataPod fromUrl(String url) {
 		logger.info("Loading: " + url);
 		
+		RdfDataPod result;
 		Lang lang = RDFLanguages.resourceNameToLang(url);
-		Model model;
 		if(JenaPluginHdt.LANG_HDT.equals(lang)) {
-			logger.info("HDT file detected - using HDT graph");
+			logger.info("HDT file detected - loading using HDT graph " + url);
 			// Only allow local file URLs
 			Path path = Paths.get(URIUtils.newURI(url));
 			String pathStr = path.toString();
@@ -114,16 +113,17 @@ public class DataPods {
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}
+			logger.info("Loading of hdt complete " + pathStr);
 
-			// Create Jena Model on top of HDT
-			HDTGraph graph = new HDTGraph(hdt);
-			model = ModelFactory.createModelForGraph(graph);
+			Reference<HDT> hdtRef = ReferenceImpl.create(hdt, () -> hdt.close(), "HDT Data Pod from " + pathStr);
+			result = new RdfDataPodHdtImpl(hdtRef, false);
 		} else {
+			Model model;
 			model = RDFDataMgr.loadModel(url);
+			result = DataPods.fromModel(model);
 		}
 
 		
-		RdfDataPod result = DataPods.fromModel(model);
 		return result;
 	}
 

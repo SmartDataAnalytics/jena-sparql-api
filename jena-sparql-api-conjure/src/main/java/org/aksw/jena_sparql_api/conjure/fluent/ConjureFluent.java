@@ -1,5 +1,7 @@
 package org.aksw.jena_sparql_api.conjure.fluent;
 
+import java.util.function.Function;
+
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.Op;
 import org.apache.jena.query.Query;
 import org.apache.jena.update.UpdateRequest;
@@ -10,6 +12,8 @@ public interface ConjureFluent {
 	// Not sure if this is the best place
 	// hdtHeader is a modifier for a datarefUrl
 	ConjureFluent hdtHeader();
+	
+	ConjureFluent cache();
 	
 
 	ConjureFluent construct(String queryStr);
@@ -32,8 +36,18 @@ public interface ConjureFluent {
 		return construct("CONSTRUCT WHERE { ?s <" + p + "> ?o");
 	}
 	
+	
+	default ConjureFluent everthing() {
+		return construct(QLib.everything());
+	}
+
+	
 	default ConjureFluent tripleCount() {
-		return construct("CONSTRUCT { ?s <urn:count> ?o }"
-			+ "{ { SELECT (COUNT(*) AS ?c) { ?s ?p ?o } } }");
+		return construct(QLib.tripleCount());
+	}
+	
+	default ConjureFluent compose(Function<? super ConjureFluent, ? extends ConjureFluent> composer) {
+		ConjureFluent result = composer.apply(this);
+		return result;
 	}
 }

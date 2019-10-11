@@ -70,6 +70,8 @@ public class ResourceTreeUtils {
 	 * 
 	 * Note, that URIs of nodes are NOT considered unless they are leaf nodes.
 	 * 
+	 * ISSUE We need to be able to 'skip' nodes 
+	 * 
 	 * @param rdfNode
 	 * @return
 	 */

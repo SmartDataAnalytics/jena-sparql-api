@@ -7,12 +7,14 @@ import java.util.function.Function;
 import org.aksw.jena_sparql_api.conjure.algebra.common.ResourceTreeUtils;
 import org.aksw.jena_sparql_api.conjure.datapod.api.RdfDataPod;
 import org.aksw.jena_sparql_api.conjure.datapod.impl.DataPods;
+import org.aksw.jena_sparql_api.conjure.datapod.impl.RdfDataPodHdt;
 import org.aksw.jena_sparql_api.conjure.dataref.core.api.PlainDataRef;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.Op;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpCoalesce;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpConstruct;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpData;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpDataRefResource;
+import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpHdtHeader;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpPersist;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpUnion;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpUpdateRequest;
@@ -139,8 +141,50 @@ public class OpExecutorDefault
 
 	@Override
 	public RdfDataPod visit(OpCoalesce op) {
-		// TODO Auto-generated method stub
-		return null;
+		List<Op> subOps = op.getSubOps();
+		
+		RdfDataPod result = null;
+		for(Op subOp : subOps) {
+			result = subOp.accept(this);
+			
+			try(RDFConnection conn = result.openConnection()) {
+				Model contribModel = conn.queryConstruct("CONSTRUCT WHERE { ?s ?p ?o } LIMIT 1");
+				if(contribModel.isEmpty()) {
+					try {
+						result.close();
+					} catch (Exception e) {
+						throw new RuntimeException(e);
+					}
+				} else {
+					break;
+				}
+			}
+		}
+		
+		if(result == null) {
+			result = DataPods.empty();
+		}
+		
+		return result;
+
+	}
+
+	@Override
+	public RdfDataPod visit(OpHdtHeader op) {
+		Op subOp = op.getSubOp();		
+		
+		RdfDataPod result;
+		try(RdfDataPod subDataPod = subOp.accept(this)) {
+			if(subDataPod instanceof RdfDataPodHdt) {
+				result = ((RdfDataPodHdt)subDataPod).headerPod();
+			} else {
+				result = DataPods.empty();
+			}
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+
+		return result;
 	}
 
 }
