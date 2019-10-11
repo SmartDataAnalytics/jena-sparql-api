@@ -5,6 +5,7 @@ import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 
 import org.aksw.jena_sparql_api.common.DefaultPrefixes;
@@ -13,7 +14,6 @@ import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.DataRef;
 import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.DataRefOp;
 import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.DataRefSparqlEndpoint;
 import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.DataRefUrl;
-import org.aksw.jena_sparql_api.conjure.dataset.algebra.Job;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.Op;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpConstruct;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpData;
@@ -25,8 +25,14 @@ import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpVar;
 import org.aksw.jena_sparql_api.conjure.dataset.engine.OpExecutorDefault;
 import org.aksw.jena_sparql_api.conjure.fluent.ConjureBuilder;
 import org.aksw.jena_sparql_api.conjure.fluent.ConjureBuilderImpl;
+import org.aksw.jena_sparql_api.conjure.fluent.ConjureContext;
 import org.aksw.jena_sparql_api.conjure.fluent.ConjureFluent;
 import org.aksw.jena_sparql_api.conjure.fluent.QLib;
+import org.aksw.jena_sparql_api.conjure.job.api.Job;
+import org.aksw.jena_sparql_api.conjure.job.api.JobBinding;
+import org.aksw.jena_sparql_api.conjure.traversal.api.OpTraversal;
+import org.aksw.jena_sparql_api.conjure.traversal.api.OpTraversalSelf;
+import org.aksw.jena_sparql_api.conjure.traversal.engine.FunctionAssembler;
 import org.aksw.jena_sparql_api.http.repository.api.HttpResourceRepositoryFromFileSystem;
 import org.aksw.jena_sparql_api.http.repository.impl.HttpResourceRepositoryFromFileSystemImpl;
 import org.aksw.jena_sparql_api.io.json.RDFNodeJsonUtils;
@@ -36,6 +42,7 @@ import org.aksw.jena_sparql_api.stmt.SparqlStmt;
 import org.aksw.jena_sparql_api.stmt.SparqlStmtParserImpl;
 import org.apache.jena.query.Syntax;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdfconnection.RDFConnection;
@@ -43,6 +50,7 @@ import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.sys.JenaSystem;
 import org.apache.jena.util.ResourceUtils;
+import org.apache.jena.vocabulary.RDF;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,16 +64,23 @@ public class MainConjurePlayground {
 		
 		String url = "http://localhost/~raven/test.hdt";
 
-		ConjureBuilder cj = new ConjureBuilderImpl(/* add query parser */);
+
+		ConjureContext ctx = new ConjureContext();
+		Model model = ctx.getModel();
+
+		ConjureBuilder cj = new ConjureBuilderImpl(ctx);
+
 		Op op = cj.coalesce(
 				cj.fromUrl(url).hdtHeader().construct("CONSTRUCT WHERE { ?s <urn:tripleCount> ?o }"),
 				cj.fromUrl(url).tripleCount().cache()).getOp();
-		
 
-		Job job = null;
+		Job job = Job.create(model);
+		job.setOp(op);
+		job.setJobBinding(JobBinding.create(model, "datasetId", OpTraversalSelf.create(model)));
 		
 		
-		RDFDataMgr.write(System.out, op.getModel(), RDFFormat.TURTLE_PRETTY);
+		
+		RDFDataMgr.write(System.out, job.getModel(), RDFFormat.TURTLE_PRETTY);
 	}
 
 
@@ -79,21 +94,22 @@ public class MainConjurePlayground {
 		// Pure luxury!
 		Function<String, SparqlStmt> parser = SparqlStmtParserImpl.create(Syntax.syntaxARQ, DefaultPrefixes.prefixes, false);
 
+		Model model = ModelFactory.createDefaultModel();
 		
 		// Set up a conjure dataset processing template
 		// Lets count predicates - 'dataRef' is a placeholder for datasets to work upon
-		Op v = OpVar.create("dataRef");
-		Op countPredicates = OpConstruct.create(v, 
+		Op v = OpVar.create(model, "dataRef");
+		Op countPredicates = OpConstruct.create(model, v, 
 				parser.apply("CONSTRUCT { ?p <eg:numUses> ?c } WHERE { { SELECT ?p (COUNT(*) AS ?c) { ?s ?p ?o } GROUP BY ?p } }").toString());
 
 		// Let's run a CONSTRUCT query on the output of another CONSTRUCT query
 		// (because we can)
-		Op totalCount = OpConstruct.create(countPredicates, parser.apply("CONSTRUCT { <urn:report> <urn:totalUses> ?t } WHERE { { SELECT (SUM(?c) AS ?t) { ?s <eg:numUses> ?c } } }").toString());
+		Op totalCount = OpConstruct.create(model, countPredicates, parser.apply("CONSTRUCT { <urn:report> <urn:totalUses> ?t } WHERE { { SELECT (SUM(?c) AS ?t) { ?s <eg:numUses> ?c } } }").toString());
 
-		Op reportDate = OpUpdateRequest.create(totalCount,
+		Op reportDate = OpUpdateRequest.create(model, totalCount,
 				parser.apply("INSERT { <urn:report> <urn:generationDate> ?d } WHERE { BIND(NOW() AS ?d) }").toString());
 
-		Op anonymousConjureWorkflow = OpUnion.create(countPredicates, reportDate);
+		Op anonymousConjureWorkflow = OpUnion.create(null, countPredicates, reportDate);
 		
 		Gson gson = new GsonBuilder().setPrettyPrinting().create();
 		String str = RDFNodeJsonUtils.toJsonNodeString(anonymousConjureWorkflow, gson);
@@ -135,7 +151,7 @@ public class MainConjurePlayground {
 		Op conjureWorkflow = JenaPluginUtils.polymorphicCast(deserializedWorkflowRes, Op.class);
 		
 		
-	    conjureWorkflow = OpConstruct.create(v, parser.apply(
+	    conjureWorkflow = OpConstruct.create(model, v, parser.apply(
 	    	      "CONSTRUCT {\n" + 
 	    	      "	    	          <env:datasetId> <urn:count> ?c\n" + 
 	    	      "	    	        } {\n" + 
@@ -146,8 +162,11 @@ public class MainConjurePlayground {
 
 	    
 	    
+		ConjureContext ctx = new ConjureContext();
+		Model xmodel = ctx.getModel();
+		xmodel.setNsPrefix("rpif", DefaultPrefixes.prefixes.getNsPrefixURI("rpif"));
 
-		ConjureBuilder cj = new ConjureBuilderImpl(/* add query parser */);
+		ConjureBuilder cj = new ConjureBuilderImpl(ctx);
 	    
 		// Example - Read triples from the header or fall back to actual counting
 		if (false) {
@@ -157,6 +176,8 @@ public class MainConjurePlayground {
 	    }
 
 		// Example - Read dataset id from the header and pass it into the generated report
+
+		
 		ConjureFluent dataset = cj.fromVar("dataRef");
 		conjureWorkflow =
 				cj.union(
@@ -166,11 +187,15 @@ public class MainConjurePlayground {
 				.update("INSERT { ?s <urn:hasReport> ?b } WHERE { ?s a <http://rdfs.org/ns/void#Dataset> . ?b a <urn:Report> }")
 					.getOp();
 		
-		
+		Job job = Job.create(xmodel);
+		job.setOp(conjureWorkflow);
+		job.setJobBinding(JobBinding.create(xmodel, "datasetId", OpTraversalSelf.create(xmodel)));
+
+
 		
 		
 		// Print out the deserialized workflow for inspection
-		RDFDataMgr.write(System.err, conjureWorkflow.getModel(), RDFFormat.TURTLE_PRETTY);
+		RDFDataMgr.write(System.err, job.getModel(), RDFFormat.TURTLE_PRETTY);
 
 		
 		// In case you missed it because you couldn't see it: The workflow *IS* RDF:
@@ -185,7 +210,7 @@ public class MainConjurePlayground {
 		OpExecutorDefault executor = new OpExecutorDefault(repo);
 
 		// Get a copy of the limbo dataset catalog via the repo so that it gets cached
-		DataRef dataRef1 = DataRefUrl.create("https://gitlab.com/limbo-project/metadata-catalog/raw/master/catalog.all.ttl");
+		DataRef dataRef1 = DataRefUrl.create(model, "https://gitlab.com/limbo-project/metadata-catalog/raw/master/catalog.all.ttl");
 		
 		// Or set up a workflow that makes databus available
 		DataRef dataRef2 = DataRefSparqlEndpoint.create("https://databus.dbpedia.org/repo/sparql");
@@ -193,12 +218,12 @@ public class MainConjurePlayground {
 		
 		// Create a data ref from a workflow
 		DataRef dataRef3 = DataRefOp.create(
-				OpUpdateRequest.create(OpData.create(),
+				OpUpdateRequest.create(model, OpData.create(model),
 //					parser.apply("INSERT DATA { [] dataid:group eg:mygrp ; dcat:distribution [ dcat:downloadURL <file:///home/raven/tmp/test.hdt> ] }").toString()));
 						parser.apply("INSERT DATA { [] dataid:group eg:mygrp ; dcat:distribution [ dcat:downloadURL <http://localhost/~raven/bib_lds_20190305.hdt.gz> ] }").toString()));
 
 		DataRef dataRef4 = DataRefOp.create(
-				OpUpdateRequest.create(OpData.create(),
+				OpUpdateRequest.create(model, OpData.create(model),
 //					parser.apply("INSERT DATA { [] dataid:group eg:mygrp ; dcat:distribution [ dcat:downloadURL <file:///home/raven/tmp/test.hdt> ] }").toString()));
 						parser.apply("INSERT DATA { [] dataid:group eg:mygrp ; dcat:distribution [ dcat:downloadURL <https://data.dnb.de/opendata/zdb_lds.hdt.gz> ] }").toString()));
 
@@ -206,7 +231,7 @@ public class MainConjurePlayground {
 		DataRef dataRef = dataRef4;
 		
 		// Set up the workflow that makes a digital copy of a dataset available
-		Op basicWorkflow = OpDataRefResource.from(dataRef);
+		Op basicWorkflow = OpDataRefResource.from(model, dataRef);
 		
 		
 		// So far so good - all we need now, is some data and we can start execution
@@ -237,9 +262,21 @@ public class MainConjurePlayground {
 		for(String url : urls) {
 			logger.info("Processing: " + url);
 
+			
 			// Create a copy of the workflow spec and substitute the variables
-			Map<String, Op> map = Collections.singletonMap("dataRef", OpDataRefResource.from(DataRefUrl.create(url)));			
-			Op effectiveWorkflow = OpUtils.copyWithSubstitution(conjureWorkflow, map::get);			
+			Map<String, Op> map = Collections.singletonMap("dataRef", OpDataRefResource.from(model, DataRefUrl.create(model, url)));			
+			Op effectiveWorkflow = OpUtils.copyWithSubstitution(job.getOp(), map::get);			
+
+			
+			JobBinding bspec = job.getJobBinding();
+			String varName = bspec.getVarName();
+			OpTraversal trav = bspec.getTraversal();
+			
+			FunctionAssembler assembler = new FunctionAssembler();
+			Function<RDFNode, Set<RDFNode>> fn = trav.accept(assembler);
+			Set<RDFNode> values = fn.apply(RDF.type);
+			
+			System.out.println("VALUES: " + values);
 			
 
 			// Set up a dataset processing expression		
@@ -249,9 +286,9 @@ public class MainConjurePlayground {
 			try(RdfDataPod data = effectiveWorkflow.accept(executor)) {
 				try(RDFConnection conn = data.openConnection()) {
 					// Print out the data that is the process result
-					Model model = conn.queryConstruct("CONSTRUCT WHERE { ?s ?p ?o }");
+					Model rmodel = conn.queryConstruct("CONSTRUCT WHERE { ?s ?p ?o }");
 					
-					RDFDataMgr.write(System.out, model, RDFFormat.TURTLE_PRETTY);
+					RDFDataMgr.write(System.out, rmodel, RDFFormat.TURTLE_PRETTY);
 				}
 			} catch(Exception e) {
 				logger.warn("Failed to process " + url, e);

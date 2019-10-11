@@ -27,6 +27,7 @@ import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.Syntax;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdfconnection.RDFConnection;
@@ -76,8 +77,10 @@ public class MainConjureSparkComparison {
 	    }
 	    
 	    
-	    Op v = OpVar.create("dataRef");
-	    Op opWorkflow = OpConstruct.create(v, parser.apply(
+	    Model model = ModelFactory.createDefaultModel();
+	    
+	    Op v = OpVar.create(model, "dataRef");
+	    Op opWorkflow = OpConstruct.create(model, v, parser.apply(
 	    		"CONSTRUCT {\n" + 
 	    		"           <env:datasetId>\n" + 
 	    		"             eg:predicateReport ?report ;\n" + 
@@ -111,7 +114,7 @@ public class MainConjureSparkComparison {
 			if(url != null) {
 	
 				// Create a copy of the workflow spec and substitute the variables
-				Map<String, Op> map = Collections.singletonMap("dataRef", OpDataRefResource.from(DataRefUrl.create(url)));			
+				Map<String, Op> map = Collections.singletonMap("dataRef", OpDataRefResource.from(model, DataRefUrl.create(model, url)));			
 				Op effectiveWorkflow = OpUtils.copyWithSubstitution(opWorkflow, map::get);			
 				
 	
@@ -122,7 +125,7 @@ public class MainConjureSparkComparison {
 				try(RdfDataPod data = effectiveWorkflow.accept(executor)) {
 					try(RDFConnection conn = data.openConnection()) {
 						// Print out the data that is the process result
-						Model model = conn.queryConstruct("CONSTRUCT WHERE { ?s ?p ?o }");
+						Model rmodel = conn.queryConstruct("CONSTRUCT WHERE { ?s ?p ?o }");
 						
 						//RDFDataMgr.write(System.out, model, RDFFormat.TURTLE_PRETTY);
 					}

@@ -1,6 +1,8 @@
-package org.aksw.jena_sparql_api.conjure.dataset.algebra;
+package org.aksw.jena_sparql_api.conjure.job.api;
 
+import org.aksw.jena_sparql_api.conjure.dataset.algebra.Op;
 import org.aksw.jena_sparql_api.mapper.annotation.IriNs;
+import org.aksw.jena_sparql_api.mapper.annotation.PolymorphicOnly;
 import org.aksw.jena_sparql_api.mapper.annotation.RdfType;
 import org.aksw.jena_sparql_api.mapper.annotation.ResourceView;
 import org.apache.jena.rdf.model.Model;
@@ -21,14 +23,22 @@ import org.apache.jena.rdf.model.Resource;
 public interface Job
 	extends Resource
 {
+	@PolymorphicOnly
 	@IriNs("rpif")
 	Op getOp();
 	Job setOp(Op op);
 	
 	@IriNs("rpif")
-	JobBinding getBinding();
+	JobBinding getJobBinding();
 	Job setJobBinding(JobBinding binding);
 
+//	public static Job create() {
+//		Job result = create(ModelFactory.createDefaultModel());
+//			//.setSubOp(subOp)
+//			//.setQueryStrings(queryStrings);
+//		
+//		return result;
+//	}
 
 	public static Job create(Model model) {
 		Job result = model.createResource().as(Job.class);

@@ -5,6 +5,7 @@ import org.aksw.jena_sparql_api.mapper.annotation.IriNs;
 import org.aksw.jena_sparql_api.mapper.annotation.IriType;
 import org.aksw.jena_sparql_api.mapper.annotation.RdfType;
 import org.aksw.jena_sparql_api.mapper.annotation.ResourceView;
+import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 
 @ResourceView
@@ -26,8 +27,13 @@ public interface DataRefUrl
 		return result;
 	}
 	
-	public static DataRefUrl create(String url) {
-		DataRefUrl result = ModelFactory.createDefaultModel().createResource().as(DataRefUrl.class)
+//	public static DataRefUrl create(String url) {
+//		DataRefUrl result = create(ModelFactory.createDefaultModel(), url);
+//		return result;
+//	}
+
+	public static DataRefUrl create(Model model, String url) {
+		DataRefUrl result = model.createResource().as(DataRefUrl.class)
 				.setDataRefUrl(url);
 		return result;
 	}

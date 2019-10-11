@@ -23,13 +23,14 @@ public interface OpUnion
 	}
 	
 	
-	public static OpUnion create(Op ...subOps) {
-		return create(Arrays.asList(subOps));
+	public static OpUnion create(Model model, Op ...subOps) {
+		return create(model, Arrays.asList(subOps));
 	}
 
-	public static OpUnion create(List<Op> subOps) {
+	public static OpUnion create(Model model, List<Op> subOps) {
 //		Model model = subOps.size() > 0 ? subOps.get(0).getModel() : ModelFactory.createDefaultModel();
-		Model model = ModelFactory.createDefaultModel();
+		// Model model = ModelFactory.createDefaultModel();
+		model = model != null ? model : ModelFactory.createDefaultModel();
 		for(Op subOp : subOps) {
 			model.add(subOp.getModel());
 		}

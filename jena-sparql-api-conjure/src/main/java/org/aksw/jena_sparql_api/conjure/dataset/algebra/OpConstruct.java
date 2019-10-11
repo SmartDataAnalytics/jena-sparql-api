@@ -7,6 +7,7 @@ import java.util.Set;
 import org.aksw.jena_sparql_api.mapper.annotation.Iri;
 import org.aksw.jena_sparql_api.mapper.annotation.RdfTypeNs;
 import org.aksw.jena_sparql_api.mapper.annotation.ResourceView;
+import org.apache.jena.rdf.model.Model;
 
 @ResourceView
 @RdfTypeNs("rpif")
@@ -26,14 +27,14 @@ public interface OpConstruct
 		return result;
 	}
 	
-	public static OpConstruct create(Op subOp, String queryString) {
-		OpConstruct result = create(subOp, Collections.singleton(queryString));
+	public static OpConstruct create(Model model, Op subOp, String queryString) {
+		OpConstruct result = create(model, subOp, Collections.singleton(queryString));
 		
 		return result;
 	}
 	
-	public static OpConstruct create(Op subOp, Collection<String> queryStrings) {
-		OpConstruct result = subOp.getModel().createResource().as(OpConstruct.class)
+	public static OpConstruct create(Model model, Op subOp, Collection<String> queryStrings) {
+		OpConstruct result = model.createResource().as(OpConstruct.class)
 			.setSubOp(subOp)
 			.setQueryStrings(queryStrings);
 		

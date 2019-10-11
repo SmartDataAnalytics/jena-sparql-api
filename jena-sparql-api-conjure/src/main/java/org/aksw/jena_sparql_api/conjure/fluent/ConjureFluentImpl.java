@@ -27,14 +27,14 @@ public class ConjureFluentImpl
 	@Override
 	public ConjureFluent construct(String queryStr) {
 		String validatedString = context.getSparqlStmtParser().apply(queryStr).toString();
-		return wrap(OpConstruct.create(op, validatedString));
+		return wrap(OpConstruct.create(context.getModel(), op, validatedString));
 	}
 
 
 	@Override
 	public ConjureFluent update(String updateRequest) {
 		String validatedString = context.getSparqlStmtParser().apply(updateRequest).toString();
-		return wrap(OpUpdateRequest.create(op, validatedString));
+		return wrap(OpUpdateRequest.create(context.getModel(), op, validatedString));
 	}
 
 	@Override
@@ -44,7 +44,7 @@ public class ConjureFluentImpl
 
 	@Override
 	public ConjureFluent hdtHeader() {
-		return wrap(OpHdtHeader.create(op));
+		return wrap(OpHdtHeader.create(context.getModel(), op));
 
 //		if(op instanceof OpDataRefResource) {
 //			OpDataRefResource x = ((OpDataRefResource)op);
@@ -63,6 +63,6 @@ public class ConjureFluentImpl
 
 	@Override
 	public ConjureFluent cache() {
-		return wrap(OpPersist.create(op));
+		return wrap(OpPersist.create(context.getModel(), op));
 	}
 }

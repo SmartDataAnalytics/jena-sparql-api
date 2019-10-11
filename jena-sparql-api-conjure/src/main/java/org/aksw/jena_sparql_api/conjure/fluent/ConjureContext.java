@@ -6,6 +6,8 @@ import org.aksw.jena_sparql_api.common.DefaultPrefixes;
 import org.aksw.jena_sparql_api.stmt.SparqlStmt;
 import org.aksw.jena_sparql_api.stmt.SparqlStmtParserImpl;
 import org.apache.jena.query.Syntax;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
 
 /**
  * Context for fluent; contains the SPARQL statement parser for early validation
@@ -14,15 +16,26 @@ import org.apache.jena.query.Syntax;
  *
  */
 public class ConjureContext {
+	/**
+	 * The model into which to create the ops and other resources 
+	 */
+	protected Model model;
 	protected Function<String, SparqlStmt> sparqlStmtParser;
 
 	public ConjureContext() {
-		this(SparqlStmtParserImpl.create(Syntax.syntaxARQ, DefaultPrefixes.prefixes, false));
+		this(
+			ModelFactory.createDefaultModel(),
+			SparqlStmtParserImpl.create(Syntax.syntaxARQ, DefaultPrefixes.prefixes, false));
 	}
 
-	public ConjureContext(Function<String, SparqlStmt> sparqlStmtParser) {
+	public ConjureContext(Model model, Function<String, SparqlStmt> sparqlStmtParser) {
 		super();
+		this.model = model;
 		this.sparqlStmtParser = sparqlStmtParser;
+	}
+	
+	public Model getModel() {
+		return model;
 	}
 
 	public Function<String, SparqlStmt> getSparqlStmtParser() {

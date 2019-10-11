@@ -23,13 +23,13 @@ public interface OpCoalesce
 	}
 	
 	
-	public static OpCoalesce create(Op ...subOps) {
-		return create(Arrays.asList(subOps));
+	public static OpCoalesce create(Model model, Op ...subOps) {
+		return create(model, Arrays.asList(subOps));
 	}
 
-	public static OpCoalesce create(List<Op> subOps) {
+	public static OpCoalesce create(Model model, List<Op> subOps) {
 		//Model model = subOps.size() > 0 ? subOps.get(0).getModel() : ModelFactory.createDefaultModel();
-		Model model = ModelFactory.createDefaultModel();
+		model = model != null ? model : ModelFactory.createDefaultModel();
 		for(Op subOp : subOps) {
 			model.add(subOp.getModel());
 		}

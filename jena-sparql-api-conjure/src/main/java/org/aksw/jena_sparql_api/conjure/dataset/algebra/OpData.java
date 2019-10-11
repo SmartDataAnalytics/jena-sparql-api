@@ -25,10 +25,10 @@ public interface OpData
 		return result;
 	}
 	
-	public static OpData create() {
-		OpData result = create(ModelFactory.createDefaultModel());
-		return result;
-	}
+//	public static OpData create() {
+//		OpData result = create(ModelFactory.createDefaultModel());
+//		return result;
+//	}
 
 	
 	public static OpData create(Model model) {

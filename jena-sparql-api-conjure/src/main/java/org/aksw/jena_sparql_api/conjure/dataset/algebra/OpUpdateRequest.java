@@ -7,6 +7,7 @@ import java.util.List;
 import org.aksw.jena_sparql_api.mapper.annotation.IriNs;
 import org.aksw.jena_sparql_api.mapper.annotation.RdfTypeNs;
 import org.aksw.jena_sparql_api.mapper.annotation.ResourceView;
+import org.apache.jena.rdf.model.Model;
 
 @ResourceView
 @RdfTypeNs("rpif")
@@ -38,14 +39,14 @@ public interface OpUpdateRequest
 		return result;
 	}
 	
-	public static OpUpdateRequest create(Op subOp, String updateRequestStrings) {
-		OpUpdateRequest result = create(subOp, Collections.singleton(updateRequestStrings));
+	public static OpUpdateRequest create(Model model, Op subOp, String updateRequestStrings) {
+		OpUpdateRequest result = create(model, subOp, Collections.singleton(updateRequestStrings));
 		
 		return result;
 	}
 	
-	public static OpUpdateRequest create(Op subOp, Collection<String> updateRequestStrings) {
-		OpUpdateRequest result = subOp.getModel().createResource().as(OpUpdateRequest.class)
+	public static OpUpdateRequest create(Model model, Op subOp, Collection<String> updateRequestStrings) {
+		OpUpdateRequest result = model.createResource().as(OpUpdateRequest.class)
 			.setSubOp(subOp)
 			.setUpdateRequests(updateRequestStrings);
 		

@@ -19,7 +19,7 @@ public class ConjureBuilderImpl
 	public ConjureBuilderImpl() {
 		this(new ConjureContext());
 	}
-
+	
 	public ConjureBuilderImpl(ConjureContext context) {
 		super();
 		this.context = context;
@@ -31,12 +31,12 @@ public class ConjureBuilderImpl
 
 	@Override
 	public ConjureFluent fromUrl(String url) {
-		return wrap(OpDataRefResource.from(DataRefUrl.create(url)));
+		return wrap(OpDataRefResource.from(context.getModel(), DataRefUrl.create(context.getModel(), url)));
 	}
 
 	@Override
 	public ConjureFluent fromVar(String name) {
-		return wrap(OpVar.create(name));
+		return wrap(OpVar.create(context.getModel(), name));
 	}
 
 	
@@ -53,13 +53,13 @@ public class ConjureBuilderImpl
 
 	@Override
 	public ConjureFluent union(ConjureFluent... conjureFluents) {
-		return wrap(OpUnion.create(toOps(conjureFluents)));
+		return wrap(OpUnion.create(context.getModel(), toOps(conjureFluents)));
 	}
 
 
 	@Override
 	public ConjureFluent coalesce(ConjureFluent... conjureFluents) {
-		return wrap(OpCoalesce.create(toOps(conjureFluents)));
+		return wrap(OpCoalesce.create(context.getModel(), toOps(conjureFluents)));
 	}
 
 }
