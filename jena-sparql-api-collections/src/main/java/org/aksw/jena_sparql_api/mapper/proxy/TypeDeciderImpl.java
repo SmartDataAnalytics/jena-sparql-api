@@ -151,6 +151,8 @@ public class TypeDeciderImpl
     	RdfType rdfType = clazz.getAnnotation(RdfType.class);
     	RdfTypeNs rdfTypeNs = clazz.getAnnotation(RdfTypeNs.class);
 		
+    	// TODO It is an error to have both annotations set
+    	
     	if(rdfTypeNs != null) {
             String ns = rdfTypeNs.value();
 			String uri = prefixMapping.getNsPrefixURI(ns);
@@ -161,7 +163,7 @@ public class TypeDeciderImpl
 //        	iri = "java://" + clazz.getCanonicalName();
 //        }
             
-			String localName = clazz.getCanonicalName();
+			String localName = clazz.getSimpleName();
 			String expanded = uri + localName;
             
             Node node = NodeFactory.createURI(expanded);
