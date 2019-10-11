@@ -5,11 +5,11 @@ import java.util.Collections;
 import java.util.List;
 
 import org.aksw.jena_sparql_api.mapper.annotation.IriNs;
-import org.aksw.jena_sparql_api.mapper.annotation.RdfType;
+import org.aksw.jena_sparql_api.mapper.annotation.RdfTypeNs;
 import org.aksw.jena_sparql_api.mapper.annotation.ResourceView;
 
 @ResourceView
-@RdfType
+@RdfTypeNs("rpif")
 public interface OpUpdateRequest
 	extends Op1
 {
@@ -22,7 +22,7 @@ public interface OpUpdateRequest
 	OpUpdateRequest setSubOp(Op op);		
 
 	
-	@IriNs("eg")
+	@IriNs("rpif")
 	List<String> getUpdateRequests();
 	OpUpdateRequest setUpdateRequests(Collection<String> updateRequestStrings);
 	

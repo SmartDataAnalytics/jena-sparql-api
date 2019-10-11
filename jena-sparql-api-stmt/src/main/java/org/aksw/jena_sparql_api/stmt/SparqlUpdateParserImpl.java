@@ -1,8 +1,12 @@
 package org.aksw.jena_sparql_api.stmt;
 
 import org.apache.jena.riot.system.IRIResolver;
+import org.apache.jena.shared.PrefixMapping;
 
 import com.google.common.base.Supplier;
+
+import org.aksw.jena_sparql_api.core.utils.UpdateUtils;
+import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.apache.jena.query.Syntax;
 import org.apache.jena.sparql.core.Prologue;
 import org.apache.jena.sparql.lang.ParserSPARQL11Update;
@@ -28,6 +32,12 @@ public class SparqlUpdateParserImpl
     public UpdateRequest apply(String updateString) {
         UpdateRequest result = updateRequestSupplier.get();
         UpdateFactory.parse(result, updateString, baseURI, syntax);
+        
+        // Remove unused namespaces
+//    	PrefixMapping usedPrefixes = UpdateUtils.usedPrefixes(result);
+//    	result.setPrefixMapping(usedPrefixes);
+    	
+        
         return result;
     }
 

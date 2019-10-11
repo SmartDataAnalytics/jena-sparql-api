@@ -17,15 +17,15 @@ import org.apache.jena.rdf.model.Resource;
  *
  */
 @ResourceView
-@RdfType
+@RdfType("rpif:Job")
 public interface Job
 	extends Resource
 {
-	@IriNs("eg")
+	@IriNs("rpif")
 	Op getOp();
 	Job setOp(Op op);
 	
-	@IriNs("eg")
+	@IriNs("rpif")
 	JobBinding getBinding();
 	Job setJobBinding(JobBinding binding);
 

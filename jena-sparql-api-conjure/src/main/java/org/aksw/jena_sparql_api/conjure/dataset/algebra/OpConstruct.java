@@ -5,15 +5,15 @@ import java.util.Collections;
 import java.util.Set;
 
 import org.aksw.jena_sparql_api.mapper.annotation.Iri;
-import org.aksw.jena_sparql_api.mapper.annotation.RdfType;
+import org.aksw.jena_sparql_api.mapper.annotation.RdfTypeNs;
 import org.aksw.jena_sparql_api.mapper.annotation.ResourceView;
 
 @ResourceView
-@RdfType
+@RdfTypeNs("rpif")
 public interface OpConstruct
 	extends Op1
 {
-	@Iri("eg:queryString")
+	@Iri("rpif:queryString")
 	Set<String> getQueryStrings();
 	OpConstruct setQueryStrings(Collection<String> queryStrings);
 	

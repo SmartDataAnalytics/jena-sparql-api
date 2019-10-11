@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.common.DefaultPrefixes;
 import org.aksw.jena_sparql_api.mapper.annotation.RdfType;
+import org.aksw.jena_sparql_api.mapper.annotation.RdfTypeNs;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.rdf.model.Model;
@@ -148,8 +149,26 @@ public class TypeDeciderImpl
     	Map<Class<?>, Node> result;
     	
     	RdfType rdfType = clazz.getAnnotation(RdfType.class);
+    	RdfTypeNs rdfTypeNs = clazz.getAnnotation(RdfTypeNs.class);
 		
-		if(rdfType != null) {
+    	if(rdfTypeNs != null) {
+            String ns = rdfTypeNs.value();
+			String uri = prefixMapping.getNsPrefixURI(ns);
+			if(uri == null) {
+				throw new RuntimeException("Undefined prefix: " + ns + " on class " + clazz);
+			}
+//          if(Strings.isNullOrEmpty(iri)) {
+//        	iri = "java://" + clazz.getCanonicalName();
+//        }
+            
+			String localName = clazz.getCanonicalName();
+			String expanded = uri + localName;
+            
+            Node node = NodeFactory.createURI(expanded);
+			result = Collections.singletonMap(clazz, node);
+
+    	} else if(rdfType != null ) {
+			
 //      RdfType rdfType = AnnotationUtils.findAnnotation(beanClass, RdfType.class);
             String iri = rdfType.value();
             if(Strings.isNullOrEmpty(iri)) {

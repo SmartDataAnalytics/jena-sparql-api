@@ -3,13 +3,13 @@ package org.aksw.jena_sparql_api.conjure.dataset.algebra;
 import java.util.Arrays;
 import java.util.List;
 
-import org.aksw.jena_sparql_api.mapper.annotation.RdfType;
+import org.aksw.jena_sparql_api.mapper.annotation.RdfTypeNs;
 import org.aksw.jena_sparql_api.mapper.annotation.ResourceView;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 
 @ResourceView
-@RdfType
+@RdfTypeNs("rpif")
 public interface OpCoalesce
 	extends OpN
 {

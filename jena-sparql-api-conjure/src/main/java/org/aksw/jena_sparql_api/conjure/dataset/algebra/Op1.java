@@ -10,7 +10,7 @@ import org.aksw.jena_sparql_api.mapper.annotation.PolymorphicOnly;
 public interface Op1
 	extends Op
 {
-	@IriNs("eg")
+	@IriNs("rpif")
 	@PolymorphicOnly
 	Op getSubOp();
 	Op1 setSubOp(Op op);

@@ -3,16 +3,16 @@ package org.aksw.jena_sparql_api.conjure.dataset.algebra;
 import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.DataRef;
 import org.aksw.jena_sparql_api.mapper.annotation.IriNs;
 import org.aksw.jena_sparql_api.mapper.annotation.PolymorphicOnly;
-import org.aksw.jena_sparql_api.mapper.annotation.RdfType;
+import org.aksw.jena_sparql_api.mapper.annotation.RdfTypeNs;
 import org.aksw.jena_sparql_api.mapper.annotation.ResourceView;
 
 @ResourceView
-@RdfType
+@RdfTypeNs("rpif")
 public interface OpDataRefResource
 	extends Op0
 {
 	@PolymorphicOnly
-	@IriNs("eg")
+	@IriNs("rpif")
 	DataRef getDataRef();
 	OpDataRefResource setDataRef(DataRef dataRef);
 	

@@ -3,15 +3,21 @@ package org.aksw.jena_sparql_api.core.utils;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.aksw.commons.collections.diff.Diff;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.SetFromGraph;
+import org.aksw.jena_sparql_api.utils.transform.NodeTransformCollectNodes;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.shared.PrefixMapping;
+import org.apache.jena.shared.impl.PrefixMappingImpl;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.core.DatasetDescription;
 import org.apache.jena.sparql.core.DatasetGraph;
@@ -23,6 +29,7 @@ import org.apache.jena.sparql.modify.request.UpdateDataInsert;
 import org.apache.jena.sparql.modify.request.UpdateDeleteInsert;
 import org.apache.jena.sparql.modify.request.UpdateModify;
 import org.apache.jena.sparql.syntax.Element;
+import org.apache.jena.sparql.syntax.syntaxtransform.UpdateTransformOps;
 import org.apache.jena.update.Update;
 import org.apache.jena.update.UpdateFactory;
 import org.apache.jena.update.UpdateRequest;
@@ -31,6 +38,32 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 
 public class UpdateRequestUtils {
+
+	
+//    public static PrefixMapping usedPrefixes(UpdateRequest updateRequest) {
+//        NodeTransformCollectNodes nodeUsageCollector = new NodeTransformCollectNodes();
+//
+//        //applyNodeTransform(updateRequest, nodeUsageCollector);
+//        Set<Node> nodes = nodeUsageCollector.getNodes();
+//
+//        PrefixMapping pm = query.getPrefixMapping();
+//        Map<String, String> usedPrefixes = nodes.stream()
+//                .filter(Node::isURI)
+//                .map(Node::getURI)
+//                .map(x -> {
+//                    String tmp = pm.shortForm(x);
+//                    String r = Objects.equals(x, tmp) ? null : tmp.split(":", 2)[0];
+//                    return r;
+//                })
+//                //.peek(System.out::println)
+//                .filter(x -> x != null)
+//                .distinct()
+//                .collect(Collectors.toMap(x -> x, pm::getNsPrefixURI));
+//
+//        PrefixMapping result = new PrefixMappingImpl();
+//        result.setNsPrefixes(usedPrefixes);
+//        return result;
+//    }
 
 	public static UpdateRequest applyTransformElt(UpdateRequest updateRequest, Function<? super Element, ? extends Element> transform) {
 		UpdateRequest result = UpdateRequestUtils.copyTransform(updateRequest, update -> {
