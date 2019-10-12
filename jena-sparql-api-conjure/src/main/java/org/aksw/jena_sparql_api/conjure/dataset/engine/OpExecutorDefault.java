@@ -2,6 +2,7 @@ package org.aksw.jena_sparql_api.conjure.dataset.engine;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 
 import org.aksw.jena_sparql_api.conjure.algebra.common.ResourceTreeUtils;
@@ -14,18 +15,24 @@ import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpCoalesce;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpConstruct;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpData;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpDataRefResource;
+import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpError;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpHdtHeader;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpPersist;
+import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpSequence;
+import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpSet;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpUnion;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpUpdateRequest;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpVar;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpVisitor;
+import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpWhen;
 import org.aksw.jena_sparql_api.http.repository.api.HttpResourceRepositoryFromFileSystem;
 import org.aksw.jena_sparql_api.http.repository.impl.HttpResourceRepositoryFromFileSystemImpl;
+import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdfconnection.RDFConnection;
+import org.apache.jena.sparql.core.Var;
 
 // TODO The visitor should delegate to the executor implementation(s) instead of
 // performing operations directly
@@ -35,6 +42,10 @@ public class OpExecutorDefault
 //	protected DataObjectRdfVisitor<RDFConnection> DataObjectRdfToConnection;
 
 	protected HttpResourceRepositoryFromFileSystemImpl repo;
+	
+	// Execution context
+	protected Map<Var, Node> execCtx;
+	
 	
 	public OpExecutorDefault(HttpResourceRepositoryFromFileSystem repo) {
 		super();
@@ -185,6 +196,55 @@ public class OpExecutorDefault
 		}
 
 		return result;
+	}
+
+	/**
+	 * Execute all arguments and return the result of the last one
+	 */
+	@Override
+	public RdfDataPod visit(OpSequence op) {
+		RdfDataPod result = null;
+		
+		List<Op> subOps = op.getSubOps();
+		int n = subOps.size();
+		
+		for(int i = 0; i < n; ++i) {
+			boolean isLast = i + 1 == n;
+
+			Op subOp = subOps.get(i);
+			RdfDataPod tmp = subOp.accept(this);
+			if(isLast) {
+				result = tmp;
+			} else {
+				try {
+					tmp.close();
+				} catch (Exception e) {
+					throw new RuntimeException(e);
+				}
+			}
+		}
+
+		if(result == null) {
+			result = DataPods.empty();
+		}
+		
+		return result;
+	}
+
+	
+	@Override
+	public RdfDataPod visit(OpSet op) {
+		throw new RuntimeException("not implemented yet");
+	}
+
+	@Override
+	public RdfDataPod visit(OpWhen op) {
+		throw new RuntimeException("not implemented yet");
+	}
+
+	@Override
+	public RdfDataPod visit(OpError op) {
+		throw new RuntimeException("Reached a user error state, user specified reason was: " + op.getReason());
 	}
 
 }

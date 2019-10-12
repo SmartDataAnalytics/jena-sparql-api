@@ -56,4 +56,28 @@ public class OpMapper
 		System.out.println("Op: " + op);
 		return null;
 	}
+
+	@Override
+	public Op visit(OpSequence op) {
+		System.out.println("Op: " + op);
+		return null;
+	}
+
+	@Override
+	public Op visit(OpSet op) {
+		System.out.println("Op: " + op);
+		return null;
+	}
+
+	@Override
+	public Op visit(OpWhen op) {
+		System.out.println("Op: " + op);
+		return null;
+	}
+
+	@Override
+	public Op visit(OpError op) {
+		System.out.println("Op: " + op);
+		return null;
+	}
 }
