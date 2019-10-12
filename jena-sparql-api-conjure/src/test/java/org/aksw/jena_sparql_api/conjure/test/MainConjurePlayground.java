@@ -2,12 +2,17 @@ package org.aksw.jena_sparql_api.conjure.test;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Function;
 
+import org.aksw.dcat.ap.utils.DcatUtils;
 import org.aksw.jena_sparql_api.common.DefaultPrefixes;
 import org.aksw.jena_sparql_api.conjure.datapod.api.RdfDataPod;
 import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.DataRef;
@@ -40,6 +45,9 @@ import org.aksw.jena_sparql_api.mapper.proxy.JenaPluginUtils;
 import org.aksw.jena_sparql_api.rx.SparqlRx;
 import org.aksw.jena_sparql_api.stmt.SparqlStmt;
 import org.aksw.jena_sparql_api.stmt.SparqlStmtParserImpl;
+import org.aksw.jena_sparql_api.utils.Vars;
+import org.apache.jena.graph.Node;
+import org.apache.jena.query.Query;
 import org.apache.jena.query.Syntax;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -48,12 +56,16 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
+import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.engine.binding.Binding;
+import org.apache.jena.sparql.engine.binding.BindingFactory;
 import org.apache.jena.sys.JenaSystem;
 import org.apache.jena.util.ResourceUtils;
-import org.apache.jena.vocabulary.RDF;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.collect.LinkedHashMultimap;
+import com.google.common.collect.Multimap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -76,7 +88,7 @@ public class MainConjurePlayground {
 
 		Job job = Job.create(model);
 		job.setOp(op);
-		job.setJobBinding(JobBinding.create(model, "datasetId", OpTraversalSelf.create(model)));
+		job.getJobBindings().add(JobBinding.create(model, "datasetId", OpTraversalSelf.create(model)));
 		
 		
 		
@@ -189,7 +201,7 @@ public class MainConjurePlayground {
 		
 		Job job = Job.create(xmodel);
 		job.setOp(conjureWorkflow);
-		job.setJobBinding(JobBinding.create(xmodel, "datasetId", OpTraversalSelf.create(xmodel)));
+		job.setJobBindings(Arrays.asList(JobBinding.create(xmodel, "datasetId", OpTraversalSelf.create(xmodel))));
 
 
 		
@@ -197,6 +209,9 @@ public class MainConjurePlayground {
 		// Print out the deserialized workflow for inspection
 		RDFDataMgr.write(System.err, job.getModel(), RDFFormat.TURTLE_PRETTY);
 
+//		if(true) {
+//			return;
+//		}
 		
 		// In case you missed it because you couldn't see it: The workflow *IS* RDF:
 		// We created RDF using static factory methods, saved it to disk and loaded it again		
@@ -239,28 +254,58 @@ public class MainConjurePlayground {
 		
 		// Fetch some download urls from the databus or limbo
 		// Turns out both data catalogs have quality issues ;)
-		List<String> urls;
+		
+		String queryStr = "CONSTRUCT {\n" + 
+				"        ?a ?b ?c .\n" + 
+				"        ?c ?d ?e\n" + 
+				"      } {\n" + 
+				"\n" + 
+				"        { SELECT DISTINCT ?a {\n" + 
+				"          ?a dcat:distribution [\n" + 
+//				"            dcat:byteSize ?byteSize\n" + 
+				"          ]\n" + 
+				"        } LIMIT 10 }\n" + 
+				"\n" + 
+				"        ?a ?b ?c\n" + 
+				"        OPTIONAL { ?c ?d ?e }\n" + 
+				"}";
+		
+		Query dcatQuery = parser.apply(queryStr).getAsQueryStmt().getQuery();
+	
+		
+		List<Resource> contexts;
 //		try(RdfDataObject catalog = DataObjects.fromSparqlEndpoint("https://databus.dbpedia.org/repo/sparql", null, null)) {			
 		try(RdfDataPod catalog = basicWorkflow.accept(executor)) {			
 			try(RDFConnection conn = catalog.openConnection()) {
-				urls = SparqlRx.execSelect(conn,
-//						"SELECT DISTINCT ?o { ?s <http://www.w3.org/ns/dcat#downloadURL> ?o } LIMIT 10")
-						parser.apply("SELECT DISTINCT ?o { ?s dataid:group ?g ; dcat:distribution/dcat:downloadURL ?o } LIMIT 10")
-							.getAsQueryStmt().getQuery())
-					.map(qs -> qs.get("o"))
-					.map(RDFNode::toString)
-					.toList()
-					.blockingGet();				
+				
+	    	    contexts = SparqlRx.execConstructGrouped(conn, Vars.a, dcatQuery)
+		    	        .map(RDFNode::asResource)
+	    	    		.toList()
+	    	    		.blockingGet();
+
+				
+//				urls = SparqlRx.execSelect(conn,
+////						"SELECT DISTINCT ?o { ?s <http://www.w3.org/ns/dcat#downloadURL> ?o } LIMIT 10")
+//						parser.apply("SELECT DISTINCT ?o { ?s dataid:group ?g ; dcat:distribution/dcat:downloadURL ?o } LIMIT 10")
+//							.getAsQueryStmt().getQuery())
+//					.map(qs -> qs.get("o"))
+//					.map(RDFNode::toString)
+//					.toList()
+//					.blockingGet();				
 			}			
 		}
 
 		
 		// Ready for workflow execution!
 
-		logger.info("Retrieved " + urls.size() + " urls for processing " + urls);
+		logger.info("Retrieved " + contexts.size() + " contexts for processing " + contexts);
 		
-		for(String url : urls) {
+		for(Resource context : contexts) {
+			
+			String url = DcatUtils.getFirstDownloadUrl(context);
+			
 			logger.info("Processing: " + url);
+			RDFNode jobContext = ModelFactory.createDefaultModel().createResource();
 
 			
 			// Create a copy of the workflow spec and substitute the variables
@@ -268,15 +313,54 @@ public class MainConjurePlayground {
 			Op effectiveWorkflow = OpUtils.copyWithSubstitution(job.getOp(), map::get);			
 
 			
-			JobBinding bspec = job.getJobBinding();
-			String varName = bspec.getVarName();
-			OpTraversal trav = bspec.getTraversal();
+			// Add an initial empty binding
+			Multimap<Var, Node> valueMap = LinkedHashMultimap.create();
 			
 			FunctionAssembler assembler = new FunctionAssembler();
-			Function<RDFNode, Set<RDFNode>> fn = trav.accept(assembler);
-			Set<RDFNode> values = fn.apply(RDF.type);
+			for(JobBinding bspec : job.getJobBindings()) {
+				String varName = bspec.getVarName();
+				Var var = Var.alloc(varName);
+				OpTraversal trav = bspec.getTraversal();
+				
+				Function<RDFNode, Set<RDFNode>> fn = trav.accept(assembler);
+				
+				Set<RDFNode> values = fn.apply(jobContext);
+				for(RDFNode value : values) {
+					Node node = value.asNode();
+					valueMap.put(var, node);
+				}
+			}
+
+			// Create the set of bindings
+			// TODO Is there a nifty way to create the cartesian product with flatMap?
+			List<Binding> currentBindings = new ArrayList<>();
+			currentBindings.add(BindingFactory.root());
+
+			List<Binding> nextBindings = new ArrayList<>();
+			for(Entry<Var, Collection<Node>> e : valueMap.asMap().entrySet()) {
+				Var k = e.getKey();
+				Collection<Node> vs = e.getValue();
+				
+				for(Node node : vs) {
+					for(Binding cb : currentBindings) {
+						Binding nb = BindingFactory.binding(cb, k, node);
+						nextBindings.add(nb);
+					}
+				}
+				
+				List<Binding> xtmp = currentBindings;
+				currentBindings = nextBindings;
+				nextBindings = xtmp;
+				nextBindings.clear();
+			}
+
+			if(currentBindings.isEmpty() || currentBindings.size() > 1) {
+				throw new RuntimeException("Can only handle exactly a single binding at present");
+			}
 			
-			System.out.println("VALUES: " + values);
+			Binding binding = currentBindings.iterator().next();
+			
+			System.out.println("BINDING: " + binding);
 			
 
 			// Set up a dataset processing expression		

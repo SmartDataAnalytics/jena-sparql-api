@@ -1,5 +1,7 @@
 package org.aksw.jena_sparql_api.conjure.job.api;
 
+import java.util.List;
+
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.Op;
 import org.aksw.jena_sparql_api.mapper.annotation.IriNs;
 import org.aksw.jena_sparql_api.mapper.annotation.PolymorphicOnly;
@@ -29,8 +31,8 @@ public interface Job
 	Job setOp(Op op);
 	
 	@IriNs("rpif")
-	JobBinding getJobBinding();
-	Job setJobBinding(JobBinding binding);
+	List<JobBinding> getJobBindings();
+	Job setJobBindings(List<JobBinding> bindings);
 
 //	public static Job create() {
 //		Job result = create(ModelFactory.createDefaultModel());

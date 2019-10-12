@@ -14,6 +14,13 @@ import org.rdfhdt.hdtjena.HDTGraph;
 public class RdfDataPodHdtImpl
 	implements RdfDataPodHdt
 {
+	/**
+	 * Reference to HDT resources
+	 * 
+	 * TODO Put the HDT *and* the HDTGraph into a common object,
+	 * so that if the HDTGraph only needs to be initialized once for
+	 * any number of requests
+	 */
 	protected Reference<HDT> hdtRef;
 	protected boolean isHeaderPod;  
 
