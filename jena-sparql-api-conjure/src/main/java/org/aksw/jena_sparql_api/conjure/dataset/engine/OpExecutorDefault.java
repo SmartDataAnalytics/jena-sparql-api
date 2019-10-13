@@ -33,6 +33,7 @@ import org.aksw.jena_sparql_api.conjure.traversal.engine.FunctionAssembler;
 import org.aksw.jena_sparql_api.http.repository.api.HttpResourceRepositoryFromFileSystem;
 import org.aksw.jena_sparql_api.http.repository.impl.HttpResourceRepositoryFromFileSystemImpl;
 import org.aksw.jena_sparql_api.rx.SparqlRx;
+import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryFactory;
@@ -109,7 +110,16 @@ public class OpExecutorDefault
 				
 				Model model = ModelFactory.createDefaultModel();
 				for(String queryStr : queryStrs) {
-					Model contrib = conn.queryConstruct(queryStr);
+					
+					Query query = QueryFactory.create(queryStr);
+					Query effQuery = QueryUtils.applyNodeTransform(query,
+							x -> x.isVariable() ? execCtx.getOrDefault(x.getName(), x) : x);
+					
+					// TODO Check whether substitution is needed
+					logger.info("Query after substitution: " + effQuery);
+					
+//					Model contrib = conn.queryConstruct(queryStr);
+					Model contrib = conn.queryConstruct(effQuery);
 					model.add(contrib);
 				}
 
