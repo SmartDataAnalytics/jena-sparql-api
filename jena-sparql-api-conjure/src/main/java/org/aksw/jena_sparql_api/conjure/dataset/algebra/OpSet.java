@@ -1,16 +1,18 @@
 package org.aksw.jena_sparql_api.conjure.dataset.algebra;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Set;
-
-import org.aksw.jena_sparql_api.mapper.annotation.Iri;
+import org.aksw.jena_sparql_api.mapper.annotation.IriNs;
 import org.aksw.jena_sparql_api.mapper.annotation.RdfTypeNs;
 import org.aksw.jena_sparql_api.mapper.annotation.ResourceView;
 import org.apache.jena.rdf.model.Model;
 
 /**
- * Set a variable in the execution context
+ * Set a variable in the execution context.
+ * A select query with a single projection variable acts as the selector for values.
+ * For convenience, a property path can be used to navigate to a
+ * related set of resources.
+ * Empty or null property path is treated as identity
+ * 
+ * var = ("SELECT ?s { ?s someProp ?x }", rdfs:label)
  * 
  * @author raven
  *
@@ -20,10 +22,28 @@ import org.apache.jena.rdf.model.Model;
 public interface OpSet
 	extends Op1
 {
-	@Iri("rpif:queryString")
-	Set<String> getQueryStrings();
-	OpSet setQueryStrings(Collection<String> queryStrings);
-	
+	@IriNs("rpif")
+	String getCtxVarName();
+	OpSet setCtxVarName(String string);
+
+	/**
+	 * Selector is a select query returning a single variable, such as
+	 * SELECT ?x { ?s a ?x }
+
+	 * @return
+	 */
+	@IriNs("rpif")
+	String getSelector();
+	OpSet setSelector(String string);
+
+	@IriNs("rpif")
+	String getPropertyPath();
+	OpSet setPropertyPath(String str);
+
+	@IriNs("rpif")
+	String getSelectorVarName();
+	OpSet setSelectorVarName(String str);
+
 	@Override
 	OpSet setSubOp(Op subOp);
 	
@@ -33,16 +53,20 @@ public interface OpSet
 		return result;
 	}
 	
-	public static OpSet create(Model model, Op subOp, String queryString) {
-		OpSet result = create(model, subOp, Collections.singleton(queryString));
-		
-		return result;
-	}
+//	public static OpSet create(Model model, Op subOp, String queryString) {
+//		OpSet result = model.createResource().as(OpSet.class)
+//				.setSubOp(subOp);
+//		
+//		return result;
+//	}
 	
-	public static OpSet create(Model model, Op subOp, Collection<String> queryStrings) {
+	public static OpSet create(Model model, Op subOp, String ctxVarName, String selectorVarName, String selector, String path) {
 		OpSet result = model.createResource().as(OpSet.class)
 			.setSubOp(subOp)
-			.setQueryStrings(queryStrings);
+			.setCtxVarName(ctxVarName)
+			.setSelectorVarName(selectorVarName)
+			.setSelector(selector)
+			.setPropertyPath(path);
 		
 		return result;
 	}

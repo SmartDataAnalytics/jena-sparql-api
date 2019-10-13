@@ -15,15 +15,15 @@ public interface ConjureFluent {
 	
 	ConjureFluent cache();
 	
-
 	ConjureFluent construct(String queryStr);
+	ConjureFluent update(String updateRequest);
 	
+
+	ConjureFluent set(String ctxVar, String selector, String path);
+
 	default ConjureFluent construct(Query query) {
 		return construct(query.toString());
 	}
-
-
-	ConjureFluent update(String updateRequest);
 	
 	default ConjureFluent update(UpdateRequest updateRequest) {
 		return update(updateRequest.toString());

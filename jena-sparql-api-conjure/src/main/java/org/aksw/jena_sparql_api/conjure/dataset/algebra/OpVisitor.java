@@ -12,6 +12,7 @@ public interface OpVisitor<T> {
 	T visit(OpHdtHeader op);
 
 
+	T visit(OpMacroCall op);
 	T visit(OpSequence op);
 	T visit(OpSet op);
 	T visit(OpWhen op);

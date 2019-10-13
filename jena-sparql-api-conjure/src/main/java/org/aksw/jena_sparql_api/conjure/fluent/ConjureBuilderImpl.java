@@ -8,6 +8,7 @@ import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.DataRefUrl;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.Op;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpCoalesce;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpDataRefResource;
+import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpSequence;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpUnion;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpVar;
 
@@ -52,14 +53,23 @@ public class ConjureBuilderImpl
 	}
 
 	@Override
+	public ConjureFluent seq(ConjureFluent... conjureFluents) {
+		return wrap(OpSequence.create(context.getModel(), toOps(conjureFluents)));
+	}
+
+	@Override
 	public ConjureFluent union(ConjureFluent... conjureFluents) {
 		return wrap(OpUnion.create(context.getModel(), toOps(conjureFluents)));
 	}
 
-
 	@Override
 	public ConjureFluent coalesce(ConjureFluent... conjureFluents) {
 		return wrap(OpCoalesce.create(context.getModel(), toOps(conjureFluents)));
+	}
+
+	@Override
+	public ConjureFluent call(String macroName, ConjureFluent... conjureFluents) {
+		throw new RuntimeException("not implemented");
 	}
 
 }

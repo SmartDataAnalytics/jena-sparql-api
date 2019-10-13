@@ -6,6 +6,7 @@ import org.aksw.jena_sparql_api.conjure.dataset.algebra.Op;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpConstruct;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpHdtHeader;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpPersist;
+import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpSet;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpUpdateRequest;
 
 public class ConjureFluentImpl	
@@ -64,5 +65,10 @@ public class ConjureFluentImpl
 	@Override
 	public ConjureFluent cache() {
 		return wrap(OpPersist.create(context.getModel(), op));
+	}
+
+	@Override
+	public ConjureFluent set(String ctxVarName, String selector, String path) {
+		return wrap(OpSet.create(context.getModel(), op, ctxVarName, null, selector, path));
 	}
 }

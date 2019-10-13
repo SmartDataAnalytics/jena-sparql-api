@@ -82,6 +82,7 @@ public class MainConjurePlayground {
 
 		ConjureBuilder cj = new ConjureBuilderImpl(ctx);
 
+		
 		Op op = cj.coalesce(
 				cj.fromUrl(url).hdtHeader().construct("CONSTRUCT WHERE { ?s <urn:tripleCount> ?o }"),
 				cj.fromUrl(url).tripleCount().cache()).getOp();
@@ -89,8 +90,12 @@ public class MainConjurePlayground {
 		Job job = Job.create(model);
 		job.setOp(op);
 		job.getJobBindings().add(JobBinding.create(model, "datasetId", OpTraversalSelf.create(model)));
+
 		
-		
+
+		// Goal: spark-submit-cj.sh catalog macrolib macroname	
+//		cj.call("myMacro", cj.fromUrl(url));
+
 		
 		RDFDataMgr.write(System.out, job.getModel(), RDFFormat.TURTLE_PRETTY);
 	}
@@ -193,7 +198,10 @@ public class MainConjurePlayground {
 		ConjureFluent dataset = cj.fromVar("dataRef");
 		conjureWorkflow =
 				cj.union(
-					dataset.hdtHeader().construct("CONSTRUCT WHERE { ?s a <http://rdfs.org/ns/void#Dataset> }"),
+					dataset.hdtHeader()
+						.construct("CONSTRUCT WHERE { ?s a <http://rdfs.org/ns/void#Dataset> }")
+						//.set("datasetId", "SELECT ?s { ?s a <http://rdfs.org/ns/void#Dataset> }", null),
+						.set("datasetId", "SELECT ?s { ?s ?p ?o }", null),
 					dataset.construct("CONSTRUCT { ?b a <urn:Report> ; <urn:usesProperty> ?p } { BIND(BNODE() AS ?b) { SELECT DISTINCT ?p { ?s ?p ?o } } }")
 				)
 				.update("INSERT { ?s <urn:hasReport> ?b } WHERE { ?s a <http://rdfs.org/ns/void#Dataset> . ?b a <urn:Report> }")

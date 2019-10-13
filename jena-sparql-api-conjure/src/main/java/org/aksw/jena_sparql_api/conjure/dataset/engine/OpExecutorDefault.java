@@ -1,8 +1,11 @@
 package org.aksw.jena_sparql_api.conjure.dataset.engine;
 
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.function.Function;
 
 import org.aksw.jena_sparql_api.conjure.algebra.common.ResourceTreeUtils;
@@ -17,6 +20,7 @@ import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpData;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpDataRefResource;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpError;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpHdtHeader;
+import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpMacroCall;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpPersist;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpSequence;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpSet;
@@ -25,32 +29,44 @@ import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpUpdateRequest;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpVar;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpVisitor;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpWhen;
+import org.aksw.jena_sparql_api.conjure.traversal.engine.FunctionAssembler;
 import org.aksw.jena_sparql_api.http.repository.api.HttpResourceRepositoryFromFileSystem;
 import org.aksw.jena_sparql_api.http.repository.impl.HttpResourceRepositoryFromFileSystemImpl;
+import org.aksw.jena_sparql_api.rx.SparqlRx;
 import org.apache.jena.graph.Node;
+import org.apache.jena.query.Query;
+import org.apache.jena.query.QueryFactory;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdfconnection.RDFConnection;
-import org.apache.jena.sparql.core.Var;
+import org.apache.jena.shared.PrefixMapping;
+import org.apache.jena.sparql.path.Path;
+import org.apache.jena.sparql.path.PathParser;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 // TODO The visitor should delegate to the executor implementation(s) instead of
 // performing operations directly
 public class OpExecutorDefault
 	implements OpVisitor<RdfDataPod>
 {
+	protected static final Logger logger = LoggerFactory.getLogger(OpExecutorDefault.class);
+	
 //	protected DataObjectRdfVisitor<RDFConnection> DataObjectRdfToConnection;
 
 	protected HttpResourceRepositoryFromFileSystemImpl repo;
 	
 	// Execution context
-	protected Map<Var, Node> execCtx;
+	protected Map<String, Node> execCtx;
 	
 	
 	public OpExecutorDefault(HttpResourceRepositoryFromFileSystem repo) {
 		super();
 		// TODO HACK Avoid the down cast
 		this.repo = (HttpResourceRepositoryFromFileSystemImpl)repo;
+		
+		this.execCtx = new LinkedHashMap<>();
 	}
 
 	/**
@@ -234,7 +250,50 @@ public class OpExecutorDefault
 	
 	@Override
 	public RdfDataPod visit(OpSet op) {
-		throw new RuntimeException("not implemented yet");
+		Op subOp = op.getSubOp();		
+		
+		RdfDataPod result = subOp.accept(this);
+		String ctxVarName = Objects.requireNonNull(op.getCtxVarName());			
+		String queryStr = Objects.requireNonNull(op.getSelector());
+		String selVarName = op.getSelectorVarName();
+		String pathStr = op.getPropertyPath();
+		Path path = pathStr == null ? null : PathParser.parse(pathStr, PrefixMapping.Extended);
+		
+		Query query = null;
+		if(selVarName == null) {
+			query = QueryFactory.create(queryStr);
+			List<String> resultVars = query.getResultVars();
+			if(resultVars.size() != 1) {
+				throw new RuntimeException("Require exactly 1 selector result var");
+			}
+			
+			selVarName = resultVars.get(0);
+		}
+		
+
+		try(RDFConnection conn = result.openConnection()) {
+			String selVarN = selVarName;
+			RDFNode node = SparqlRx.execSelect(conn, queryStr)
+				.map(qs -> qs.get(selVarN))
+				.firstElement()
+				.blockingGet();
+
+			if(path != null) {
+				Set<RDFNode> tgts = FunctionAssembler.execPath(conn, node, path);				
+				node = tgts.isEmpty() ? null : tgts.iterator().next();
+			}
+		
+			Node n = node == null ? null : node.asNode();
+			
+			Node priorValue = execCtx.get(ctxVarName);
+			
+			logger.info("Updating ctx[" + ctxVarName + "] = " + n + " <- " + priorValue);
+			execCtx.put(ctxVarName, n);
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+
+		return result;		
 	}
 
 	@Override
@@ -245,6 +304,11 @@ public class OpExecutorDefault
 	@Override
 	public RdfDataPod visit(OpError op) {
 		throw new RuntimeException("Reached a user error state, user specified reason was: " + op.getReason());
+	}
+
+	@Override
+	public RdfDataPod visit(OpMacroCall op) {
+		throw new RuntimeException("not implemented");
 	}
 
 }

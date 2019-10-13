@@ -13,16 +13,21 @@ import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecutionFactory;
+import org.apache.jena.query.QuerySolution;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.path.Path;
 import org.apache.jena.sparql.path.PathParser;
 
+import io.reactivex.Flowable;
+
 public class FunctionAssembler
 	implements OpTraversalVisitor<Function<RDFNode, Set<RDFNode>>>
 {
-	public static Set<RDFNode> execPath(RDFNode start, Path path) {
+	
+	public static Set<RDFNode> execPath(RDFConnection conn, RDFNode start, Path path) {
 		Query query = new Query();
 		query.setQuerySelectType();
 		query.getProject().add(Vars.s);
@@ -30,7 +35,12 @@ public class FunctionAssembler
 		query.setQueryPattern(ElementUtils.createElementPath(start.asNode(), path, Vars.o));
 		Model model = start.getModel();
 		
-		Set<RDFNode> result = SparqlRx.execSelect(() -> QueryExecutionFactory.create(query, model))
+		
+		Flowable<QuerySolution> flowable = conn == null
+				? SparqlRx.execSelect(() -> QueryExecutionFactory.create(query, model))
+				: SparqlRx.execSelect(conn, query);
+		
+		Set<RDFNode> result = flowable
 				.map(qs -> qs.get(Vars.o.getName()))
 				.toList().map(LinkedHashSet::new)
 				.blockingGet();
@@ -43,7 +53,7 @@ public class FunctionAssembler
 		String str = op.getPropertyPath();
 		Path path = PathParser.parse(str, PrefixMapping.Standard);
 
-		return rdfNode -> execPath(rdfNode, path);
+		return rdfNode -> execPath(null, rdfNode, path);
 	}
 
 	@Override
