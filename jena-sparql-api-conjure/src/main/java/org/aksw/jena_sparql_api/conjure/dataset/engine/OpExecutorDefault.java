@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
@@ -43,8 +44,13 @@ import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.shared.PrefixMapping;
+import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.engine.binding.BindingHashMap;
+import org.apache.jena.sparql.expr.Expr;
+import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.path.Path;
 import org.apache.jena.sparql.path.PathParser;
+import org.apache.jena.sparql.util.ExprUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -325,7 +331,30 @@ public class OpExecutorDefault
 
 	@Override
 	public RdfDataPod visit(OpWhen op) {
-		throw new RuntimeException("not implemented yet");
+		String conditionStr = op.getCondition();
+		Expr expr = ExprUtils.parse(conditionStr);
+		
+		// Context to binding
+		BindingHashMap binding = new BindingHashMap();
+		for(Entry<String, Node> e : execCtx.entrySet()) {
+			String k = e.getKey();
+			Node v = e.getValue();
+		
+			if(v != null) {
+				binding.add(Var.alloc(k), v);
+			}
+		}
+		//BindingUtils.fromMap(execCtx);
+		
+		NodeValue val = ExprUtils.eval(expr);
+		Op subOp = val.getBoolean()
+			? op.getLhs()
+			: op.getRhs();
+			
+		subOp = subOp == null ? OpData.create(ModelFactory.createDefaultModel()) : subOp;
+
+		RdfDataPod result = subOp.accept(this);
+		return result;
 	}
 
 	@Override

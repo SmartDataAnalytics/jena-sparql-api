@@ -8,24 +8,28 @@ import org.apache.jena.rdf.model.Model;
 @ResourceView
 @RdfTypeNs("rpif")
 public interface OpWhen
-	extends Op1
+	extends Op2
 {
 	@Iri("rpif")
 	String getCondition();
 	OpWhen setCondition(String condition);
 	
 	@Override
-	OpWhen setSubOp(Op subOp);
-	
+	OpWhen setLhs(Op subOp);
+
+	@Override
+	OpWhen setRhs(Op subOp);
+
 	@Override
 	default <T> T accept(OpVisitor<T> visitor) {
 		T result = visitor.visit(this);
 		return result;
 	}
 	
-	public static OpWhen create(Model model, Op subOp, String condition) {
+	public static OpWhen create(Model model, String condition, Op lhsOp, Op rhsOp) {		
 		OpWhen result = model.createResource().as(OpWhen.class)
-			.setSubOp(subOp)
+			.setLhs(lhsOp)
+			.setRhs(rhsOp)
 			.setCondition(condition);
 		
 		return result;

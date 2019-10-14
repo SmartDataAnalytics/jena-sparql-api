@@ -19,5 +19,5 @@ public interface OpVisitor<T> {
 	T visit(OpError op);
 
 
-	T visit(OpVar op);
+	T visit(OpVar op);	
 }
