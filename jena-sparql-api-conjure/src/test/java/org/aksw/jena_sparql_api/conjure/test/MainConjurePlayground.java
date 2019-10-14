@@ -6,13 +6,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Function;
 
-import org.aksw.dcat.ap.utils.DcatUtils;
 import org.aksw.jena_sparql_api.common.DefaultPrefixes;
 import org.aksw.jena_sparql_api.conjure.datapod.api.RdfDataPod;
 import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.DataRef;
@@ -28,6 +28,7 @@ import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpUpdateRequest;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpUtils;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpVar;
 import org.aksw.jena_sparql_api.conjure.dataset.engine.OpExecutorDefault;
+import org.aksw.jena_sparql_api.conjure.dataset.engine.TaskContext;
 import org.aksw.jena_sparql_api.conjure.fluent.ConjureBuilder;
 import org.aksw.jena_sparql_api.conjure.fluent.ConjureBuilderImpl;
 import org.aksw.jena_sparql_api.conjure.fluent.ConjureContext;
@@ -48,6 +49,7 @@ import org.aksw.jena_sparql_api.stmt.SparqlStmtParserImpl;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
+import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.query.Syntax;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -230,7 +232,7 @@ public class MainConjurePlayground {
 		// Lots of magic, fairies and unicorns in there
 		// (and gears and screws one wants to configure for production use - and which may at this stage sometimes break)
 		HttpResourceRepositoryFromFileSystem repo = HttpResourceRepositoryFromFileSystemImpl.createDefault();		
-		OpExecutorDefault executor = new OpExecutorDefault(repo);
+		OpExecutorDefault catalogExecutor = new OpExecutorDefault(repo, null);
 
 		// Get a copy of the limbo dataset catalog via the repo so that it gets cached
 		DataRef dataRef1 = DataRefUrl.create(model, "https://gitlab.com/limbo-project/metadata-catalog/raw/master/catalog.all.ttl");
@@ -281,17 +283,51 @@ public class MainConjurePlayground {
 		Query dcatQuery = parser.apply(queryStr).getAsQueryStmt().getQuery();
 	
 		
-		List<Resource> contexts;
+		List<TaskContext> taskContexts = new ArrayList<>();
+		//List<Resource> inputRecords;
 //		try(RdfDataObject catalog = DataObjects.fromSparqlEndpoint("https://databus.dbpedia.org/repo/sparql", null, null)) {			
-		try(RdfDataPod catalog = basicWorkflow.accept(executor)) {			
+		try(RdfDataPod catalog = basicWorkflow.accept(catalogExecutor)) {			
 			try(RDFConnection conn = catalog.openConnection()) {
 				
-	    	    contexts = SparqlRx.execConstructGrouped(conn, Vars.a, dcatQuery)
+	    	    List<Resource> inputRecords = SparqlRx.execConstructGrouped(conn, Vars.a, dcatQuery)
 		    	        .map(RDFNode::asResource)
 	    	    		.toList()
 	    	    		.blockingGet();
 
-				
+	    		// For every input record is a dcat entry, assign an anonymous dataref
+	    		for(Resource inputRecord : inputRecords) {
+	    			Map<String, Resource> nameToDataRef = new HashMap<>();
+
+	    			Query q = parser.apply("SELECT DISTINCT ?x { ?x dcat:distribution [] }").getQuery();
+	    			Model m = inputRecord.getModel();
+
+	    			// QueryExecution qe = 
+
+	    			List<Resource> dcatDataRefs = SparqlRx.execSelect(() -> QueryExecutionFactory.create(q, m))
+	    	        	.map(qs -> qs.get("x"))
+	    				.map(RDFNode::asResource)
+	    	        	.toList()
+	    	        	.blockingGet();
+
+	    			int i = 0;
+	    			for(Resource r : dcatDataRefs) {
+	    				nameToDataRef.put("unnamedDataRef" + (i++), r);
+	    			}
+	    			
+		    		logger.info("Registered data refs for input " + inputRecord + " are: " + nameToDataRef);
+	    			TaskContext taskContext = new TaskContext(inputRecord, nameToDataRef);
+	    			taskContexts.add(taskContext);
+	    			// Note, that the dcat ref query was run on the inputContext models
+	    			// So the following assertion is assumed to hold:
+	    			// dcatDataRef.getModel() == inputRecord.getModel()
+	    		}
+
+	    		logger.info("Created " + taskContexts.size() + " task contexts");
+	    		
+	    		if(true) {
+	    			return;
+	    		}
+
 //				urls = SparqlRx.execSelect(conn,
 ////						"SELECT DISTINCT ?o { ?s <http://www.w3.org/ns/dcat#downloadURL> ?o } LIMIT 10")
 //						parser.apply("SELECT DISTINCT ?o { ?s dataid:group ?g ; dcat:distribution/dcat:downloadURL ?o } LIMIT 10")
@@ -304,21 +340,34 @@ public class MainConjurePlayground {
 		}
 
 		
+		// Check the contexts for well-known data refs; i.e. dcat entries
+		
+		
+		
+		
 		// Ready for workflow execution!
 
-		logger.info("Retrieved " + contexts.size() + " contexts for processing " + contexts);
+//		logger.info("Retrieved " + inputRecords.size() + " contexts for processing " + inputRecords);
 		
-		for(Resource context : contexts) {
+		for(TaskContext taskContext : taskContexts) {
+						
+			OpExecutorDefault executor = new OpExecutorDefault(repo, taskContext);
+
 			
-			String url = DcatUtils.getFirstDownloadUrl(context);
-			
-			logger.info("Processing: " + url);
+			logger.info("Processing: " + taskContext.getInputRecord());
 			RDFNode jobContext = ModelFactory.createDefaultModel().createResource();
 
 			
+			Set<String> mentionedVars = OpUtils.mentionedVarNames(job.getOp());
+			System.out.println("Mentioned vars: " + mentionedVars);
+			
+			if(true) {
+				return;
+			}
+			
 			// Create a copy of the workflow spec and substitute the variables
-			Map<String, Op> map = Collections.singletonMap("dataRef", OpDataRefResource.from(model, DataRefUrl.create(model, url)));			
-			Op effectiveWorkflow = OpUtils.copyWithSubstitution(job.getOp(), map::get);			
+			Map<String, Op> map = Collections.emptyMap();//Collections.singletonMap("dataRef", OpDataRefResource.from(model, DataRefUrl.create(model, url)));			
+			Op effectiveWorkflow = OpUtils.copyWithSubstitution(job.getOp(), map::get);
 
 			
 			// Add an initial empty binding
@@ -383,7 +432,7 @@ public class MainConjurePlayground {
 					RDFDataMgr.write(System.out, rmodel, RDFFormat.TURTLE_PRETTY);
 				}
 			} catch(Exception e) {
-				logger.warn("Failed to process " + url, e);
+				logger.warn("Failed to process " + taskContext, e);
 			}
 		}
 

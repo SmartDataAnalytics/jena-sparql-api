@@ -8,5 +8,7 @@ public interface PlainDataRefVisitor<T> {
 	T visit(PlainDataRefSparqlEndpoint dataRef);
 	T visit(PlainDataRefOp dataRef);
 
+	T visit(PlainDataRefDcat dataRef);
+
 	T visit(PlainDataRefExt dataRef);	
 }

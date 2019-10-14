@@ -415,14 +415,17 @@ public class SparqlRx {
     }
     
     //public static Acc
-    
     public static Flowable<RDFNode> execConstructGrouped(SparqlQueryConnection conn, Node s, Query query) {
+    	return execConstructGrouped(q -> conn.query(q), s, query);
+    }    
+
+    public static Flowable<RDFNode> execConstructGrouped(Function<Query, QueryExecution> qeSupp, Node s, Query query) {
     	Template template = query.getConstructTemplate();
     	Query clone = preprocessQueryForPartition(s, query);
     	
 		Flowable<RDFNode> result = SparqlRx
 			// For future reference: If we get an empty results by using the query object, we probably have wrapped a variable with NodeValue.makeNode. 
-			.execSelectRaw(() -> conn.query(clone))
+			.execSelectRaw(() -> qeSupp.apply(clone))
 			.groupBy(createGrouper((Var)s)::apply)
 			.map(group -> {
 				Node groupKey = group.getKey();

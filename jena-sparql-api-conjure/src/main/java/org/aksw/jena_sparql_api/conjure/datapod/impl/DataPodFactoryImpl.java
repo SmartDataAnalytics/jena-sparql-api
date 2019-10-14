@@ -2,8 +2,10 @@ package org.aksw.jena_sparql_api.conjure.datapod.impl;
 
 import java.util.Objects;
 
+import org.aksw.dcat.ap.utils.DcatUtils;
 import org.aksw.jena_sparql_api.conjure.datapod.api.RdfDataPod;
 import org.aksw.jena_sparql_api.conjure.dataref.core.api.PlainDataRefCatalog;
+import org.aksw.jena_sparql_api.conjure.dataref.core.api.PlainDataRefDcat;
 import org.aksw.jena_sparql_api.conjure.dataref.core.api.PlainDataRefExt;
 import org.aksw.jena_sparql_api.conjure.dataref.core.api.PlainDataRefOp;
 import org.aksw.jena_sparql_api.conjure.dataref.core.api.PlainDataRefSparqlEndpoint;
@@ -11,6 +13,7 @@ import org.aksw.jena_sparql_api.conjure.dataref.core.api.PlainDataRefUrl;
 import org.aksw.jena_sparql_api.conjure.dataref.core.api.PlainDataRefVisitor;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.Op;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpVisitor;
+import org.apache.jena.rdf.model.Resource;
 
 public class DataPodFactoryImpl
 	implements PlainDataRefVisitor<RdfDataPod>
@@ -50,6 +53,19 @@ public class DataPodFactoryImpl
 		Op op = (Op)Objects.requireNonNull(dataRef.getOp());
 		RdfDataPod result = op.accept(opExecutor);
 		
+		return result;
+	}
+
+	@Override
+	public RdfDataPod visit(PlainDataRefDcat dataRef) {
+		Resource dcatRecord = dataRef.getDcatResource();
+		
+		String url = DcatUtils.getFirstDownloadUrl(dcatRecord);
+		if(url == null) {
+			throw new RuntimeException("Could not obtain a datasource from " + dcatRecord);
+		}
+		
+		RdfDataPod result = DataPods.fromUrl(url);
 		return result;
 	}
 

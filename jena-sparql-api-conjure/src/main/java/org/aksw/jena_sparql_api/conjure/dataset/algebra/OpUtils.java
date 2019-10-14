@@ -34,12 +34,27 @@ public class OpUtils {
 		return result;
 	}
 
-	public static Op substituteVars(Op op, Function<String, ? extends Op> varNameToSubst) {
-		Set<OpVar> vars = Streams.stream(Traverser.forTree(Op::getChildren).depthFirstPostOrder(op))
-			.filter(x -> x instanceof OpVar)
-			.map(x -> x.as(OpVar.class))
-			.collect(Collectors.toSet());
+
+	public static Set<String> mentionedVarNames(Op op) {
+		Set<OpVar> opVars = mentionedVars(op);
+		Set<String> result = opVars.stream()
+				.map(OpVar::getName)
+				.collect(Collectors.toSet());
+		return result;
+	}
+	
+	public static Set<OpVar> mentionedVars(Op op) {
+		Set<OpVar> result = Streams.stream(Traverser.forTree(Op::getChildren).depthFirstPostOrder(op))
+				.filter(x -> x instanceof OpVar)
+				.map(x -> x.as(OpVar.class))
+				.collect(Collectors.toSet());
 		
+		return result;
+	}
+	
+	public static Op substituteVars(Op op, Function<String, ? extends Op> varNameToSubst) {
+		
+		Set<OpVar> vars = mentionedVars(op);
 		
 		Op result = op;
 		for(OpVar var : vars) {

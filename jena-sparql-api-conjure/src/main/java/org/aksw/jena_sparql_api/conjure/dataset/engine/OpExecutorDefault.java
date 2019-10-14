@@ -58,11 +58,20 @@ public class OpExecutorDefault
 
 	protected HttpResourceRepositoryFromFileSystemImpl repo;
 	
+	/**
+	 * The task context holds the input record and
+	 * an assignment of variables to data references
+	 * 
+	 */
+	protected TaskContext taskContext;
+
+	
 	// Execution context
+	// TODO Maybe rename this to 'substitution context' as it is mainly used for this purpose
 	protected Map<String, Node> execCtx;
 	
 	
-	public OpExecutorDefault(HttpResourceRepositoryFromFileSystem repo) {
+	public OpExecutorDefault(HttpResourceRepositoryFromFileSystem repo, TaskContext taskContext) {
 		super();
 		// TODO HACK Avoid the down cast
 		this.repo = (HttpResourceRepositoryFromFileSystemImpl)repo;
