@@ -69,6 +69,8 @@ public class ConjureFluentImpl
 
 	@Override
 	public ConjureFluent set(String ctxVarName, String selector, String path) {
-		return wrap(OpSet.create(context.getModel(), op, ctxVarName, null, selector, path));
+		String parsedSelctor = context.getSparqlStmtParser().apply(selector).toString();
+		// TODO Parse path
+		return wrap(OpSet.create(context.getModel(), op, ctxVarName, null, parsedSelctor, path));
 	}
 }

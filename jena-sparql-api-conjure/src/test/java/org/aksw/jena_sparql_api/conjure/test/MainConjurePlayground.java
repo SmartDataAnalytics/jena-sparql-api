@@ -199,6 +199,8 @@ public class MainConjurePlayground {
 
 		
 		ConjureFluent dataset = cj.fromVar("dataRef");
+
+		if(false) {
 		conjureWorkflow =
 				cj.union(
 					dataset.hdtHeader()
@@ -209,7 +211,14 @@ public class MainConjurePlayground {
 				)
 				.update("INSERT { ?s <urn:hasReport> ?b } WHERE { ?s a <http://rdfs.org/ns/void#Dataset> . ?b a <urn:Report> }")
 					.getOp();
+		}
 		
+		conjureWorkflow =
+				cj.seq(
+					cj.fromUrl("http://input").set("DATAID", "SELECT ?x { ?x dcat:distribution [] }", null),
+					dataset.construct("CONSTRUCT { ?DATAID a <urn:Report> ; <urn:usesProperty> ?p } { BIND(BNODE() AS ?b) { SELECT DISTINCT ?p { ?s ?p ?o } } }")
+				)
+					.getOp();
 		Job job = Job.create(xmodel);
 		job.setOp(conjureWorkflow);
 		job.setJobBindings(Arrays.asList(JobBinding.create(xmodel, "datasetId", OpTraversalSelf.create(xmodel))));
@@ -251,7 +260,7 @@ public class MainConjurePlayground {
 		DataRef dataRef4 = DataRefOp.create(
 				OpUpdateRequest.create(model, OpData.create(model),
 //					parser.apply("INSERT DATA { [] dataid:group eg:mygrp ; dcat:distribution [ dcat:downloadURL <file:///home/raven/tmp/test.hdt> ] }").toString()));
-						parser.apply("INSERT DATA { [] dataid:group eg:mygrp ; dcat:distribution [ dcat:downloadURL <https://data.dnb.de/opendata/zdb_lds.hdt.gz> ] }").toString()));
+						parser.apply("INSERT DATA { <http://mydata> dataid:group eg:mygrp ; dcat:distribution [ dcat:downloadURL <https://data.dnb.de/opendata/zdb_lds.hdt.gz> ] }").toString()));
 
 
 		DataRef dataRef = dataRef4;
@@ -324,7 +333,10 @@ public class MainConjurePlayground {
 	    			}
 	    			
 		    		logger.info("Registered data refs for input " + inputRecord + " are: " + nameToDataRef);
-	    			TaskContext taskContext = new TaskContext(inputRecord, nameToDataRef);
+	    			Map<String, Model> nameToModel = new HashMap<>();
+	    			nameToModel.put("http://input", inputRecord.getModel());
+		    		
+		    		TaskContext taskContext = new TaskContext(inputRecord, nameToDataRef, nameToModel);
 	    			taskContexts.add(taskContext);
 	    			// Note, that the dcat ref query was run on the inputContext models
 	    			// So the following assertion is assumed to hold:

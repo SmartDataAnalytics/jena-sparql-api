@@ -87,6 +87,10 @@ public class OpExecutorDefault
 		this.execCtx = new LinkedHashMap<>();
 	}
 
+	public TaskContext getTaskContext() {
+		return taskContext;
+	}
+	
 	/**
 	 * Check the repository for whether it can supply an entity for the hash 
 	 * 

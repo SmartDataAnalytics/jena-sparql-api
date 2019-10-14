@@ -5,8 +5,13 @@ import org.aksw.jena_sparql_api.conjure.datapod.api.RdfDataPod;
 import org.aksw.jena_sparql_api.conjure.dataref.core.api.PlainDataRefDcat;
 import org.aksw.jena_sparql_api.conjure.dataref.core.api.PlainDataRefUrl;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpVisitor;
+import org.aksw.jena_sparql_api.conjure.dataset.engine.OpExecutorDefault;
+import org.aksw.jena_sparql_api.conjure.dataset.engine.TaskContext;
 import org.aksw.jena_sparql_api.http.repository.api.HttpResourceRepositoryFromFileSystem;
+import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This class extends DataObjectFactory with advanced handling of DataRefUrl using a repository
@@ -17,7 +22,7 @@ import org.apache.jena.rdf.model.Resource;
 public class DataPodFactoryAdvancedImpl
 	extends DataPodFactoryImpl {
 	
-	//private static final Logger logger = LoggerFactory.getLogger(DataPodFactoryAdvancedImpl.class);
+	private static Logger logger = LoggerFactory.getLogger(DataPodFactoryAdvancedImpl.class);
 
 	protected HttpResourceRepositoryFromFileSystem repo;
 
@@ -34,7 +39,18 @@ public class DataPodFactoryAdvancedImpl
 	public RdfDataPod visit(PlainDataRefUrl dataRef) {
 		String url = dataRef.getDataRefUrl();
 
-		RdfDataPod result = DataPods.create(url, repo);
+		TaskContext context = ((OpExecutorDefault)opExecutor).getTaskContext();
+		Model m = context.getCtxModels().get(url);
+		RdfDataPod result;
+		if(m != null) {
+			logger.info("Accessed input model");
+			result = DataPods.fromModel(m);
+		} else {
+			result = DataPods.create(url, repo);
+		}
+		
+
+//		RdfDataPod result = DataPods.create(url, repo);
 		return result;
 	}
 	

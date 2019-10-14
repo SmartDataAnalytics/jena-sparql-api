@@ -2,7 +2,6 @@ package org.aksw.jena_sparql_api.conjure.datapod.impl;
 
 import java.util.Objects;
 
-import org.aksw.dcat.ap.utils.DcatUtils;
 import org.aksw.jena_sparql_api.conjure.datapod.api.RdfDataPod;
 import org.aksw.jena_sparql_api.conjure.dataref.core.api.PlainDataRefCatalog;
 import org.aksw.jena_sparql_api.conjure.dataref.core.api.PlainDataRefDcat;
@@ -13,11 +12,14 @@ import org.aksw.jena_sparql_api.conjure.dataref.core.api.PlainDataRefUrl;
 import org.aksw.jena_sparql_api.conjure.dataref.core.api.PlainDataRefVisitor;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.Op;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpVisitor;
-import org.apache.jena.rdf.model.Resource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class DataPodFactoryImpl
 	implements PlainDataRefVisitor<RdfDataPod>
 {
+	private static Logger logger = LoggerFactory.getLogger(DataPodFactoryImpl.class);
+	
 	protected OpVisitor<? extends RdfDataPod> opExecutor;
 	
 	public DataPodFactoryImpl(OpVisitor<? extends RdfDataPod> opExecutor) {
@@ -27,8 +29,23 @@ public class DataPodFactoryImpl
 
 	@Override
 	public RdfDataPod visit(PlainDataRefUrl dataRef) {
-		RdfDataPod result = DataPods.fromUrl(dataRef);
-		return result;
+		throw new RuntimeException("no user handler");
+		
+//		// Check the static datasets of the executor first
+//		// TODO HACK - Add an interface to access an executor's task context
+//		String url = dataRef.getDataRefUrl();
+//		
+//		TaskContext context = ((OpExecutorDefault)opExecutor).getTaskContext();
+//		Model m = context.getCtxModels().get(url);
+//		RdfDataPod result;
+//		if(m != null) {
+//			logger.info("Accessed input model");
+//			result = DataPods.fromModel(m);
+//		} else {
+//			result = DataPods.fromUrl(dataRef);
+//		}
+//		
+//		return result;
 	}
 
 	@Override
