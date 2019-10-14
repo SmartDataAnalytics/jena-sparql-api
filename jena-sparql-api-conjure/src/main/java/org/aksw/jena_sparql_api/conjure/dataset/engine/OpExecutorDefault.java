@@ -13,6 +13,7 @@ import org.aksw.jena_sparql_api.conjure.datapod.api.RdfDataPod;
 import org.aksw.jena_sparql_api.conjure.datapod.impl.DataPods;
 import org.aksw.jena_sparql_api.conjure.datapod.impl.RdfDataPodHdt;
 import org.aksw.jena_sparql_api.conjure.dataref.core.api.PlainDataRef;
+import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.DataRef;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.Op;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpCoalesce;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpConstruct;
@@ -75,6 +76,7 @@ public class OpExecutorDefault
 		super();
 		// TODO HACK Avoid the down cast
 		this.repo = (HttpResourceRepositoryFromFileSystemImpl)repo;
+		this.taskContext = taskContext;
 		
 		this.execCtx = new LinkedHashMap<>();
 	}
@@ -182,7 +184,13 @@ public class OpExecutorDefault
 
 	@Override
 	public RdfDataPod visit(OpVar op) {
-		throw new RuntimeException("no handler for variables");
+		String varName = op.getName();
+		Map<String, DataRef> map = taskContext.getDataRefMapping();
+		DataRef dataRef = map.get(varName);
+		RdfDataPod result = DataPods.fromDataRef(dataRef, repo, this);
+
+		//RdfDataPod result = dataRef.visit(this);
+		return result;
 	}
 
 	@Override

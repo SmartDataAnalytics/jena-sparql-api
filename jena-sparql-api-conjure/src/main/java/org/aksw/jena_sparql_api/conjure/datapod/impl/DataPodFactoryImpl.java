@@ -58,15 +58,7 @@ public class DataPodFactoryImpl
 
 	@Override
 	public RdfDataPod visit(PlainDataRefDcat dataRef) {
-		Resource dcatRecord = dataRef.getDcatResource();
-		
-		String url = DcatUtils.getFirstDownloadUrl(dcatRecord);
-		if(url == null) {
-			throw new RuntimeException("Could not obtain a datasource from " + dcatRecord);
-		}
-		
-		RdfDataPod result = DataPods.fromUrl(url);
-		return result;
+		throw new RuntimeException("No override with custom handler");
 	}
 
 //	@Override

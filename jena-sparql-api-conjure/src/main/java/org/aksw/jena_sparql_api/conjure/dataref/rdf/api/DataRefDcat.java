@@ -7,15 +7,16 @@ import org.aksw.jena_sparql_api.mapper.annotation.ResourceView;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
 
+
 @ResourceView
 @RdfTypeNs("rpif")
 public interface DataRefDcat
 	extends PlainDataRefDcat, DataRef
 {
 	@IriNs("rpif")
-	DataRefDcat setDcatRecord(Resource dcatRecord);
+	// @PolymorphicOnly
 	Resource getDcatRecord();
-
+	DataRefDcat setDcatRecord(Resource dcatRecord);
 
 	@Override
 	default <T> T accept2(DataRefVisitor<T> visitor) {
@@ -24,11 +25,12 @@ public interface DataRefDcat
 	}
 	
 	public static DataRefDcat create(Model model, Resource dcatRecord) {
+		model.add(dcatRecord.getModel());
+		dcatRecord = dcatRecord.inModel(model);
+		
 		DataRefDcat result = model.createResource().as(DataRefDcat.class)
 				.setDcatRecord(dcatRecord);
 
 		return result;
 	}
-
-
 }

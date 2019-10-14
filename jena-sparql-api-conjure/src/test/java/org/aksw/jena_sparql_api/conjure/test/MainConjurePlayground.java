@@ -5,8 +5,8 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -16,6 +16,7 @@ import java.util.function.Function;
 import org.aksw.jena_sparql_api.common.DefaultPrefixes;
 import org.aksw.jena_sparql_api.conjure.datapod.api.RdfDataPod;
 import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.DataRef;
+import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.DataRefDcat;
 import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.DataRefOp;
 import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.DataRefSparqlEndpoint;
 import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.DataRefUrl;
@@ -296,7 +297,7 @@ public class MainConjurePlayground {
 
 	    		// For every input record is a dcat entry, assign an anonymous dataref
 	    		for(Resource inputRecord : inputRecords) {
-	    			Map<String, Resource> nameToDataRef = new HashMap<>();
+	    			Map<String, DataRef> nameToDataRef = new HashMap<>();
 
 	    			Query q = parser.apply("SELECT DISTINCT ?x { ?x dcat:distribution [] }").getQuery();
 	    			Model m = inputRecord.getModel();
@@ -311,7 +312,15 @@ public class MainConjurePlayground {
 
 	    			int i = 0;
 	    			for(Resource r : dcatDataRefs) {
-	    				nameToDataRef.put("unnamedDataRef" + (i++), r);
+	    				Model xxmodel = ModelFactory.createDefaultModel();
+	    				xxmodel.add(r.getModel());
+	    				r = r.inModel(xxmodel);
+
+	    				DataRefDcat dr = DataRefDcat.create(xxmodel, r);
+	    				
+	    				RDFDataMgr.write(System.err, dr.getModel(), RDFFormat.TURTLE_PRETTY);
+	    				
+	    				nameToDataRef.put("unnamedDataRef" + (i++), dr);
 	    			}
 	    			
 		    		logger.info("Registered data refs for input " + inputRecord + " are: " + nameToDataRef);
@@ -324,9 +333,9 @@ public class MainConjurePlayground {
 
 	    		logger.info("Created " + taskContexts.size() + " task contexts");
 	    		
-	    		if(true) {
-	    			return;
-	    		}
+//	    		if(true) {
+//	    			return;
+//	    		}
 
 //				urls = SparqlRx.execSelect(conn,
 ////						"SELECT DISTINCT ?o { ?s <http://www.w3.org/ns/dcat#downloadURL> ?o } LIMIT 10")
@@ -350,10 +359,7 @@ public class MainConjurePlayground {
 //		logger.info("Retrieved " + inputRecords.size() + " contexts for processing " + inputRecords);
 		
 		for(TaskContext taskContext : taskContexts) {
-						
-			OpExecutorDefault executor = new OpExecutorDefault(repo, taskContext);
 
-			
 			logger.info("Processing: " + taskContext.getInputRecord());
 			RDFNode jobContext = ModelFactory.createDefaultModel().createResource();
 
@@ -361,14 +367,33 @@ public class MainConjurePlayground {
 			Set<String> mentionedVars = OpUtils.mentionedVarNames(job.getOp());
 			System.out.println("Mentioned vars: " + mentionedVars);
 			
-			if(true) {
-				return;
-			}
+			Map<String, DataRef> dataRefMapping = taskContext.getDataRefMapping();
+			// Get the subset of mentioned vars for which no entry in the task context
+			// exists
+			// If there is just a single dataref and one unbound var
+			// auto-bind them
+			Set<String> unmatchedVars = new HashSet<>(mentionedVars);
+			unmatchedVars.removeAll(taskContext.getDataRefMapping().keySet());
 			
-			// Create a copy of the workflow spec and substitute the variables
-			Map<String, Op> map = Collections.emptyMap();//Collections.singletonMap("dataRef", OpDataRefResource.from(model, DataRefUrl.create(model, url)));			
-			Op effectiveWorkflow = OpUtils.copyWithSubstitution(job.getOp(), map::get);
+			if(unmatchedVars.size() > 1) {
+				throw new RuntimeException("Too many unmatched vars: " + unmatchedVars);
+			} else if(unmatchedVars.size() == 1) {
+				String unmatchedVarName = unmatchedVars.iterator().next();
+				if(dataRefMapping.size() == 1) {
+					DataRef entry = dataRefMapping.values().iterator().next();
+					dataRefMapping.put(unmatchedVarName, entry);
+				} else {
+					throw new RuntimeException("Could not auto-bind var " + unmatchedVarName);
+				}
+			}	
 
+			OpExecutorDefault executor = new OpExecutorDefault(repo, taskContext);
+
+			// Create a copy of the workflow spec and substitute the variables
+			//Map<String, Op> map = Collections.emptyMap();//Collections.singletonMap("dataRef", OpDataRefResource.from(model, DataRefUrl.create(model, url)));			
+			//Op effectiveWorkflow = OpUtils.copyWithSubstitution(job.getOp(), map::get);
+
+			Op effectiveWorkflow = job.getOp();
 			
 			// Add an initial empty binding
 			Multimap<Var, Node> valueMap = LinkedHashMultimap.create();

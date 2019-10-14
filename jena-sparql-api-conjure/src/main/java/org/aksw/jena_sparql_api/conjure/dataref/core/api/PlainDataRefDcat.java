@@ -5,7 +5,7 @@ import org.apache.jena.rdf.model.Resource;
 public interface PlainDataRefDcat
 	extends PlainDataRef
 {
-	Resource getDcatResource();
+	Resource getDcatRecord();
 	
 	@Override
 	default <T> T accept(PlainDataRefVisitor<T> visitor) {

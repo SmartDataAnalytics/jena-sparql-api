@@ -2,6 +2,7 @@ package org.aksw.jena_sparql_api.conjure.dataset.engine;
 
 import java.util.Map;
 
+import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.DataRef;
 import org.apache.jena.rdf.model.Resource;
 
 /**
@@ -12,9 +13,9 @@ import org.apache.jena.rdf.model.Resource;
  */
 public class TaskContext {
 	protected Resource inputRecord;
-	protected Map<String, Resource> dataRefMapping;
+	protected Map<String, DataRef> dataRefMapping;
 	
-	public TaskContext(Resource inputRecord, Map<String, Resource> dataRefMapping) {
+	public TaskContext(Resource inputRecord, Map<String, DataRef> dataRefMapping) {
 		super();
 		this.inputRecord = inputRecord;
 		this.dataRefMapping = dataRefMapping;
@@ -24,7 +25,7 @@ public class TaskContext {
 		return inputRecord;
 	}
 
-	public Map<String, Resource> getDataRefMapping() {
+	public Map<String, DataRef> getDataRefMapping() {
 		return dataRefMapping;
 	}
 }
