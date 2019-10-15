@@ -83,6 +83,7 @@ public class MainConjurePlayground {
 	
 	public static void main2(String[] args) {
 		
+		
 		String url = "http://localhost/~raven/test.hdt";
 
 
@@ -111,6 +112,24 @@ public class MainConjurePlayground {
 
 
 	public static void main(String[] args) throws Exception {
+
+		/*
+		HashCode a = Hashing.sha256().hashString("a", StandardCharsets.UTF_8);
+		HashCode b = Hashing.sha256().hashString("b", StandardCharsets.UTF_8);
+		HashCode c = Hashing.sha256().hashString("c", StandardCharsets.UTF_8);
+		
+		String x = Hashing.combineUnordered(Arrays.asList(a, b, c)).toString();
+		String y = Hashing.combineUnordered(Arrays.asList(a, Hashing.combineUnordered(Arrays.asList(b, c)))).toString();
+		String z = Hashing.combineUnordered(Arrays.asList(b, Hashing.combineUnordered(Arrays.asList(c, a)))).toString();
+
+		System.out.println("x: " + x);
+		System.out.println("y: " + y);
+		System.out.println("z: " + z);
+
+		if(true) {
+			return;
+		}
+		*/
 		
 		// TODO Circular init issue with DefaultPrefixes
 		// We could use ARQConstants.getGlobalPrefixMap()
@@ -239,8 +258,11 @@ public class MainConjurePlayground {
 				)
 					.getOp();
 		}
-		conjureWorkflow = dataset.hdtHeader().everthing()
+		
+		conjureWorkflow = dataset.hdtHeader().everthing().cache()
 					.getOp();
+		
+
 		Job job = Job.create(xmodel);
 		job.setOp(conjureWorkflow);
 		job.setJobBindings(Arrays.asList(JobBinding.create(xmodel, "datasetId", OpTraversalSelf.create(xmodel))));

@@ -25,7 +25,8 @@ public class GraphUtils {
 	}
 	
 	public static Stream<Triple> stream(Graph graph) {
-		return Streams.stream(graph.find());
+		ExtendedIterator<Triple> it = graph.find();
+		return Streams.stream(it).onClose(it::close);
 	}
 
     /**

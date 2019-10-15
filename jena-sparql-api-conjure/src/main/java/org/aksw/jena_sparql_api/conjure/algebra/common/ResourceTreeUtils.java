@@ -1,23 +1,32 @@
 package org.aksw.jena_sparql_api.conjure.algebra.common;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
-import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.conjure.entity.algebra.HashUtils;
 import org.apache.jena.ext.com.google.common.collect.ComparisonChain;
+import org.apache.jena.ext.com.google.common.hash.HashCode;
+import org.apache.jena.ext.com.google.common.hash.HashFunction;
+import org.apache.jena.ext.com.google.common.hash.Hashing;
+import org.apache.jena.graph.Graph;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.util.iterator.ExtendedIterator;
 
-import com.github.jsonldjava.shaded.com.google.common.collect.Maps;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Streams;
 import com.google.common.graph.SuccessorsFunction;
 import com.google.common.graph.Traverser;
@@ -59,6 +68,36 @@ public class ResourceTreeUtils {
 		}		
 	}
 
+	
+	public static HashCode generateModelHash(Model model, HashFunction hashFunction) {
+		Graph graph = model.getGraph();
+		HashCode result = generateModelHash(graph, hashFunction);
+		return result;
+	}
+	
+	public static HashCode generateModelHash(Graph graph, HashFunction hashFunction) {
+		HashCode result = hashFunction.hashString("# begin of ntriples", StandardCharsets.UTF_8);
+		ExtendedIterator<Triple> it = graph.find();
+		try {
+			while(it.hasNext()) {
+				//NodeFmtLib.str(t)
+				Triple t = it.next();
+				StringBuilder sb = new  StringBuilder();
+				sb.append(t.getSubject().isBlank() ? "_:" : t.getSubject());
+				sb.append(" ");
+				sb.append(t.getPredicate());
+				sb.append(" ");
+				sb.append(t.getObject().isBlank() ? "_:" : t.getObject());
+				
+				HashCode tmp = hashFunction.hashString(sb.toString(), StandardCharsets.UTF_8);
+				result = Hashing.combineUnordered(Arrays.asList(result, tmp));
+			}
+		} finally {
+			it.close();
+		}
+		return result;
+	}
+	
 	/**
 	 * Create a hash for a resource based on transitively following its
 	 * outgoing properties
@@ -81,7 +120,13 @@ public class ResourceTreeUtils {
 		String result = createGenericHash(rdfNode, seen, priorHash);
 		return result;
 	}
-	
+
+	public static HashCode createGenericHash2(RDFNode rdfNode) {
+		String str = createGenericHash(rdfNode);
+		HashCode result = Hashing.sha256().hashString(str, StandardCharsets.UTF_8);
+		return result;
+	}
+
 
 	public static String createGenericHash(RDFNode rdfNode, Set<RDFNode> seen, Map<RDFNode, String> priorHash) {
 		

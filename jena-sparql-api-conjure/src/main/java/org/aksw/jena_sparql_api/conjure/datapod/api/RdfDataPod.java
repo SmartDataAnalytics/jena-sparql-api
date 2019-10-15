@@ -1,17 +1,6 @@
 package org.aksw.jena_sparql_api.conjure.datapod.api;
 
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.nio.file.Path;
-
-import org.aksw.jena_sparql_api.http.domain.api.RdfEntityInfo;
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdfconnection.RDFConnection;
-import org.apache.jena.riot.RDFDataMgr;
-import org.apache.jena.riot.RDFFormat;
-import org.apache.jena.riot.WebContent;
 
 public interface RdfDataPod
 	extends DataPod

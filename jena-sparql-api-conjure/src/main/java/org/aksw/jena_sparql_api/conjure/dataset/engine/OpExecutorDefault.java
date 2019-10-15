@@ -1,5 +1,11 @@
 package org.aksw.jena_sparql_api.conjure.dataset.engine;
 
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.StandardOpenOption;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -8,6 +14,7 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.conjure.algebra.common.ResourceTreeUtils;
 import org.aksw.jena_sparql_api.conjure.datapod.api.RdfDataPod;
@@ -28,14 +35,25 @@ import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpSequence;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpSet;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpUnion;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpUpdateRequest;
+import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpUtils;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpVar;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpVisitor;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpWhen;
 import org.aksw.jena_sparql_api.conjure.traversal.engine.FunctionAssembler;
+import org.aksw.jena_sparql_api.http.domain.api.RdfEntityInfo;
 import org.aksw.jena_sparql_api.http.repository.api.HttpResourceRepositoryFromFileSystem;
+import org.aksw.jena_sparql_api.http.repository.api.RdfHttpEntityFile;
+import org.aksw.jena_sparql_api.http.repository.api.ResourceStore;
 import org.aksw.jena_sparql_api.http.repository.impl.HttpResourceRepositoryFromFileSystemImpl;
 import org.aksw.jena_sparql_api.rx.SparqlRx;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
+import org.apache.http.HttpHeaders;
+import org.apache.http.HttpRequest;
+import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.client.methods.RequestBuilder;
+import org.apache.jena.ext.com.google.common.hash.HashCode;
+import org.apache.jena.ext.com.google.common.hash.HashFunction;
+import org.apache.jena.ext.com.google.common.hash.Hashing;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryFactory;
@@ -43,6 +61,9 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdfconnection.RDFConnection;
+import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.riot.RDFFormat;
+import org.apache.jena.riot.WebContent;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.binding.BindingHashMap;
@@ -194,7 +215,93 @@ public class OpExecutorDefault
 
 	@Override
 	public RdfDataPod visit(OpPersist op) {
-		throw new RuntimeException("not implemented yet");
+
+		HashFunction hashFn = Hashing.sha256();
+		
+		// The sup without operators that do not modify the result
+		Op semanticSubOp = OpUtils.stripCache(op);
+		HashCode subOpHash = ResourceTreeUtils.createGenericHash2(semanticSubOp);
+
+		// Hash the task context
+		//HashCode taskcon
+		HashCode inputRecordHash = ResourceTreeUtils.createGenericHash2(taskContext.getInputRecord());
+		
+		// Hash the data refs
+		HashCode dataRefHash = Hashing.combineUnordered(
+				taskContext.getDataRefMapping().entrySet().stream().map(e ->
+					Hashing.combineOrdered(Arrays.asList(
+						Hashing.sha256().hashString(e.getKey(), StandardCharsets.UTF_8),
+						ResourceTreeUtils.createGenericHash2(e.getValue()))))
+				.collect(Collectors.toList()));
+
+		HashCode ctxModelsHash = Hashing.combineUnordered(
+				taskContext.getCtxModels().entrySet().stream().map(e ->
+					Hashing.combineOrdered(Arrays.asList(
+						hashFn.hashString(e.getKey(), StandardCharsets.UTF_8),
+						ResourceTreeUtils.generateModelHash(e.getValue(), hashFn))))
+				.collect(Collectors.toList()));
+
+		HashCode completeHash = Hashing.combineOrdered(Arrays.asList(
+				subOpHash,
+				inputRecordHash,
+				ctxModelsHash,
+				dataRefHash));
+
+		String hashStr = completeHash.toString();
+		
+		ResourceStore hashStore = repo.getHashStore();
+		
+		//RdfHttpResourceFile cacheEntry = hashStore.getResource(hashStr);
+		//hashStore.
+		HttpUriRequest baseRequest =
+				RequestBuilder.get(hashStr)
+				.setHeader(HttpHeaders.ACCEPT, "application/x-hdt")
+				.setHeader(HttpHeaders.ACCEPT_ENCODING, "identity,bzip2,gzip")
+				.build();
+
+		RdfDataPod result = null;
+		
+		HttpRequest effectiveRequest = HttpResourceRepositoryFromFileSystemImpl.expandHttpRequest(baseRequest);
+		logger.info("Expanded HTTP Request: " + effectiveRequest);
+		try {
+			RdfHttpEntityFile entity = repo.get(effectiveRequest, null);
+			if(entity != null) {
+				String pathStr = entity.getAbsolutePath().toString();
+				DataPods.fromUrl(pathStr);
+			}
+			
+		} catch (IOException e1) {
+			throw new RuntimeException(e1);
+		}
+		
+		if(result == null) {
+			Op subOp = op.getSubOp();
+			try(RdfDataPod pod = subOp.accept(this)) {
+				try(RDFConnection conn = pod.openConnection()) {
+					Model m = conn.queryConstruct("CONSTRUCT WHERE { ?s ?p ?o }");
+					
+					java.nio.file.Path tmpFile = Files.createTempFile("data-", ".ttl");
+					try(OutputStream out = Files.newOutputStream(tmpFile, StandardOpenOption.WRITE)) {
+						RDFDataMgr.write(out, m, RDFFormat.TURTLE_PRETTY);
+					} catch (IOException e1) {
+						throw new RuntimeException(e1);
+					}
+					
+					RdfEntityInfo entityInfo = ModelFactory.createDefaultModel().createResource().as(RdfEntityInfo.class)
+							.setContentType(WebContent.contentTypeTurtle);
+					hashStore.putWithMove(hashStr, entityInfo, tmpFile);
+					
+				} catch (IOException e2) {
+					throw new RuntimeException(e2);
+				}
+				
+			} catch (Exception e3) {
+				throw new RuntimeException(e3);
+			}
+		}
+		
+
+		return result;
 	}
 
 	@Override
