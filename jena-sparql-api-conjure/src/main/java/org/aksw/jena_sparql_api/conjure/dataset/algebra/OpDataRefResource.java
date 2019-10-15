@@ -1,5 +1,7 @@
 package org.aksw.jena_sparql_api.conjure.dataset.algebra;
 
+import java.util.List;
+
 import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.DataRef;
 import org.aksw.jena_sparql_api.mapper.annotation.IriNs;
 import org.aksw.jena_sparql_api.mapper.annotation.PolymorphicOnly;
@@ -23,6 +25,12 @@ public interface OpDataRefResource
 		return result;
 	}
 	
+	@Override
+	default OpDataRefResource clone(Model cloneModel, List<Op> subOps) {
+		return this.inModel(cloneModel).as(OpDataRefResource.class)
+				.setDataRef(getDataRef());
+	}
+
 	public static OpDataRefResource from(Model model, DataRef dataRef) {
 		OpDataRefResource result = model
 				.createResource().as(OpDataRefResource.class)

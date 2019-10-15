@@ -1,6 +1,5 @@
 package org.aksw.jena_sparql_api.conjure.datapod.api;
 
-
 /**
  * A DataPod represents a specific digital copy of a dataset
  * and acts as the provider for means of access to it.
@@ -13,6 +12,28 @@ package org.aksw.jena_sparql_api.conjure.datapod.api;
 public interface DataPod
 	extends AutoCloseable
 {
+	//List<Checksum> getContentHashes();
+	
+	//Resource persist(Path baseFolder);
+	//Persister getPersister();
+	// Simple persist method
+	/**
+	 * In general, it seems the the data pod is not a bad place for persistence
+	 * functionality.
+	 * 
+	 * But there are two types of persistence: On the dataset level and the service level.
+	 * Assume a virtuoso, that persists its state as a virtuoso.db file.
+	 * If we wanted to persist a virtuso.db file, we'd have to stop the service, copy the file,
+	 * and restart it.
+	 * So we might actually do something like dataPod.getService().persistState()
+	 * 
+	 * @param path The file to write to (if persist creates an archive, it is the directory)
+	 * @return A resource describing the content type, encoding written
+	 * @throws IOException
+	 */
+	//RdfEntityInfo persist(Path path) throws IOException;
+
+	
 	/**
 	 * Whether the content of the data object can be modified
 	 * 

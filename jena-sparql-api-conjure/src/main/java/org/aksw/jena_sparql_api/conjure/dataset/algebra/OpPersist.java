@@ -1,5 +1,7 @@
 package org.aksw.jena_sparql_api.conjure.dataset.algebra;
 
+import java.util.List;
+
 import org.aksw.jena_sparql_api.mapper.annotation.RdfTypeNs;
 import org.aksw.jena_sparql_api.mapper.annotation.ResourceView;
 import org.apache.jena.rdf.model.Model;
@@ -19,6 +21,12 @@ public interface OpPersist
 		return result;
 	}
 	
+	@Override
+	default OpPersist clone(Model cloneModel, List<Op> subOps) {
+		return this.inModel(cloneModel).as(OpPersist.class)
+				.setSubOp(subOps.iterator().next());
+	}
+
 //	public static OpPersist create(Op subOp) {
 //		OpPersist result = create(subOp, Collections.singleton(queryString));
 //		

@@ -14,6 +14,7 @@ import java.util.Set;
 import java.util.function.Function;
 
 import org.aksw.jena_sparql_api.common.DefaultPrefixes;
+import org.aksw.jena_sparql_api.conjure.algebra.common.ResourceTreeUtils;
 import org.aksw.jena_sparql_api.conjure.datapod.api.RdfDataPod;
 import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.DataRef;
 import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.DataRefDcat;
@@ -24,6 +25,7 @@ import org.aksw.jena_sparql_api.conjure.dataset.algebra.Op;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpConstruct;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpData;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpDataRefResource;
+import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpPersist;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpUnion;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpUpdateRequest;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpUtils;
@@ -54,8 +56,10 @@ import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.query.Syntax;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
@@ -64,6 +68,8 @@ import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.engine.binding.BindingFactory;
 import org.apache.jena.sys.JenaSystem;
 import org.apache.jena.util.ResourceUtils;
+import org.apache.jena.vocabulary.DCAT;
+import org.apache.jena.vocabulary.RDF;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -170,8 +176,7 @@ public class MainConjurePlayground {
 		// (The mapper-proxy plugin system knows how to do that)
 		Op conjureWorkflow = JenaPluginUtils.polymorphicCast(deserializedWorkflowRes, Op.class);
 		
-		
-	    conjureWorkflow = OpConstruct.create(model, v, parser.apply(
+		Op coreOp = OpConstruct.create(model, v, parser.apply(
 	    	      "CONSTRUCT {\n" + 
 	    	      "	    	          <env:datasetId> <urn:count> ?c\n" + 
 	    	      "	    	        } {\n" + 
@@ -179,7 +184,20 @@ public class MainConjurePlayground {
 	    	      "	    	            ?s ?p ?o\n" + 
 	    	      "	    	          } }\n" + 
 	    	      "	    	        }").toString());
+		
+	    conjureWorkflow = OpPersist.create(model, coreOp);
 
+	    
+	    Op test = OpUtils.stripCache(conjureWorkflow);
+	    
+	    String origHash = ResourceTreeUtils.createGenericHash(conjureWorkflow);
+	    String coreHash = ResourceTreeUtils.createGenericHash(coreOp);
+	    String cleanedHash = ResourceTreeUtils.createGenericHash(test);
+	    
+	    // Assertion: cleaned hash == orig hash 
+	    System.out.println("ORIG HASH: " + origHash);
+	    System.out.println("CORE HASH: " + coreHash);
+	    System.out.println("CLEANED HASH: " + cleanedHash);
 	    
 	    
 		ConjureContext ctx = new ConjureContext();
@@ -213,11 +231,15 @@ public class MainConjurePlayground {
 					.getOp();
 		}
 		
+		if(false) {
 		conjureWorkflow =
 				cj.seq(
 					cj.fromUrl("http://input").set("DATAID", "SELECT ?x { ?x dcat:distribution [] }", null),
 					dataset.construct("CONSTRUCT { ?DATAID a <urn:Report> ; <urn:usesProperty> ?p } { BIND(BNODE() AS ?b) { SELECT DISTINCT ?p { ?s ?p ?o } } }")
 				)
+					.getOp();
+		}
+		conjureWorkflow = dataset.hdtHeader().everthing()
 					.getOp();
 		Job job = Job.create(xmodel);
 		job.setOp(conjureWorkflow);
@@ -261,9 +283,14 @@ public class MainConjurePlayground {
 				OpUpdateRequest.create(model, OpData.create(model),
 //					parser.apply("INSERT DATA { [] dataid:group eg:mygrp ; dcat:distribution [ dcat:downloadURL <file:///home/raven/tmp/test.hdt> ] }").toString()));
 						parser.apply("INSERT DATA { <http://mydata> dataid:group eg:mygrp ; dcat:distribution [ dcat:downloadURL <https://data.dnb.de/opendata/zdb_lds.hdt.gz> ] }").toString()));
+		
+		
+			DataRef dataRef5 = DataRefOp.create(
+					OpUpdateRequest.create(model, OpData.create(model),
+//						parser.apply("INSERT DATA { [] dataid:group eg:mygrp ; dcat:distribution [ dcat:downloadURL <file:///home/raven/tmp/test.hdt> ] }").toString()));
+							parser.apply("INSERT DATA { <http://mydata> dataid:group eg:mygrp ; dcat:distribution [ dcat:downloadURL <http://localhost/~raven/009e80050fa7f4279596956477157ec2.hdt> ] }").toString()));
 
-
-		DataRef dataRef = dataRef4;
+		DataRef dataRef = dataRef5;
 		
 		// Set up the workflow that makes a digital copy of a dataset available
 		Op basicWorkflow = OpDataRefResource.from(model, dataRef);
@@ -471,7 +498,55 @@ public class MainConjurePlayground {
 			} catch(Exception e) {
 				logger.warn("Failed to process " + taskContext, e);
 			}
+			
+			Resource inputRecord = taskContext.getInputRecord();
+			
+			Model resultModel = ModelFactory.createDefaultModel();
+			Resource inputRecordX = inputRecord.inModel(resultModel.add(inputRecord.getModel()));
+			
+			// TODO We only need to output the job model once if it was the same for every task
+			Resource jobX = job.inModel(resultModel.add(job.getModel()));
+			
+			
+			
+			Resource resultDcat = resultModel.createResource()
+				.addProperty(RDF.type, prov("Entity"))
+				.addProperty(RDF.type, DCAT.Dataset);
+
+			// Copy the input record
+			Resource association = resultModel.createResource()
+					.addProperty(RDF.type, prov("Association"))
+					.addProperty(prov("hadPlan"), job);
+
+			Resource activity = resultModel.createResource()
+					.addProperty(RDF.type, prov("Activity"))
+					.addProperty(prov("qualifiedAssociation"), association)
+					.addProperty(prov("used"), inputRecord) // TODO Ensure the input record is an entity
+					.addProperty(prov("used"), job);
+
+			resultDcat
+				.addProperty(prov("wasGeneratedBy"), activity);
+			
+			
+			
+			RDFDataMgr.write(System.out, resultDcat.getModel(), RDFFormat.TURTLE_PRETTY);
+			// TODO Create the output DCAT record:
+			// d' wasDerivedFrom d
+			// d' wasGeneratedBy activity
+			// activity prov:used d ; startedAtTime ; endedAtTime
+//			   prov:qualifiedUsage [
+//			                        a prov:Usage;
+//			                        prov:entity  :process;
+//			                        prov:hadRole :processSpec;          
+//			                     ];
+			// 
+			// 
+			
 		}
 
+	}
+	
+	public static Property prov(String name) {
+		return ResourceFactory.createProperty("http://www.w3.org/ns/prov#" + name);
 	}
 }

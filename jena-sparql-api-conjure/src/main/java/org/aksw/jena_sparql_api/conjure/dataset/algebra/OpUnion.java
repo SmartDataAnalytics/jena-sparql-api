@@ -21,7 +21,13 @@ public interface OpUnion
 		T result = visitor.visit(this);
 		return result;
 	}
-	
+
+	@Override
+	default OpUnion clone(Model cloneModel, List<Op> subOps) {
+		return this.inModel(cloneModel).as(OpUnion.class)
+				.setSubOps(subOps);
+	}
+
 	
 	public static OpUnion create(Model model, Op ...subOps) {
 		return create(model, Arrays.asList(subOps));

@@ -1,5 +1,7 @@
 package org.aksw.jena_sparql_api.conjure.dataset.algebra;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -8,6 +10,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.mapper.proxy.JenaPluginUtils;
+import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
@@ -17,6 +20,37 @@ import com.google.common.collect.Streams;
 import com.google.common.graph.Traverser;
 
 public class OpUtils {
+
+	public static Op stripCache(Op in) {
+		Model cloneModel = ModelFactory.createDefaultModel();
+		//Resource root = in.inModel(cloneModel.add(in.getModel()));
+		
+		Op result = stripCacheCore(in, cloneModel);
+		
+		return result;
+	}
+
+	public static Op stripCacheCore(Op op, Model cloneModel) {
+		
+		//Op op = op instanceof Op ? op : JenaPluginUtils.polymorphicCast(_op, Op.class); 
+		Op result;
+		if(op instanceof OpPersist) {
+			OpPersist trueOp = (OpPersist)op;
+			Op subOp = trueOp.getSubOp();
+			
+			result = stripCacheCore(subOp, cloneModel);
+		} else {
+			Collection<Op> subOps = op.getChildren();
+			List<Op> newSubOps = new ArrayList<>(subOps.size());
+			for(Op subOp : subOps) {
+				Op newSubOp = stripCacheCore(subOp, cloneModel);
+				newSubOps.add(newSubOp);
+			}
+			result = op.clone(cloneModel, newSubOps);
+		}
+		
+		return result;
+	}
 
 
 	public static Op copyWithSubstitution(Op op, Map<String, ? extends Op> varNameToSubst) {

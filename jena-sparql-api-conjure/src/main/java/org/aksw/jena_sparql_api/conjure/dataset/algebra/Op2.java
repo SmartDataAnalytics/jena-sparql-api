@@ -1,7 +1,7 @@
 package org.aksw.jena_sparql_api.conjure.dataset.algebra;
 
 import java.util.Arrays;
-import java.util.Collection;
+import java.util.List;
 import java.util.Objects;
 
 import org.aksw.jena_sparql_api.mapper.annotation.IriNs;
@@ -21,7 +21,7 @@ public interface Op2
 	Op2 setRhs(Op op);
 
 	@Override
-	default Collection<Op> getChildren() {
+	default List<Op> getChildren() {
 		Op lhs = Objects.requireNonNull(getLhs());
 		Op rhs = Objects.requireNonNull(getRhs());
 

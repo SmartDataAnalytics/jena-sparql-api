@@ -22,6 +22,12 @@ public interface OpCoalesce
 		return result;
 	}
 	
+	@Override
+	default OpCoalesce clone(Model cloneModel, List<Op> subOps) {
+		return this.inModel(cloneModel).as(OpCoalesce.class)
+				.setSubOps(subOps);
+	}
+
 	
 	public static OpCoalesce create(Model model, Op ...subOps) {
 		return create(model, Arrays.asList(subOps));

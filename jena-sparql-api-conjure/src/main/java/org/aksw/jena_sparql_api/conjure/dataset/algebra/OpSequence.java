@@ -22,6 +22,12 @@ public interface OpSequence
 		return result;
 	}
 	
+	@Override
+	default OpSequence clone(Model cloneModel, List<Op> subOps) {
+		return this.inModel(cloneModel).as(OpSequence.class)
+				.setSubOps(subOps);
+	}
+
 	
 	public static OpSequence create(Model model, Op ...subOps) {
 		return create(model, Arrays.asList(subOps));

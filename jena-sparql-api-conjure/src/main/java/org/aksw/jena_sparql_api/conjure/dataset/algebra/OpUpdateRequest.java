@@ -39,6 +39,14 @@ public interface OpUpdateRequest
 		return result;
 	}
 	
+	@Override
+	default OpUpdateRequest clone(Model cloneModel, List<Op> subOps) {
+		return this.inModel(cloneModel).as(OpUpdateRequest.class)
+				.setSubOp(subOps.iterator().next())
+				.setUpdateRequests(getUpdateRequests());
+	}
+
+	
 	public static OpUpdateRequest create(Model model, Op subOp, String updateRequestStrings) {
 		OpUpdateRequest result = create(model, subOp, Collections.singleton(updateRequestStrings));
 		

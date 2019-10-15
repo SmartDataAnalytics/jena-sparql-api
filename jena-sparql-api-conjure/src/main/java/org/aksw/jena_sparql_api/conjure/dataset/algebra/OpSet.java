@@ -1,5 +1,7 @@
 package org.aksw.jena_sparql_api.conjure.dataset.algebra;
 
+import java.util.List;
+
 import org.aksw.jena_sparql_api.mapper.annotation.IriNs;
 import org.aksw.jena_sparql_api.mapper.annotation.RdfTypeNs;
 import org.aksw.jena_sparql_api.mapper.annotation.ResourceView;
@@ -44,6 +46,10 @@ public interface OpSet
 	String getSelectorVarName();
 	OpSet setSelectorVarName(String str);
 
+	@IriNs("rpif")
+	String getPath();
+	OpSet setPath(String str);
+
 	@Override
 	OpSet setSubOp(Op subOp);
 	
@@ -53,6 +59,17 @@ public interface OpSet
 		return result;
 	}
 	
+	@Override
+	default OpSet clone(Model cloneModel, List<Op> subOps) {
+		return this.inModel(cloneModel).as(OpSet.class)
+				.setSubOp(subOps.iterator().next())
+				.setSubOp(getSubOp())
+				.setCtxVarName(getCtxVarName())
+				.setSelectorVarName(getSelectorVarName())
+				.setSelector(getSelector())
+				.setPropertyPath(getPath());
+	}
+
 //	public static OpSet create(Model model, Op subOp, String queryString) {
 //		OpSet result = model.createResource().as(OpSet.class)
 //				.setSubOp(subOp);

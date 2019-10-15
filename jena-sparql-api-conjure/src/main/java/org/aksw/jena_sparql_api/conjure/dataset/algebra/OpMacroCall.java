@@ -35,6 +35,12 @@ public interface OpMacroCall
 		return result;
 	}
 	
+	@Override
+	default OpMacroCall clone(Model cloneModel, List<Op> subOps) {
+		return this.inModel(cloneModel).as(OpMacroCall.class)
+				.setSubOps(subOps);
+	}
+
 	
 	public static OpMacroCall create(Model model, Macro macro, Op ...subOps) {
 		return create(model, macro, Arrays.asList(subOps));

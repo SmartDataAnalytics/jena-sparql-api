@@ -1,7 +1,7 @@
 package org.aksw.jena_sparql_api.conjure.dataset.algebra;
 
-import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 
 import org.aksw.jena_sparql_api.mapper.annotation.IriNs;
@@ -16,7 +16,7 @@ public interface Op1
 	Op1 setSubOp(Op op);
 	
 	@Override
-	default Collection<Op> getChildren() {
+	default List<Op> getChildren() {
 		Op subOp = getSubOp();
 		Objects.requireNonNull(subOp);
 		return Collections.singletonList(subOp);

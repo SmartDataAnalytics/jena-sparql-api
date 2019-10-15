@@ -2,6 +2,7 @@ package org.aksw.jena_sparql_api.conjure.dataset.algebra;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 
 import org.aksw.jena_sparql_api.mapper.annotation.Iri;
@@ -26,6 +27,14 @@ public interface OpConstruct
 		T result = visitor.visit(this);
 		return result;
 	}
+	
+	@Override
+	default OpConstruct clone(Model cloneModel, List<Op> subOps) {
+		return this.inModel(cloneModel).as(OpConstruct.class)
+				.setSubOp(subOps.iterator().next())
+				.setQueryStrings(getQueryStrings());
+	}
+
 	
 	public static OpConstruct create(Model model, Op subOp, String queryString) {
 		OpConstruct result = create(model, subOp, Collections.singleton(queryString));

@@ -73,6 +73,11 @@ public class OpExecutorDefault
 	protected TaskContext taskContext;
 
 	
+	// Would a dry run mode help for computing hashes consistently?
+	// Or should this be done separately?
+	protected boolean isDryRun;
+	
+	
 	// Execution context
 	// TODO Maybe rename this to 'substitution context' as it is mainly used for this purpose
 	protected Map<String, Node> execCtx;

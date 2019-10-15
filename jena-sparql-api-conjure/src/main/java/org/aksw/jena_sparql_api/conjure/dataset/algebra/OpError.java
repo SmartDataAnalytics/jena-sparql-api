@@ -1,5 +1,7 @@
 package org.aksw.jena_sparql_api.conjure.dataset.algebra;
 
+import java.util.List;
+
 import org.aksw.jena_sparql_api.mapper.annotation.IriNs;
 import org.aksw.jena_sparql_api.mapper.annotation.RdfTypeNs;
 import org.aksw.jena_sparql_api.mapper.annotation.ResourceView;
@@ -26,6 +28,12 @@ public interface OpError
 		T result = visitor.visit(this);
 		return result;
 	}
+	
+	@Override
+	default OpError clone(Model cloneModel, List<Op> subOps) {
+		return this.inModel(cloneModel).as(OpError.class);
+	}
+
 	
 //	public static OpVar create(String name) {
 //		OpVar result = create(ModelFactory.createDefaultModel(), name);
