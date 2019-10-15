@@ -267,7 +267,7 @@ public class OpExecutorDefault
 			RdfHttpEntityFile entity = repo.get(effectiveRequest, null);
 			if(entity != null) {
 				String pathStr = entity.getAbsolutePath().toString();
-				DataPods.fromUrl(pathStr);
+				result = DataPods.fromUrl(pathStr);
 			}
 			
 		} catch (IOException e1) {
@@ -289,7 +289,10 @@ public class OpExecutorDefault
 					
 					RdfEntityInfo entityInfo = ModelFactory.createDefaultModel().createResource().as(RdfEntityInfo.class)
 							.setContentType(WebContent.contentTypeTurtle);
-					hashStore.putWithMove(hashStr, entityInfo, tmpFile);
+					RdfHttpEntityFile ent = hashStore.putWithMove(hashStr, entityInfo, tmpFile);
+					HttpResourceRepositoryFromFileSystemImpl.computeHashForEntity(ent, null);
+					
+					result = DataPods.fromUrl(ent.getAbsolutePath().toUri().toString());
 					
 				} catch (IOException e2) {
 					throw new RuntimeException(e2);

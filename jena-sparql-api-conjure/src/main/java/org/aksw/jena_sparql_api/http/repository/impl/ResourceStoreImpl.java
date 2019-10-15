@@ -166,9 +166,10 @@ public class ResourceStoreImpl
 	 */
 	public RdfHttpEntityFile putWithMove(String uri, RdfEntityInfo metadata, Path file) throws IOException {
 		RdfHttpEntityFile result = allocateEntity(uri, metadata);
-		result.updateInfo(record -> ResourceUtils.copyDirectProperties(record, metadata));
 		Path tgtFile = result.getAbsolutePath();
+		Files.createDirectories(tgtFile.getParent());
 		Files.move(file, tgtFile, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+		result.updateInfo(record -> ResourceUtils.copyDirectProperties(record, metadata));
 		
 		return result;
 	}
@@ -297,6 +298,10 @@ public class ResourceStoreImpl
 	@Override
 	public void updateInfo(Path path, Consumer<? super Resource> callback) {
 		Resource r = pathAnnotator.getRecord(path);
+		if(r == null) {
+			throw new RuntimeException("Cannot update record of non-existent content file");
+		}
+		
 		callback.accept(r);
 		pathAnnotator.setRecord(path, r);
 	}

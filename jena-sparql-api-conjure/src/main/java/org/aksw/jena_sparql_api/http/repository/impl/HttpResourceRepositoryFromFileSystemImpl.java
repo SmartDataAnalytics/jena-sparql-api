@@ -445,18 +445,22 @@ public class HttpResourceRepositoryFromFileSystemImpl
 		if(plan == null) {
 			RdfHttpResourceFile res = downloadStore.getResource(uri);
 			HttpRequest newRequest = expandHttpRequest(request);
-			Entry<HttpRequest, HttpResponse> response = httpRequester.apply(newRequest);
-
 			
-			RdfHttpEntityFile entity = saveResponse(res, response.getKey(), response.getValue());
-			
-			
-			// Validation step; the entity should match the 
-			plan = findBestPlanToServeRequest(request, Collections.singleton(entity), opExecutor);
+			if(httpRequester != null) {
+				Entry<HttpRequest, HttpResponse> response = httpRequester.apply(newRequest);
+	
+				
+				RdfHttpEntityFile entity = saveResponse(res, response.getKey(), response.getValue());
+				
+				
+				// Validation step; the entity should match the 
+				plan = findBestPlanToServeRequest(request, Collections.singleton(entity), opExecutor);
+			}
 		}
 		
 		if(plan == null) {
-			throw new RuntimeException("Could not create a plan for how to serve an HTTP request");
+			return null;
+			//throw new RuntimeException("Could not create a plan for how to serve an HTTP request");
 		}
 
 //		// Convert the entity to the request
