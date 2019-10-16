@@ -312,7 +312,7 @@ public class MainConjurePlayground {
 //						parser.apply("INSERT DATA { [] dataid:group eg:mygrp ; dcat:distribution [ dcat:downloadURL <file:///home/raven/tmp/test.hdt> ] }").toString()));
 							parser.apply("INSERT DATA { <http://mydata> dataid:group eg:mygrp ; dcat:distribution [ dcat:downloadURL <http://localhost/~raven/009e80050fa7f4279596956477157ec2.hdt> ] }").toString()));
 
-		DataRef dataRef = dataRef5;
+		DataRef dataRef = dataRef4;
 		
 		// Set up the workflow that makes a digital copy of a dataset available
 		Op basicWorkflow = OpDataRefResource.from(model, dataRef);

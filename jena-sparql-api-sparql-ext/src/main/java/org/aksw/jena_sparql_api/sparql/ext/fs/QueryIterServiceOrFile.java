@@ -8,9 +8,11 @@ import java.nio.file.Paths;
 
 import org.apache.jena.atlas.logging.Log;
 import org.apache.jena.graph.Node;
+import org.apache.jena.query.Dataset;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QueryExecutionFactory;
+import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.OpAsQuery;
 import org.apache.jena.sparql.algebra.op.OpService;
@@ -87,12 +89,15 @@ public class QueryIterServiceOrFile extends QueryIterService {
         boolean silent = opService.getSilent() ;
         QueryIterator qIter ;
         try {
+        	String url = path.toUri().toString();
+        	Dataset dataset = RDFDataMgr.loadDataset(url);
+        	
 //	    	// TODO Probably add namespaces declared on query scope (how to access them?)
 	        Op subOp = op.getSubOp();
 	        Query query = OpAsQuery.asQuery(subOp);
-	        query.addGraphURI(path.toUri().toString());
+	        //query.addGraphURI(path.toUri().toString());
 	        
-	        QueryExecution qe = QueryExecutionFactory.create(query);//, input);
+	        QueryExecution qe = QueryExecutionFactory.create(query, dataset);//, input);
 	        QueryIterator right = new QueryIteratorResultSet(qe.execSelect());
 	        
             // This iterator is materialized already otherwise we may end up
