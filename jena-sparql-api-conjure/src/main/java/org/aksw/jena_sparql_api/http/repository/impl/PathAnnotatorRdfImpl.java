@@ -4,6 +4,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.concurrent.ExecutionException;
 
 import org.aksw.jena_sparql_api.http.repository.api.PathAnnotatorRdf;
 import org.apache.jena.rdf.model.Model;
@@ -13,13 +14,25 @@ import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.util.ResourceUtils;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
+
 public class PathAnnotatorRdfImpl
 	implements PathAnnotatorRdf
 {
+	protected Cache<Path, Resource> cache = CacheBuilder.newBuilder().maximumSize(64).build();
 	
 	protected String suffix = ".meta";
-	
+
 	public Resource getRecord(Path path) {
+		try {
+			return cache.get(path, () -> getRecordUncached(path));
+		} catch (ExecutionException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	public Resource getRecordUncached(Path path) {
 		
 		Resource result;
 		
@@ -102,6 +115,8 @@ public class PathAnnotatorRdfImpl
 					throw new RuntimeException(e);
 				}
 			}
+			
+			cache.put(path, result);
 			
 		} else {
 			result = null;
