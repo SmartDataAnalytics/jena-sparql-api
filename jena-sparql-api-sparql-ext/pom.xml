@@ -65,6 +65,12 @@
 			<artifactId>jena-sparql-api-utils</artifactId>
 		</dependency>
 
+		<!-- Used for binary search via the service clause -->
+		<dependency>
+			<groupId>org.aksw.jena-sparql-api</groupId>
+			<artifactId>jena-sparql-api-io-core</artifactId>
+		</dependency>
+
 		<dependency>
 			<groupId>org.apache.jena</groupId>
 			<artifactId>jena-rdfconnection</artifactId>

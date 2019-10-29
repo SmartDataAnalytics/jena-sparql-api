@@ -686,4 +686,10 @@ public class BinarySearchOnSortedFile
         return result;
 	}
 
+	
+	public static void boyerMoore(byte[] str) {
+		
+	}
+	
+	
 }

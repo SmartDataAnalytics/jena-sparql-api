@@ -1,13 +1,22 @@
 package org.aksw.jena_sparql_api.utils;
 
 import java.io.UnsupportedEncodingException;
+import java.net.URI;
 import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+
+import org.apache.http.NameValuePair;
+import org.apache.http.client.utils.URLEncodedUtils;
+import org.apache.jena.rdf.model.impl.Util;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
-import org.apache.jena.rdf.model.impl.Util;
 
 /**
  * This class does not really belong to the SPARQL api,
@@ -22,6 +31,21 @@ public class UriUtils {
 
     public static final Pattern replaceNamespacePattern = Pattern.compile("(?<=/)[^/]+(?=/[^/]+/*$)");
 
+    
+    /**
+     * Only retains first value
+     * @return
+     */
+    public static Map<String, String> createMapFromUriQueryString(URI uri) {
+    	List<NameValuePair> nm = URLEncodedUtils.parse(uri, StandardCharsets.UTF_8);
+    	Map<String, String> result = nm.stream()
+    		.collect(Collectors.toMap(
+    				NameValuePair::getName,
+    				NameValuePair::getValue,
+    				(u, v) -> u, LinkedHashMap::new));
+
+    	return result;
+    }
 
     /**
      * Taken from Node_URI.getNameSpace()

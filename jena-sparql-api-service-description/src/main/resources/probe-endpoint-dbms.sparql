@@ -1,3 +1,4 @@
+#PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 PREFIX bif: <bif:>
 PREFIX apf: <http://jena.hpl.hp.com/ARQ/property#>
 PREFIX stardog: <tag:stardog:api:functions:>
@@ -73,7 +74,18 @@ WHERE {
     BIND("graphdb" AS ?dbmsShortName)
   }
 
-  # TODO https://github.com/w3c/sparql-12/wiki/Inventory-of-existing-extensions-to-SPARQL-1.1 RDF4j, Kineo, Communica, 
+  OPTIONAL {
+    SERVICE SILENT <env://REMOTE> {
+      BIND("12"^^<http://www.w3.org/2001/XMLSchema#integer> * "P1Y"^^<http://www.w3.org/2001/XMLSchema#yearMonthDuration> = "P12Y"^^<http://www.w3.org/2001/XMLSchema#yearMonthDuration> AS ?test)
+    }
+    FILTER(?test)
+    BIND("rdf4j" AS ?dbmsRawName)
+    BIND("rdf4j" AS ?dbmsShortName)
+  }
+
+
+  # TODO https://github.com/w3c/sparql-12/wiki/Inventory-of-existing-extensions-to-SPARQL-1.1 Kineo, Communica, 
+
 
   BIND( REPLACE(REPLACE(STR(?dbmsRawName), '\\s+', ' '), ' ', '-') AS ?dbmsName)
   BIND(CONCAT(?dbmsName, ':', STR(?dbmsVersion)) AS ?dbmsId)
