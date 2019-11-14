@@ -318,7 +318,6 @@ public class MainConjurePlayground {
 		// Set up the workflow that makes a digital copy of a dataset available
 		Op basicWorkflow = OpDataRefResource.from(model, dataRef);
 		
-		
 		// So far so good - all we need now, is some data and we can start execution
 
 		

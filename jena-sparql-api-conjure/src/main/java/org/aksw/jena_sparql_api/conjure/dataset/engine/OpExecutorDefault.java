@@ -226,20 +226,30 @@ public class OpExecutorDefault
 		//HashCode taskcon
 		HashCode inputRecordHash = ResourceTreeUtils.createGenericHash2(taskContext.getInputRecord());
 		
+		List<HashCode> dataRefHashes = taskContext.getDataRefMapping().entrySet().stream().map(e ->
+				Hashing.combineOrdered(Arrays.asList(
+					Hashing.sha256().hashString(e.getKey(), StandardCharsets.UTF_8),
+					ResourceTreeUtils.createGenericHash2(e.getValue()))))
+			.collect(Collectors.toList());
+		
+		if(dataRefHashes.isEmpty()) {
+			dataRefHashes.add(hashFn.hashInt(0));
+		}
+		
 		// Hash the data refs
-		HashCode dataRefHash = Hashing.combineUnordered(
-				taskContext.getDataRefMapping().entrySet().stream().map(e ->
-					Hashing.combineOrdered(Arrays.asList(
-						Hashing.sha256().hashString(e.getKey(), StandardCharsets.UTF_8),
-						ResourceTreeUtils.createGenericHash2(e.getValue()))))
-				.collect(Collectors.toList()));
+		HashCode dataRefHash = Hashing.combineUnordered(dataRefHashes);
 
-		HashCode ctxModelsHash = Hashing.combineUnordered(
-				taskContext.getCtxModels().entrySet().stream().map(e ->
-					Hashing.combineOrdered(Arrays.asList(
-						hashFn.hashString(e.getKey(), StandardCharsets.UTF_8),
-						ResourceTreeUtils.generateModelHash(e.getValue(), hashFn))))
-				.collect(Collectors.toList()));
+		List<HashCode> ctxModelHashes = taskContext.getCtxModels().entrySet().stream().map(e ->
+				Hashing.combineOrdered(Arrays.asList(
+					hashFn.hashString(e.getKey(), StandardCharsets.UTF_8),
+					ResourceTreeUtils.generateModelHash(e.getValue(), hashFn))))
+			.collect(Collectors.toList());
+		
+		if(ctxModelHashes.isEmpty()) {
+			ctxModelHashes.add(hashFn.hashInt(0));
+		}
+
+		HashCode ctxModelsHash = Hashing.combineUnordered(ctxModelHashes);
 
 		HashCode completeHash = Hashing.combineOrdered(Arrays.asList(
 				subOpHash,

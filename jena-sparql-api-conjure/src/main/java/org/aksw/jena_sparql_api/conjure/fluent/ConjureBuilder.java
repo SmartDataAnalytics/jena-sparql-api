@@ -1,6 +1,8 @@
 package org.aksw.jena_sparql_api.conjure.fluent;
 
 public interface ConjureBuilder {
+	ConjureContext getContext();
+	
 	ConjureFluent fromUrl(String url);
 	ConjureFluent fromVar(String name);
 	ConjureFluent fromEmptyModel();

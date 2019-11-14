@@ -1,13 +1,17 @@
 package org.aksw.jena_sparql_api.conjure.datapod.impl;
 
+import java.util.Set;
+
 import org.aksw.jena_sparql_api.conjure.datapod.api.RdfDataPod;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionWrapper;
 
+import com.github.jsonldjava.shaded.com.google.common.collect.Sets;
+
 public abstract class RdfDataPodBase
 	implements RdfDataPod
 {
-	protected RDFConnection activeConnection = null;
+	protected Set<RDFConnection> openConnections = Sets.newIdentityHashSet();
 	protected boolean isClosed = false;
 
 	@Override
@@ -20,22 +24,23 @@ public abstract class RdfDataPodBase
 		if(!isClosed) {
 			isClosed = true;
 
-			if(activeConnection != null) {
-				activeConnection.close();
-				throw new RuntimeException("Data Object was closed, however a connection was still open");
+			if(!openConnections.isEmpty()) {
+				//activeConnection.close();
+				throw new RuntimeException("DataPod was closed, however " + openConnections.size() + " connections were still open");
 			}
 		}
 	}
 
 	@Override
 	public synchronized RDFConnection openConnection() {
-		if(activeConnection != null) {
-			throw new RuntimeException("A prior obtained connection has not yet been closed");
-		}
+//		if(openConnections.isEmpty()) {
+//			throw new RuntimeException("A prior obtained connection has not yet been closed");
+//		}
 		
 		RDFConnection core = newConnection();
 
-		activeConnection = new RDFConnectionWrapper(core) {
+		RDFConnection[] newConnection = new RDFConnection[] { null };
+		newConnection[0] = new RDFConnectionWrapper(core) {
 			
 			// TODO Intercept and reject update calls if isMutable is false
 			
@@ -43,13 +48,13 @@ public abstract class RdfDataPodBase
 			public void close() {
 				// Prevent from e.g. running this while e.g. DataObject.close() is called
 				synchronized(RdfDataPodBase.this) {
-					activeConnection = null;
+					openConnections.remove(newConnection[0]);
 				}
 				super.close();
 			}
 		};
 		
-		return activeConnection;
+		return newConnection[0];
 	}
 	
 	abstract protected RDFConnection newConnection();

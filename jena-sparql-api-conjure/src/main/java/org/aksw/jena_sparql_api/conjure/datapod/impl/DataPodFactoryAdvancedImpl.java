@@ -43,7 +43,7 @@ public class DataPodFactoryAdvancedImpl
 		Model m = context.getCtxModels().get(url);
 		RdfDataPod result;
 		if(m != null) {
-			logger.info("Accessed input model");
+			logger.info("Accessed input model for url " + url);
 			result = DataPods.fromModel(m);
 		} else {
 			result = DataPods.create(url, repo);

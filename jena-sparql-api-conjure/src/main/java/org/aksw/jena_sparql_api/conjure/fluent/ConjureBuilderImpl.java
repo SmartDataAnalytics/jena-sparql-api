@@ -27,6 +27,11 @@ public class ConjureBuilderImpl
 		this.context = context;
 	}
 
+	@Override
+	public ConjureContext getContext() {
+		return context;
+	}
+
 	public ConjureFluent wrap(Op op) {
 		return new ConjureFluentImpl(context, op);
 	}
@@ -77,5 +82,4 @@ public class ConjureBuilderImpl
 	public ConjureFluent fromEmptyModel() {
 		return wrap(OpData.create(context.getModel()));
 	}
-
 }

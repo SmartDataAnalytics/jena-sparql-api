@@ -45,6 +45,7 @@ class ResourceSourceFileImpl
 }
 
 class ResourceUtils {
+
 	/**
 	 * Copies all direct outgoing properties of src to tgt
 	 * 
@@ -106,6 +107,9 @@ class ResourceUtils {
 public class ResourceStoreImpl
 	implements ResourceStore
 {
+	protected String TMP_SUFFIX = ".tmp";
+
+	
 	protected Path basePath;
 	
 	protected String CONTENT = "_content";
@@ -232,6 +236,8 @@ public class ResourceStoreImpl
 					? Collections.<Path>emptyList().stream()
 					: Files.list(contentFolder))
 						.filter(file -> pathAnnotator.isAnnotationFor(file).isEmpty())
+						// skip .tmp files
+						.filter(file -> !file.getFileName().toString().endsWith(TMP_SUFFIX))
 						.map(this::getEntityForPath)
 						.collect(Collectors.toList());			
 		} catch(Exception e) {
