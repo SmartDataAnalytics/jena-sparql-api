@@ -56,7 +56,7 @@
 
 		<dependency>
 			<groupId>org.aksw.jena-sparql-api</groupId>
-			<artifactId>jena-sparql-api-dcat</artifactId>
+			<artifactId>jena-sparql-api-dcat-api</artifactId>
 		</dependency>
 
 		<dependency>

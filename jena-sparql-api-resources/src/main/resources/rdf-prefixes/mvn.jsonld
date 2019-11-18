@@ -1,0 +1,5 @@
+{
+  "@context": {
+    "mvn": "http://maven.apache.org/POM#"
+  }
+}

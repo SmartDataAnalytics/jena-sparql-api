@@ -1,24 +1,34 @@
 package org.aksw.jena_sparql_api.http.repository.impl;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.conjure.utils.ContentTypeUtils;
 import org.aksw.jena_sparql_api.http.domain.api.RdfEntityInfo;
+import org.aksw.jena_sparql_api.http.repository.api.HttpResourceRepositoryFromFileSystem;
 import org.aksw.jena_sparql_api.http.repository.api.PathAnnotatorRdf;
 import org.aksw.jena_sparql_api.http.repository.api.RdfHttpEntityFile;
 import org.aksw.jena_sparql_api.http.repository.api.RdfHttpResourceFile;
 import org.aksw.jena_sparql_api.http.repository.api.ResourceStore;
+import org.apache.http.HttpHeaders;
+import org.apache.http.HttpRequest;
+import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.client.methods.RequestBuilder;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Property;
@@ -26,6 +36,13 @@ import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.StmtIterator;
+import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.riot.RDFFormat;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.github.jsonldjava.shaded.com.google.common.collect.Maps;
+import com.google.common.collect.Iterables;
 
 
 interface ResourceSourceFile {
@@ -117,7 +134,81 @@ public class ResourceStoreImpl
 	protected ResourceSourceFile resourceSource;
 	protected PathAnnotatorRdf pathAnnotator;
 	protected Function<String, Path> uriToRelPath;
+	
+	private static final Logger logger = LoggerFactory.getLogger(ResourceStore.class);
+
+	public static Model requestModel(HttpResourceRepositoryFromFileSystem repo, ResourceStore store, String uri, RDFFormat preferredOutputFormat, Supplier<Model> modelSupplier) throws IOException {
+		Entry<RdfHttpEntityFile, Model> entry = requestRdfEntity(repo, store, uri, preferredOutputFormat, modelSupplier);
 		
+		Model result = entry.getValue();
+		return result;
+	}
+
+
+	/**
+	 * Request an RDF model from the repository based on a given uri (or any string)
+	 * 
+	 * @param repo
+	 * @param store
+	 * @param uri
+	 * @param preferredOutputformat
+	 * @param modelSupplier
+	 * @return
+	 * @throws IOException 
+	 */
+	public static Entry<RdfHttpEntityFile, Model> requestRdfEntity(HttpResourceRepositoryFromFileSystem repo, ResourceStore store, String uri, RDFFormat preferredOutFormat, Supplier<Model> modelSupplier) throws IOException {
+		
+		RdfHttpEntityFile entity;
+		Model model;
+		
+		HttpUriRequest baseRequest =
+				RequestBuilder.get(uri)
+				.setHeader(HttpHeaders.ACCEPT, "application/n-triples")
+				.setHeader(HttpHeaders.ACCEPT_ENCODING, "identity,bzip2,gzip")
+				.build();
+
+		
+		HttpRequest effectiveRequest = HttpResourceRepositoryFromFileSystemImpl.expandHttpRequest(baseRequest);
+		logger.info("Expanded HTTP Request: " + effectiveRequest);
+		try {
+			entity = repo.get(effectiveRequest, null);
+		} catch (IOException e1) {
+			throw new RuntimeException(e1);
+		}
+		
+		if(entity != null) {
+			String absPath = entity.getAbsolutePath().toString();
+			model = RDFDataMgr.loadModel(absPath);
+		} else {
+			//RDFLanguages.fi
+			RDFFormat effectiveOutFormat;
+			String fileExt = Iterables.getFirst(preferredOutFormat.getLang().getFileExtensions(), null);
+			effectiveOutFormat = fileExt == null
+					? RDFFormat.TURTLE_PRETTY
+					: preferredOutFormat;
+			
+			fileExt = Iterables.getFirst(effectiveOutFormat.getLang().getFileExtensions(), null);
+			
+			Objects.requireNonNull(fileExt, "Should not happen");
+			
+			model = modelSupplier.get();
+			java.nio.file.Path tmpFile = Files.createTempFile("data-", fileExt);
+			try(OutputStream out = Files.newOutputStream(tmpFile, StandardOpenOption.WRITE)) {
+				RDFDataMgr.write(out, model, effectiveOutFormat);
+			} catch (IOException e1) {
+				throw new RuntimeException(e1);
+			}
+
+			RdfEntityInfo entityInfo = ModelFactory.createDefaultModel().createResource().as(RdfEntityInfo.class)
+					.setContentType(effectiveOutFormat.getLang().getContentType().toString());
+			entity = store.putWithMove(uri, entityInfo, tmpFile);
+			//HttpResourceRepositoryFromFileSystemImpl.computeHashForEntity(ent, null);			
+		}
+
+		return Maps.immutableEntry(entity, model);
+	}
+	
+	
 	public ResourceStoreImpl(Path basePath) {
 		this(basePath, UriToPathUtils::resolvePath);
 	}

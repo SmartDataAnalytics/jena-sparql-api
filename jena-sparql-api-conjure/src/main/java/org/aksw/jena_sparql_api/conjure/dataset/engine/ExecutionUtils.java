@@ -1,14 +1,18 @@
 package org.aksw.jena_sparql_api.conjure.dataset.engine;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
+import org.aksw.dcat.jena.domain.api.MvnEntity;
 import org.aksw.jena_sparql_api.conjure.algebra.common.ResourceTreeUtils;
 import org.aksw.jena_sparql_api.conjure.datapod.api.RdfDataPod;
 import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.DataRef;
@@ -19,6 +23,8 @@ import org.aksw.jena_sparql_api.conjure.job.api.JobBinding;
 import org.aksw.jena_sparql_api.conjure.traversal.api.OpTraversal;
 import org.aksw.jena_sparql_api.conjure.traversal.engine.FunctionAssembler;
 import org.aksw.jena_sparql_api.http.repository.api.HttpResourceRepositoryFromFileSystem;
+import org.aksw.jena_sparql_api.http.repository.api.ResourceStore;
+import org.aksw.jena_sparql_api.http.repository.api.ResourceStore;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -43,25 +49,53 @@ import com.google.common.collect.Multimap;
 public class ExecutionUtils {
 	private static final Logger logger = LoggerFactory.getLogger(ExecutionUtils.class);
 
-	
-	public static Resource extractDcatSummary(Resource r) {
-		ModelFactory.createDefaultModel().createResource();
+	/**
+	 * Create an Id from a given resource with the following precedence of preferences:
+	 * - maven identifier
+	 * - URI
+	 * - generic hash
+	 * 
+	 * @param r
+	 * @return
+	 */
+	public static String deriveId(Resource r) {
+		MvnEntity ds = ModelFactory.createDefaultModel().createResource().as(MvnEntity.class);
+		String mvnId = Arrays.asList(ds.getGroupId(), ds.getArtifactId(), ds.getVersion(), ds.getClassifier()).stream()
+			.filter(Objects::nonNull)
+			.collect(Collectors.joining(":"));
+		
+		String result = !mvnId.isEmpty()
+				? mvnId
+				: r.isURIResource()
+					? r.getURI()
+					: ResourceTreeUtils.createGenericHash(r);
+
+		return result;
 	}
 
-	public static void executeJob(Job job, HttpResourceRepositoryFromFileSystem repo, List<TaskContext> taskContexts) {
+	public static void executeJob(
+			Job job,
+			List<TaskContext> taskContexts,
+			HttpResourceRepositoryFromFileSystem repo,
+			ResourceStore cacheStore) {
 		Op jobOp = job.getOp();
 	    Op semanticJobOp = OpUtils.stripCache(jobOp);
-	    String semanticJobOpHash = ResourceTreeUtils.createGenericHash(semanticJobOp);
+	    String jobId = ResourceTreeUtils.createGenericHash(semanticJobOp);
 
 		
 		for(TaskContext taskContext : taskContexts) {
 
 			Resource inputRecord = taskContext.getInputRecord();
 
-			logger.info("Processing: " + inputRecord);
-			
 			// Try to create a hash from the input record
-			
+			String inputRecordId = deriveId(inputRecord);
+
+			String completeId = inputRecordId + "/" + jobId;
+
+			logger.info("Processing: " + inputRecord + " with complete id " + completeId);
+
+			// Check the cache store for whether it contains an entry
+			cacheStore.getResource(completeId);
 			
 			
 			RDFNode jobContext = ModelFactory.createDefaultModel().createResource();

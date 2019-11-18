@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api.conjure.datapod.api;
 
+import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdfconnection.RDFConnection;
 
 public interface RdfDataPod
@@ -54,4 +55,21 @@ public interface RdfDataPod
 	 * @return
 	 */
 	RDFConnection openConnection();
+	
+	/**
+	 * Obtain a {@link Model} for the data backing this pod.
+	 * By default, CONSTRUCT WHERE { ?s ?p ?o } is executed on this data pod's connection.
+	 * However, DataPods backed by a Model may directly expose the underlying Model, which
+	 * allows for fast model access.
+	 * 
+	 * 
+	 * @return
+	 */
+	default Model getModel() {
+		Model result;
+		try(RDFConnection conn = openConnection()) {
+			result = conn.queryConstruct("CONSTRUCT WHERE { ?s ?p ?o }");
+		}
+		return result;
+	}
 }

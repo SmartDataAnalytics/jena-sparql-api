@@ -37,7 +37,7 @@ import org.aksw.jena_sparql_api.conjure.fluent.QLib;
 import org.aksw.jena_sparql_api.conjure.job.api.Job;
 import org.aksw.jena_sparql_api.conjure.job.api.JobBinding;
 import org.aksw.jena_sparql_api.conjure.traversal.api.OpTraversalSelf;
-import org.aksw.jena_sparql_api.http.repository.api.HttpResourceRepositoryFromFileSystem;
+import org.aksw.jena_sparql_api.http.repository.api.ResourceStore;
 import org.aksw.jena_sparql_api.http.repository.impl.HttpResourceRepositoryFromFileSystemImpl;
 import org.aksw.jena_sparql_api.io.json.RDFNodeJsonUtils;
 import org.aksw.jena_sparql_api.mapper.proxy.JenaPluginUtils;
@@ -270,7 +270,8 @@ public class MainConjurePlayground {
 		// This does HTTP caching, content type conversion and content negotiation
 		// Lots of magic, fairies and unicorns in there
 		// (and gears and screws one wants to configure for production use - and which may at this stage sometimes break)
-		HttpResourceRepositoryFromFileSystem repo = HttpResourceRepositoryFromFileSystemImpl.createDefault();		
+		HttpResourceRepositoryFromFileSystemImpl repo = HttpResourceRepositoryFromFileSystemImpl.createDefault();		
+		ResourceStore cacheStore = repo.getCacheStore();
 		OpExecutorDefault catalogExecutor = new OpExecutorDefault(repo, null);
 
 		// Get a copy of the limbo dataset catalog via the repo so that it gets cached
@@ -403,7 +404,7 @@ public class MainConjurePlayground {
 
 //		logger.info("Retrieved " + inputRecords.size() + " contexts for processing " + inputRecords);
 		
-		ExecutionUtils.executeJob(job, repo, taskContexts);
+		ExecutionUtils.executeJob(job, taskContexts, repo, cacheStore);
 
 	}
 	

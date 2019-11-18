@@ -45,6 +45,7 @@ import org.aksw.jena_sparql_api.http.repository.api.HttpResourceRepositoryFromFi
 import org.aksw.jena_sparql_api.http.repository.api.RdfHttpEntityFile;
 import org.aksw.jena_sparql_api.http.repository.api.ResourceStore;
 import org.aksw.jena_sparql_api.http.repository.impl.HttpResourceRepositoryFromFileSystemImpl;
+import org.aksw.jena_sparql_api.http.repository.impl.ResourceStoreImpl;
 import org.aksw.jena_sparql_api.rx.SparqlRx;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.apache.http.HttpHeaders;
@@ -248,35 +249,48 @@ public class OpExecutorDefault
 		if(result == null) {
 			Op subOp = op.getSubOp();
 			try(RdfDataPod pod = subOp.accept(this)) {
-				try(RDFConnection conn = pod.openConnection()) {
-					Model m = conn.queryConstruct("CONSTRUCT WHERE { ?s ?p ?o }");
-					
-					java.nio.file.Path tmpFile = Files.createTempFile("data-", ".ttl");
-					try(OutputStream out = Files.newOutputStream(tmpFile, StandardOpenOption.WRITE)) {
-						RDFDataMgr.write(out, m, RDFFormat.TURTLE_PRETTY);
-					} catch (IOException e1) {
-						throw new RuntimeException(e1);
-					}
-					
-					RdfEntityInfo entityInfo = ModelFactory.createDefaultModel().createResource().as(RdfEntityInfo.class)
-							.setContentType(WebContent.contentTypeTurtle);
-					RdfHttpEntityFile ent = hashStore.putWithMove(hashStr, entityInfo, tmpFile);
-					HttpResourceRepositoryFromFileSystemImpl.computeHashForEntity(ent, null);
-					
-					result = DataPods.fromUrl(ent.getAbsolutePath().toUri().toString());
-					
-				} catch (IOException e2) {
-					throw new RuntimeException(e2);
+				Model m;
+				try {
+					m = ResourceStoreImpl.requestModel(repo, hashStore, hashStr, RDFFormat.TURTLE_PRETTY, () -> pod.getModel());
+				} catch (IOException e) {
+					throw new RuntimeException(e);
 				}
-				
-			} catch (Exception e3) {
-				throw new RuntimeException(e3);
+				result = DataPods.fromModel(m);
+			} catch (Exception e1) {
+				throw new RuntimeException(e1);
 			}
 		}
 		
 
 		return result;
 	}
+
+// Old implementation of visit(OpPersist) - delete if the new impl works	
+//	
+//	try(RDFConnection conn = pod.openConnection()) {
+//		Model m = conn.queryConstruct("CONSTRUCT WHERE { ?s ?p ?o }");
+//		
+//		java.nio.file.Path tmpFile = Files.createTempFile("data-", ".ttl");
+//		try(OutputStream out = Files.newOutputStream(tmpFile, StandardOpenOption.WRITE)) {
+//			RDFDataMgr.write(out, m, RDFFormat.TURTLE_PRETTY);
+//		} catch (IOException e1) {
+//			throw new RuntimeException(e1);
+//		}
+//		
+//		RdfEntityInfo entityInfo = ModelFactory.createDefaultModel().createResource().as(RdfEntityInfo.class)
+//				.setContentType(WebContent.contentTypeTurtle);
+//		RdfHttpEntityFile ent = hashStore.putWithMove(hashStr, entityInfo, tmpFile);
+//		HttpResourceRepositoryFromFileSystemImpl.computeHashForEntity(ent, null);
+//		
+//		result = DataPods.fromUrl(ent.getAbsolutePath().toUri().toString());
+//		
+//	} catch (IOException e2) {
+//		throw new RuntimeException(e2);
+//	}
+//	
+//} catch (Exception e3) {
+//	throw new RuntimeException(e3);
+//}
 
 	public static HashCode computeOpHash(OpPersist op, TaskContext taskContext) {
 		HashFunction hashFn = Hashing.sha256();

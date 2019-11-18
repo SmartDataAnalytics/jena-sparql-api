@@ -86,6 +86,11 @@ public class DataPods {
 				RDFConnection result = RDFConnectionFactory.connect(dataset);
 				return result;
 			}
+			
+			@Override
+			public Model getModel() {
+				return model;
+			}
 		};
 	}
 

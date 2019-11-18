@@ -40,6 +40,7 @@ public class DefaultPrefixes {
 			.setNsPrefixes(RDFDataMgr.loadModel("rdf-prefixes/geosparql.jsonld"))
 			.setNsPrefixes(RDFDataMgr.loadModel("rdf-prefixes/dataid.jsonld"))
 			.setNsPrefixes(RDFDataMgr.loadModel("rdf-prefixes/jsa.jsonld"))
+			.setNsPrefixes(RDFDataMgr.loadModel("rdf-prefixes/mvn.jsonld"))
 			.setNsPrefixes(RDFDataMgr.loadModel("rdf-prefixes/rpif.jsonld"));
 	}
 	
