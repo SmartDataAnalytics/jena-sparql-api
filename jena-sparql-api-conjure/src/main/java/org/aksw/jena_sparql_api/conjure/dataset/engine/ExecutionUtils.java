@@ -9,6 +9,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Function;
 
+import org.aksw.jena_sparql_api.conjure.algebra.common.ResourceTreeUtils;
 import org.aksw.jena_sparql_api.conjure.datapod.api.RdfDataPod;
 import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.DataRef;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.Op;
@@ -41,15 +42,31 @@ import com.google.common.collect.Multimap;
 
 public class ExecutionUtils {
 	private static final Logger logger = LoggerFactory.getLogger(ExecutionUtils.class);
+
 	
-	
+	public static Resource extractDcatSummary(Resource r) {
+		ModelFactory.createDefaultModel().createResource();
+	}
+
 	public static void executeJob(Job job, HttpResourceRepositoryFromFileSystem repo, List<TaskContext> taskContexts) {
+		Op jobOp = job.getOp();
+	    Op semanticJobOp = OpUtils.stripCache(jobOp);
+	    String semanticJobOpHash = ResourceTreeUtils.createGenericHash(semanticJobOp);
+
+		
 		for(TaskContext taskContext : taskContexts) {
 
-			logger.info("Processing: " + taskContext.getInputRecord());
+			Resource inputRecord = taskContext.getInputRecord();
+
+			logger.info("Processing: " + inputRecord);
+			
+			// Try to create a hash from the input record
+			
+			
+			
 			RDFNode jobContext = ModelFactory.createDefaultModel().createResource();
 
-			
+
 			Set<String> mentionedVars = OpUtils.mentionedVarNames(job.getOp());
 			System.out.println("Mentioned vars: " + mentionedVars);
 			
@@ -135,8 +152,8 @@ public class ExecutionUtils {
 			logger.info("Conjure spec is:");
 			RDFDataMgr.write(System.err, effectiveWorkflow.getModel(), RDFFormat.TURTLE_PRETTY);
 			
-			try(RdfDataPod data = effectiveWorkflow.accept(executor)) {
-				try(RDFConnection conn = data.openConnection()) {
+			try(RdfDataPod resultDataPod = effectiveWorkflow.accept(executor)) {
+				try(RDFConnection conn = resultDataPod.openConnection()) {
 					// Print out the data that is the process result
 					Model rmodel = conn.queryConstruct("CONSTRUCT WHERE { ?s ?p ?o }");
 					
@@ -145,8 +162,6 @@ public class ExecutionUtils {
 			} catch(Exception e) {
 				logger.warn("Failed to process " + taskContext, e);
 			}
-			
-			Resource inputRecord = taskContext.getInputRecord();
 			
 			Model resultModel = ModelFactory.createDefaultModel();
 			Resource inputRecordX = inputRecord.inModel(resultModel.add(inputRecord.getModel()));

@@ -216,46 +216,7 @@ public class OpExecutorDefault
 	@Override
 	public RdfDataPod visit(OpPersist op) {
 
-		HashFunction hashFn = Hashing.sha256();
-		
-		// The sup without operators that do not modify the result
-		Op semanticSubOp = OpUtils.stripCache(op);
-		HashCode subOpHash = ResourceTreeUtils.createGenericHash2(semanticSubOp);
-
-		// Hash the task context
-		//HashCode taskcon
-		HashCode inputRecordHash = ResourceTreeUtils.createGenericHash2(taskContext.getInputRecord());
-		
-		List<HashCode> dataRefHashes = taskContext.getDataRefMapping().entrySet().stream().map(e ->
-				Hashing.combineOrdered(Arrays.asList(
-					Hashing.sha256().hashString(e.getKey(), StandardCharsets.UTF_8),
-					ResourceTreeUtils.createGenericHash2(e.getValue()))))
-			.collect(Collectors.toList());
-		
-		if(dataRefHashes.isEmpty()) {
-			dataRefHashes.add(hashFn.hashInt(0));
-		}
-		
-		// Hash the data refs
-		HashCode dataRefHash = Hashing.combineUnordered(dataRefHashes);
-
-		List<HashCode> ctxModelHashes = taskContext.getCtxModels().entrySet().stream().map(e ->
-				Hashing.combineOrdered(Arrays.asList(
-					hashFn.hashString(e.getKey(), StandardCharsets.UTF_8),
-					ResourceTreeUtils.generateModelHash(e.getValue(), hashFn))))
-			.collect(Collectors.toList());
-		
-		if(ctxModelHashes.isEmpty()) {
-			ctxModelHashes.add(hashFn.hashInt(0));
-		}
-
-		HashCode ctxModelsHash = Hashing.combineUnordered(ctxModelHashes);
-
-		HashCode completeHash = Hashing.combineOrdered(Arrays.asList(
-				subOpHash,
-				inputRecordHash,
-				ctxModelsHash,
-				dataRefHash));
+		HashCode completeHash = computeOpHash(op, taskContext);
 
 		String hashStr = completeHash.toString();
 		
@@ -315,6 +276,50 @@ public class OpExecutorDefault
 		
 
 		return result;
+	}
+
+	public static HashCode computeOpHash(OpPersist op, TaskContext taskContext) {
+		HashFunction hashFn = Hashing.sha256();
+		
+		// The sup without operators that do not modify the result
+		Op semanticSubOp = OpUtils.stripCache(op);
+		HashCode subOpHash = ResourceTreeUtils.createGenericHash2(semanticSubOp);
+
+		// Hash the task context
+		// HashCode taskcon
+		HashCode inputRecordHash = ResourceTreeUtils.createGenericHash2(taskContext.getInputRecord());
+
+		List<HashCode> dataRefHashes = taskContext.getDataRefMapping().entrySet().stream().map(e ->
+				Hashing.combineOrdered(Arrays.asList(
+					Hashing.sha256().hashString(e.getKey(), StandardCharsets.UTF_8),
+					ResourceTreeUtils.createGenericHash2(e.getValue()))))
+			.collect(Collectors.toList());
+		
+		if(dataRefHashes.isEmpty()) {
+			dataRefHashes.add(hashFn.hashInt(0));
+		}
+		
+		// Hash the data refs
+		HashCode dataRefHash = Hashing.combineUnordered(dataRefHashes);
+
+		List<HashCode> ctxModelHashes = taskContext.getCtxModels().entrySet().stream().map(e ->
+				Hashing.combineOrdered(Arrays.asList(
+					hashFn.hashString(e.getKey(), StandardCharsets.UTF_8),
+					ResourceTreeUtils.generateModelHash(e.getValue(), hashFn))))
+			.collect(Collectors.toList());
+		
+		if(ctxModelHashes.isEmpty()) {
+			ctxModelHashes.add(hashFn.hashInt(0));
+		}
+
+		HashCode ctxModelsHash = Hashing.combineUnordered(ctxModelHashes);
+
+		HashCode completeHash = Hashing.combineOrdered(Arrays.asList(
+				subOpHash,
+				inputRecordHash,
+				ctxModelsHash,
+				dataRefHash));
+		return completeHash;
 	}
 
 	@Override

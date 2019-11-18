@@ -2,29 +2,37 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>jena-sparql-api-dcat</artifactId>
+    <artifactId>jena-sparql-api-dcat-api</artifactId>
     <packaging>jar</packaging>
 
     <name>Jena SPARQL API - DCAT</name>
 
     <parent>
         <groupId>org.aksw.jena-sparql-api</groupId>
-        <artifactId>jena-sparql-api-parent</artifactId>
+        <artifactId>jena-sparql-api-dcat-parent</artifactId>
         <version>3.12.0-2-SNAPSHOT</version>
     </parent>
 
     <dependencies>
+<!--         <dependency> -->
+<!--             <groupId>org.aksw.jena-sparql-api</groupId> -->
+<!--             <artifactId>jena-sparql-api-mapper-annotations</artifactId> -->
+<!--         </dependency> -->
+
+<!--         <dependency> -->
+<!--             <groupId>org.apache.jena</groupId> -->
+<!--             <artifactId>jena-arq</artifactId> -->
+<!--         </dependency> -->
+
         <dependency>
             <groupId>org.aksw.jena-sparql-api</groupId>
-            <artifactId>jena-sparql-api-mapper-annotations</artifactId>
+            <artifactId>jena-sparql-api-collections</artifactId>
         </dependency>
 
-<!--
         <dependency>
             <groupId>org.aksw.jena-sparql-api</groupId>
             <artifactId>jena-sparql-api-utils</artifactId>
         </dependency>
--->
 
         <!-- Unit Testing -->
         <dependency>
