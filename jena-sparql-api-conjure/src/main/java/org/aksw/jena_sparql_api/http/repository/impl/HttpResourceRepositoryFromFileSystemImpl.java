@@ -551,6 +551,13 @@ public class HttpResourceRepositoryFromFileSystemImpl
 	}
 	
 	
+	/**
+	 * Compute a hash (sha256) for the content at path tmp and associate it with the given
+	 * entity. If tmp is null, use the content of the entity.
+	 * 
+	 * @param rdfEntity
+	 * @param tmp
+	 */
 	public static void computeHashForEntity(RdfHttpEntityFile rdfEntity, Path tmp) {
 		Path targetPath = rdfEntity.getAbsolutePath();
 

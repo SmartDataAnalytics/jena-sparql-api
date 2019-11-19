@@ -19,6 +19,7 @@ import org.apache.http.message.BasicHeader;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFLanguages;
+import org.apache.jena.sys.JenaSystem;
 
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;

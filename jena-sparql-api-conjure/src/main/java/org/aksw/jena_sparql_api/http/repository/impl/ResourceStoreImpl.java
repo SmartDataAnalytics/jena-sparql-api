@@ -160,14 +160,13 @@ public class ResourceStoreImpl
 		
 		RdfHttpEntityFile entity;
 		Model model;
-		
+
 		HttpUriRequest baseRequest =
 				RequestBuilder.get(uri)
 				.setHeader(HttpHeaders.ACCEPT, "application/n-triples")
 				.setHeader(HttpHeaders.ACCEPT_ENCODING, "identity,bzip2,gzip")
 				.build();
 
-		
 		HttpRequest effectiveRequest = HttpResourceRepositoryFromFileSystemImpl.expandHttpRequest(baseRequest);
 		logger.info("Expanded HTTP Request: " + effectiveRequest);
 		try {
@@ -177,9 +176,12 @@ public class ResourceStoreImpl
 		}
 		
 		if(entity != null) {
+			logger.info("Serving " + uri + " from cache");
 			String absPath = entity.getAbsolutePath().toString();
 			model = RDFDataMgr.loadModel(absPath);
 		} else {
+			logger.info("Serving" + uri + " from computation and adding to cache");
+
 			//RDFLanguages.fi
 			RDFFormat effectiveOutFormat;
 			String fileExt = Iterables.getFirst(preferredOutFormat.getLang().getFileExtensions(), null);
@@ -200,9 +202,9 @@ public class ResourceStoreImpl
 			}
 
 			RdfEntityInfo entityInfo = ModelFactory.createDefaultModel().createResource().as(RdfEntityInfo.class)
-					.setContentType(effectiveOutFormat.getLang().getContentType().toString());
+					.setContentType(effectiveOutFormat.getLang().getContentType().getContentType());
 			entity = store.putWithMove(uri, entityInfo, tmpFile);
-			//HttpResourceRepositoryFromFileSystemImpl.computeHashForEntity(ent, null);			
+			HttpResourceRepositoryFromFileSystemImpl.computeHashForEntity(entity, null);			
 		}
 
 		return Maps.immutableEntry(entity, model);
