@@ -171,7 +171,7 @@ public class OpExecutorDefault
 					model.add(contrib);
 				}
 
-				result = DataPods.fromModel(model);				
+				result = DataPods.fromModel(model);
 			}
 		} catch (Exception e) {
 			throw new RuntimeException(e);
@@ -357,13 +357,7 @@ public class OpExecutorDefault
 			
 			try(RDFConnection conn = result.openConnection()) {
 				Model contribModel = conn.queryConstruct("CONSTRUCT WHERE { ?s ?p ?o } LIMIT 1");
-				if(contribModel.isEmpty()) {
-					try {
-						result.close();
-					} catch (Exception e) {
-						throw new RuntimeException(e);
-					}
-				} else {
+				if(!contribModel.isEmpty()) {
 					break;
 				}
 			}

@@ -26,7 +26,6 @@ import org.aksw.jena_sparql_api.conjure.traversal.engine.FunctionAssembler;
 import org.aksw.jena_sparql_api.http.repository.api.HttpResourceRepositoryFromFileSystem;
 import org.aksw.jena_sparql_api.http.repository.api.ResourceStore;
 import org.aksw.jena_sparql_api.http.repository.impl.ResourceStoreImpl;
-import org.aksw.jena_sparql_api.http.repository.api.ResourceStore;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -34,7 +33,6 @@ import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
-import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.sparql.core.Var;
@@ -45,6 +43,7 @@ import org.apache.jena.vocabulary.RDF;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.github.jsonldjava.shaded.com.google.common.collect.Maps;
 import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Multimap;
 
@@ -98,15 +97,23 @@ public class ExecutionUtils {
 
 			// Check the cache store for whether it contains an entry
 			try {
-				ResourceStoreImpl.requestModel(repo, cacheStore, completeId, RDFFormat.TURTLE_PRETTY,		
-						() -> computeModel(job, repo, taskContext, inputRecord));
+				Model model = ResourceStoreImpl.requestModel(repo, cacheStore, completeId, RDFFormat.TURTLE_PRETTY,		
+						() -> {
+							RdfDataPod tmp = computeModel(job, repo, taskContext, inputRecord).getValue();							
+							Model r = tmp.getModel();
+							return r;
+						});
+				
+				System.out.println("BEGIN OUTPUT");
+				RDFDataMgr.write(System.out, model, RDFFormat.TURTLE_PRETTY);
+				System.out.println("END OUTPUT");
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}		
 		}
 	}
 
-	private static Model computeModel(Job job, HttpResourceRepositoryFromFileSystem repo, TaskContext taskContext,
+	private static Entry<Model, RdfDataPod> computeModel(Job job, HttpResourceRepositoryFromFileSystem repo, TaskContext taskContext,
 			Resource inputRecord) {
 		RDFNode jobContext = ModelFactory.createDefaultModel().createResource();
 
@@ -196,16 +203,18 @@ public class ExecutionUtils {
 		logger.info("Conjure spec is:");
 		RDFDataMgr.write(System.err, effectiveWorkflow.getModel(), RDFFormat.TURTLE_PRETTY);
 		
-		try(RdfDataPod resultDataPod = effectiveWorkflow.accept(executor)) {
-			try(RDFConnection conn = resultDataPod.openConnection()) {
-				// Print out the data that is the process result
-				Model rmodel = conn.queryConstruct("CONSTRUCT WHERE { ?s ?p ?o }");
-				
-				RDFDataMgr.write(System.out, rmodel, RDFFormat.TURTLE_PRETTY);
-			}
-		} catch(Exception e) {
-			logger.warn("Failed to process " + taskContext, e);
-		}
+		RdfDataPod resultDataPod = effectiveWorkflow.accept(executor);
+//		try() {
+//			Model rmodel = resultDataPod.getModel();
+////			try(RDFConnection conn = resultDataPod.openConnection()) {
+////				// Print out the data that is the process result
+////				Model rmodel = conn.queryConstruct("CONSTRUCT WHERE { ?s ?p ?o }");
+////				
+//				RDFDataMgr.write(System.out, rmodel, RDFFormat.TURTLE_PRETTY);
+////			}
+//		} catch(Exception e) {
+//			logger.warn("Failed to process " + taskContext, e);
+//		}
 		
 		Model resultModel = ModelFactory.createDefaultModel();
 		Resource inputRecordX = inputRecord.inModel(resultModel.add(inputRecord.getModel()));
@@ -234,7 +243,7 @@ public class ExecutionUtils {
 			.addProperty(prov("wasGeneratedBy"), activity);
 		
 		
-		return resultDcat.getModel();
+		return Maps.immutableEntry(resultDcat.getModel(), resultDataPod);
 		
 		//RDFDataMgr.write(System.out, resultDcat.getModel(), RDFFormat.TURTLE_PRETTY);
 		// TODO Create the output DCAT record:

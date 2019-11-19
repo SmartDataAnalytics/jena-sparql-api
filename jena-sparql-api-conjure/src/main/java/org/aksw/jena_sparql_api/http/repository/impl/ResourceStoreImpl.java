@@ -174,7 +174,7 @@ public class ResourceStoreImpl
 		} catch (IOException e1) {
 			throw new RuntimeException(e1);
 		}
-		
+
 		if(entity != null) {
 			logger.info("Serving " + uri + " from cache");
 			String absPath = entity.getAbsolutePath().toString();

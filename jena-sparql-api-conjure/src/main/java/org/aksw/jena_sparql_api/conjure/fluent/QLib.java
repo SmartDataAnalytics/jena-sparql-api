@@ -8,7 +8,7 @@ package org.aksw.jena_sparql_api.conjure.fluent;
  */
 public class QLib {
 	public static String tripleCount() {
-		return "CONSTRUCT { [] <http://rdfs.org/ns/void#triples> ?o }"
+		return "CONSTRUCT { [] <http://rdfs.org/ns/void#triples> ?c }"
 				+ "{ { SELECT (COUNT(*) AS ?c) { ?s ?p ?o } } }";
 	}
 
