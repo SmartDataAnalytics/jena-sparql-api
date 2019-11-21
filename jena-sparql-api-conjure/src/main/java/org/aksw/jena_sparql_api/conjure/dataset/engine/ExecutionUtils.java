@@ -104,15 +104,31 @@ public class ExecutionUtils {
 							return r;
 						});
 				
-				System.out.println("BEGIN OUTPUT");
+//				System.out.println("BEGIN OUTPUT");
 				RDFDataMgr.write(System.out, model, RDFFormat.TURTLE_PRETTY);
-				System.out.println("END OUTPUT");
+//				System.out.println("END OUTPUT");
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}		
 		}
 	}
 
+	/**
+	 * TODO The result of this computation are two datasets:
+	 * The result dataset and its dcat record dataset. How to chache that?
+	 * - Cache both - if so: What to use as the id of the metadata? Maybe $classifier$ + -meta?
+	 * - Cache only the result dataset
+	 * - 
+	 * 
+	 * 
+	 * 
+	 * 
+	 * @param job
+	 * @param repo
+	 * @param taskContext
+	 * @param inputRecord
+	 * @return
+	 */
 	private static Entry<Model, RdfDataPod> computeModel(Job job, HttpResourceRepositoryFromFileSystem repo, TaskContext taskContext,
 			Resource inputRecord) {
 		RDFNode jobContext = ModelFactory.createDefaultModel().createResource();
@@ -216,6 +232,8 @@ public class ExecutionUtils {
 //			logger.warn("Failed to process " + taskContext, e);
 //		}
 		
+
+
 		Model resultModel = ModelFactory.createDefaultModel();
 		Resource inputRecordX = inputRecord.inModel(resultModel.add(inputRecord.getModel()));
 		

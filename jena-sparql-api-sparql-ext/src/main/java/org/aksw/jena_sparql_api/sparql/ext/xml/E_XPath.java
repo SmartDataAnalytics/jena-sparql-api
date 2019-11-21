@@ -9,6 +9,7 @@ import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.function.FunctionBase2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 
 /**
@@ -44,6 +45,14 @@ public class E_XPath
         Object obj = nv.asNode().getLiteralValue();
     	if(obj instanceof Node) {
 	    	Node xml = (Node)obj;
+	    	// If 'xml' is a Document with a single node, use the node as the context for the xpath evaluation
+	    	// Reason: Nodes matched by xml:unnest will be wrapped into new (invisible) XML documents
+	    	// We would expect to be able to run xpath expressions directly on the
+	    	// result nodes of the unnesting - without having to consider the invisible document root node 
+	    	if(xml instanceof Document && xml.getChildNodes().getLength() == 1) {
+	    		xml = xml.getFirstChild();
+	    	}
+	    	
 	    	//System.out.println(XmlUtils.toString(xml));
 
 	        if(query.isString() && xml != null) {
@@ -52,7 +61,7 @@ public class E_XPath
 	            try {
 	            	XPathExpression expr = xPath.compile(queryStr);
 	            	Object tmp = expr.evaluate(xml, XPathConstants.STRING);
-	            	
+
 //	            	if(tmp instanceof NodeList) {
 //	            		NodeList nodes = (NodeList)tmp;
 //	            		for(int i = 0; i < nodes.getLength(); ++i) {
