@@ -10,6 +10,7 @@ import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -196,6 +197,8 @@ public class SparqlStmtUtils {
 			throws FileNotFoundException, IOException, ParseException {
 		
 		InputStream in = openInputStream(filenameOrURI);
+		Objects.requireNonNull(in, "Could not open input stream from " + filenameOrURI);
+
         if(baseIri == null) {
         	URI tmp = extractBaseIri(filenameOrURI);
 	        baseIri = tmp.toString();

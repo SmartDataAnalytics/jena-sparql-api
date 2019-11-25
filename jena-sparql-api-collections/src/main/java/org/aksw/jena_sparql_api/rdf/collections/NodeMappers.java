@@ -9,9 +9,7 @@ import org.apache.jena.graph.NodeFactory;
 public class NodeMappers {
 	public static final NodeMapper<Node> PASSTHROUGH = new NodeMapperPassthrough();
 
-	
 	public static final NodeMapper<String> string = NodeMappers.from(String.class);
-	
 	
 	public static final NodeMapper<String> DEFAULT_URI_OR_STRING = new NodeMapperUriOrString(
 			str -> str.startsWith("file:") || UrlValidator.getInstance().isValid(str)); // || EmailValidator.getInstance().isValid(str));

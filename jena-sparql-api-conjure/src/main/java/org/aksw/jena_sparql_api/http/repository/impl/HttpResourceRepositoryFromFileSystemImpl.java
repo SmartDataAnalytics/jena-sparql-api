@@ -688,10 +688,15 @@ public class HttpResourceRepositoryFromFileSystemImpl
 		//throw new RuntimeException("not implemented yet");
 		return Maps.immutableEntry(myRequest, response);
 	}
-	
-	public static HttpResourceRepositoryFromFileSystemImpl createDefault() throws IOException {
+
+	public static Path getDefaultPath() {
 		String homeDir = StandardSystemProperty.USER_HOME.value();
-		Path root = Paths.get(homeDir).resolve(".dcat/repository");
+		Path result = Paths.get(homeDir).resolve(".dcat/repository");
+
+		return result;
+	}
+	public static HttpResourceRepositoryFromFileSystemImpl createDefault() throws IOException {
+		Path root = getDefaultPath();
 		Files.createDirectories(root);
 
 		HttpResourceRepositoryFromFileSystemImpl result = create(root);

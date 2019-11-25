@@ -162,9 +162,9 @@ public class ExecutionUtils {
 				dists.add(dist);
 				dist.setDownloadURL(dataEntry.getKey().getAbsolutePath().toUri().toString());
 	
-				System.out.println("BEGIN OUTPUT");
-				RDFDataMgr.write(System.out, dcatDataset.getModel(), RDFFormat.TURTLE_PRETTY);
-				System.out.println("END OUTPUT");
+//				System.out.println("BEGIN OUTPUT");
+//				RDFDataMgr.write(System.out, dcatDataset.getModel(), RDFFormat.TURTLE_PRETTY);
+//				System.out.println("END OUTPUT");
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}
