@@ -251,7 +251,7 @@ public class OpExecutorDefault
 			try(RdfDataPod pod = subOp.accept(this)) {
 				Model m;
 				try {
-					m = ResourceStoreImpl.requestModel(repo, hashStore, hashStr, RDFFormat.TURTLE_PRETTY, () -> pod.getModel());
+					m = ResourceStoreImpl.requestModel(repo, hashStore, hashStr, RDFFormat.TURTLE_PRETTY, () -> pod.getModel()).getValue();
 				} catch (IOException e) {
 					throw new RuntimeException(e);
 				}

@@ -45,5 +45,13 @@ public class RdfHttpResourceFileImpl
 		RdfHttpEntityFile result = getResourceStore().allocateEntity(path, description);
 		return result;
 	}
+
+	@Override
+	public RdfHttpResourceFile resolve(String path) {
+		Path targetPath = getRelativePath().resolve(path);
+		RdfHttpResourceFile result = new RdfHttpResourceFileImpl(manager, targetPath);
+		return result;
+		//getResourceStore().getResource(uri)
+	}
 	
 }

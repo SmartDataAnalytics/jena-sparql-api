@@ -13,6 +13,8 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.aksw.dcat.jena.domain.api.DcatDataset;
+import org.aksw.dcat.jena.domain.api.DcatDistribution;
 import org.aksw.dcat.jena.domain.api.MvnEntity;
 import org.aksw.jena_sparql_api.conjure.algebra.common.ResourceTreeUtils;
 import org.aksw.jena_sparql_api.conjure.datapod.api.RdfDataPod;
@@ -24,6 +26,7 @@ import org.aksw.jena_sparql_api.conjure.job.api.JobBinding;
 import org.aksw.jena_sparql_api.conjure.traversal.api.OpTraversal;
 import org.aksw.jena_sparql_api.conjure.traversal.engine.FunctionAssembler;
 import org.aksw.jena_sparql_api.http.repository.api.HttpResourceRepositoryFromFileSystem;
+import org.aksw.jena_sparql_api.http.repository.api.RdfHttpEntityFile;
 import org.aksw.jena_sparql_api.http.repository.api.ResourceStore;
 import org.aksw.jena_sparql_api.http.repository.impl.ResourceStoreImpl;
 import org.apache.jena.graph.Node;
@@ -43,9 +46,21 @@ import org.apache.jena.vocabulary.RDF;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.github.jsonldjava.shaded.com.google.common.collect.Maps;
 import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Multimap;
+
+interface ConjureCacheEntry {
+	RdfDataPod getDataPod();
+	Model getMetadata();
+	
+	
+	
+	// Model getDcatMetadata();
+
+	// 
+}
+
+
 
 public class ExecutionUtils {
 	private static final Logger logger = LoggerFactory.getLogger(ExecutionUtils.class);
@@ -74,11 +89,24 @@ public class ExecutionUtils {
 		return result;
 	}
 
-	public static void executeJob(
+	/**
+	 * Execute a job and return a dcat model of the result
+	 * 
+	 * @param job
+	 * @param taskContexts
+	 * @param repo
+	 * @param cacheStore
+	 * @return
+	 */
+	public static List<DcatDataset> executeJob(
 			Job job,
 			List<TaskContext> taskContexts,
 			HttpResourceRepositoryFromFileSystem repo,
 			ResourceStore cacheStore) {
+		
+		List<DcatDataset> result = new ArrayList<>();
+		Model resultModel = ModelFactory.createDefaultModel();
+		
 		Op jobOp = job.getOp();
 	    Op semanticJobOp = OpUtils.stripCache(jobOp);
 	    String jobId = ResourceTreeUtils.createGenericHash(semanticJobOp);
@@ -95,22 +123,54 @@ public class ExecutionUtils {
 
 			logger.info("Processing: " + inputRecord + " with complete id " + completeId);
 
-			// Check the cache store for whether it contains an entry
+			
+			// For the ID, there are these artifacts:
+			// ID/data - the actual data
+			// ID/dcat - dcat metadata
+			// ID/exectx - execution context
+
+//			RdfHttpEntityFile dataEntity = ResourceStoreImpl.getOrCacheEntity(repo, store, uri, serializer, contentSupplier);
+//			if(dataEntity == null) {
+//				Entry<Model, RdfDataPod> e = executeJob(job, repo, taskContext, inputRecord);
+//	
+//			}
 			try {
-				Model model = ResourceStoreImpl.requestModel(repo, cacheStore, completeId, RDFFormat.TURTLE_PRETTY,		
+	
+				Entry<RdfHttpEntityFile, Model> dataEntry = ResourceStoreImpl.requestModel(repo, cacheStore, completeId + "/data", RDFFormat.TURTLE_PRETTY,		
 						() -> {
-							RdfDataPod tmp = computeModel(job, repo, taskContext, inputRecord).getValue();							
+							RdfDataPod tmp = executeJob(job, repo, taskContext, inputRecord);							
 							Model r = tmp.getModel();
 							return r;
 						});
+	
+				Model provModel = ResourceStoreImpl.requestModel(repo, cacheStore, completeId + "/dcat", RDFFormat.TURTLE_PRETTY,		
+						() -> {
+							Model r = createProvenanceData(job, inputRecord).getModel();
+							//RdfDataPod tmp = executeJob(job, repo, taskContext, inputRecord);							
+							return r;
+						}).getValue();
+	
+				resultModel.add(provModel);
+				DcatDataset dcatDataset = provModel.listSubjectsWithProperty(RDF.type, DCAT.Dataset).toList()
+						.get(0)
+						.inModel(resultModel)
+						.as(DcatDataset.class);
+				result.add(dcatDataset);
 				
-//				System.out.println("BEGIN OUTPUT");
-				RDFDataMgr.write(System.out, model, RDFFormat.TURTLE_PRETTY);
-//				System.out.println("END OUTPUT");
+				Collection<DcatDistribution> dists = dcatDataset.getDistributions(DcatDistribution.class);
+				DcatDistribution dist = resultModel.createResource().as(DcatDistribution.class);
+				dists.add(dist);
+				dist.setDownloadURL(dataEntry.getKey().getAbsolutePath().toUri().toString());
+	
+				System.out.println("BEGIN OUTPUT");
+				RDFDataMgr.write(System.out, dcatDataset.getModel(), RDFFormat.TURTLE_PRETTY);
+				System.out.println("END OUTPUT");
 			} catch (IOException e) {
 				throw new RuntimeException(e);
-			}		
+			}
 		}
+		
+		return result;
 	}
 
 	/**
@@ -129,19 +189,18 @@ public class ExecutionUtils {
 	 * @param inputRecord
 	 * @return
 	 */
-	private static Entry<Model, RdfDataPod> computeModel(Job job, HttpResourceRepositoryFromFileSystem repo, TaskContext taskContext,
+	private static RdfDataPod executeJob(Job job, HttpResourceRepositoryFromFileSystem repo, TaskContext taskContext,
 			Resource inputRecord) {
 		RDFNode jobContext = ModelFactory.createDefaultModel().createResource();
 
-
 		Set<String> mentionedVars = OpUtils.mentionedVarNames(job.getOp());
-		System.out.println("Mentioned vars: " + mentionedVars);
+		logger.debug("Mentioned vars: " + mentionedVars);
 		
 		Map<String, DataRef> dataRefMapping = taskContext.getDataRefMapping();
 		// Get the subset of mentioned vars for which no entry in the task context
 		// exists
 		// If there is just a single dataref and one unbound var
-		// auto-bind them
+		// auto-bind them to the input calatog record resource
 		Set<String> unmatchedVars = new HashSet<>(mentionedVars);
 		unmatchedVars.removeAll(taskContext.getDataRefMapping().keySet());
 		
@@ -152,6 +211,7 @@ public class ExecutionUtils {
 			if(dataRefMapping.size() == 1) {
 				DataRef entry = dataRefMapping.values().iterator().next();
 				dataRefMapping.put(unmatchedVarName, entry);
+				logger.info("Autobind of " + unmatchedVarName + " to " + entry);
 			} else {
 				throw new RuntimeException("Could not auto-bind var " + unmatchedVarName);
 			}
@@ -232,15 +292,35 @@ public class ExecutionUtils {
 //			logger.warn("Failed to process " + taskContext, e);
 //		}
 		
+		return resultDataPod;
+		//return Maps.immutableEntry(resultDcat.getModel(), resultDataPod);
 
 
+//		Resource resultDcat = createProvenanceData(job, inputRecord);
+//		
+//		
+//		return Maps.immutableEntry(resultDcat.getModel(), resultDataPod);
+		
+		//RDFDataMgr.write(System.out, resultDcat.getModel(), RDFFormat.TURTLE_PRETTY);
+		// TODO Create the output DCAT record:
+		// d' wasDerivedFrom d
+		// d' wasGeneratedBy activity
+		// activity prov:used d ; startedAtTime ; endedAtTime
+//			   prov:qualifiedUsage [
+//			                        a prov:Usage;
+//			                        prov:entity  :process;
+//			                        prov:hadRole :processSpec;          
+//			                     ];
+		// 
+		// 
+	}
+
+	private static Resource createProvenanceData(Job job, Resource inputRecord) {
 		Model resultModel = ModelFactory.createDefaultModel();
 		Resource inputRecordX = inputRecord.inModel(resultModel.add(inputRecord.getModel()));
 		
 		// TODO We only need to output the job model once if it was the same for every task
 		Resource jobX = job.inModel(resultModel.add(job.getModel()));
-		
-		
 		
 		Resource resultDcat = resultModel.createResource()
 			.addProperty(RDF.type, prov("Entity"))
@@ -259,22 +339,7 @@ public class ExecutionUtils {
 
 		resultDcat
 			.addProperty(prov("wasGeneratedBy"), activity);
-		
-		
-		return Maps.immutableEntry(resultDcat.getModel(), resultDataPod);
-		
-		//RDFDataMgr.write(System.out, resultDcat.getModel(), RDFFormat.TURTLE_PRETTY);
-		// TODO Create the output DCAT record:
-		// d' wasDerivedFrom d
-		// d' wasGeneratedBy activity
-		// activity prov:used d ; startedAtTime ; endedAtTime
-//			   prov:qualifiedUsage [
-//			                        a prov:Usage;
-//			                        prov:entity  :process;
-//			                        prov:hadRole :processSpec;          
-//			                     ];
-		// 
-		// 
+		return resultDcat;
 	}
 	
 	public static Property prov(String name) {

@@ -11,7 +11,11 @@ import org.aksw.jena_sparql_api.http.domain.api.RdfEntityInfo;
 import org.apache.jena.rdf.model.Resource;
 
 public interface ResourceStore {
-	
+
+	// TODO Maybe add here or on a sub-interface
+	// facilities for post-entity-creation; i.e. put trigger that can compute checksums
+	// on entities
+
 	public static String readHash(RdfHttpEntityFile entity, String hashName) {
 		RdfEntityInfo info = entity.getCombinedInfo().as(RdfEntityInfo.class);
 		Checksum hashInfo = info.getHash(hashName);

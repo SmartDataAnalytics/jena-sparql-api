@@ -14,7 +14,7 @@ public class NodeMappers {
 	
 	
 	public static final NodeMapper<String> DEFAULT_URI_OR_STRING = new NodeMapperUriOrString(
-			str -> UrlValidator.getInstance().isValid(str)); // || EmailValidator.getInstance().isValid(str));
+			str -> str.startsWith("file:") || UrlValidator.getInstance().isValid(str)); // || EmailValidator.getInstance().isValid(str));
 	
 	public static final NodeMapper<String> uriString = new NodeMapperDelegating<>(String.class,
 			Node::isURI, NodeFactory::createURI, Node::getURI); 

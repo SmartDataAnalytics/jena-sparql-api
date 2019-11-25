@@ -16,6 +16,8 @@ public class TaskContext {
 	// TODO Clarify whether we need the input record as a resource or rather as a model
 	// in ctxDatasets
 	protected Resource inputRecord;
+	
+	// TODO Consider using a resource to back the map
 	protected Map<String, DataRef> dataRefMapping;
 	
 	/**
