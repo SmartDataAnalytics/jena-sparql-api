@@ -2,6 +2,7 @@ package org.aksw.jena_sparql_api.rx;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -41,12 +42,18 @@ public class RDFDataMgrEx {
 	 * @param filenameOrURI
 	 */
 	public static void execSparql(Model model, String filenameOrURI) {
-		execSparql(model, filenameOrURI, null);
+		execSparql(model, filenameOrURI, (Function<String, String>)null);
 	}
 
 	public static void execSparql(Model model, String filenameOrURI, Function<String, String> envLookup) {
 		try(RDFConnection conn = RDFConnectionFactory.connect(DatasetFactory.wrap(model))) {
 			execSparql(conn, filenameOrURI, envLookup);
+		}
+	}
+
+	public static void execSparql(Model model, String filenameOrURI, Map<String, String> envMap) {
+		try(RDFConnection conn = RDFConnectionFactory.connect(DatasetFactory.wrap(model))) {
+			execSparql(conn, filenameOrURI, envMap == null ? null : envMap::get);
 		}
 	}
 

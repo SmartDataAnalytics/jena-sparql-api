@@ -212,6 +212,13 @@ public class SparqlStmtUtils {
 //			baseIri = parent.toString();
         }
 
+		return extracted(pm, baseIri, in);
+		//stmts.forEach(stmt -> process(conn, stmt, sink));
+	}
+
+	private static SparqlStmtIterator extracted(PrefixMapping pm, String baseIri, InputStream in)
+			throws IOException, ParseException {
+
 //		File file = new File(filename).getAbsoluteFile();
 //		if(!file.exists()) {
 //			throw new FileNotFoundException(file.getAbsolutePath() + " does not exist");
@@ -253,7 +260,6 @@ public class SparqlStmtUtils {
 		SparqlStmtIterator stmts = SparqlStmtUtils.parse(in, sparqlStmtParser);
 
 		return stmts;
-		//stmts.forEach(stmt -> process(conn, stmt, sink));
 	}
 
 
