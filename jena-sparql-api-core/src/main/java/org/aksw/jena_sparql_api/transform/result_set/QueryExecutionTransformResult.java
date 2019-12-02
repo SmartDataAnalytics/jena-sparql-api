@@ -25,9 +25,9 @@ import org.apache.jena.query.ResultSetFactory;
 import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.DatasetGraphFactory;
-import org.apache.jena.sparql.core.Substitute;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.engine.binding.BindingFactory;
@@ -108,6 +108,17 @@ public class QueryExecutionTransformResult
 		Graph result = GraphFactory.createDefaultGraph();
 		graph.find().mapWith(t -> NodeTransformLib.transform(nodeTransform, t))
 			.forEachRemaining(result::add);
+		return result;
+	}
+
+	public static RDFNode applyNodeTransform(NodeTransform nodeTransform, RDFNode rdfNode) {
+		Model beforeModel = rdfNode.getModel();
+		Model afterModel = applyNodeTransform(nodeTransform, beforeModel);
+		Node beforeNode = rdfNode.asNode();
+		Node tmp = nodeTransform.apply(beforeNode);
+		Node afterNode = tmp == null ? beforeNode : tmp;
+		RDFNode result = afterModel.asRDFNode(afterNode);
+		
 		return result;
 	}
 

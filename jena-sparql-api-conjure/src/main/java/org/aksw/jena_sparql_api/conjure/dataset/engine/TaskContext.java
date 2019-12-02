@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api.conjure.dataset.engine;
 
+import java.io.Serializable;
 import java.util.Map;
 
 import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.DataRef;
@@ -12,7 +13,14 @@ import org.apache.jena.rdf.model.Resource;
  * @author raven
  *
  */
-public class TaskContext {
+public class TaskContext
+	implements Serializable
+{
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
 	// TODO Clarify whether we need the input record as a resource or rather as a model
 	// in ctxDatasets
 	protected Resource inputRecord;

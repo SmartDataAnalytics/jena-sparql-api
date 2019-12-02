@@ -4,6 +4,7 @@ import org.aksw.dcat.jena.domain.api.DcatEntity;
 import org.aksw.jena_sparql_api.rdf.collections.ResourceUtils;
 import org.apache.jena.enhanced.EnhGraph;
 import org.apache.jena.graph.Node;
+import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.impl.ResourceImpl;
 import org.apache.jena.vocabulary.DCTerms;
 
@@ -15,6 +16,11 @@ public class DcatEntityImpl
 		super(node, graph);
 	}
 	
+	
+	@Override
+	public Resource asResource() {
+		return new ResourceImpl(this.node, this.enhGraph);
+	}
 //	@Override
 //	public String getCkanId() {
 //		String result = ResourceUtils.getLiteralValue(this, DCTerms.identifier, Literal::getString).orElse(null);
