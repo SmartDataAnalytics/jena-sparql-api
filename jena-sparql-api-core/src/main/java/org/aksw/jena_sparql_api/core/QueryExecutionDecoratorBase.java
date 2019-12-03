@@ -13,6 +13,7 @@ import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.sparql.core.Quad;
+import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.util.Context;
 
 
@@ -55,6 +56,11 @@ public class QueryExecutionDecoratorBase<T extends QueryExecution>
 
     @Override
     public void setInitialBinding(QuerySolution binding) {
+        decoratee.setInitialBinding(binding);
+    }
+
+    @Override
+    public void setInitialBinding(Binding binding) {
         decoratee.setInitialBinding(binding);
     }
 

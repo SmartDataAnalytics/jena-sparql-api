@@ -106,8 +106,13 @@ public class QueryExecutionCompare
      */
     @Override
     public void setInitialBinding(QuerySolution binding) {
-        //To change body of implemented methods use File | Settings | File Templates.
+    	throw new RuntimeException("not implemented");
     }
+
+	@Override
+	public void setInitialBinding(Binding binding) {
+    	throw new RuntimeException("not implemented");
+	}
 
     /**
      * The dataset against which the query will execute.
@@ -485,6 +490,7 @@ public class QueryExecutionCompare
 	public Iterator<JsonObject> execJsonItems() {
         throw new RuntimeException("Not implemented yet");
 	}
+
 
     /*
     @Override

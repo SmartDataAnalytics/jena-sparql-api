@@ -1,25 +1,31 @@
 package org.aksw.jena_sparql_api.retry.core;
 
+import java.util.Iterator;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
+
+import org.aksw.jena_sparql_api.core.QueryExecutionDecorator;
+import org.apache.jena.atlas.json.JsonArray;
+import org.apache.jena.atlas.json.JsonObject;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.query.Dataset;
+import org.apache.jena.query.Query;
+import org.apache.jena.query.QueryExecution;
+import org.apache.jena.query.QuerySolution;
+import org.apache.jena.query.ResultSet;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.sparql.core.Quad;
+import org.apache.jena.sparql.engine.binding.Binding;
+import org.apache.jena.sparql.util.Context;
+
 import com.google.common.util.concurrent.ListenableFuture;
 import com.nurkiewicz.asyncretry.AsyncRetryExecutor;
 import com.nurkiewicz.asyncretry.RetryExecutor;
 import com.nurkiewicz.asyncretry.backoff.Backoff;
 import com.nurkiewicz.asyncretry.policy.AbortRetryException;
 import com.nurkiewicz.asyncretry.policy.RetryPolicy;
-import org.aksw.jena_sparql_api.core.QueryExecutionDecorator;
-import org.apache.jena.atlas.json.JsonArray;
-import org.apache.jena.atlas.json.JsonObject;
-import org.apache.jena.graph.Triple;
-import org.apache.jena.query.*;
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.sparql.core.Quad;
-import org.apache.jena.sparql.util.Context;
-
-import java.util.Iterator;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Supplier;
 
 public class QueryExecutionRetry
 	extends QueryExecutionDecorator
@@ -153,6 +159,12 @@ public class QueryExecutionRetry
 		@Override
 		public void setInitialBinding(QuerySolution querySolution) {
 			this.initialBinding = querySolution;
+		}
+
+		@Override
+		public void setInitialBinding(Binding binding) {
+			throw new RuntimeException("not implemented");
+			//this.initialBinding = QuerySolution. binding;
 		}
 
 		public QuerySolution getInitialBinding() {

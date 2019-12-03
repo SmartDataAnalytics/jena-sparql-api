@@ -98,13 +98,14 @@ public class ExecutionUtils {
 	 * @param cacheStore
 	 * @return
 	 */
-	public static List<DcatDataset> executeJob(
+	public static DcatDataset executeJob(
 			Job job,
-			List<TaskContext> taskContexts,
+			TaskContext taskContext,
 			HttpResourceRepositoryFromFileSystem repo,
 			ResourceStore cacheStore) {
 		
-		List<DcatDataset> result = new ArrayList<>();
+		DcatDataset result;
+		//List<DcatDataset> result = new ArrayList<>();
 		Model resultModel = ModelFactory.createDefaultModel();
 		
 		Op jobOp = job.getOp();
@@ -112,62 +113,61 @@ public class ExecutionUtils {
 	    String jobId = ResourceTreeUtils.createGenericHash(semanticJobOp);
 
 		
-		for(TaskContext taskContext : taskContexts) {
+		//for(TaskContext taskContext : taskContexts) {
 
-			Resource inputRecord = taskContext.getInputRecord();
+		Resource inputRecord = taskContext.getInputRecord();
 
-			// Try to create a hash from the input record
-			String inputRecordId = deriveId(inputRecord);
+		// Try to create a hash from the input record
+		String inputRecordId = deriveId(inputRecord);
 
-			String completeId = inputRecordId + "/" + jobId;
+		String completeId = inputRecordId + "/" + jobId;
 
-			logger.info("Processing: " + inputRecord + " with complete id " + completeId);
+		logger.info("Processing: " + inputRecord + " with complete id " + completeId);
 
-			
-			// For the ID, there are these artifacts:
-			// ID/data - the actual data
-			// ID/dcat - dcat metadata
-			// ID/exectx - execution context
+		
+		// For the ID, there are these artifacts:
+		// ID/data - the actual data
+		// ID/dcat - dcat metadata
+		// ID/exectx - execution context
 
 //			RdfHttpEntityFile dataEntity = ResourceStoreImpl.getOrCacheEntity(repo, store, uri, serializer, contentSupplier);
 //			if(dataEntity == null) {
 //				Entry<Model, RdfDataPod> e = executeJob(job, repo, taskContext, inputRecord);
 //	
 //			}
-			try {
-	
-				Entry<RdfHttpEntityFile, Model> dataEntry = ResourceStoreImpl.requestModel(repo, cacheStore, completeId + "/data", RDFFormat.TURTLE_PRETTY,		
-						() -> {
-							RdfDataPod tmp = executeJob(job, repo, taskContext, inputRecord);							
-							Model r = tmp.getModel();
-							return r;
-						});
-	
-				Model provModel = ResourceStoreImpl.requestModel(repo, cacheStore, completeId + "/dcat", RDFFormat.TURTLE_PRETTY,		
-						() -> {
-							Model r = createProvenanceData(job, inputRecord).getModel();
-							//RdfDataPod tmp = executeJob(job, repo, taskContext, inputRecord);							
-							return r;
-						}).getValue();
-	
-				resultModel.add(provModel);
-				DcatDataset dcatDataset = provModel.listSubjectsWithProperty(RDF.type, DCAT.Dataset).toList()
-						.get(0)
-						.inModel(resultModel)
-						.as(DcatDataset.class);
-				result.add(dcatDataset);
-				
-				Collection<DcatDistribution> dists = dcatDataset.getDistributions(DcatDistribution.class);
-				DcatDistribution dist = resultModel.createResource().as(DcatDistribution.class);
-				dists.add(dist);
-				dist.setDownloadURL(dataEntry.getKey().getAbsolutePath().toUri().toString());
-	
+		try {
+
+			Entry<RdfHttpEntityFile, Model> dataEntry = ResourceStoreImpl.requestModel(repo, cacheStore, completeId + "/data", RDFFormat.TURTLE_PRETTY,		
+					() -> {
+						RdfDataPod tmp = executeJob(job, repo, taskContext, inputRecord);							
+						Model r = tmp.getModel();
+						return r;
+					});
+
+			Model provModel = ResourceStoreImpl.requestModel(repo, cacheStore, completeId + "/dcat", RDFFormat.TURTLE_PRETTY,		
+					() -> {
+						Model r = createProvenanceData(job, inputRecord).getModel();
+						//RdfDataPod tmp = executeJob(job, repo, taskContext, inputRecord);							
+						return r;
+					}).getValue();
+
+			resultModel.add(provModel);
+			result = provModel.listSubjectsWithProperty(RDF.type, DCAT.Dataset).toList()
+					.get(0)
+					.inModel(resultModel)
+					.as(DcatDataset.class);
+			//result.add(dcatDataset);
+			
+			Collection<DcatDistribution> dists = result.getDistributions(DcatDistribution.class);
+			DcatDistribution dist = resultModel.createResource().as(DcatDistribution.class);
+			dists.add(dist);
+			dist.setDownloadURL(dataEntry.getKey().getAbsolutePath().toUri().toString());
+
 //				System.out.println("BEGIN OUTPUT");
 //				RDFDataMgr.write(System.out, dcatDataset.getModel(), RDFFormat.TURTLE_PRETTY);
 //				System.out.println("END OUTPUT");
-			} catch (IOException e) {
-				throw new RuntimeException(e);
-			}
+		} catch (IOException e) {
+			throw new RuntimeException(e);
 		}
 		
 		return result;

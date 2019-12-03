@@ -403,8 +403,9 @@ public class MainConjurePlayground {
 		// Ready for workflow execution!
 
 //		logger.info("Retrieved " + inputRecords.size() + " contexts for processing " + inputRecords);
-		
-		ExecutionUtils.executeJob(job, taskContexts, repo, cacheStore);
+		for(TaskContext taskContext : taskContexts) {
+			ExecutionUtils.executeJob(job, taskContext, repo, cacheStore);
+		}
 
 	}
 	
