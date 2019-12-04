@@ -83,11 +83,13 @@ public class HDTHeaderGraph extends GraphBase {
 		}
 		ExtendedIterator<Triple> result = WrappedIterator.create(hdtIterator)
 			.mapWith(t -> {
+				String r;
 				try {
-					return t.asNtriple().toString();
+					r = t.asNtriple().toString();
 				} catch (IOException e) {
 					throw new RuntimeException(e);
 				}
+				return r;
 			})
 			.mapWith(NTripleUtils::parseNtripleString);
 		
