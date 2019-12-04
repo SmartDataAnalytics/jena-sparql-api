@@ -182,7 +182,7 @@ public class ResourceStoreImpl
 			logger.info("Serving" + uri + " from computation and adding to cache");
 
 			content = contentSupplier.get();
-			serializer.serialize(uri, store, content);
+			entity = serializer.serialize(uri, store, content);
 			//RDFLanguages.fi
 //			RDFFormat effectiveOutFormat;
 //			String fileExt = Iterables.getFirst(preferredOutFormat.getLang().getFileExtensions(), null);

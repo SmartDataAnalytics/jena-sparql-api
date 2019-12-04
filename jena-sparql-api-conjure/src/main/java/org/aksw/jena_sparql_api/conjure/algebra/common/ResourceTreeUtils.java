@@ -15,6 +15,10 @@ import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.conjure.entity.algebra.HashUtils;
 import org.apache.jena.ext.com.google.common.collect.ComparisonChain;
+import org.apache.jena.ext.com.google.common.collect.Maps;
+import org.apache.jena.ext.com.google.common.collect.Streams;
+import org.apache.jena.ext.com.google.common.graph.SuccessorsFunction;
+import org.apache.jena.ext.com.google.common.graph.Traverser;
 import org.apache.jena.ext.com.google.common.hash.HashCode;
 import org.apache.jena.ext.com.google.common.hash.HashFunction;
 import org.apache.jena.ext.com.google.common.hash.Hashing;
@@ -26,10 +30,6 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.util.iterator.ExtendedIterator;
 
-import com.google.common.collect.Maps;
-import com.google.common.collect.Streams;
-import com.google.common.graph.SuccessorsFunction;
-import com.google.common.graph.Traverser;
 
 public class ResourceTreeUtils {
 	

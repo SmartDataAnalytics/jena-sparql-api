@@ -484,7 +484,9 @@ public class HttpResourceRepositoryFromFileSystemImpl
 //		System.out.println("Number of ops after optimization: " + OpUtils.getNumOps(op));
 
 		Op op = plan.getOp();
-		RDFDataMgr.write(System.out, op.getModel(), RDFFormat.TURTLE_PRETTY);
+
+		// TODO Output the plan to the logger
+//		RDFDataMgr.write(System.out, op.getModel(), RDFFormat.TURTLE_PRETTY);
 
 		
 		Path tgt = op.accept(opExecutor);

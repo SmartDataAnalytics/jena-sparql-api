@@ -10,14 +10,14 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.mapper.proxy.JenaPluginUtils;
+import org.apache.jena.ext.com.google.common.collect.Streams;
+import org.apache.jena.ext.com.google.common.graph.Traverser;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
 
-import com.google.common.collect.Streams;
-import com.google.common.graph.Traverser;
 
 public class OpUtils {
 
