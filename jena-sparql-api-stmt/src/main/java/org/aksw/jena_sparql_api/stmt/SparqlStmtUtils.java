@@ -119,7 +119,7 @@ public class SparqlStmtUtils {
 
 			UpdateRequest before = stmt.getAsUpdateStmt().getUpdateRequest();
 			UpdateRequest after = UpdateRequestUtils.copyTransform(before, update -> {
-				// Up to Jena 3.11.0 (inclusive) transforms do not aaffect UpdateData objects
+				// Up to Jena 3.11.0 (inclusive) transforms do not affect UpdateData objects
 				Update r = update instanceof UpdateData
 					? UpdateUtils.copyWithQuadTransform((UpdateData)update, q -> QuadUtils.applyNodeTransform(q, xform))
 					: UpdateTransformOps.transform(update, elform, exform);					

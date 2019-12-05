@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
@@ -168,6 +169,13 @@ public class QueryUtils {
 				result.addDescribeNode(var);
 			}
 			break;
+		case Query.QueryTypeJson:
+			result = query.cloneQuery();
+			result.setQueryJsonType();
+        	proto.getJsonMapping().entrySet()
+    			.forEach(e -> result.addJsonMapping(e.getKey(), e.getValue()));
+			break;
+
 		default:
 			throw new RuntimeException("unsupported query type");
 			//proto.result
@@ -251,6 +259,23 @@ public class QueryUtils {
 		return result;
 	}
 	
+
+	/**
+	 * Transform json mapping obtained via Query.getJsonMapping
+	 * TODO Actually this should be added to Jena's NodeTransformLib.
+	 * 
+	 * @param jsonMapping
+	 * @param nodeTransform
+	 * @return
+	 */
+	public static Map<String, Node> applyNodeTransform(Map<String, Node> jsonMapping, NodeTransform nodeTransform) {
+		Map<String, Node> result = jsonMapping.entrySet().stream()
+				.collect(Collectors.toMap(
+						Entry::getKey,
+						e -> nodeTransform.apply(e.getValue())));
+		return result;
+	}
+
     public static Query applyNodeTransform(Query query, NodeTransform nodeTransform) {
 
         ElementTransform eltrans = new ElementTransformSubst2(nodeTransform) ;
@@ -271,6 +296,12 @@ public class QueryUtils {
         		template = new Template(after);
         	}
         }
+        
+        Map<String, Node> jsonMapping = null;
+        if(query.isJsonType()) {
+        	 Map<String, Node> before = query.getJsonMapping();
+        	jsonMapping = applyNodeTransform(before, nodeTransform);
+        }
 
         
         //Query result = org.apache.jena.sparql.syntax.syntaxtransform.QueryTransformOps.transform(query, eltrans, exprTrans) ;
@@ -289,6 +320,12 @@ public class QueryUtils {
         if(template != null) {
         	result.setQueryConstructType();
         	result.setConstructTemplate(template);
+        }
+        
+        if(jsonMapping != null) {
+        	result.setQueryJsonType();
+        	jsonMapping.entrySet()
+        		.forEach(e -> result.addJsonMapping(e.getKey(), e.getValue()));
         }
 
 //        Query result = tmp;
