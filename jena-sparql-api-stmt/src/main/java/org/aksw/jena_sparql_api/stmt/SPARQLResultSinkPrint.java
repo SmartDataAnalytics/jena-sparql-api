@@ -31,7 +31,7 @@ public class SPARQLResultSinkPrint
 	public SPARQLResultSinkPrint(PrintStream out, Gson gson) {
 		super();
 		this.out = out != null ? out : System.err;
-		this.gson = gson != null ? gson : gson;
+		this.gson = gson != null ? gson : new Gson();
 	}
 	
 	@Override
