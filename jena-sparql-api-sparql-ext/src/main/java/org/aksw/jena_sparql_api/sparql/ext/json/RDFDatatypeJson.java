@@ -8,14 +8,20 @@ import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.sparql.expr.ExprEvalException;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.vocabulary.XSD;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 
+
+
 public class RDFDatatypeJson
     extends BaseDatatype
 {
+	private static final Logger logger = LoggerFactory.getLogger(RDFDatatypeJson.class);
+	
 	public static final String IRI = XSD.getURI() + "json"; 
 	public static final RDFDatatypeJson INSTANCE = new RDFDatatypeJson();
 	
@@ -25,8 +31,20 @@ public class RDFDatatypeJson
     	this(IRI);
     }
 
+    // Workaround for spark's old 
+    public static Gson createGson() {
+    	GsonBuilder builder = new GsonBuilder();
+    	try {
+    		builder.setLenient();
+    	} catch(NoSuchMethodError e) {
+    		logger.warn("Gson.setLenient not available");
+    	}
+    	Gson result = builder.create();
+    	return result;
+    }
+    
     public RDFDatatypeJson(String uri) {
-        this(uri, new GsonBuilder().setLenient().create());
+        this(uri, createGson());
     }
 
     public RDFDatatypeJson(String uri, Gson gson) {
