@@ -29,6 +29,7 @@ import org.aksw.jena_sparql_api.http.repository.api.HttpResourceRepositoryFromFi
 import org.aksw.jena_sparql_api.http.repository.api.RdfHttpEntityFile;
 import org.aksw.jena_sparql_api.http.repository.api.ResourceStore;
 import org.aksw.jena_sparql_api.http.repository.impl.ResourceStoreImpl;
+import org.aksw.jena_sparql_api.utils.BindingUtils;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -139,6 +140,8 @@ public class ExecutionUtils {
 
 			Entry<RdfHttpEntityFile, Model> dataEntry = ResourceStoreImpl.requestModel(repo, cacheStore, completeId + "/data", RDFFormat.TURTLE_PRETTY,		
 					() -> {
+						// TODO taskContext already contains the input record; clarify whether
+						// inputRecord arg may differ from that of the context
 						RdfDataPod tmp = executeJob(job, repo, taskContext, inputRecord);							
 						Model r = tmp.getModel();
 						return r;
@@ -191,7 +194,7 @@ public class ExecutionUtils {
 	 */
 	private static RdfDataPod executeJob(Job job, HttpResourceRepositoryFromFileSystem repo, TaskContext taskContext,
 			Resource inputRecord) {
-		RDFNode jobContext = ModelFactory.createDefaultModel().createResource();
+		//RDFNode jobContext = ModelFactory.createDefaultModel().createResource();
 
 		Set<String> mentionedVars = OpUtils.mentionedVarNames(job.getOp());
 		logger.debug("Mentioned vars: " + mentionedVars);
@@ -202,7 +205,7 @@ public class ExecutionUtils {
 		// If there is just a single dataref and one unbound var
 		// auto-bind them to the input calatog record resource
 		Set<String> unmatchedVars = new HashSet<>(mentionedVars);
-		unmatchedVars.removeAll(taskContext.getDataRefMapping().keySet());
+		unmatchedVars.removeAll(dataRefMapping.keySet());
 		
 		if(unmatchedVars.size() > 1) {
 			throw new RuntimeException("Too many unmatched vars: " + unmatchedVars);
@@ -217,8 +220,6 @@ public class ExecutionUtils {
 			}
 		}	
 
-		OpExecutorDefault executor = new OpExecutorDefault(repo, taskContext);
-
 		// Create a copy of the workflow spec and substitute the variables
 		//Map<String, Op> map = Collections.emptyMap();//Collections.singletonMap("dataRef", OpDataRefResource.from(model, DataRefUrl.create(model, url)));			
 		//Op effectiveWorkflow = OpUtils.copyWithSubstitution(job.getOp(), map::get);
@@ -228,6 +229,7 @@ public class ExecutionUtils {
 		// Add an initial empty binding
 		Multimap<Var, Node> valueMap = LinkedHashMultimap.create();
 		
+		//inputRecord = taskContext.inputRecord();
 		FunctionAssembler assembler = new FunctionAssembler();
 		for(JobBinding bspec : job.getJobBindings()) {
 			String varName = bspec.getVarName();
@@ -236,7 +238,7 @@ public class ExecutionUtils {
 			
 			Function<RDFNode, Set<RDFNode>> fn = trav.accept(assembler);
 			
-			Set<RDFNode> values = fn.apply(jobContext);
+			Set<RDFNode> values = fn.apply(inputRecord);
 			for(RDFNode value : values) {
 				Node node = value.asNode();
 				valueMap.put(var, node);
@@ -272,13 +274,22 @@ public class ExecutionUtils {
 		
 		Binding binding = currentBindings.iterator().next();
 		
-		System.out.println("BINDING: " + binding);
+		logger.info("Job Binding: " + binding);
+		// System.out.println("BINDING: " + binding);
 		
 
 		// Set up a dataset processing expression		
 		logger.info("Conjure spec is:");
 		RDFDataMgr.write(System.err, effectiveWorkflow.getModel(), RDFFormat.TURTLE_PRETTY);
+
+		Map<Var, Node> map = BindingUtils.toMap(binding);
+		Map<String, Node> execCtx = map.entrySet().stream()
+				.collect(Collectors.toMap(
+						e -> e.getKey().getName(),
+						Entry::getValue));
 		
+		OpExecutorDefault executor = new OpExecutorDefault(repo, taskContext, execCtx);
+
 		RdfDataPod resultDataPod = effectiveWorkflow.accept(executor);
 //		try() {
 //			Model rmodel = resultDataPod.getModel();

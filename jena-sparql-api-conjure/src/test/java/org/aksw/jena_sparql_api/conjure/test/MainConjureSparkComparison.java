@@ -1,6 +1,7 @@
 package org.aksw.jena_sparql_api.conjure.test;
 
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -17,7 +18,6 @@ import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpDataRefResource;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpUtils;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpVar;
 import org.aksw.jena_sparql_api.conjure.dataset.engine.OpExecutorDefault;
-import org.aksw.jena_sparql_api.conjure.dataset.engine.TaskContext;
 import org.aksw.jena_sparql_api.http.repository.api.HttpResourceRepositoryFromFileSystem;
 import org.aksw.jena_sparql_api.http.repository.impl.HttpResourceRepositoryFromFileSystemImpl;
 import org.aksw.jena_sparql_api.rx.SparqlRx;
@@ -105,7 +105,7 @@ public class MainConjureSparkComparison {
 	    
 		
 		HttpResourceRepositoryFromFileSystem repo = HttpResourceRepositoryFromFileSystemImpl.createDefault();		
-		OpExecutorDefault executor = new OpExecutorDefault(repo, null /* will cause NPE */);
+		OpExecutorDefault executor = new OpExecutorDefault(repo, null /* will cause NPE */, new LinkedHashMap<>());
 
 		logger.info("Retrieved " + dcatRecords.size() + " urls for processing " + dcatRecords);
 		

@@ -1,13 +1,9 @@
 package org.aksw.jena_sparql_api.conjure.dataset.engine;
 
 import java.io.IOException;
-import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -40,7 +36,6 @@ import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpVar;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpVisitor;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpWhen;
 import org.aksw.jena_sparql_api.conjure.traversal.engine.FunctionAssembler;
-import org.aksw.jena_sparql_api.http.domain.api.RdfEntityInfo;
 import org.aksw.jena_sparql_api.http.repository.api.HttpResourceRepositoryFromFileSystem;
 import org.aksw.jena_sparql_api.http.repository.api.RdfHttpEntityFile;
 import org.aksw.jena_sparql_api.http.repository.api.ResourceStore;
@@ -62,9 +57,7 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdfconnection.RDFConnection;
-import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
-import org.apache.jena.riot.WebContent;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.binding.BindingHashMap;
@@ -103,15 +96,18 @@ public class OpExecutorDefault
 	// Execution context
 	// TODO Maybe rename this to 'substitution context' as it is mainly used for this purpose
 	protected Map<String, Node> execCtx;
+	// protected BindingMap execCtx;
 	
 	
-	public OpExecutorDefault(HttpResourceRepositoryFromFileSystem repo, TaskContext taskContext) {
+	public OpExecutorDefault(HttpResourceRepositoryFromFileSystem repo, TaskContext taskContext, Map<String, Node> execCtx) {
 		super();
 		// TODO HACK Avoid the down cast
 		this.repo = (HttpResourceRepositoryFromFileSystemImpl)repo;
 		this.taskContext = taskContext;
 		
-		this.execCtx = new LinkedHashMap<>();
+		this.execCtx = execCtx; 
+		//this.execCtx = binding;
+		//this.execCtx = new LinkedHashMap<>();
 	}
 
 	public TaskContext getTaskContext() {
@@ -160,6 +156,9 @@ public class OpExecutorDefault
 				for(String queryStr : queryStrs) {
 					
 					Query query = QueryFactory.create(queryStr);
+
+					// Apply substitution of variables in the query pattern
+					// with values of variables in the context
 					Query effQuery = QueryUtils.applyNodeTransform(query,
 							x -> x.isVariable() ? execCtx.getOrDefault(x.getName(), x) : x);
 					

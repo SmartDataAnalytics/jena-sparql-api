@@ -5,6 +5,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -272,7 +273,7 @@ public class MainConjurePlayground {
 		// (and gears and screws one wants to configure for production use - and which may at this stage sometimes break)
 		HttpResourceRepositoryFromFileSystemImpl repo = HttpResourceRepositoryFromFileSystemImpl.createDefault();		
 		ResourceStore cacheStore = repo.getCacheStore();
-		OpExecutorDefault catalogExecutor = new OpExecutorDefault(repo, null);
+		OpExecutorDefault catalogExecutor = new OpExecutorDefault(repo, null, new LinkedHashMap<>());
 
 		// Get a copy of the limbo dataset catalog via the repo so that it gets cached
 		DataRef dataRef1 = DataRefUrl.create(model, "https://gitlab.com/limbo-project/metadata-catalog/raw/master/catalog.all.ttl");
