@@ -31,6 +31,7 @@ import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.StmtIterator;
+import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -183,6 +184,16 @@ public class ResourceStoreImpl
 
 			content = contentSupplier.get();
 			entity = serializer.serialize(uri, store, content);
+			
+			boolean sanityCheck = true;
+			// Check whether the written data is readable
+			// Corruption may be caused e.g. by race condiditons
+			if(sanityCheck) {
+				String file = entity.getAbsolutePath().toString();
+				Model sanityCheckModel = RDFDataMgr.loadModel(file);
+				logger.info("Sanity check result: Model has " + sanityCheckModel.size() + " triples");
+			}
+			
 			//RDFLanguages.fi
 //			RDFFormat effectiveOutFormat;
 //			String fileExt = Iterables.getFirst(preferredOutFormat.getLang().getFileExtensions(), null);
