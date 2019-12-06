@@ -265,7 +265,7 @@ public class ResourceStoreImpl
 		RdfHttpEntityFile result = allocateEntity(uri, metadata);
 		Path tgtFile = result.getAbsolutePath();
 		Files.createDirectories(tgtFile.getParent());
-		Files.move(file, tgtFile, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+		Files.move(file, tgtFile /*, StandardCopyOption.ATOMIC_MOVE */, StandardCopyOption.REPLACE_EXISTING);
 		result.updateInfo(record -> ResourceUtils.copyDirectProperties(record, metadata));
 		
 		return result;

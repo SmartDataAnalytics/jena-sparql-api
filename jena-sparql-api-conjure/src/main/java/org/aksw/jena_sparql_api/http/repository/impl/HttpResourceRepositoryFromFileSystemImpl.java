@@ -505,7 +505,7 @@ public class HttpResourceRepositoryFromFileSystemImpl
 	
 				forceCreateDirectories(tgtPath.getParent());
 	
-				Files.move(tgt, tgtPath, StandardCopyOption.ATOMIC_MOVE);
+				Files.move(tgt, tgtPath /*, StandardCopyOption.ATOMIC_MOVE */);
 				
 				// Note: It is important that we relativize based on the target file's directory,
 				// hence tgt.getParent()
@@ -637,7 +637,7 @@ public class HttpResourceRepositoryFromFileSystemImpl
 
 		computeHashForEntity(rdfEntity, tmp);
 		
-		Files.move(tmp, targetPath, StandardCopyOption.ATOMIC_MOVE);
+		Files.move(tmp, targetPath /*, StandardCopyOption.ATOMIC_MOVE */);
 		
 		//RdfFileEntity result = new RdfFileEntityImpl(finalPath, meta);
 //		result.setContentType(meta.getContentType());

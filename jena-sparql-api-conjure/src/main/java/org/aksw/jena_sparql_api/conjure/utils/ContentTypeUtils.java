@@ -16,15 +16,15 @@ import org.apache.http.Header;
 import org.apache.http.HttpHeaders;
 import org.apache.http.entity.ContentType;
 import org.apache.http.message.BasicHeader;
+import org.apache.jena.ext.com.google.common.collect.Iterables;
+import org.apache.jena.ext.com.google.common.collect.Maps;
+import org.apache.jena.ext.com.google.common.math.DoubleMath;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFLanguages;
-import org.apache.jena.sys.JenaSystem;
 
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Maps;
-import com.google.common.math.DoubleMath;
 import com.google.common.net.MediaType;
+
 
 
 public class ContentTypeUtils {
