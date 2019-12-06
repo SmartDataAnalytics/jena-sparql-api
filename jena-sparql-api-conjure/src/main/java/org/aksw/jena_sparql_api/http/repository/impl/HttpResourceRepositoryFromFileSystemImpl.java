@@ -52,10 +52,10 @@ import org.apache.jena.ext.com.google.common.hash.Hashing;  // due to spark conf
 import org.apache.jena.ext.com.google.common.io.ByteSource; // due to spark conflict
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.riot.RDFDataMgr;
-import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.riot.WebContent;
 import org.apache.jena.sys.JenaSystem;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.base.StandardSystemProperty;
 import com.google.common.collect.HashMultimap;
@@ -66,6 +66,8 @@ import com.google.common.net.MediaType;
 public class HttpResourceRepositoryFromFileSystemImpl
 	implements HttpResourceRepositoryFromFileSystem
 {
+	private static final Logger logger = LoggerFactory.getLogger(HttpResourceRepositoryFromFileSystemImpl.class);
+	
 	protected ResourceStore downloadStore;
 	protected ResourceStore cacheStore;
 	protected ResourceStore hashStore;
@@ -615,12 +617,12 @@ public class HttpResourceRepositoryFromFileSystemImpl
 		// TODO Move the logic to derive the headers we want elsewhere
 		// E.g. apache2 may return gzip files as content type instead of encoding
 		RdfEntityInfo meta = HttpHeaderUtils.copyMetaData(entity, null);
+		String uri = request.getRequestLine().getUri();
 		if(ct == null
 				|| ct.equalsIgnoreCase(ContentType.APPLICATION_OCTET_STREAM.getMimeType())
 				|| ct.equalsIgnoreCase(ContentType.TEXT_PLAIN.getMimeType())
 				|| ct.equalsIgnoreCase(ContentType.parse("application/x-gzip").getMimeType())
 				) {
-			String uri = request.getRequestLine().getUri();
 			meta = ContentTypeUtils.deriveHeadersFromFileExtension(uri);
 		}
 		
@@ -637,6 +639,7 @@ public class HttpResourceRepositoryFromFileSystemImpl
 
 		computeHashForEntity(rdfEntity, tmp);
 		
+		logger.info("For url " + uri + " moving file " + tmp + " to " + targetPath);
 		Files.move(tmp, targetPath /*, StandardCopyOption.ATOMIC_MOVE */);
 		
 		//RdfFileEntity result = new RdfFileEntityImpl(finalPath, meta);

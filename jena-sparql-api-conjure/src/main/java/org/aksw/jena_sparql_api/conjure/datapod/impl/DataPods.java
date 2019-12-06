@@ -167,7 +167,7 @@ public class DataPods {
 			}
 			
 			Path absPath = entity.getAbsolutePath();
-			logger.debug("Resolved " + url + " to " + absPath);
+			logger.info("Resolved " + url + " to " + absPath);
 			
 			r = DataPods.fromUrl(absPath.toUri().toString());
 		} else {
