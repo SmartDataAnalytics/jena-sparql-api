@@ -434,6 +434,10 @@ public class HttpResourceRepositoryFromFileSystemImpl
 		String uri = request.getRequestLine().getUri();
 
 		
+//		if(uri.contains("db3fc357b775f2e996f88c87ddfacc64/db3fc357b775f2e996f88c87ddfacc64.hdt")) {
+//			System.out.println("DEBUG POINT");
+//		}
+		
 		//RdfHttpResourceFile res = store.get(uri);
 		
 		
@@ -637,10 +641,12 @@ public class HttpResourceRepositoryFromFileSystemImpl
 		Path tmp = FileUtils.allocateTmpFile(targetPath);
 		Files.copy(entity.getContent(), tmp, StandardCopyOption.REPLACE_EXISTING);
 
+		// Issue: computeHashForEntity requires the entity file to exist and thus creates a zero byte file
+		// However, Files.move will then cause a file already exists exception
 		computeHashForEntity(rdfEntity, tmp);
 		
 		logger.info("For url " + uri + " moving file " + tmp + " to " + targetPath);
-		Files.move(tmp, targetPath /*, StandardCopyOption.ATOMIC_MOVE */);
+		Files.move(tmp, targetPath, StandardCopyOption.REPLACE_EXISTING /*, StandardCopyOption.ATOMIC_MOVE */);
 		
 		//RdfFileEntity result = new RdfFileEntityImpl(finalPath, meta);
 //		result.setContentType(meta.getContentType());
