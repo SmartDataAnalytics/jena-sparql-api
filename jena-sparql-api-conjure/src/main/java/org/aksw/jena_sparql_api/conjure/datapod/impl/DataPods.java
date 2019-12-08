@@ -91,6 +91,11 @@ public class DataPods {
 			public Model getModel() {
 				return model;
 			}
+			@Override
+			public synchronized void close() {
+				// dataset.close();
+				super.close();
+			}
 		};
 	}
 

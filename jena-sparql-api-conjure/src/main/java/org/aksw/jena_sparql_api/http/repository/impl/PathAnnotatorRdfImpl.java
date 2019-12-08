@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api.http.repository.impl;
 
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
@@ -110,7 +111,9 @@ public class PathAnnotatorRdfImpl
 			} else {
 				org.apache.jena.rdf.model.RDFWriter writer = copy.getWriter("ttl-nb");
 				try {
-					writer.write(copy, Files.newOutputStream(metadata), base);
+					try(OutputStream out = Files.newOutputStream(metadata)) {
+						writer.write(copy, out, base);
+					}
 				} catch(Exception e) {
 					throw new RuntimeException(e);
 				}

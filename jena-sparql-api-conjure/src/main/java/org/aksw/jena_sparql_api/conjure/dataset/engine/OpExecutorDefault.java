@@ -464,6 +464,12 @@ public class OpExecutorDefault
 			logger.info("Updating ctx[" + ctxVarName + "] = " + n + " <- " + priorValue);
 			execCtx.put(ctxVarName, n);
 		} catch (Exception e) {
+			try {
+				result.close();
+			} catch (Exception e1) {
+				// Ignored in favor of 'e'
+			}
+
 			throw new RuntimeException(e);
 		}
 

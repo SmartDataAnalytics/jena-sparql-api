@@ -14,6 +14,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.aksw.jena_sparql_api.conjure.utils.ContentTypeUtils;
 import org.aksw.jena_sparql_api.http.domain.api.RdfEntityInfo;
@@ -336,14 +337,18 @@ public class ResourceStoreImpl
 		List<RdfHttpEntityFile> result;
 		
 		try {
-			result = (!Files.exists(contentFolder)
-					? Collections.<Path>emptyList().stream()
-					: Files.list(contentFolder))
-						.filter(file -> pathAnnotator.isAnnotationFor(file).isEmpty())
-						// skip .tmp files
-						.filter(file -> !file.getFileName().toString().endsWith(TMP_SUFFIX))
-						.map(this::getEntityForPath)
-						.collect(Collectors.toList());			
+			if(!Files.exists(contentFolder)) {
+				result = Collections.emptyList();
+			} else {
+				try(Stream<Path> stream = Files.list(contentFolder)) {
+					result = stream.filter(file -> pathAnnotator.isAnnotationFor(file).isEmpty())
+							// skip .tmp files
+							.filter(file -> !file.getFileName().toString().endsWith(TMP_SUFFIX))
+							.map(this::getEntityForPath)
+							.collect(Collectors.toList());			
+
+				}
+			}
 		} catch(Exception e) {
 			throw new RuntimeException(e);
 		}

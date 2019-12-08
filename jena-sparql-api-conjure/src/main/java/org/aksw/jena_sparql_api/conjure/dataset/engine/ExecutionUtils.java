@@ -50,17 +50,6 @@ import org.slf4j.LoggerFactory;
 import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Multimap;
 
-interface ConjureCacheEntry {
-	RdfDataPod getDataPod();
-	Model getMetadata();
-	
-	
-	
-	// Model getDcatMetadata();
-
-	// 
-}
-
 
 
 public class ExecutionUtils {
@@ -123,7 +112,11 @@ public class ExecutionUtils {
 
 		String completeId = inputRecordId + "/" + jobId;
 
-		logger.info("Processing: " + inputRecord + " with complete id " + completeId);
+		logger.info("Processing: " + inputRecord);
+		logger.info("  Complete id     : " + completeId);
+		logger.info("  Input model size: " + inputRecord.getModel().size()); 
+		logger.info("  Job model size  : " + job.getModel().size()); 
+		
 
 		
 		// For the ID, there are these artifacts:
@@ -142,8 +135,13 @@ public class ExecutionUtils {
 					() -> {
 						// TODO taskContext already contains the input record; clarify whether
 						// inputRecord arg may differ from that of the context
-						RdfDataPod tmp = executeJob(job, repo, taskContext, inputRecord);							
-						Model r = tmp.getModel();
+						logger.info("No cache entry for " + inputRecord + "  Executing job ...");
+						Model r;
+						try(RdfDataPod tmp = executeJob(job, repo, taskContext, inputRecord)) {
+							r = tmp.getModel();
+						} catch (Exception e) {
+							throw new RuntimeException(e);
+						}
 						return r;
 					});
 
@@ -164,8 +162,11 @@ public class ExecutionUtils {
 			Collection<DcatDistribution> dists = result.getDistributions(DcatDistribution.class);
 			DcatDistribution dist = resultModel.createResource().as(DcatDistribution.class);
 			dists.add(dist);
-			dist.setDownloadURL(dataEntry.getKey().getAbsolutePath().toUri().toString());
+			String downloadUrl = dataEntry.getKey().getAbsolutePath().toUri().toString();
+			dist.setDownloadURL(downloadUrl);
 
+			logger.info("Download url: " + downloadUrl);
+			
 //				System.out.println("BEGIN OUTPUT");
 //				RDFDataMgr.write(System.out, dcatDataset.getModel(), RDFFormat.TURTLE_PRETTY);
 //				System.out.println("END OUTPUT");

@@ -1,6 +1,7 @@
 package org.aksw.jena_sparql_api.conjure.entity.engine;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -189,7 +190,9 @@ public class OpExecutor
 		Lang tgtLang = RDFLanguages.nameToLang(tgtContentType);
 
 		try {
-			RDFDataMgr.read(m, Files.newInputStream(srcPath, StandardOpenOption.READ), srcLang);
+			try(InputStream in = Files.newInputStream(srcPath, StandardOpenOption.READ)) {
+				RDFDataMgr.read(m, in, srcLang);
+			}
 		} catch (IOException e1) {
 			throw new RuntimeException(e1);
 		}
