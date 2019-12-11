@@ -92,7 +92,11 @@ public class ExecutionUtils {
 			Job job,
 			TaskContext taskContext,
 			HttpResourceRepositoryFromFileSystem repo,
-			ResourceStore cacheStore) {
+			ResourceStore cacheStore,
+			ConjureFormatConfig formatConfig) {
+		
+		RDFFormat dataFormat = formatConfig.getDatasetFormat();
+		RDFFormat provenanceFormat = formatConfig.getProvenanceFormat();
 		
 		DcatDataset result;
 		//List<DcatDataset> result = new ArrayList<>();
@@ -131,13 +135,13 @@ public class ExecutionUtils {
 //			}
 		try {
 
-			Entry<RdfHttpEntityFile, Model> dataEntry = ResourceStoreImpl.requestModel(repo, cacheStore, completeId + "/data", RDFFormat.TURTLE_PRETTY,		
+			Entry<RdfHttpEntityFile, Model> dataEntry = ResourceStoreImpl.requestModel(repo, cacheStore, completeId + "/data", dataFormat,		
 					() -> {
 						// TODO taskContext already contains the input record; clarify whether
 						// inputRecord arg may differ from that of the context
 						logger.info("No cache entry for " + inputRecord + "  Executing job ...");
 						Model r;
-						try(RdfDataPod tmp = executeJob(job, repo, taskContext, inputRecord)) {
+						try(RdfDataPod tmp = executeJob(job, repo, taskContext, inputRecord, dataFormat)) {
 							r = tmp.getModel();
 						} catch (Exception e) {
 							throw new RuntimeException(e);
@@ -145,7 +149,7 @@ public class ExecutionUtils {
 						return r;
 					});
 
-			Model provModel = ResourceStoreImpl.requestModel(repo, cacheStore, completeId + "/dcat", RDFFormat.TURTLE_PRETTY,		
+			Model provModel = ResourceStoreImpl.requestModel(repo, cacheStore, completeId + "/dcat", provenanceFormat,		
 					() -> {
 						Model r = createProvenanceData(job, inputRecord).getModel();
 						//RdfDataPod tmp = executeJob(job, repo, taskContext, inputRecord);							
@@ -193,10 +197,16 @@ public class ExecutionUtils {
 	 * @param inputRecord
 	 * @return
 	 */
-	private static RdfDataPod executeJob(Job job, HttpResourceRepositoryFromFileSystem repo, TaskContext taskContext,
-			Resource inputRecord) {
+	private static RdfDataPod executeJob(
+			Job job,
+			HttpResourceRepositoryFromFileSystem repo,
+			TaskContext taskContext,
+			Resource inputRecord,
+			RDFFormat persistRdfFormat) {
 		//RDFNode jobContext = ModelFactory.createDefaultModel().createResource();
 
+		//RDFFormat persistRdfFormat = formatConfig.datasetFormat;
+		
 		Set<String> mentionedVars = OpUtils.mentionedVarNames(job.getOp());
 		logger.debug("Mentioned vars: " + mentionedVars);
 		
@@ -289,7 +299,11 @@ public class ExecutionUtils {
 						e -> e.getKey().getName(),
 						Entry::getValue));
 		
-		OpExecutorDefault executor = new OpExecutorDefault(repo, taskContext, execCtx);
+		OpExecutorDefault executor = new OpExecutorDefault(
+				repo,
+				taskContext,
+				execCtx,
+				persistRdfFormat);
 
 		RdfDataPod resultDataPod = effectiveWorkflow.accept(executor);
 //		try() {

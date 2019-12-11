@@ -119,7 +119,12 @@ public class DataPods {
 			
 			HDT hdt;
 			try {
-				hdt = HDTManager.loadHDT(pathStr);
+				//hdt = HDTManager.loadHDT(pathStr);
+				// Map seems to be significantly faster than load for cases where we have
+				// to scan all triples anyway
+				// TODO The load method should take an example query load in order to decide
+				// the best way of loading
+				hdt = HDTManager.mapHDT(pathStr);
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}

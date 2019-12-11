@@ -1,6 +1,7 @@
 package org.aksw.jena_sparql_api.transform.result_set;
 
 import java.io.Closeable;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.function.Function;
@@ -104,36 +105,79 @@ public class QueryExecutionTransformResult
 		return result;
 	}
 	
-	public static Graph applyNodeTransform(NodeTransform nodeTransform, Graph graph) {
+	public static Graph copyWithNodeTransform(NodeTransform nodeTransform, Graph graph) {
 		Graph result = GraphFactory.createDefaultGraph();
 		graph.find().mapWith(t -> NodeTransformLib.transform(nodeTransform, t))
 			.forEachRemaining(result::add);
 		return result;
 	}
+	
+	public static Graph applyNodeTransform(NodeTransform nodeTransform, Graph graph) {
+		List<Triple> inserts = new ArrayList<>();
+
+		ExtendedIterator<Triple> it = graph.find();
+		try {
+			while(it.hasNext()) {
+				Triple before = it.next();
+				Triple after = NodeTransformLib.transform(nodeTransform, before);
+				if(!after.equals(before)) {
+					it.remove();
+					inserts.add(after);
+				}
+			}
+		} finally {
+			it.close();
+		}
+		
+		for(Triple t : inserts) {
+			graph.add(t);
+		}
+		return graph;
+	}
 
 	public static RDFNode applyNodeTransform(NodeTransform nodeTransform, RDFNode rdfNode) {
+		Model model = rdfNode.getModel();
+		applyNodeTransform(nodeTransform, model);
+		Node beforeNode = rdfNode.asNode();
+		Node tmp = nodeTransform.apply(beforeNode);
+		Node afterNode = tmp == null ? beforeNode : tmp;
+		RDFNode result = model.asRDFNode(afterNode);
+
+		return result;
+	}
+
+
+	public static RDFNode copyWithNodeTransform(NodeTransform nodeTransform, RDFNode rdfNode) {
 		Model beforeModel = rdfNode.getModel();
-		Model afterModel = applyNodeTransform(nodeTransform, beforeModel);
+		Model afterModel = copyWithNodeTransform(nodeTransform, beforeModel);
 		Node beforeNode = rdfNode.asNode();
 		Node tmp = nodeTransform.apply(beforeNode);
 		Node afterNode = tmp == null ? beforeNode : tmp;
 		RDFNode result = afterModel.asRDFNode(afterNode);
-		
+
 		return result;
 	}
 
 	public static Model applyNodeTransform(NodeTransform nodeTransform, Model model) {
 		Graph oldGraph = model.getGraph();
-		Graph newGraph = applyNodeTransform(nodeTransform, oldGraph);
+		applyNodeTransform(nodeTransform, oldGraph);
+		return model;
+	}
+
+	public static Model copyWithNodeTransform(NodeTransform nodeTransform, Model model) {
+		Graph oldGraph = model.getGraph();
+		Graph newGraph = copyWithNodeTransform(nodeTransform, oldGraph);
 		Model result = ModelFactory.createModelForGraph(newGraph);
 		return result;
 	}
 	
+	// TODO This method should perform an in-place transform
 	public static DatasetGraph applyNodeTransform(NodeTransform nodeTransform, DatasetGraph dg) {
 		DatasetGraph result = DatasetGraphFactory.create();
 		WrappedIterator.create(dg.find())
 			.mapWith(q -> NodeTransformLib.transform(nodeTransform, q))
 			.forEachRemaining(result::add);
+		
 		return result;
 	}
 
@@ -160,7 +204,7 @@ public class QueryExecutionTransformResult
 	@Override
 	public Model execConstruct() {
 		Model model = super.execConstruct();
-		Model result = applyNodeTransform(nodeTransform, model);
+		Model result = copyWithNodeTransform(nodeTransform, model);
 		return result;
 	}
 	
@@ -197,7 +241,7 @@ public class QueryExecutionTransformResult
 	@Override
 	public Model execDescribe() {
 		Model model = super.execConstruct();
-		Model result = applyNodeTransform(nodeTransform, model);
+		Model result = copyWithNodeTransform(nodeTransform, model);
 		return result;
 	}
 	

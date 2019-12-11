@@ -76,6 +76,8 @@ public class OpExecutorDefault
 {
 	protected static final Logger logger = LoggerFactory.getLogger(OpExecutorDefault.class);
 	
+	protected RDFFormat persistRdfFormat;
+
 //	protected DataObjectRdfVisitor<RDFConnection> DataObjectRdfToConnection;
 
 	protected HttpResourceRepositoryFromFileSystemImpl repo;
@@ -99,13 +101,18 @@ public class OpExecutorDefault
 	// protected BindingMap execCtx;
 	
 	
-	public OpExecutorDefault(HttpResourceRepositoryFromFileSystem repo, TaskContext taskContext, Map<String, Node> execCtx) {
+	public OpExecutorDefault(
+			HttpResourceRepositoryFromFileSystem repo,
+			TaskContext taskContext,
+			Map<String, Node> execCtx,
+			RDFFormat persistRdfFormat) {
 		super();
 		// TODO HACK Avoid the down cast
 		this.repo = (HttpResourceRepositoryFromFileSystemImpl)repo;
 		this.taskContext = taskContext;
 		
 		this.execCtx = execCtx; 
+		this.persistRdfFormat = persistRdfFormat;
 		//this.execCtx = binding;
 		//this.execCtx = new LinkedHashMap<>();
 	}
@@ -163,6 +170,7 @@ public class OpExecutorDefault
 							x -> x.isVariable() ? execCtx.getOrDefault(x.getName(), x) : x);
 					
 					// TODO Check whether substitution is needed
+//					logger.info("Query before substitution: " + queryStr);
 					logger.info("Query after substitution: " + effQuery);
 					
 //					Model contrib = conn.queryConstruct(queryStr);
@@ -250,7 +258,7 @@ public class OpExecutorDefault
 			try(RdfDataPod pod = subOp.accept(this)) {
 				Model m;
 				try {
-					m = ResourceStoreImpl.requestModel(repo, hashStore, hashStr, RDFFormat.TURTLE_PRETTY, () -> pod.getModel()).getValue();
+					m = ResourceStoreImpl.requestModel(repo, hashStore, hashStr, persistRdfFormat, () -> pod.getModel()).getValue();
 				} catch (IOException e) {
 					throw new RuntimeException(e);
 				}

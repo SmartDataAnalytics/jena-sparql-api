@@ -27,6 +27,7 @@ import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpUnion;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpUpdateRequest;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpUtils;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpVar;
+import org.aksw.jena_sparql_api.conjure.dataset.engine.ConjureFormatConfig;
 import org.aksw.jena_sparql_api.conjure.dataset.engine.ExecutionUtils;
 import org.aksw.jena_sparql_api.conjure.dataset.engine.OpExecutorDefault;
 import org.aksw.jena_sparql_api.conjure.dataset.engine.TaskContext;
@@ -273,7 +274,7 @@ public class MainConjurePlayground {
 		// (and gears and screws one wants to configure for production use - and which may at this stage sometimes break)
 		HttpResourceRepositoryFromFileSystemImpl repo = HttpResourceRepositoryFromFileSystemImpl.createDefault();		
 		ResourceStore cacheStore = repo.getCacheStore();
-		OpExecutorDefault catalogExecutor = new OpExecutorDefault(repo, null, new LinkedHashMap<>());
+		OpExecutorDefault catalogExecutor = new OpExecutorDefault(repo, null, new LinkedHashMap<>(), RDFFormat.TURTLE_PRETTY);
 
 		// Get a copy of the limbo dataset catalog via the repo so that it gets cached
 		DataRef dataRef1 = DataRefUrl.create(model, "https://gitlab.com/limbo-project/metadata-catalog/raw/master/catalog.all.ttl");
@@ -405,7 +406,7 @@ public class MainConjurePlayground {
 
 //		logger.info("Retrieved " + inputRecords.size() + " contexts for processing " + inputRecords);
 		for(TaskContext taskContext : taskContexts) {
-			ExecutionUtils.executeJob(job, taskContext, repo, cacheStore);
+			ExecutionUtils.executeJob(job, taskContext, repo, cacheStore, new ConjureFormatConfig());
 		}
 
 	}

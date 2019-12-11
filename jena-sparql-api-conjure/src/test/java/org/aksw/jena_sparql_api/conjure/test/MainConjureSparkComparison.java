@@ -34,6 +34,7 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.sys.JenaSystem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -105,7 +106,7 @@ public class MainConjureSparkComparison {
 	    
 		
 		HttpResourceRepositoryFromFileSystem repo = HttpResourceRepositoryFromFileSystemImpl.createDefault();		
-		OpExecutorDefault executor = new OpExecutorDefault(repo, null /* will cause NPE */, new LinkedHashMap<>());
+		OpExecutorDefault executor = new OpExecutorDefault(repo, null /* will cause NPE */, new LinkedHashMap<>(), RDFFormat.TURTLE_PRETTY);
 
 		logger.info("Retrieved " + dcatRecords.size() + " urls for processing " + dcatRecords);
 		

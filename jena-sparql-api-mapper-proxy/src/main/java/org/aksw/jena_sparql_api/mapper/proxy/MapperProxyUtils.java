@@ -1486,18 +1486,41 @@ public class MapperProxyUtils {
 				    if(delegate != null) {
 				    	r = delegate.apply(obj, args);
 				    } else if(method.isDefault()) {
-				    	Class<?> declaringClass = method.getDeclaringClass();
-				    	Constructor<Lookup> constructor =
-			    			Lookup.class.getDeclaredConstructor(Class.class);
-		                constructor.setAccessible(true);
+				    	// Add default methods to the methodImplMap when requested
+				    	
+				    	// Performance note: Without caching of the default method delegate,
+				    	// VisualVM reported around 80% of CPU time being used on
+				    	// repeatedly setting up that method handle
+				    	// These figures were observed with our "Conjure" system which
+				    	// heavily uses the visitor pattern in conjunction with default methods
+				    	// on Jena Resource classes
 
-		                MethodHandle handle = constructor.newInstance(declaringClass)
-	                    .in(declaringClass)
-	                    .unreflectSpecial(method, declaringClass)
-	                    .bindTo(obj);
-		                
-	                    r = handle.invokeWithArguments(args);
+				    	BiFunction<Object, Object[], Object> defaultMethodDelegate;
+				    	synchronized (methodImplMap) {
+					    	Class<?> declaringClass = method.getDeclaringClass();
+					    	Constructor<Lookup> constructor =
+				    			Lookup.class.getDeclaredConstructor(Class.class);
+			                constructor.setAccessible(true);
+
+			                MethodHandle undboundHandle = constructor.newInstance(declaringClass)
+		                    .in(declaringClass)
+		                    .unreflectSpecial(method, declaringClass);
 			                
+			                defaultMethodDelegate = (o, a) -> {
+			                    MethodHandle boundHandle = undboundHandle.bindTo(o);
+			                    Object x;
+								try {
+									x = boundHandle.invokeWithArguments(a);
+								} catch (Throwable e) {
+									throw new RuntimeException(e);
+								}
+			                    return x;
+			                };
+			                
+			                methodImplMap.put(method, defaultMethodDelegate);
+						}
+				    	r = defaultMethodDelegate.apply(obj, args);
+				    	
 
 			                //r = method.invoke(hack, args);
 			                

@@ -32,13 +32,20 @@ public class WriterGraphRIOT_HDT extends
 	}
 
 	@Override
-	public void write(OutputStream out, Graph graph, PrefixMap prefixMap, String baseURI,
+	public void write(OutputStream out, Graph graph, PrefixMap prefixMap, String rawBaseURI,
 			Context context) {
+		
+		String baseURI = rawBaseURI == null ? "http://www.example.org/" : rawBaseURI;
+		
 		ExtendedIterator<TripleString> it = graph.find()
 				.mapWith(x -> new TripleString(
-						NodeFmtLib.str(x.getSubject(), baseURI, prefixMap),
-						NodeFmtLib.str(x.getPredicate(), baseURI, prefixMap),
-						NodeFmtLib.str(x.getObject(), baseURI, prefixMap)));
+						x.getSubject().toString(),
+						x.getPredicate().toString(),
+						x.getObject().toString()
+						));
+						//NodeFmtLib.str(x.getSubject(), baseURI, prefixMap),
+						//NodeFmtLib.str(x.getPredicate(), baseURI, prefixMap),
+						//NodeFmtLib.str(x.getObject(), baseURI, prefixMap)));
 
 		try {
 			HDT hdt = HDTManager.generateHDT(it, baseURI, new HDTSpecification(), null);
