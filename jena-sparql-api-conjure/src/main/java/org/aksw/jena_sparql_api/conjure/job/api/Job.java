@@ -4,7 +4,6 @@ import java.util.List;
 
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.Op;
 import org.aksw.jena_sparql_api.conjure.traversal.api.OpTraversal;
-import org.aksw.jena_sparql_api.conjure.traversal.api.OpTraversalSelf;
 import org.aksw.jena_sparql_api.mapper.annotation.IriNs;
 import org.aksw.jena_sparql_api.mapper.annotation.PolymorphicOnly;
 import org.aksw.jena_sparql_api.mapper.annotation.RdfType;
@@ -36,6 +35,10 @@ public interface Job
 	List<JobBinding> getJobBindings();
 	Job setJobBindings(List<JobBinding> bindings);
 
+	@IriNs("rpif")
+	String getJobName();
+	Job setJobName(String name);
+	
 	default Job addJobBinding(String varName, OpTraversal traversal) {
 		getJobBindings()
 			.add(JobBinding.create(getModel(), varName, traversal));
@@ -58,5 +61,13 @@ public interface Job
 		
 		return result;
 	}
+	
+	public static Job create(Model model, String jobName) {
+		Job result = create(model)
+				.setJobName(jobName);
+
+		return result;
+	}
+
 }
 

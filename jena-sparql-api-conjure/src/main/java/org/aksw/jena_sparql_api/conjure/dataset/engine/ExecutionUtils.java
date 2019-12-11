@@ -79,6 +79,14 @@ public class ExecutionUtils {
 		return result;
 	}
 
+	public static String getJobId(Job job) {
+		Op jobOp = job.getOp();
+	    Op semanticJobOp = OpUtils.stripCache(jobOp);
+	    String result = ResourceTreeUtils.createGenericHash(semanticJobOp);
+
+	    return result;
+	}
+	
 	/**
 	 * Execute a job and return a dcat model of the result
 	 * 
@@ -102,9 +110,9 @@ public class ExecutionUtils {
 		//List<DcatDataset> result = new ArrayList<>();
 		Model resultModel = ModelFactory.createDefaultModel();
 		
-		Op jobOp = job.getOp();
-	    Op semanticJobOp = OpUtils.stripCache(jobOp);
-	    String jobId = ResourceTreeUtils.createGenericHash(semanticJobOp);
+		// Op jobOp = job.getOp();
+	    // Op semanticJobOp = OpUtils.stripCache(jobOp);
+	    String jobId = getJobId(job); //ResourceTreeUtils.createGenericHash(semanticJobOp);
 
 		
 		//for(TaskContext taskContext : taskContexts) {
