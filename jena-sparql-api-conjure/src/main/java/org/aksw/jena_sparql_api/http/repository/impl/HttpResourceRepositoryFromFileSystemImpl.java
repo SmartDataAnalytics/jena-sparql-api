@@ -511,8 +511,13 @@ public class HttpResourceRepositoryFromFileSystemImpl
 	
 				forceCreateDirectories(tgtPath.getParent());
 	
-				Files.move(tgt, tgtPath /*, StandardCopyOption.ATOMIC_MOVE */);
-				
+				// HACK - Replace existing should not be needed
+				try {
+					Files.move(tgt, tgtPath /*, StandardCopyOption.REPLACE_EXISTING */); /*, StandardCopyOption.ATOMIC_MOVE */
+				}
+				catch(Exception e) {
+					logger.warn("Should not happen: Failed move " + tgt + " to " + tgtPath, e);
+				}
 				// Note: It is important that we relativize based on the target file's directory,
 				// hence tgt.getParent()
 				Path relTgtPath = tgt.getParent().relativize(tgtPath);
