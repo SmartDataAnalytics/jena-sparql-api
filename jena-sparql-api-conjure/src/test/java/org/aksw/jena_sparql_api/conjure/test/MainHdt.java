@@ -1,16 +1,16 @@
 package org.aksw.jena_sparql_api.conjure.test;
 
-import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.util.concurrent.TimeUnit;
 
 import org.aksw.jena_sparql_api.conjure.datapod.impl.RdfDataPodHdtImpl;
 import org.aksw.jena_sparql_api.conjure.datapod.impl.ReferenceImpl;
+import org.aksw.jena_sparql_api.utils.GraphUtils;
 import org.aksw.jena_sparql_api.utils.hdt.JenaPluginHdt;
+import org.apache.jena.graph.Graph;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.query.ResultSetFormatter;
@@ -24,6 +24,8 @@ import org.junit.Test;
 import org.rdfhdt.hdt.hdt.HDT;
 import org.rdfhdt.hdt.hdt.HDTManager;
 import org.rdfhdt.hdtjena.HDTGraph;
+
+import com.github.jsonldjava.shaded.com.google.common.base.Stopwatch;
 
 
 public class MainHdt {
@@ -61,18 +63,41 @@ public class MainHdt {
 	
 	public static void main(String[] args) throws IOException {
 //		String filename = "/home/raven/tmp/swdf-2012-11-28.hdt.gz";
-		String filename = "/home/raven/tmp/test.hdt";
+		String filename = "/home/raven/public_html/test.hdt";
 
 //		HDT hdt = HDTManager.mapIndexedHDT(filename, null);
 		HDT hdt = HDTManager.loadHDT(filename);
 
 		// Create Jena Model on top of HDT.
-		HDTGraph graph = new HDTGraph(hdt);
+		Graph graph = new HDTGraph(hdt);
+		//graph = GraphWrapperTransform.wrapWithNtripleParse(graph);
 		Model model = ModelFactory.createModelForGraph(graph);
+
+		Graph graphFix = GraphUtils.wrapGraphWithNQuadsFix(graph);
+		Model modelFix = ModelFactory.createModelForGraph(graphFix);
 		
-		try(QueryExecution qe = QueryExecutionFactory.create("SELECT * { ?s ?p ?o } LIMIT 10", model)) {
-			System.out.println(ResultSetFormatter.asText(qe.execSelect()));
+		int n = 3;
+		String queryStr = "SELECT * { ?s ?p ?o } LIMIT 1000000";
+		for(int i = 0; i < n; ++i) {
+				
+			Stopwatch sw1 = Stopwatch.createStarted();				
+			try(QueryExecution qe = QueryExecutionFactory.create(queryStr, model)) {
+				ResultSetFormatter.consume(qe.execSelect());
+				//System.out.println(ResultSetFormatter.asText(qe.execSelect()));
+			}
+			System.out.println("Plain HDT: " + sw1.elapsed(TimeUnit.MILLISECONDS));
+
+			Stopwatch sw2 = Stopwatch.createStarted();				
+			try(QueryExecution qe = QueryExecutionFactory.create(queryStr, modelFix)) {
+				ResultSetFormatter.consume(qe.execSelect());
+				//System.out.println(ResultSetFormatter.asText(qe.execSelect()));
+			}
+			System.out.println("Fixed HDT: " + sw2.elapsed(TimeUnit.MILLISECONDS));
+
+//				if(i == n - 1) {
+//			}
 		}
+		
 		
 	}
 }

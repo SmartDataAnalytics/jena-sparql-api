@@ -1,10 +1,8 @@
-package org.aksw.jena_sparql_api.io.binseach;
-
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
+package org.aksw.jena_sparql_api.utils.io;
 
 import org.apache.jena.graph.Triple;
 import org.apache.jena.riot.RIOT;
+import org.apache.jena.riot.lang.LangNQuads;
 import org.apache.jena.riot.lang.LangNTriples;
 import org.apache.jena.riot.system.ErrorHandlerFactory;
 import org.apache.jena.riot.system.IRIResolver;
@@ -14,6 +12,7 @@ import org.apache.jena.riot.system.PrefixMapFactory;
 import org.apache.jena.riot.system.RiotLib;
 import org.apache.jena.riot.tokens.Tokenizer;
 import org.apache.jena.riot.tokens.TokenizerFactory;
+import org.apache.jena.sparql.core.Quad;
 
 public class NTripleUtils {
 	
@@ -29,7 +28,19 @@ public class NTripleUtils {
 
 	public static ParserProfile profile = permissiveProfile();
 
-	public static Triple parseNtripleString(String str)  {
+	/**
+	 * Parse the first triple from a given string.
+	 * It is recommended for the string to not have any trailing data.
+	 * 
+	 * @param str
+	 * @return
+	 */
+	public static Triple parseNTriplesString(String str)  {
+		Tokenizer tokenizer = TokenizerFactory.makeTokenizerString(str);
+		LangNTriples parser = new LangNTriples(tokenizer, profile, null);
+		Triple result = parser.next();
+
+		/*
 		Triple result;
 		try(InputStream is = new ByteArrayInputStream(str.getBytes())) {			
 			Tokenizer tokenizer = TokenizerFactory.makeTokenizerUTF8(is);
@@ -38,6 +49,22 @@ public class NTripleUtils {
 		} catch(Exception e) {
 			throw new RuntimeException("Error parsing '" + str + "'", e);
 		}
+		*/
+		
+		return result;
+	}
+	
+	/**
+	 * Parse the first quad from a given string.
+	 * It is recommended for the string to not have any trailing data.
+	 * 
+	 * @param str
+	 * @return
+	 */
+	public static Quad parseNQuadsString(String str)  {
+		Tokenizer tokenizer = TokenizerFactory.makeTokenizerString(str);
+		LangNQuads parser = new LangNQuads(tokenizer, profile, null);
+		Quad result = parser.next();
 		
 		return result;
 	}

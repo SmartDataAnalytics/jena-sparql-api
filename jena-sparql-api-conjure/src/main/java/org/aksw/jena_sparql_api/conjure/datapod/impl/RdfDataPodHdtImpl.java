@@ -1,6 +1,7 @@
 package org.aksw.jena_sparql_api.conjure.datapod.impl;
 
 import org.aksw.jena_sparql_api.conjure.datapod.api.RdfDataPod;
+import org.aksw.jena_sparql_api.utils.GraphUtils;
 import org.aksw.jena_sparql_api.utils.hdt.HDTHeaderGraph;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.query.DatasetFactory;
@@ -45,9 +46,20 @@ public class RdfDataPodHdtImpl
 	public RDFConnection openConnection() {
 		HDT hdt = hdtRef.getValue();
 
-		Graph graph = isHeaderPod
-				? new HDTHeaderGraph(hdt)
-				: new HDTGraph(hdt);
+		Graph graph;
+		if(isHeaderPod) {
+			graph = new HDTHeaderGraph(hdt);
+		} else {
+			graph = new HDTGraph(hdt);
+			
+			// TODO Evaluate to what extend this fix is useful
+			// A conclusion might be, that the input data itself should be fixed
+			// instead of us attempting a workaround here
+			boolean enableNQuadsFix = true;
+			if(enableNQuadsFix) {
+				graph = GraphUtils.wrapGraphWithNQuadsFix(graph);
+			}
+		}
 
 		Model model = ModelFactory.createModelForGraph(graph);
 

@@ -2,7 +2,7 @@ package org.aksw.jena_sparql_api.utils.hdt;
 
 import java.io.IOException;
 
-import org.aksw.jena_sparql_api.io.binseach.NTripleUtils;
+import org.aksw.jena_sparql_api.utils.io.NTripleUtils;
 import org.apache.jena.graph.GraphStatisticsHandler;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.graph.impl.GraphBase;
@@ -91,7 +91,7 @@ public class HDTHeaderGraph extends GraphBase {
 				}
 				return r;
 			})
-			.mapWith(NTripleUtils::parseNtripleString);
+			.mapWith(NTripleUtils::parseNTriplesString);
 		
 		return result;
 	}
