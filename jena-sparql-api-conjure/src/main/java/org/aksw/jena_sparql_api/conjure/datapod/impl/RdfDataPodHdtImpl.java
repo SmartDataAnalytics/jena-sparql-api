@@ -57,7 +57,8 @@ public class RdfDataPodHdtImpl
 			// instead of us attempting a workaround here
 			boolean enableNQuadsFix = true;
 			if(enableNQuadsFix) {
-				graph = GraphUtils.wrapGraphWithNQuadsFix(graph);
+				//graph = GraphUtils.wrapGraphWithNQuadsFix(graph);
+				graph = GraphUtils.wrapWithValidation(graph);
 			}
 		}
 

@@ -90,11 +90,17 @@ public class GraphUtils {
         return result;
     }
     
-//	public static boolean isValid(Triple t) {
-//		String str = NodeFmtLib.str(t);
-//		NTripleUtils.parseNTriplesString(str);
-//		return true;
-//	}
+	public static boolean isValid(Triple t) {
+		boolean result;
+		try {
+			String str = NodeFmtLib.str(t) + " .";
+			NTripleUtils.parseNTriplesString(str);
+			result = true;
+		} catch(Exception e) {
+			result = false;
+		}
+		return result;
+	}
 
 	/**
 	 * Fix for an issue we observed in some HDT files:
@@ -140,8 +146,11 @@ public class GraphUtils {
 	 */
 	public static Graph wrapGraphWithNQuadsFix(Graph base) {
 		return new GraphWrapperTransform(base, it -> it
-				.mapWith(GraphUtils::fixTripleWithGraphInObject)
-				.filterKeep(Objects::nonNull));
+				.mapWith(GraphUtils::fixTripleWithGraphInObject));
 	}
 
+	public static Graph wrapWithValidation(Graph base) {
+		return new GraphWrapperTransform(base, it -> it
+				.filterKeep(GraphUtils::isValid));
+	}
 }
