@@ -200,6 +200,12 @@ public class ResourceUtils {
 		return result;
 	}
 
+	public static <T extends RDFNode> ExtendedIterator<T> listPropertyValues(Model model, Resource s, Property p, Class<T> clazz) {
+		ExtendedIterator<T> result = model.listStatements(s, p, (RDFNode)null)
+				.mapWith(stmt -> getPropertyValue(stmt, clazz));
+		return result;
+	}
+
 	/*
 	 * properties
 	 */
@@ -897,5 +903,14 @@ public class ResourceUtils {
 		return result;
 	}
 
+//	public static <T extends RDFNode> ExtendedIterator<T> listPropertyValues(Resource s, Class<T> clazz) {
+//		ExtendedIterator<T> result = listPropertyValues(s, null, clazz);		
+//		return result;
+//	}
+//
+//	public static <T extends RDFNode> ExtendedIterator<T> listPropertyValues(Property p, Class<T> clazz) {
+//		ExtendedIterator<T> result = listPropertyValues(s, null, clazz);		
+//		return result;
+//	}
 
 }

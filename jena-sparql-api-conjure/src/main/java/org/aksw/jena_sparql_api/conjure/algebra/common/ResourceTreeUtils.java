@@ -14,6 +14,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.conjure.entity.algebra.HashUtils;
+import org.aksw.jena_sparql_api.rdf.collections.ResourceUtils;
 import org.apache.jena.ext.com.google.common.collect.ComparisonChain;
 import org.apache.jena.ext.com.google.common.collect.Maps;
 import org.apache.jena.ext.com.google.common.collect.Streams;
@@ -55,6 +56,18 @@ public class ResourceTreeUtils {
 			.count();
 		
 		return result;
+	}
+	
+	/**
+	 * Recursively delete all properties of all resources reachable from the root resource
+	 * (inclusive) in outgoing direction.
+	 * The resource itself is not deleted.
+	 * 
+	 * 
+	 * @param root
+	 */
+	public static void clearSubTree(Resource root) {
+		clearSubTree(root, r -> ResourceUtils.listPropertyValues(r, null, Resource.class).toSet());
 	}
 	
 	public static <T extends Resource> void clearSubTree(T rootOp, SuccessorsFunction<T> successorsFunction) {

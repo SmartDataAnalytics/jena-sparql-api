@@ -29,7 +29,9 @@ import org.aksw.jena_sparql_api.http.repository.api.HttpResourceRepositoryFromFi
 import org.aksw.jena_sparql_api.http.repository.api.RdfHttpEntityFile;
 import org.aksw.jena_sparql_api.http.repository.api.ResourceStore;
 import org.aksw.jena_sparql_api.http.repository.impl.ResourceStoreImpl;
+import org.aksw.jena_sparql_api.rdf.collections.ResourceUtils;
 import org.aksw.jena_sparql_api.utils.BindingUtils;
+import org.aksw.jena_sparql_api.utils.NodeUtils;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -164,12 +166,18 @@ public class ExecutionUtils {
 						return r;
 					}).getValue();
 
+			// We use the plan in the cache to retain provenance, but we don't need it
+			// on every single output
+			// Replace it with a placeholder for now, and later substitute it back
+			ExecutionUtils.toPlaceholder(provModel, prov("hadPlan"), ConjureConstants.PROV_PLACEHOLDER_URI);
+
 			resultModel.add(provModel);
 			result = provModel.listSubjectsWithProperty(RDF.type, DCAT.Dataset).toList()
 					.get(0)
 					.inModel(resultModel)
 					.as(DcatDataset.class);
 			//result.add(dcatDataset);
+			
 			
 			Collection<DcatDistribution> dists = result.getDistributions(DcatDistribution.class);
 			DcatDistribution dist = resultModel.createResource().as(DcatDistribution.class);
@@ -349,7 +357,24 @@ public class ExecutionUtils {
 		// 
 	}
 
-	private static Resource createProvenanceData(Job job, Resource inputRecord) {
+	
+	public static void toPlaceholder(Model model, Property property, String placeholderUri) {
+		Set<Resource> objects = clear(model, property);
+		for(Resource object : objects) {
+			org.apache.jena.util.ResourceUtils.renameResource(object, placeholderUri);
+		}
+	}
+	
+	public static Set<Resource> clear(Model model, Property property) {
+		Set<Resource> objects = ResourceUtils.listPropertyValues(model, null, prov("hadPlan"), Resource.class).toSet();
+		for(Resource o : objects) {
+			ResourceTreeUtils.clearSubTree(o);
+		}	
+		return objects;
+	}
+	
+	
+	public static Resource createProvenanceData(Job job, Resource inputRecord) {
 		Model resultModel = ModelFactory.createDefaultModel();
 		Resource inputRecordX = inputRecord.inModel(resultModel.add(inputRecord.getModel()));
 		

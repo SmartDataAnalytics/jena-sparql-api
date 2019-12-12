@@ -20,7 +20,8 @@ import com.google.common.collect.Iterables;
 
 public class NodeUtils {
 	
-	public static final Node nullUriNode = NodeFactory.createURI("http://null.null/null");
+	public static final String nullUri = "http://null.null/null";
+	public static final Node nullUriNode = NodeFactory.createURI(nullUri);
 
 //	public static final Node N_ABSENT = NodeFactory.createURI("http://special.absent/none");
 
