@@ -631,6 +631,8 @@ public class HttpResourceRepositoryFromFileSystemImpl
 				|| ct.equalsIgnoreCase(ContentType.APPLICATION_OCTET_STREAM.getMimeType())
 				|| ct.equalsIgnoreCase(ContentType.TEXT_PLAIN.getMimeType())
 				|| ct.equalsIgnoreCase(ContentType.parse("application/x-gzip").getMimeType())
+//				|| ct.equalsIgnoreCase(ContentType.parse("application/x-bzip").getMimeType())
+				|| ct.equalsIgnoreCase(ContentType.parse("application/x-bzip2").getMimeType())
 				) {
 			meta = ContentTypeUtils.deriveHeadersFromFileExtension(uri);
 		}

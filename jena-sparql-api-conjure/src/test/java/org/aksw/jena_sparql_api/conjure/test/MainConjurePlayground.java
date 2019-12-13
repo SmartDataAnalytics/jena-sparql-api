@@ -280,7 +280,7 @@ public class MainConjurePlayground {
 		DataRef dataRef1 = DataRefUrl.create(model, "https://gitlab.com/limbo-project/metadata-catalog/raw/master/catalog.all.ttl");
 		
 		// Or set up a workflow that makes databus available
-		DataRef dataRef2 = DataRefSparqlEndpoint.create("https://databus.dbpedia.org/repo/sparql");
+		DataRef dataRef2 = DataRefSparqlEndpoint.create(model, "https://databus.dbpedia.org/repo/sparql");
 
 		
 		// Create a data ref from a workflow

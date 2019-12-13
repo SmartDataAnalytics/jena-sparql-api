@@ -6,7 +6,7 @@ import org.aksw.jena_sparql_api.conjure.dataref.core.api.PlainDataRefSparqlEndpo
 import org.aksw.jena_sparql_api.mapper.annotation.Iri;
 import org.aksw.jena_sparql_api.mapper.annotation.RdfType;
 import org.aksw.jena_sparql_api.mapper.annotation.ResourceView;
-import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.Model;
 
 @ResourceView
 @RdfType
@@ -21,7 +21,7 @@ public interface DataRefSparqlEndpoint
 	List<String> getNamedGraphs();
 
 	@Override
-	@Iri("eg:namedGraph")
+	@Iri("eg:defaultGraph")
 	List<String> getDefaultGraphs();
 
 	@Override
@@ -30,8 +30,15 @@ public interface DataRefSparqlEndpoint
 		return result;
 	}
 	
-	public static DataRefSparqlEndpoint create(String serviceUrl) {
-		DataRefSparqlEndpoint result = ModelFactory.createDefaultModel().createResource().as(DataRefSparqlEndpoint.class)
+//	public static DataRefSparqlEndpoint create(String serviceUrl) {
+//		DataRefSparqlEndpoint result = ModelFactory.createDefaultModel().createResource().as(DataRefSparqlEndpoint.class)
+//				.setServiceUrl(serviceUrl);
+//		return result;
+//
+//	}
+
+	public static DataRefSparqlEndpoint create(Model model, String serviceUrl) {
+		DataRefSparqlEndpoint result = model.createResource().as(DataRefSparqlEndpoint.class)
 				.setServiceUrl(serviceUrl);
 		return result;
 
