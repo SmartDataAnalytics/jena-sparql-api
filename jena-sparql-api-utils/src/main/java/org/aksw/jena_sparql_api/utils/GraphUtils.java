@@ -120,14 +120,18 @@ public class GraphUtils {
 		
 		// Only fix the object, therefore use short strings in s and p position
 		// to speed up re-parsing
-		StringBuilder sb = new StringBuilder();
-		sb.append("<x:s> <x:p> ");
-		sb.append(NodeFmtLib.str(t.getObject()));
-		sb.append(" .");
-		String str = sb.toString();
-		Quad q = NTripleUtils.parseNQuadsString(str);
-		Triple r = new Triple(t.getSubject(), t.getPredicate(), q.getObject());
-		return r;
+		try {
+			StringBuilder sb = new StringBuilder();
+			sb.append("<x:s> <x:p> ");
+			sb.append(NodeFmtLib.str(t.getObject()));
+			sb.append(" .");
+			String str = sb.toString();
+			Quad q = NTripleUtils.parseNQuadsString(str);
+			Triple r = new Triple(t.getSubject(), t.getPredicate(), q.getObject());
+			return r;
+		} catch(Exception e) {
+			return null;
+		}
 	}
 
 //	public static Graph wrapWithNtripleParse(Graph base) {
@@ -146,7 +150,8 @@ public class GraphUtils {
 	 */
 	public static Graph wrapGraphWithNQuadsFix(Graph base) {
 		return new GraphWrapperTransform(base, it -> it
-				.mapWith(GraphUtils::fixTripleWithGraphInObject));
+				.mapWith(GraphUtils::fixTripleWithGraphInObject)
+				.filterKeep(Objects::nonNull));
 	}
 
 	public static Graph wrapWithValidation(Graph base) {
