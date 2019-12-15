@@ -4,6 +4,7 @@ import java.beans.Introspector;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles.Lookup;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -1063,6 +1064,26 @@ public class MapperProxyUtils {
 		Method[] methods = clazz.getMethods();
 		
 		for(Method method : methods) {
+			
+			// Proxy default methods
+	    	// Performance note: Without caching of the default method delegate,
+	    	// VisualVM reported around 80% of CPU time being used on
+	    	// repeatedly setting up that method handle
+	    	// These figures were observed with our "Conjure" system which
+	    	// heavily uses the visitor pattern in conjunction with default methods
+	    	// on Jena Resource classes
+			if(method.isDefault()) {
+				BiFunction<Object, Object[], Object> defaultMethodDelegate;
+				try {
+					defaultMethodDelegate = proxyDefaultMethod(method);
+				} catch(Exception e) {
+					throw new RuntimeException(e);
+				}
+				
+				methodImplMap.put(method, defaultMethodDelegate);
+				continue;
+			}
+
 			MethodDescriptor descriptor = classifyMethod(method);
 			if(descriptor == null) {
 				continue;
@@ -1074,6 +1095,7 @@ public class MapperProxyUtils {
 			if(method.isBridge()) {
 				continue;
 			}
+			
 			
 			String beanPropertyName = deriveBeanPropertyName(method.getName());
 
@@ -1486,40 +1508,15 @@ public class MapperProxyUtils {
 				    if(delegate != null) {
 				    	r = delegate.apply(obj, args);
 				    } else if(method.isDefault()) {
-				    	// Add default methods to the methodImplMap when requested
-				    	
-				    	// Performance note: Without caching of the default method delegate,
-				    	// VisualVM reported around 80% of CPU time being used on
-				    	// repeatedly setting up that method handle
-				    	// These figures were observed with our "Conjure" system which
-				    	// heavily uses the visitor pattern in conjunction with default methods
-				    	// on Jena Resource classes
+				    	throw new RuntimeException("Should never come here anymore");
 
-				    	BiFunction<Object, Object[], Object> defaultMethodDelegate;
-				    	synchronized (methodImplMap) {
-					    	Class<?> declaringClass = method.getDeclaringClass();
-					    	Constructor<Lookup> constructor =
-				    			Lookup.class.getDeclaredConstructor(Class.class);
-			                constructor.setAccessible(true);
-
-			                MethodHandle undboundHandle = constructor.newInstance(declaringClass)
-		                    .in(declaringClass)
-		                    .unreflectSpecial(method, declaringClass);
-			                
-			                defaultMethodDelegate = (o, a) -> {
-			                    MethodHandle boundHandle = undboundHandle.bindTo(o);
-			                    Object x;
-								try {
-									x = boundHandle.invokeWithArguments(a);
-								} catch (Throwable e) {
-									throw new RuntimeException(e);
-								}
-			                    return x;
-			                };
-			                
-			                methodImplMap.put(method, defaultMethodDelegate);
-						}
-				    	r = defaultMethodDelegate.apply(obj, args);
+//				    	BiFunction<Object, Object[], Object> defaultMethodDelegate;
+//				    	synchronized (methodImplMap) {
+//						    defaultMethodDelegate = proxyDefaultMethod(method);
+//			                
+//			                methodImplMap.put(method, defaultMethodDelegate);
+//						}
+//				    	r = defaultMethodDelegate.apply(obj, args);
 				    	
 
 			                //r = method.invoke(hack, args);
@@ -1612,5 +1609,30 @@ public class MapperProxyUtils {
 		}
 
 		return result;
+	}
+	
+	public static BiFunction<Object, Object[], Object> proxyDefaultMethod(Method method)
+			throws NoSuchMethodException, SecurityException, IllegalAccessException, InstantiationException, IllegalArgumentException, InvocationTargetException {
+		BiFunction<Object, Object[], Object> defaultMethodDelegate;
+		Class<?> declaringClass = method.getDeclaringClass();
+		Constructor<Lookup> constructor =
+			Lookup.class.getDeclaredConstructor(Class.class);
+		constructor.setAccessible(true);
+
+		MethodHandle undboundHandle = constructor.newInstance(declaringClass)
+				.in(declaringClass)
+				.unreflectSpecial(method, declaringClass);
+		
+		defaultMethodDelegate = (o, a) -> {
+		    MethodHandle boundHandle = undboundHandle.bindTo(o);
+		    Object r;
+			try {
+				r = boundHandle.invokeWithArguments(a);
+			} catch (Throwable e) {
+				throw new RuntimeException(e);
+			}
+		    return r;
+		};
+		return defaultMethodDelegate;
 	}
 }
