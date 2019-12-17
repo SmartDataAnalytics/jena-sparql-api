@@ -189,6 +189,9 @@ public class RDFDataMgrRx {
 		writeDatasets(flowable.map(DatasetUtils::createFromResource), file, format);
 	}
 
+	public static void writeResources(Flowable<? extends Resource> flowable, OutputStream out, RDFFormat format) throws Exception {
+		writeDatasets(flowable.map(DatasetUtils::createFromResource), out, format);
+	}
 	
 	
 //	static class State {

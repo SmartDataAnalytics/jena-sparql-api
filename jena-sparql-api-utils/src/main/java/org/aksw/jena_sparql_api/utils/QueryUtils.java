@@ -309,12 +309,15 @@ public class QueryUtils {
         // QueryTransformOps creates a shallow copy of the query which causes problems
         // if a PrefixMapping2 is used; the PM2 is materialized into a PM
         // Fix prefixes in sub queries by clearing them
-        ElementWalker.walk(result.getQueryPattern(), new ElementVisitorBase() {
-        	@Override
-        	public void visit(ElementSubQuery el) {
-        		el.getQuery().getPrefixMapping().clearNsPrefixMap();
-        	}
-        });
+        Element resultEl = result.getQueryPattern();
+        if(resultEl != null) {
+	        ElementWalker.walk(resultEl, new ElementVisitorBase() {
+	        	@Override
+	        	public void visit(ElementSubQuery el) {
+	        		el.getQuery().getPrefixMapping().clearNsPrefixMap();
+	        	}
+	        });
+        }
         
         if(template != null) {
         	result.setQueryConstructType();
