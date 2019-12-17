@@ -10,6 +10,8 @@ public class SparqlParserConfig
 {
     protected Syntax syntax;
     protected Prologue prologue;
+    // It may be better to support prefix optimization as a post processor
+//    protected boolean optimizePrefixes;
 
     public SparqlParserConfig clone() {
         SparqlParserConfig result = new SparqlParserConfig(syntax, prologue.copy());
@@ -67,8 +69,16 @@ public class SparqlParserConfig
         return result;
     }
 
+//	public boolean optimizePrefixes() {
+//		return optimizePrefixes;
+//	}
+//
+//	public SparqlParserConfig optimizePrefixes(boolean optimizePrefixes) {
+//		this.optimizePrefixes = optimizePrefixes;
+//		return this;
+//	}
 
-    public SparqlParserConfig applyDefaults() {
+	public SparqlParserConfig applyDefaults() {
         if(syntax == null) {
             syntax = Syntax.syntaxARQ;
         }

@@ -5,12 +5,15 @@ import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.aksw.jena_sparql_api.utils.ElementTransformSubst2;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.core.DatasetDescription;
 import org.apache.jena.sparql.core.Quad;
+import org.apache.jena.sparql.expr.ExprTransform;
+import org.apache.jena.sparql.graph.NodeTransform;
 import org.apache.jena.sparql.modify.request.QuadDataAcc;
 import org.apache.jena.sparql.modify.request.UpdateData;
 import org.apache.jena.sparql.modify.request.UpdateDataDelete;
@@ -19,6 +22,9 @@ import org.apache.jena.sparql.modify.request.UpdateDeleteInsert;
 import org.apache.jena.sparql.modify.request.UpdateModify;
 import org.apache.jena.sparql.modify.request.UpdateWithUsing;
 import org.apache.jena.sparql.syntax.Element;
+import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransform;
+import org.apache.jena.sparql.syntax.syntaxtransform.ExprTransformNodeElement;
+import org.apache.jena.sparql.syntax.syntaxtransform.UpdateTransformOps;
 import org.apache.jena.update.Update;
 
 public class UpdateUtils {
@@ -29,6 +35,14 @@ public class UpdateUtils {
 		Update result = applyElementTransform(update, xform);
 		return result;
 	}
+
+    public static Update applyNodeTransform(Update update, NodeTransform nodeTransform) {
+        ElementTransform eltrans = new ElementTransformSubst2(nodeTransform) ;
+        ExprTransform exprTrans = new ExprTransformNodeElement(nodeTransform, eltrans) ;
+        Update result = UpdateTransformOps.transform(update, eltrans, exprTrans) ;
+    	
+    	return result;
+    }
 
 	public static Update applyElementTransform(Update update, Function<? super Element, ? extends Element> transform) {
 		UpdateTransformVisitor visitor = new UpdateTransformVisitor(transform);

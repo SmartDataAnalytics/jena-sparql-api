@@ -7,7 +7,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -20,7 +19,6 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.SortCondition;
 import org.apache.jena.shared.PrefixMapping;
-import org.apache.jena.shared.impl.PrefixMappingImpl;
 import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.OpAsQuery;
@@ -50,6 +48,7 @@ import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransform;
 import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransformCopyBase;
 import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransformer;
 import org.apache.jena.sparql.util.ExprUtils;
+import org.apache.jena.sparql.util.PrefixMapping2;
 
 import com.google.common.collect.DiscreteDomain;
 import com.google.common.collect.Range;
@@ -347,6 +346,23 @@ public class QueryUtils {
         return result;
     }
 
+    
+    /**
+     * Determines the used prefixes w.r.t the query's local prefixes and
+     * a global prefix map (may be null).
+     * The local prefixes take precedence.
+     * 
+     * @param query
+     * @param global
+     * @return
+     */
+    public static PrefixMapping usedPrefixes(Query query, PrefixMapping global) {
+    	PrefixMapping local = query.getPrefixMapping();
+    	PrefixMapping pm = global == null ? local : new PrefixMapping2(global, local);
+    	PrefixMapping result = usedReferencePrefixes(query, pm);
+        return result;
+    }
+    
     /**
      * Scans the query for all occurrences of URI nodes and returns the applicable subset of its
      * prefix mapping.
@@ -373,28 +389,44 @@ public class QueryUtils {
      * @return
      */
     public static PrefixMapping usedPrefixes(Query query) {
+    	PrefixMapping result = usedPrefixes(query, null);
+    	return result;
+    }
+
+    /**
+     * Determine used prefixes within the given prefix mapping.
+     * The query's own prefixes are ignored.
+     * 
+     * @param query
+     * @param pm
+     * @return
+     */
+    public static PrefixMapping usedReferencePrefixes(Query query, PrefixMapping pm) {
         NodeTransformCollectNodes nodeUsageCollector = new NodeTransformCollectNodes();
 
         applyNodeTransform(query, nodeUsageCollector);
         Set<Node> nodes = nodeUsageCollector.getNodes();
 
-        PrefixMapping pm = query.getPrefixMapping();
-        Map<String, String> usedPrefixes = nodes.stream()
-                .filter(Node::isURI)
-                .map(Node::getURI)
-                .map(x -> {
-                    String tmp = pm.shortForm(x);
-                    String r = Objects.equals(x, tmp) ? null : tmp.split(":", 2)[0];
-                    return r;
-                })
-                //.peek(System.out::println)
-                .filter(x -> x != null)
-                .distinct()
-                .collect(Collectors.toMap(x -> x, pm::getNsPrefixURI));
-
-        PrefixMapping result = new PrefixMappingImpl();
-        result.setNsPrefixes(usedPrefixes);
+        PrefixMapping result = PrefixUtils.usedPrefixes(pm, nodes);
         return result;
+    }
+
+    /**
+     * In-place optimize a query's prefixes to only used prefixes
+     * 
+     * @param query
+     * @param pm
+     * @return
+     */
+    public static Query optimizePrefixes(Query query, PrefixMapping globalPm) {
+    	PrefixMapping usedPrefixes = QueryUtils.usedPrefixes(query, globalPm);
+    	query.setPrefixMapping(usedPrefixes);
+    	return query;
+    }
+
+    public static Query optimizePrefixes(Query query) {
+    	optimizePrefixes(query, null);
+    	return query;
     }
 
     public static Query randomizeVars(Query query) {

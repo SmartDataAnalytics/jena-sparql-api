@@ -3,25 +3,23 @@ package org.aksw.jena_sparql_api.core.utils;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import org.aksw.commons.collections.diff.Diff;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
+import org.aksw.jena_sparql_api.utils.PrefixUtils;
 import org.aksw.jena_sparql_api.utils.SetFromGraph;
 import org.aksw.jena_sparql_api.utils.transform.NodeTransformCollectNodes;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.shared.PrefixMapping;
-import org.apache.jena.shared.impl.PrefixMappingImpl;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.core.DatasetDescription;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.Quad;
+import org.apache.jena.sparql.graph.NodeTransform;
 import org.apache.jena.sparql.modify.request.QuadDataAcc;
 import org.apache.jena.sparql.modify.request.UpdateData;
 import org.apache.jena.sparql.modify.request.UpdateDataDelete;
@@ -29,7 +27,7 @@ import org.apache.jena.sparql.modify.request.UpdateDataInsert;
 import org.apache.jena.sparql.modify.request.UpdateDeleteInsert;
 import org.apache.jena.sparql.modify.request.UpdateModify;
 import org.apache.jena.sparql.syntax.Element;
-import org.apache.jena.sparql.syntax.syntaxtransform.UpdateTransformOps;
+import org.apache.jena.sparql.util.PrefixMapping2;
 import org.apache.jena.update.Update;
 import org.apache.jena.update.UpdateFactory;
 import org.apache.jena.update.UpdateRequest;
@@ -39,7 +37,61 @@ import com.google.common.collect.Lists;
 
 public class UpdateRequestUtils {
 
+
+    public static UpdateRequest optimizePrefixes(UpdateRequest updateRequest) {
+    	optimizePrefixes(updateRequest, null);
+    	return updateRequest;
+    }
+
+    /**
+     * In-place optimize an update request's prefixes to only used prefixes
+     * The global prefix map may be null.
+     * 
+     * @param query
+     * @param pm
+     * @return
+     */
+    public static UpdateRequest optimizePrefixes(UpdateRequest updateRequest, PrefixMapping globalPm) {
+    	PrefixMapping usedPrefixes = UpdateRequestUtils.usedPrefixes(updateRequest, globalPm);
+    	updateRequest.setPrefixMapping(usedPrefixes);
+    	return updateRequest;
+    }
+
+    
+    public static PrefixMapping usedPrefixes(UpdateRequest updateRequest, PrefixMapping global) {
+    	PrefixMapping local = updateRequest.getPrefixMapping();
+    	PrefixMapping pm = global == null ? local : new PrefixMapping2(global, local);
+    	PrefixMapping result = usedReferencePrefixes(updateRequest, pm);
+        return result;	
+    }
 	
+    /**
+     * Determine used prefixes within the given prefix mapping.
+     * The update request's own prefixes are ignored.
+     * 
+     * @param query
+     * @param pm
+     * @return
+     */
+    public static PrefixMapping usedReferencePrefixes(UpdateRequest updateRequest, PrefixMapping pm) {
+        NodeTransformCollectNodes nodeUsageCollector = new NodeTransformCollectNodes();
+
+        applyNodeTransform(updateRequest, nodeUsageCollector);
+        Set<Node> nodes = nodeUsageCollector.getNodes();
+
+        PrefixMapping result = PrefixUtils.usedPrefixes(pm, nodes);
+        return result;
+    }
+    
+    public static UpdateRequest applyNodeTransform(UpdateRequest updateRequest, NodeTransform nodeTransform) {
+		UpdateRequest result = UpdateRequestUtils.copyTransform(updateRequest, update -> {
+			Update r = UpdateUtils.applyNodeTransform(update, nodeTransform);
+			return r;
+		});
+
+		return result;
+    }
+
 //    public static PrefixMapping usedPrefixes(UpdateRequest updateRequest) {
 //        NodeTransformCollectNodes nodeUsageCollector = new NodeTransformCollectNodes();
 //

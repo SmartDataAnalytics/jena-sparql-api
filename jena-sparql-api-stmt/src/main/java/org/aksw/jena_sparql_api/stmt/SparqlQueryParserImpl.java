@@ -2,11 +2,9 @@ package org.aksw.jena_sparql_api.stmt;
 
 import java.util.function.Supplier;
 
-import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryFactory;
 import org.apache.jena.query.Syntax;
-import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.core.Prologue;
 
 public class SparqlQueryParserImpl
@@ -31,10 +29,6 @@ public class SparqlQueryParserImpl
     public Query apply(String queryString) {
         Query result = querySupplier.get();
         QueryFactory.parse(result, queryString, baseURI, syntax);
-
-        // Remove unused namespaces
-    	PrefixMapping usedPrefixes = QueryUtils.usedPrefixes(result);
-    	result.setPrefixMapping(usedPrefixes);
 
         return result;
     }

@@ -71,6 +71,36 @@ public class SparqlStmtUtils {
 	// TODO Duplicate symbol definition; exists in E_Benchmark
 	public static final Symbol symConnection = Symbol.create("http://jsa.aksw.org/connection");
 
+
+	/**
+	 * Removes all unused prefixes from a stmt
+	 *  
+	 * @param stmt
+	 * @return
+	 */
+    public static SparqlStmt optimizePrefixes(SparqlStmt stmt) {
+    	optimizePrefixes(stmt, null);
+    	return stmt;
+    }
+
+    /**
+     * In-place optimize an update request's prefixes to only used prefixes
+     * The global prefix map may be null.
+     * 
+     * @param query
+     * @param pm
+     * @return
+     */
+    public static SparqlStmt optimizePrefixes(SparqlStmt stmt, PrefixMapping globalPm) {
+    	if(stmt.isQuery()) {
+    		QueryUtils.optimizePrefixes(stmt.getQuery(), globalPm);
+    	} else if(stmt.isUpdateRequest()) {
+    		UpdateRequestUtils.optimizePrefixes(stmt.getUpdateRequest(), globalPm);
+    	}
+    	return stmt;
+    }
+
+    	
 	public static SparqlStmt applyOpTransform(SparqlStmt stmt, Function<? super Op, ? extends Op> transform) {
 		SparqlStmt result;
 		if(stmt.isQuery()) {
@@ -119,7 +149,8 @@ public class SparqlStmtUtils {
 
 			UpdateRequest before = stmt.getAsUpdateStmt().getUpdateRequest();
 			UpdateRequest after = UpdateRequestUtils.copyTransform(before, update -> {
-				// Up to Jena 3.11.0 (inclusive) transforms do not affect UpdateData objects
+				// Transform UpdataData ourselves as
+				// up to Jena 3.11.0 (inclusive) transforms do not affect UpdateData objects
 				Update r = update instanceof UpdateData
 					? UpdateUtils.copyWithQuadTransform((UpdateData)update, q -> QuadUtils.applyNodeTransform(q, xform))
 					: UpdateTransformOps.transform(update, elform, exform);					

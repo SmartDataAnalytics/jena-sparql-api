@@ -92,6 +92,20 @@ public class SparqlStmtParserImpl
 //    public static SparqlStmtParserImpl create() {
 //        SparqlStmtParserImpl result
 //    }
+    /**
+     * Create an ARQ-based parser that throws exceptions on parse errors
+     * @return
+     */
+    public static SparqlStmtParserImpl create() {
+        SparqlStmtParserImpl result = create(Syntax.syntaxARQ, false);
+        return result;
+    }
+
+    public static SparqlStmtParserImpl create(PrefixMapping prefixMapping) {
+        SparqlStmtParserImpl result = create(Syntax.syntaxARQ, prefixMapping, false);
+        return result;
+    }
+
     public static SparqlStmtParserImpl create(Syntax syntax, boolean actAsClassifier) {
         SparqlStmtParserImpl result = create(SparqlParserConfig.newInstance().setSyntax(syntax).applyDefaults(), actAsClassifier);
         return result;

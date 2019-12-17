@@ -25,7 +25,7 @@ public class SparqlUpdateParserStmt
     public UpdateRequest apply(String queryStr) {
         SparqlStmt stmt = stmtParser.apply(queryStr);
         if(!stmt.isUpdateRequest()) {
-            throw new RuntimeException("SPARQL statement is not a query: " + stmt);
+            throw new RuntimeException("SPARQL statement is not an update request: " + stmt);
         }
 
         UpdateRequest result = stmt.getAsUpdateStmt().getUpdateRequest();

@@ -25,6 +25,9 @@ public class NodeUtils {
 
 //	public static final Node N_ABSENT = NodeFactory.createURI("http://special.absent/none");
 
+	// Note to myself because I repeatedly added node/prefix utils here:
+	// Prefix / PrefixMapping related utils are in PrefixUtils ~ Claus
+	
 	public static Node substWithLookup(Node node, Function<String, String> lookup) {
 		String ENV = "env:";
 		
