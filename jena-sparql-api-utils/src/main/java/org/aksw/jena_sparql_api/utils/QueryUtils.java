@@ -46,7 +46,6 @@ import org.apache.jena.sparql.syntax.PatternVars;
 import org.apache.jena.sparql.syntax.Template;
 import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransform;
 import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransformCopyBase;
-import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransformer;
 import org.apache.jena.sparql.util.ExprUtils;
 import org.apache.jena.sparql.util.PrefixMapping2;
 
@@ -70,7 +69,7 @@ public class QueryUtils {
 		Element eltBefore = afterQueryTmp.getQueryPattern();
 
 		// Fix blank nodes introduced as graph names by e.g. Algebra.unionDefaultGraph
-		Element eltAfter = ElementTransformer.transform(eltBefore, new ElementTransformCopyBase() {
+		Element eltAfter = org.aksw.jena_sparql_api.backports.syntaxtransform.ElementTransformer.transform(eltBefore, new ElementTransformCopyBase() {
 			protected Map<Node, Var> map = new HashMap<>();
 			
 			@Override
