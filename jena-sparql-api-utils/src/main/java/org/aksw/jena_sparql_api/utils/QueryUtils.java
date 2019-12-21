@@ -181,6 +181,11 @@ public class QueryUtils {
 
 		result.setPrefixMapping(proto.getPrefixMapping());
 
+		
+		// TODO We may want to move (named) graph URI copying to a separate function
+//		result.getGraphURIs().addAll(proto.getGraphURIs());
+//		result.getNamedGraphURIs().addAll(proto.getNamedGraphURIs());
+		
 		return result;
 	}
 
