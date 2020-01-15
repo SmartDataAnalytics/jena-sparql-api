@@ -36,7 +36,7 @@ public class PropertyFunctionFactoryFsFind
 	implements PropertyFunctionFactory
 {
 
-	private static final Logger logger = LoggerFactory.getLogger(PropertyFunctionFactoryXmlUnnest.class);
+	private static final Logger logger = LoggerFactory.getLogger(PropertyFunctionFactoryFsFind.class);
 
 	protected Function<? super Path, ? extends Stream<? extends Path>> fn;
 

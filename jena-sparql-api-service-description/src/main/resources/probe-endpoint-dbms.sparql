@@ -1,0 +1,93 @@
+#PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+PREFIX bif: <bif:>
+PREFIX apf: <http://jena.hpl.hp.com/ARQ/property#>
+PREFIX stardog: <tag:stardog:api:functions:>
+PREFIX hint: <http://www.bigdata.com/queryHints#>
+PREFIX ofn: <http://www.ontotext.com/sparql/functions/>
+
+INSERT {
+  []
+    a sd:ServiceDescription ;
+    eg:dbmsId   ?dbmsId ;
+    eg:dbmsName ?dbmsName ;
+    eg:dbmsVersion ?dbmsVersion ;
+    eg:dbmsShortName ?dbmsShortName
+}
+WHERE {
+
+  # Virtuoso ~ http://vos.openlinksw.com/owiki/wiki/VOS/VirtCheckSvrVersionViaSparql
+  OPTIONAL {
+    SERVICE SILENT <env://REMOTE> {
+      BIND( bif:sys_stat('st_dbms_name')          AS ?dbmsRawName)
+      BIND( bif:sys_stat('st_dbms_ver')           AS ?dbmsVersion)
+      # ( bif:sys_stat('st_build_thread_model') AS ?thread )
+      # ( bif:sys_stat('st_build_opsys_id')     AS ?opsys )
+      # ( bif:sys_stat('st_build_date')         AS ?date )
+      # ( bif:sys_stat('st_lic_owner')          AS ?owner )
+      # ( bif:sys_stat('st_lic_serial_number')  AS ?serial )
+      # WHERE
+      #   {  ?s a ?o  }
+      # LIMIT 1
+    }
+    FILTER(BOUND(?dbmsRawName))
+    BIND("virtuoso" AS ?dbmsShortName)
+  }
+
+  # Jena ~ https://jena.apache.org/documentation/query/library-propfunc.html
+  OPTIONAL {
+    SERVICE SILENT <env://REMOTE> {
+      ?dbmsRawName apf:versionARQ ?dbmsVersion
+    }
+    FILTER(BOUND(?dbmsVersion))
+    BIND("jena" AS ?dbmsShortName)
+  }
+
+  # Stardog ~ https://www.stardog.com/docs/#_sparql_query_functions
+  OPTIONAL {
+    SERVICE SILENT <env://REMOTE> {
+      BIND(ABS(stardog:toRadians(0)) < 0.001 AS ?test)
+    }
+    FILTER(?test) #
+    BIND("stardog" AS ?dbmsRawName)
+    BIND("stardog" AS ?dbmsShortName)
+  }
+
+  # Blazegraph ~ https://wiki.blazegraph.com/wiki/index.php/QueryHints
+  OPTIONAL {
+    SERVICE SILENT <env://REMOTE> {
+      # none-blazegraph stores will find no matches for the triple pattern (unless in the odd case where someone added this triple)
+      hint:Query hint:optimizer "None"
+      BIND(true AS ?teset)
+    }
+    FILTER(?test) # ?test is expected to be true for stardog
+    BIND("blazegraph" AS ?dbmsRawName)
+    BIND("blazegraph" AS ?dbmsShortName)
+  }
+  
+  # GraphDB
+  OPTIONAL {
+    SERVICE SILENT <env://REMOTE> {
+      BIND(ABS(ofn:toRadians(0)) < 0.001 AS ?test)
+    }
+    FILTER(?test)
+    BIND("graphdb" AS ?dbmsRawName)
+    BIND("graphdb" AS ?dbmsShortName)
+  }
+
+  OPTIONAL {
+    SERVICE SILENT <env://REMOTE> {
+      BIND("12"^^<http://www.w3.org/2001/XMLSchema#integer> * "P1Y"^^<http://www.w3.org/2001/XMLSchema#yearMonthDuration> = "P12Y"^^<http://www.w3.org/2001/XMLSchema#yearMonthDuration> AS ?test)
+    }
+    FILTER(?test)
+    BIND("rdf4j" AS ?dbmsRawName)
+    BIND("rdf4j" AS ?dbmsShortName)
+  }
+
+
+  # TODO https://github.com/w3c/sparql-12/wiki/Inventory-of-existing-extensions-to-SPARQL-1.1 Kineo, Communica, 
+
+
+  BIND( REPLACE(REPLACE(STR(?dbmsRawName), '\\s+', ' '), ' ', '-') AS ?dbmsName)
+  BIND(CONCAT(?dbmsName, ':', STR(?dbmsVersion)) AS ?dbmsId)
+}
+

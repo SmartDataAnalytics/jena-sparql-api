@@ -1,0 +1,15 @@
+{
+  "@context": {
+    "wd": "http://www.wikidata.org/entity/",
+    "wds": "http://www.wikidata.org/entity/statement/",
+    "wdv": "http://www.wikidata.org/value/",
+    "wdt": "http://www.wikidata.org/prop/direct/",
+    "wikibase": "http://wikiba.se/ontology#",
+    "p": "http://www.wikidata.org/prop/",
+    "ps": "http://www.wikidata.org/prop/statement/",
+    "pq": "http://www.wikidata.org/prop/qualifier/",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "bd": "http://www.bigdata.com/rdf#"
+  }
+}
+

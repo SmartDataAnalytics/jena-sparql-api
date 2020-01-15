@@ -1,13 +1,12 @@
 package org.aksw.jena_sparql_api.stmt;
 
-import org.apache.jena.riot.system.IRIResolver;
-
-import com.google.common.base.Supplier;
 import org.apache.jena.query.Syntax;
+import org.apache.jena.riot.system.IRIResolver;
 import org.apache.jena.sparql.core.Prologue;
-import org.apache.jena.sparql.lang.ParserSPARQL11Update;
 import org.apache.jena.update.UpdateFactory;
 import org.apache.jena.update.UpdateRequest;
+
+import com.google.common.base.Supplier;
 
 public class SparqlUpdateParserImpl
     implements SparqlUpdateParser
@@ -28,6 +27,7 @@ public class SparqlUpdateParserImpl
     public UpdateRequest apply(String updateString) {
         UpdateRequest result = updateRequestSupplier.get();
         UpdateFactory.parse(result, updateString, baseURI, syntax);
+        
         return result;
     }
 

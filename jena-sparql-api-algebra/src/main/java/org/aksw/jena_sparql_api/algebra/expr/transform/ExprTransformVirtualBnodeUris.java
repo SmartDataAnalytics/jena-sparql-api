@@ -334,6 +334,9 @@ public class ExprTransformVirtualBnodeUris
     		Op e = FixpointIteration.apply(c, x -> {
         		x = TransformPullFiltersIfCanMergeBGPs.transform(x);
         		x = Transformer.transform(new TransformMergeBGPs(), x);
+        		// TODO Add a transformation that tidies up
+        		// sequences of OpProject and OpExten
+//        		x = Transformer.transform(new TransformPro(), x);
         		return x;
     		});
 
@@ -341,7 +344,7 @@ public class ExprTransformVirtualBnodeUris
 			return e;
 		});
 
-		System.out.println("Rewrote query\n" + query + " to\n" + result);
+		//System.out.println("Rewrote query\n" + query + " to\n" + result);
 		logger.debug("Rewrote query\n" + query + " to\n" + result);
 		return result;
 	}

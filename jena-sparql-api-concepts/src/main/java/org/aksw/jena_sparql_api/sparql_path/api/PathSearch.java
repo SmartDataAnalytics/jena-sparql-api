@@ -1,5 +1,11 @@
 package org.aksw.jena_sparql_api.sparql_path.api;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.Random;
+import java.util.function.Function;
+import java.util.function.Predicate;
+
 import io.reactivex.Flowable;
 
 /**
@@ -21,12 +27,40 @@ public interface PathSearch<P> {
 	PathSearch<P> setMaxLength(Long maxLength);
 	Long getMaxLength();
 	
-	default PathSearch<P> setMaxResults(Integer maxResults) {
-		return setMaxResults(maxResults == null ? null : maxResults.longValue());
+	default PathSearch<P> setMaxInternalResultsHint(Integer maxResults) {
+		return setMaxInternalResultsHint(maxResults == null ? null : maxResults.longValue());
 	}
 
-	PathSearch<P> setMaxResults(Long maxResults);
-	Long getMaxResults();
+	/**
+	 * Hint to the backing path finding algorithm about how many candidate paths to generate.
+	 * The hint may be ignored.
+	 * 
+	 * @param maxResults
+	 * @return
+	 */
+	PathSearch<P> setMaxInternalResultsHint(Long maxResults);
+	Long getMaxInternalResultsHint();
 
+	
+	// PathSearch<P> setRandom(Random random);
+	// PathSearch<P> setMaxLength(Long maxLength);
+
+	default PathSearch<P> shuffle(Random random) {
+		return transformInternal(f -> {
+			List<P> list = f.toList().blockingGet();
+			Collections.shuffle(list, random);
+			return Flowable.fromIterable(list);
+		});
+	}
+	
+	default PathSearch<P> filter(Predicate<? super P> predicate) {
+		//io.reactivex.functions.Predicate. p -> predicate.test(p);
+		return transformInternal(f -> f.filter(predicate::test));
+	}
+
+	PathSearch<P> transformInternal(Function<Flowable<P>, Flowable<P>> filter);
+
+	//PathSearch<P> transformInternal(Function<? super Flowable<? super P>, ? extends Flowable<? extends P>> filter);
+	
 	Flowable<P> exec();
 }

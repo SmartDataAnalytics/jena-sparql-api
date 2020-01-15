@@ -74,6 +74,33 @@ public interface ExampleResource
 Check for the latest version on [Maven Central](https://search.maven.org/search?q=a:jena-sparql-api-mapper-proxy).
 
 
+### Resource View
+The `@ResourceView` annotation accepts a list of classes (`Class<?>`) as arguments which must be equivalent-or-super types of the annotated type.
+The generated proxy will be registered only for the provided classes.
+Providing no argument is is treated as if the annotated type itself was provided as an argument.
+
+```java
+interface MyPlainResource extends Resource {
+  String getName();
+}
+
+@ResourceView(MyPlainResource.class)
+// Also valid (but in this case discouraged as registrations should be frugal):
+// @ResourceView(MyPlainResource.class, MyAnnotatedResource.class)
+interface MyAnnotatedResource extends MyPlainResource {
+  @Override @IriNs("eg") String getName();
+}
+```
+
+In the code, this can be used as follows:
+```java
+// Register the implementation from the annotated type:
+JenaPluginUtils.registerResourceClass(MyAnnotatedResource.class);
+
+// Now it is possible to request a view using the super types supplied to @ResourceView
+MyPlainResource my = ModelFactory.createDefaultModel().createResource(MyPlainResource.class);
+```
+
 ### Dynamic polymorphic collection views
 Dynamic collection view have the signature
 ```

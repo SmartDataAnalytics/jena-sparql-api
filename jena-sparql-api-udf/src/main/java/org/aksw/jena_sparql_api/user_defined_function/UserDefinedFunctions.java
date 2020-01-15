@@ -86,44 +86,47 @@ public class UserDefinedFunctions {
 				}
 			}
 
-			if(activeUdfs.size() != 1) {
+			if(activeUdfs.isEmpty()) {
+				logger.warn("User defined function " + fnIri + " has no candidate for profiles " + activeProfiles);
+			} else if(activeUdfs.size() > 1) {
 				throw new RuntimeException("Expected exactly 1 definition for " + fnIri + "; got: " + activeUdfs);
-			}
-			
-			
-			UdfDefinition activeUdf = Iterables.getFirst(activeUdfs, null);
-
-			Resource ra = activeUdf.getAliasFor();
-
-			if(activeUdf.mapsToPropertyFunction()) {
-				System.out.println("Mapped pfn");
-			} else if(ra != null) {
-				UserDefinedFunctionResource alias = ra.as(UserDefinedFunctionResource.class);
-				if(alias != null) {
-					resolveUdf(result, alias, activeProfiles);
-					
-					String iri = forceIri(alias);
-					// Try to resolve the definition
-					// TODO Possible try to resolve against Jena's function registry
-					UserDefinedFunctionDefinition udfd = result.get(iri);
-					if(udfd == null) {
-						throw new RuntimeException("Could not resolve " + iri);						
-					}
-					
-					//UserDefinedFunctionResource udf = alias.as(UserDefinedFunctionResource.class);
-					UserDefinedFunctionDefinition ud = new UserDefinedFunctionDefinition(fnIri, udfd.getBaseExpr(), udfd.getArgList());
-					
-					result.put(ud.getUri(), ud);
-					//f.add(fnIri, udfd.getBaseExpr(), udfd.getArgList());							
-				}
 			} else {
-				UserDefinedFunctionDefinition udfd = UdfDefinition.toJena(fnIri, activeUdf);
 				
-				logger.debug("Registering " + udfd);
-				
-				result.put(udfd.getUri(), udfd);
+				UdfDefinition activeUdf = Iterables.getFirst(activeUdfs, null);
+	
+				Resource ra = activeUdf.getAliasFor();
+	
+				if(activeUdf.mapsToPropertyFunction()) {
+					logger.debug("Mapped property function: " + ra);
+				} else if(ra != null) {
+					UserDefinedFunctionResource alias = ra.as(UserDefinedFunctionResource.class);
+					if(alias != null) {
+						resolveUdf(result, alias, activeProfiles);
+						
+						String iri = forceIri(alias);
+						// Try to resolve the definition
+						// TODO Possibly try to resolve against Jena's function registry
+						UserDefinedFunctionDefinition udfd = result.get(iri);
+						if(udfd == null) {
+							logger.warn("Could not resolve " + iri);
+							//throw new RuntimeException("Could not resolve " + iri);						
+						} else {
+						
+							//UserDefinedFunctionResource udf = alias.as(UserDefinedFunctionResource.class);
+							UserDefinedFunctionDefinition ud = new UserDefinedFunctionDefinition(fnIri, udfd.getBaseExpr(), udfd.getArgList());
+							
+							result.put(ud.getUri(), ud);
+							//f.add(fnIri, udfd.getBaseExpr(), udfd.getArgList());
+						}
+					}
+				} else {
+					UserDefinedFunctionDefinition udfd = UdfDefinition.toJena(fnIri, activeUdf);
+					
+					logger.debug("Registering " + udfd);
+					
+					result.put(udfd.getUri(), udfd);
+				}
 			}
-
 		}
 	}
 }

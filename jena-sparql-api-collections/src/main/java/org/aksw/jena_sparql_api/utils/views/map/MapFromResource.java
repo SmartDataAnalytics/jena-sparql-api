@@ -49,6 +49,7 @@ public class MapFromResource
 {
 	protected final Resource subject;
 	protected final Property entryProperty;
+	//protected final boolean isReverseEntryProperty;
 	protected final Property keyProperty;
 
 	//protected fin
@@ -59,6 +60,7 @@ public class MapFromResource
 		super();
 		this.subject = subject;
 		this.entryProperty = entryProperty;
+		//this.isReverseEntryProperty = false;
 		this.keyProperty = keyProperty;
 	}
 

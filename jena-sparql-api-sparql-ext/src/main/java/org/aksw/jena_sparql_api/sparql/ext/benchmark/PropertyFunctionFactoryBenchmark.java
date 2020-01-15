@@ -4,6 +4,7 @@ import java.nio.file.Path;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
+import org.aksw.jena_sparql_api.sparql.ext.json.E_JsonPath;
 import org.apache.jena.ext.com.google.common.collect.Iterators;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdfconnection.RDFConnection;
@@ -14,7 +15,6 @@ import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.engine.binding.BindingFactory;
 import org.apache.jena.sparql.engine.binding.BindingMap;
 import org.apache.jena.sparql.engine.iterator.QueryIterPlainWrapper;
-import org.apache.jena.sparql.expr.ExprTypeException;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.pfunction.PFuncSimpleAndList;
 import org.apache.jena.sparql.pfunction.PropFuncArg;
@@ -53,7 +53,8 @@ public class PropertyFunctionFactoryBenchmark
 				ExecutionContext execCxt) {
 
 			RDFConnection conn = E_Benchmark.getConnection(execCxt);
-			JsonObject json = E_Benchmark.benchmark(conn, subject);
+			boolean includeResultSet = object.getArgListSize() >= 3;
+			JsonObject json = E_Benchmark.benchmark(conn, subject, includeResultSet);
 			
 			QueryIterator result;
 			if(json == null) {
@@ -63,16 +64,28 @@ public class PropertyFunctionFactoryBenchmark
 	
 				Node timeNode = object.getArg(0);
 				Node sizeNode = object.getArg(1);
+				Node resultSetNode = includeResultSet ? object.getArg(2) : null;
 	
 	            BindingMap b = BindingFactory.create(binding) ;
 	
-	
-	            b.add((Var)timeNode,
-						NodeValue.makeDecimal(json.get("time").getAsBigDecimal()).asNode());
-	
-	            b.add((Var)sizeNode,
-						NodeValue.makeInteger(json.get("size").getAsBigInteger()).asNode());
-
+// TODO Raise an exception if output arguments are non-variables
+	            
+//	            if(timeNode.isVariable()) {
+		            b.add((Var)timeNode,
+							NodeValue.makeDecimal(json.get("time").getAsBigDecimal()).asNode());
+//	            }
+	            
+//	            if(sizeNode.isVariable()) {
+		            b.add((Var)sizeNode,
+							NodeValue.makeInteger(json.get("size").getAsBigInteger()).asNode());
+//	            }
+	            
+//		            && resultSetNode.isVariable()
+	            if(resultSetNode != null) {
+		            b.add((Var)resultSetNode,
+							E_JsonPath.jsonToNode(json.get("result")));
+	            }
+	            
 	            result = new QueryIterPlainWrapper(Iterators.singletonIterator(b), execCxt) ;
 			}
 			return result;

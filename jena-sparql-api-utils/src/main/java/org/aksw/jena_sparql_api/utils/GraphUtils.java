@@ -3,14 +3,19 @@ package org.aksw.jena_sparql_api.utils;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Stream;
 
+import org.aksw.jena_sparql_api.utils.graph.GraphWrapperTransform;
+import org.aksw.jena_sparql_api.utils.io.NTripleUtils;
 import org.apache.jena.atlas.web.TypedInputStream;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.riot.out.NodeFmtLib;
+import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.graph.GraphFactory;
 import org.apache.jena.util.iterator.ExtendedIterator;
 
@@ -25,7 +30,8 @@ public class GraphUtils {
 	}
 	
 	public static Stream<Triple> stream(Graph graph) {
-		return Streams.stream(graph.find());
+		ExtendedIterator<Triple> it = graph.find();
+		return Streams.stream(it).onClose(it::close);
 	}
 
     /**
@@ -83,4 +89,73 @@ public class GraphUtils {
 
         return result;
     }
+    
+	public static boolean isValid(Triple t) {
+		boolean result;
+		try {
+			String str = NodeFmtLib.str(t) + " .";
+			NTripleUtils.parseNTriplesString(str);
+			result = true;
+		} catch(Exception e) {
+			result = false;
+		}
+		return result;
+	}
+
+	/**
+	 * Fix for an issue we observed in some HDT files:
+	 * This method fixes triples that have a graph component in the object position by discarding
+	 * the graph from that object.
+	 * 
+	 * The introduced overhead is a factor of a bit more than 3;
+	 * Tested on iterating the 1 million triples of a corrupted HDT file:
+	 * 
+	 * Plain HDT: 1777ms ~ 1.5sec
+     * Fixed HDT: 4922ms ~ 5sec
+	 * 
+	 * @param t
+	 * @return
+	 */
+	public static Triple fixTripleWithGraphInObject(Triple t) {
+		
+		// Only fix the object, therefore use short strings in s and p position
+		// to speed up re-parsing
+		try {
+			StringBuilder sb = new StringBuilder();
+			sb.append("<x:s> <x:p> ");
+			sb.append(NodeFmtLib.str(t.getObject()));
+			sb.append(" .");
+			String str = sb.toString();
+			Quad q = NTripleUtils.parseNQuadsString(str);
+			Triple r = new Triple(t.getSubject(), t.getPredicate(), q.getObject());
+			return r;
+		} catch(Exception e) {
+			return null;
+		}
+	}
+
+//	public static Graph wrapWithNtripleParse(Graph base) {
+//		return new GraphWrapperTransform(base, it -> it.filterKeep(GraphUtils::isValid));
+//	}
+
+	/**
+	 * We encountered HDT files that contained quads although the Java API
+	 * treated them as triples.
+	 * This wrapper causes all triples to be serialized as quads and then subsequently re-parsed.
+	 * Only the triple component is then returned.
+	 * 
+	 * 
+	 * @param base
+	 * @return
+	 */
+	public static Graph wrapGraphWithNQuadsFix(Graph base) {
+		return new GraphWrapperTransform(base, it -> it
+				.mapWith(GraphUtils::fixTripleWithGraphInObject)
+				.filterKeep(Objects::nonNull));
+	}
+
+	public static Graph wrapWithValidation(Graph base) {
+		return new GraphWrapperTransform(base, it -> it
+				.filterKeep(GraphUtils::isValid));
+	}
 }

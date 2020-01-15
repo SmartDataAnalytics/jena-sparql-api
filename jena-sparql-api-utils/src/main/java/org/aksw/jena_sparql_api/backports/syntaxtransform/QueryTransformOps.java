@@ -102,14 +102,18 @@ public class QueryTransformOps {
         
         
         Element el = q2.getQueryPattern();
-        Element el2 = ElementTransformer.transform(el, transform, exprTransform);
-        // Top level is always a group.
-        if (!(el2 instanceof ElementGroup)) {
-            ElementGroup eg = new ElementGroup();
-            eg.addElement(el2);
-            el2 = eg;
+        
+        // Pattern can be null, such as for DESCRIBE queries
+        if(el != null) {
+	        Element el2 = ElementTransformer.transform(el, transform, exprTransform);
+	        // Top level is always a group.
+	        if (!(el2 instanceof ElementGroup)) {
+	            ElementGroup eg = new ElementGroup();
+	            eg.addElement(el2);
+	            el2 = eg;
+	        }
+	        q2.setQueryPattern(el2);
         }
-        q2.setQueryPattern(el2);
         return q2;
     }
 

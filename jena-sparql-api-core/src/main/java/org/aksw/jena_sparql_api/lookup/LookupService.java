@@ -20,6 +20,11 @@ public interface LookupService<K, V>
         return LookupServiceTransformValue.create(this, fn);
     }
 
+    default LookupService<K, V> cache() {
+        return LookupServiceCacheMem.create(this);
+    }
+    
+    
     /**
      * Requests a map.
      * 
@@ -52,4 +57,5 @@ public interface LookupService<K, V>
     	List<V> result = requestList(keys).blockingGet();
         return result;
     }
+    
 }

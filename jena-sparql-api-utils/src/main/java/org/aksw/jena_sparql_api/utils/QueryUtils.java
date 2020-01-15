@@ -1,10 +1,12 @@
 package org.aksw.jena_sparql_api.utils;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -12,38 +14,97 @@ import java.util.stream.Collectors;
 import org.aksw.commons.collections.generator.Generator;
 import org.aksw.jena_sparql_api.backports.syntaxtransform.ExprTransformNodeElement;
 import org.aksw.jena_sparql_api.utils.transform.NodeTransformCollectNodes;
+import org.apache.jena.ext.com.google.common.collect.Sets;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.SortCondition;
 import org.apache.jena.shared.PrefixMapping;
-import org.apache.jena.shared.impl.PrefixMappingImpl;
 import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.OpAsQuery;
+import org.apache.jena.sparql.algebra.OpVars;
 import org.apache.jena.sparql.algebra.op.OpSlice;
 import org.apache.jena.sparql.core.BasicPattern;
 import org.apache.jena.sparql.core.DatasetDescription;
 import org.apache.jena.sparql.core.Quad;
+import org.apache.jena.sparql.core.QuadPattern;
 import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.core.VarExprList;
 import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprTransform;
 import org.apache.jena.sparql.graph.NodeTransform;
 import org.apache.jena.sparql.graph.NodeTransformLib;
+import org.apache.jena.sparql.modify.request.QuadAcc;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementFilter;
+import org.apache.jena.sparql.syntax.ElementNamedGraph;
 import org.apache.jena.sparql.syntax.ElementSubQuery;
 import org.apache.jena.sparql.syntax.ElementVisitorBase;
 import org.apache.jena.sparql.syntax.ElementWalker;
 import org.apache.jena.sparql.syntax.PatternVars;
 import org.apache.jena.sparql.syntax.Template;
 import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransform;
+import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransformCopyBase;
 import org.apache.jena.sparql.util.ExprUtils;
+import org.apache.jena.sparql.util.PrefixMapping2;
 
 import com.google.common.collect.DiscreteDomain;
 import com.google.common.collect.Range;
 
 public class QueryUtils {
+	
+	public static Query applyOpTransform(Query beforeQuery, Function<? super Op, ? extends Op> transform) {
+		Op beforeOp = Algebra.compile(beforeQuery);
+		Op afterOp = transform.apply(beforeOp);
+		
+		//Set<Var> afterOpVars = OpVars.visibleVars(afterOp);
+//		Op op = NodeTransformLib.transform(new NodeTransformBNodesToVariables(), afterOp);
+		
+		Collection<Var> mentionedVars = OpVars.mentionedVars(beforeOp);		
+		Query afterQueryTmp = OpAsQuery.asQuery(afterOp);
+//		Query afterQuery = fixVarNames(afterQueryTmp);
+
+		Generator<Var> vargen = VarGeneratorBlacklist.create(mentionedVars);
+		Element eltBefore = afterQueryTmp.getQueryPattern();
+
+		// Fix blank nodes introduced as graph names by e.g. Algebra.unionDefaultGraph
+		Element eltAfter = org.aksw.jena_sparql_api.backports.syntaxtransform.ElementTransformer.transform(eltBefore, new ElementTransformCopyBase() {
+			protected Map<Node, Var> map = new HashMap<>();
+			
+			@Override
+			public Element transform(ElementNamedGraph el, Node gn, Element elt1) {
+				Element result;
+				if(gn.isBlank() || (gn.isVariable() && gn.getName().startsWith("?"))) {
+					Var v = map.get(gn);
+					if(v == null) {
+						v = vargen.next();
+						map.put(gn, v);
+					}
+					result = new ElementNamedGraph(v, elt1);
+				} else {
+					result = super.transform(el, gn, elt1);
+				}
+				return result;
+			}
+		});
+		afterQueryTmp.setQueryPattern(eltAfter);
+		
+		Query result = QueryUtils.restoreQueryForm(afterQueryTmp, beforeQuery);
+		
+		return result;
+	}
+	
+// Seems like Query.getResultVars already does what I wanted to do here
+//	public Set<Var> visibleVars(Query query) {
+//		Set<Var> result;
+//		if(query.isQueryResultStar()) {
+//			Op op = Algebra.compile(query);
+//			result = OpVars.visibleVars(op);
+//		} else {
+//			query.getPro
+//		}
+//	}
 	
 	/**
 	 * Restore a query form from a prototype.
@@ -64,24 +125,55 @@ public class QueryUtils {
 		switch(tgtQueryType) {
 		case Query.QueryTypeSelect:
 			result = query.cloneQuery();
+
+			Set<Var> expectedVars = new LinkedHashSet<>(proto.getProjectVars());
+			VarExprList replacement = new VarExprList();
+
+			Set<Var> actualVars = new LinkedHashSet<>(result.getProjectVars());
+			
+			Set<Var> missingVars = Sets.difference(expectedVars, actualVars);
+			Set<Var> exceedingVars = Sets.difference(actualVars, expectedVars);
+			if(!missingVars.isEmpty()) {
+				throw new RuntimeException("Missing vars: " + missingVars + ", expected: " + expectedVars + ", actual: " + actualVars);
+			}
+			
+			if(!exceedingVars.isEmpty()) {
+				VarExprList actual = result.getProject();
+				for(Var expectedVar : expectedVars) {				
+					Expr expr = actual.getExpr(expectedVar);
+					VarExprListUtils.add(replacement, expectedVar, expr);
+				}
+				
+				VarExprListUtils.replace(result.getProject(), replacement);
+				result.setQueryResultStar(false);
+				result.setResultVars();
+			}
 			break;
 		case Query.QueryTypeConstruct:
+			// If the projection uses expressions, create a sub query
 			result = selectToConstruct(query, proto.getConstructTemplate());
 			break;
 		case Query.QueryTypeAsk:
 			result = query.cloneQuery();
-			query.setQueryAskType();
+			result.setQueryAskType();
 			break;
 		case Query.QueryTypeDescribe:
 			result = query.cloneQuery();
-			query.setQueryDescribeType();
+			result.setQueryDescribeType();
 			for(Node node : proto.getResultURIs()) {
-				query.addDescribeNode(node);
+				result.addDescribeNode(node);
 			}
 			for(Var var : proto.getProjectVars()) {
-				query.addDescribeNode(var);
+				result.addDescribeNode(var);
 			}
 			break;
+		case Query.QueryTypeJson:
+			result = query.cloneQuery();
+			result.setQueryJsonType();
+        	proto.getJsonMapping().entrySet()
+    			.forEach(e -> result.addJsonMapping(e.getKey(), e.getValue()));
+			break;
+
 		default:
 			throw new RuntimeException("unsupported query type");
 			//proto.result
@@ -89,6 +181,11 @@ public class QueryUtils {
 
 		result.setPrefixMapping(proto.getPrefixMapping());
 
+		
+		// TODO We may want to move (named) graph URI copying to a separate function
+//		result.getGraphURIs().addAll(proto.getGraphURIs());
+//		result.getNamedGraphURIs().addAll(proto.getNamedGraphURIs());
+		
 		return result;
 	}
 
@@ -132,13 +229,15 @@ public class QueryUtils {
 	public static Query rewrite(Query beforeQuery, Function<? super Op, ? extends Op> xform) {
 		Op beforeOp = Algebra.compile(beforeQuery);
 		Op afterOp = xform.apply(beforeOp);// Transformer.transform(xform, beforeOp);
-		Query result = OpAsQuery.asQuery(afterOp);
-		
-		if(beforeQuery.isConstructType()) {
-			result.setQueryConstructType();
-			Template template = beforeQuery.getConstructTemplate();
-			result.setConstructTemplate(template);
-		}
+		Query afterQuery = OpAsQuery.asQuery(afterOp);
+		afterQuery.getPrefixMapping().setNsPrefixes(beforeQuery.getPrefixMapping());
+
+		Query result = restoreQueryForm(afterQuery, beforeQuery);
+//		if(beforeQuery.isConstructType()) {
+//			result.setQueryConstructType();
+//			Template template = beforeQuery.getConstructTemplate();
+//			result.setConstructTemplate(template);
+//		}
 		
 		return result;
 	}
@@ -153,10 +252,33 @@ public class QueryUtils {
 	}
 	
 	public static boolean canActAsConstruct(Query q) {
-		boolean result = !q.hasAggregators() && !q.hasGroupBy() && !q.hasValues() && !q.hasHaving();
+		boolean result = true;
+		result = result && !q.hasAggregators();
+		result = result && !q.hasGroupBy();
+		result = result && !q.hasValues();
+		result = !q.hasHaving();
+		result = result && !VarExprListUtils.hasExprs(q.getProject());
+
 		return result;
 	}
 	
+
+	/**
+	 * Transform json mapping obtained via Query.getJsonMapping
+	 * TODO Actually this should be added to Jena's NodeTransformLib.
+	 * 
+	 * @param jsonMapping
+	 * @param nodeTransform
+	 * @return
+	 */
+	public static Map<String, Node> applyNodeTransform(Map<String, Node> jsonMapping, NodeTransform nodeTransform) {
+		Map<String, Node> result = jsonMapping.entrySet().stream()
+				.collect(Collectors.toMap(
+						Entry::getKey,
+						e -> nodeTransform.apply(e.getValue())));
+		return result;
+	}
+
     public static Query applyNodeTransform(Query query, NodeTransform nodeTransform) {
 
         ElementTransform eltrans = new ElementTransformSubst2(nodeTransform) ;
@@ -166,9 +288,22 @@ public class QueryUtils {
         Template template = null;
         if(query.isConstructType()) {
         	Template tmp = query.getConstructTemplate();
-        	BasicPattern before = tmp.getBGP();
-        	BasicPattern after = NodeTransformLib.transform(nodeTransform, before);
-        	template = new Template(after);
+        	if(tmp.containsRealQuad()) {
+        		QuadPattern before = QuadPatternUtils.create(tmp.getQuads());
+//        	BasicPattern before = tmp.getBGP();
+        		QuadPattern after = NodeTransformLib.transform(nodeTransform, before);
+        		template = new Template(new QuadAcc(after.getList()));
+        	} else {
+        		BasicPattern before = tmp.getBGP();
+        		BasicPattern after = NodeTransformLib.transform(nodeTransform, before);
+        		template = new Template(after);
+        	}
+        }
+        
+        Map<String, Node> jsonMapping = null;
+        if(query.isJsonType()) {
+        	 Map<String, Node> before = query.getJsonMapping();
+        	jsonMapping = applyNodeTransform(before, nodeTransform);
         }
 
         
@@ -178,16 +313,25 @@ public class QueryUtils {
         // QueryTransformOps creates a shallow copy of the query which causes problems
         // if a PrefixMapping2 is used; the PM2 is materialized into a PM
         // Fix prefixes in sub queries by clearing them
-        ElementWalker.walk(result.getQueryPattern(), new ElementVisitorBase() {
-        	@Override
-        	public void visit(ElementSubQuery el) {
-        		el.getQuery().getPrefixMapping().clearNsPrefixMap();
-        	}
-        });
+        Element resultEl = result.getQueryPattern();
+        if(resultEl != null) {
+	        ElementWalker.walk(resultEl, new ElementVisitorBase() {
+	        	@Override
+	        	public void visit(ElementSubQuery el) {
+	        		el.getQuery().getPrefixMapping().clearNsPrefixMap();
+	        	}
+	        });
+        }
         
         if(template != null) {
         	result.setQueryConstructType();
         	result.setConstructTemplate(template);
+        }
+        
+        if(jsonMapping != null) {
+        	result.setQueryJsonType();
+        	jsonMapping.entrySet()
+        		.forEach(e -> result.addJsonMapping(e.getKey(), e.getValue()));
         }
 
 //        Query result = tmp;
@@ -209,6 +353,23 @@ public class QueryUtils {
         return result;
     }
 
+    
+    /**
+     * Determines the used prefixes w.r.t the query's local prefixes and
+     * a global prefix map (may be null).
+     * The local prefixes take precedence.
+     * 
+     * @param query
+     * @param global
+     * @return
+     */
+    public static PrefixMapping usedPrefixes(Query query, PrefixMapping global) {
+    	PrefixMapping local = query.getPrefixMapping();
+    	PrefixMapping pm = global == null ? local : new PrefixMapping2(global, local);
+    	PrefixMapping result = usedReferencePrefixes(query, pm);
+        return result;
+    }
+    
     /**
      * Scans the query for all occurrences of URI nodes and returns the applicable subset of its
      * prefix mapping.
@@ -235,28 +396,44 @@ public class QueryUtils {
      * @return
      */
     public static PrefixMapping usedPrefixes(Query query) {
+    	PrefixMapping result = usedPrefixes(query, null);
+    	return result;
+    }
+
+    /**
+     * Determine used prefixes within the given prefix mapping.
+     * The query's own prefixes are ignored.
+     * 
+     * @param query
+     * @param pm
+     * @return
+     */
+    public static PrefixMapping usedReferencePrefixes(Query query, PrefixMapping pm) {
         NodeTransformCollectNodes nodeUsageCollector = new NodeTransformCollectNodes();
 
         applyNodeTransform(query, nodeUsageCollector);
         Set<Node> nodes = nodeUsageCollector.getNodes();
 
-        PrefixMapping pm = query.getPrefixMapping();
-        Map<String, String> usedPrefixes = nodes.stream()
-                .filter(Node::isURI)
-                .map(Node::getURI)
-                .map(x -> {
-                    String tmp = pm.shortForm(x);
-                    String r = Objects.equals(x, tmp) ? null : tmp.split(":", 2)[0];
-                    return r;
-                })
-                //.peek(System.out::println)
-                .filter(x -> x != null)
-                .distinct()
-                .collect(Collectors.toMap(x -> x, pm::getNsPrefixURI));
-
-        PrefixMapping result = new PrefixMappingImpl();
-        result.setNsPrefixes(usedPrefixes);
+        PrefixMapping result = PrefixUtils.usedPrefixes(pm, nodes);
         return result;
+    }
+
+    /**
+     * In-place optimize a query's prefixes to only used prefixes
+     * 
+     * @param query
+     * @param pm
+     * @return
+     */
+    public static Query optimizePrefixes(Query query, PrefixMapping globalPm) {
+    	PrefixMapping usedPrefixes = QueryUtils.usedPrefixes(query, globalPm);
+    	query.setPrefixMapping(usedPrefixes);
+    	return query;
+    }
+
+    public static Query optimizePrefixes(Query query) {
+    	optimizePrefixes(query, null);
+    	return query;
     }
 
     public static Query randomizeVars(Query query) {

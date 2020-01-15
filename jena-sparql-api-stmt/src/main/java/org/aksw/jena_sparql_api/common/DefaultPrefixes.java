@@ -39,7 +39,9 @@ public class DefaultPrefixes {
 			.setNsPrefixes(RDFDataMgr.loadModel("rdf-prefixes/rdfa11.jsonld"))
 			.setNsPrefixes(RDFDataMgr.loadModel("rdf-prefixes/geosparql.jsonld"))
 			.setNsPrefixes(RDFDataMgr.loadModel("rdf-prefixes/dataid.jsonld"))
-			.setNsPrefixes(RDFDataMgr.loadModel("rdf-prefixes/jsa.jsonld"));
+			.setNsPrefixes(RDFDataMgr.loadModel("rdf-prefixes/jsa.jsonld"))
+			.setNsPrefixes(RDFDataMgr.loadModel("rdf-prefixes/mvn.jsonld"))
+			.setNsPrefixes(RDFDataMgr.loadModel("rdf-prefixes/rpif.jsonld"));
 	}
 	
 	// TODO The issue with dynamic loading of namespaces based on class path scanning is,

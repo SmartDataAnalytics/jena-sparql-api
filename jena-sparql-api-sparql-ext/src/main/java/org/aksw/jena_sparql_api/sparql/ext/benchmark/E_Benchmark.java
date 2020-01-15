@@ -1,16 +1,20 @@
 package org.aksw.jena_sparql_api.sparql.ext.benchmark;
 
+import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.aksw.jena_sparql_api.sparql.ext.json.RDFDatatypeJson;
+import org.aksw.jena_sparql_api.utils.Symbols;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.ResultSet;
+import org.apache.jena.query.ResultSetFactory;
 import org.apache.jena.query.ResultSetFormatter;
+import org.apache.jena.query.ResultSetRewindable;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.sparql.core.DatasetGraph;
@@ -20,24 +24,25 @@ import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.function.FunctionBase1;
 import org.apache.jena.sparql.function.FunctionEnv;
 import org.apache.jena.sparql.util.Context;
-import org.apache.jena.sparql.util.Symbol;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Stopwatch;
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 public class E_Benchmark
 	extends FunctionBase1
 {
 	private static final Logger logger = LoggerFactory.getLogger(E_Benchmark.class);
-	public static final Symbol symConnection = Symbol.create("http://jsa.aksw.org/connection");
+	
 	
 	@Override
 	protected NodeValue exec(List<NodeValue> args, FunctionEnv env) {
-		Node node = args.get(0).asNode();	
+		Node node = args.get(0).asNode();
 		RDFConnection conn = getConnection(env);
-		JsonObject json = benchmark(conn, node);
+		JsonObject json = benchmark(conn, node, false);
 		if(json == null) {
 			throw new ExprTypeException("no node value obtained");
 		}
@@ -46,7 +51,7 @@ public class E_Benchmark
 	    return result;
 	}
 
-	public static JsonObject benchmark(RDFConnection conn, Node node) {
+	public static JsonObject benchmark(RDFConnection conn, Node node, boolean includeResultSet) {
 		JsonObject result;
 		if(node.isVariable()) {
 			result = null;
@@ -55,7 +60,7 @@ public class E_Benchmark
 	
 			if(nv.isString()) {
 	    		String queryStr = nv.getString();
-	    		result = benchmark(conn, queryStr);
+	    		result = benchmark(conn, queryStr, includeResultSet);
 	    	} else { 	
 		    	throw new ExprTypeException("Incorrect node value type " + nv);//": " + node)) ;
 		    }
@@ -67,7 +72,7 @@ public class E_Benchmark
 		RDFConnection conn = null;
 		Context cxt = env.getContext();
 		if(cxt != null) {
-			conn = cxt.get(symConnection);
+			conn = cxt.get(Symbols.symConnection);
 		}
 		
 		if(conn == null) {
@@ -87,7 +92,7 @@ public class E_Benchmark
 		RDFConnection conn = null;
 		Context cxt = env.getContext();
 		if(cxt != null) {
-			conn = cxt.get(symConnection);
+			conn = cxt.get(Symbols.symConnection);
 		}
 		
 		if(conn == null) {
@@ -102,7 +107,7 @@ public class E_Benchmark
 		return conn;
 	}
 
-	public static JsonObject benchmark(RDFConnection conn, String queryStr) {
+	public static JsonObject benchmark(RDFConnection conn, String queryStr, boolean includeResultSet) {
 		
 		if(conn == null) {
 			throw new RuntimeException("No connection or dataset specified in context");
@@ -111,20 +116,42 @@ public class E_Benchmark
 		logger.info("Benchmarking query: " + queryStr);
 		
 		Stopwatch sw = Stopwatch.createStarted();
-		long resultSetSize;
+		Long resultSetSize = null;
+		ResultSetRewindable rsw = null;
 		try(QueryExecution qe = conn.query(queryStr)) {
 			ResultSet rs = qe.execSelect();
-			resultSetSize = ResultSetFormatter.consume(rs);
+			
+			if(includeResultSet) {
+				rsw = ResultSetFactory.copyResults(rs);
+			} else {				
+				resultSetSize = (long)ResultSetFormatter.consume(rs);
+			}
+			
 		} catch(Exception e) {
     		logger.warn("Failure executing benchmark request", e);
 			throw new ExprTypeException("Failure executing benchmark request", e);
 		}
 
+		
 		long ms = sw.stop().elapsed(TimeUnit.NANOSECONDS);
 		BigDecimal s = new BigDecimal(ms).divide(new BigDecimal(1000000000l));
 
 		JsonObject json = new JsonObject();
 		json.addProperty("time", s);
+
+		if(rsw != null) {
+			rsw.reset();
+			ByteArrayOutputStream baos = new ByteArrayOutputStream();
+			ResultSetFormatter.outputAsJSON(baos, rsw);
+
+			String resultSetStr = baos.toString();
+
+			resultSetSize = (long)rsw.size();
+			Gson gson = new Gson();
+			JsonElement el = gson.fromJson(resultSetStr, JsonElement.class);
+			json.add("result", el);
+		}
+
 		json.addProperty("size", resultSetSize);
 
 		return json;

@@ -10,6 +10,7 @@ import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -51,6 +52,7 @@ import org.apache.jena.riot.system.stream.StreamManager;
 import org.apache.jena.riot.web.HttpOp;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.shared.impl.PrefixMappingImpl;
+import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.core.Prologue;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.expr.ExprTransform;
@@ -69,6 +71,53 @@ public class SparqlStmtUtils {
 	// TODO Duplicate symbol definition; exists in E_Benchmark
 	public static final Symbol symConnection = Symbol.create("http://jsa.aksw.org/connection");
 
+
+	/**
+	 * Removes all unused prefixes from a stmt
+	 *  
+	 * @param stmt
+	 * @return
+	 */
+    public static SparqlStmt optimizePrefixes(SparqlStmt stmt) {
+    	optimizePrefixes(stmt, null);
+    	return stmt;
+    }
+
+    /**
+     * In-place optimize an update request's prefixes to only used prefixes
+     * The global prefix map may be null.
+     * 
+     * @param query
+     * @param pm
+     * @return
+     */
+    public static SparqlStmt optimizePrefixes(SparqlStmt stmt, PrefixMapping globalPm) {
+    	if(stmt.isQuery()) {
+    		QueryUtils.optimizePrefixes(stmt.getQuery(), globalPm);
+    	} else if(stmt.isUpdateRequest()) {
+    		UpdateRequestUtils.optimizePrefixes(stmt.getUpdateRequest(), globalPm);
+    	}
+    	return stmt;
+    }
+
+    	
+	public static SparqlStmt applyOpTransform(SparqlStmt stmt, Function<? super Op, ? extends Op> transform) {
+		SparqlStmt result;
+		if(stmt.isQuery()) {
+			Query tmp = stmt.getAsQueryStmt().getQuery();
+			Query query = QueryUtils.applyOpTransform(tmp, transform);
+			result = new SparqlStmtQuery(query);
+		} else if(stmt.isUpdateRequest()) {
+			UpdateRequest tmp = stmt.getAsUpdateStmt().getUpdateRequest();
+			UpdateRequest updateRequest = UpdateRequestUtils.applyOpTransform(tmp, transform);
+			
+			result = new SparqlStmtUpdate(updateRequest);			
+		} else {
+			result = stmt;
+		}
+		
+		return result;
+	}
 
 	public static SparqlStmt applyNodeTransform(SparqlStmt stmt, NodeTransform xform) {
 		SparqlStmt result;
@@ -100,7 +149,8 @@ public class SparqlStmtUtils {
 
 			UpdateRequest before = stmt.getAsUpdateStmt().getUpdateRequest();
 			UpdateRequest after = UpdateRequestUtils.copyTransform(before, update -> {
-				// Up to Jena 3.11.0 (inclusive) transforms do not aaffect UpdateData objects
+				// Transform UpdataData ourselves as
+				// up to Jena 3.11.0 (inclusive) transforms do not affect UpdateData objects
 				Update r = update instanceof UpdateData
 					? UpdateUtils.copyWithQuadTransform((UpdateData)update, q -> QuadUtils.applyNodeTransform(q, xform))
 					: UpdateTransformOps.transform(update, elform, exform);					
@@ -178,6 +228,8 @@ public class SparqlStmtUtils {
 			throws FileNotFoundException, IOException, ParseException {
 		
 		InputStream in = openInputStream(filenameOrURI);
+		Objects.requireNonNull(in, "Could not open input stream from " + filenameOrURI);
+
         if(baseIri == null) {
         	URI tmp = extractBaseIri(filenameOrURI);
 	        baseIri = tmp.toString();
@@ -190,6 +242,13 @@ public class SparqlStmtUtils {
 //	        URI parent = uri.getPath().endsWith("/") ? uri.resolve("..") : uri.resolve(".");
 //			baseIri = parent.toString();
         }
+
+		return extracted(pm, baseIri, in);
+		//stmts.forEach(stmt -> process(conn, stmt, sink));
+	}
+
+	private static SparqlStmtIterator extracted(PrefixMapping pm, String baseIri, InputStream in)
+			throws IOException, ParseException {
 
 //		File file = new File(filename).getAbsoluteFile();
 //		if(!file.exists()) {
@@ -232,7 +291,6 @@ public class SparqlStmtUtils {
 		SparqlStmtIterator stmts = SparqlStmtUtils.parse(in, sparqlStmtParser);
 
 		return stmts;
-		//stmts.forEach(stmt -> process(conn, stmt, sink));
 	}
 
 

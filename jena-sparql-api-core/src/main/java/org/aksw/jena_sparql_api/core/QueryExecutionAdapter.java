@@ -13,6 +13,7 @@ import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.sparql.core.Quad;
+import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.util.Context;
 
 /**
@@ -27,6 +28,11 @@ public class QueryExecutionAdapter
     implements QueryExecution
 {
     protected QueryExecutionTimeoutHelper timeoutHelper = new QueryExecutionTimeoutHelper(this);
+
+	@Override
+	public void setInitialBinding(Binding binding) {
+        throw new RuntimeException("Not Implemented.");
+	}
 
     @Override
     public void setInitialBinding(QuerySolution binding) {

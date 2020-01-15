@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -16,9 +17,11 @@ import org.aksw.commons.collections.SetUtils;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
 import org.aksw.jena_sparql_api.core.utils.QueryGenerationUtils;
+import org.aksw.jena_sparql_api.http.HttpExceptionUtils;
 import org.aksw.jena_sparql_api.utils.IteratorResultSetBinding;
 import org.aksw.jena_sparql_api.utils.QuadPatternUtils;
 import org.aksw.jena_sparql_api.utils.VarUtils;
+import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.ext.com.google.common.base.Objects;
 import org.apache.jena.ext.com.google.common.collect.Maps;
 import org.apache.jena.graph.Graph;
@@ -26,11 +29,14 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
+import org.apache.jena.query.QueryFactory;
 import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.rdfconnection.RDFConnection;
+import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.apache.jena.sparql.algebra.Table;
 import org.apache.jena.sparql.algebra.table.TableData;
@@ -122,7 +128,8 @@ public class SparqlRx {
 			}
 			emitter.onComplete();
 		} catch (Exception e) {
-			emitter.onError(new Throwable("Error executing " + q, e));
+			Exception f = HttpExceptionUtils.makeHumanFriendly(e);
+			emitter.onError(new Throwable("Error executing " + q, f));
 		}
 	}
 
@@ -169,6 +176,14 @@ public class SparqlRx {
 
 	public static Flowable<QuerySolution> execSelect(Supplier<QueryExecution> qes) {
 		return execSelect(qes, ResultSet::next);
+	}
+
+	public static Flowable<QuerySolution> execSelect(RDFConnection conn, String queryStr) {
+		return execSelect(() -> conn.query(queryStr), ResultSet::next);
+	}
+
+	public static Flowable<QuerySolution> execSelect(RDFConnection conn, Query query) {
+		return execSelect(() -> conn.query(query), ResultSet::next);
 	}
 
 	public static Flowable<Triple> execConstructTriples(Supplier<QueryExecution> qes) {
@@ -246,6 +261,21 @@ public class SparqlRx {
 	// }
 
 	public static void main(String[] args) {
+		// Some tests for whether timeouts actually work - so far it worked...
+		String queryStr = "CONSTRUCT { ?p a ?c } { { SELECT ?p (COUNT(DISTINCT ?s) AS ?c) { ?s ?p ?o } GROUP BY ?p } }";
+		//String queryStr = "CONSTRUCT WHERE { ?s ?p ?o . ?x ?y ?z }";
+		Query query = QueryFactory.create(queryStr);
+
+		RDFConnection conn = RDFConnectionFactory.connect("http://localhost:8890/sparql");
+		List<RDFNode> rdfNodes = SparqlRx.execPartitioned(conn, Vars.p, query)
+			.timeout(300, TimeUnit.MILLISECONDS)
+			.toList()
+			.blockingGet();
+		
+		System.out.println(rdfNodes);
+	}
+	
+	public static void main2(String[] args) {
 //		List<Entry<Integer, List<Entry<Integer, Integer>>>> list = groupByOrdered(Flowable.range(0, 10).map(i -> Maps.immutableEntry((int)(i / 3), i)),
 //		e -> e.getKey())
 //		.toList().blockingGet();
@@ -347,19 +377,24 @@ public class SparqlRx {
 //    	return result;
 //    }
 
-    public static Single<Range<Long>> fetchCountQuery(SparqlQueryConnection qef, Query query, Long itemLimit, Long rowLimit) {
+    public static Single<Range<Long>> fetchCountQueryPartition(SparqlQueryConnection qef, Query query, Collection<Var> partitionVars, Long itemLimit, Long rowLimit) {
 
         //Var outputVar = Var.alloc("_count_"); //ConceptUtils.freshVar(concept);
 
         Long xitemLimit = itemLimit == null ? null : itemLimit + 1;
         Long xrowLimit = rowLimit == null ? null : rowLimit + 1;
 
-        Entry<Var, Query> countQuery = QueryGenerationUtils.createQueryCount(query, xitemLimit, xrowLimit);
+        Entry<Var, Query> countQuery = QueryGenerationUtils.createQueryCountPartition(query, partitionVars, xitemLimit, xrowLimit);
         Var v = countQuery.getKey();
         Query q = countQuery.getValue();
         
         return SparqlRx.fetchNumber(qef, q, v)
         		.map(count -> SparqlRx.toRange(count.longValue(), xitemLimit, xrowLimit));
+    }
+
+    public static Single<Range<Long>> fetchCountQuery(SparqlQueryConnection qef, Query query, Long itemLimit, Long rowLimit) {
+    	Single<Range<Long>> result = fetchCountQueryPartition(qef, query, null, itemLimit, rowLimit);
+    	return result;
     }
 
     
@@ -379,7 +414,33 @@ public class SparqlRx {
     	return execPartitioned(conn, s, q);
     }
     
-    public static Flowable<RDFNode> execPartitioned(SparqlQueryConnection conn, Node s, Query q) {
+    //public static Acc
+    public static Flowable<RDFNode> execConstructGrouped(SparqlQueryConnection conn, Node s, Query query) {
+    	return execConstructGrouped(q -> conn.query(q), s, query);
+    }    
+
+    public static Flowable<RDFNode> execConstructGrouped(Function<Query, QueryExecution> qeSupp, Node s, Query query) {
+    	Template template = query.getConstructTemplate();
+    	Query clone = preprocessQueryForPartition(s, query);
+    	
+		Flowable<RDFNode> result = SparqlRx
+			// For future reference: If we get an empty results by using the query object, we probably have wrapped a variable with NodeValue.makeNode. 
+			.execSelectRaw(() -> qeSupp.apply(clone))
+			.groupBy(createGrouper((Var)s)::apply)
+			.map(group -> {
+				Node groupKey = group.getKey();
+				AccGraph acc = new AccGraph(template);
+				group.forEach(acc::accumulate);
+				Graph g = acc.getValue();
+				Model m = ModelFactory.createModelForGraph(g);
+				RDFNode r = m.asRDFNode(groupKey);
+				return r;
+			});
+		return result;
+    }
+
+    
+    public static Query preprocessQueryForPartition(Node s, Query q) {
 
     	Template template = q.getConstructTemplate();
         Set<Var> projectVars = new LinkedHashSet<>();
@@ -412,7 +473,13 @@ public class SparqlRx {
     	clone.setDistinct(true);
     	
     	logger.debug("Converted query to: " + clone);
-    	
+    	return clone;
+    }
+    
+    public static Flowable<RDFNode> execPartitioned(SparqlQueryConnection conn, Node s, Query q) {
+
+    	Template template = q.getConstructTemplate();
+    	Query clone = preprocessQueryForPartition(s, q);
     	
 		Flowable<RDFNode> result = SparqlRx
 				// For future reference: If we get an empty results by using the query object, we probably have wrapped a variable with NodeValue.makeNode. 

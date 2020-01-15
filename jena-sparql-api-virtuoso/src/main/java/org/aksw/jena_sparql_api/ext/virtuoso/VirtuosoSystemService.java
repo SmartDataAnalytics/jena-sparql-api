@@ -11,11 +11,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.prefs.Preferences;
 
-import org.aksw.commons.service.core.AbstractSystemService;
 import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.core.connection.SparqlQueryConnectionJsa;
 import org.aksw.jena_sparql_api.core.connection.SparqlUpdateConnectionJsa;
 import org.aksw.jena_sparql_api.core.service.SparqlBasedSystemService;
+import org.aksw.jena_sparql_api.io.utils.AbstractSystemService;
 import org.aksw.jena_sparql_api.update.FluentSparqlService;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionModular;

@@ -6,17 +6,18 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.aksw.commons.collections.generator.Generator;
 import org.aksw.commons.jena.jgrapht.PseudoGraphJenaModel;
+import org.aksw.jena_sparql_api.algebra.utils.AlgebraUtils;
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.Concept;
@@ -28,7 +29,6 @@ import org.aksw.jena_sparql_api.core.utils.QueryExecutionUtils;
 import org.aksw.jena_sparql_api.model.QueryExecutionFactoryModel;
 import org.aksw.jena_sparql_api.sparql_path.core.PathConstraintBase;
 import org.aksw.jena_sparql_api.sparql_path.core.VocabPath;
-import org.aksw.jena_sparql_api.sparql_path.core.algorithm.GraphPathComparator;
 import org.aksw.jena_sparql_api.stmt.SparqlStmt;
 import org.aksw.jena_sparql_api.stmt.SparqlStmtParserImpl;
 import org.aksw.jena_sparql_api.stmt.SparqlStmtQuery;
@@ -36,6 +36,7 @@ import org.aksw.jena_sparql_api.stmt.SparqlStmtUtils;
 import org.aksw.jena_sparql_api.util.sparql.syntax.path.PathUtils;
 import org.aksw.jena_sparql_api.util.sparql.syntax.path.SimplePath;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
+import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.aksw.jena_sparql_api.utils.VarGeneratorBlacklist;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.graph.Node;
@@ -51,6 +52,7 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.apache.jena.shared.PrefixMapping;
+import org.apache.jena.sparql.algebra.optimize.Rewrite;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.graph.GraphFactory;
 import org.apache.jena.sparql.lang.arq.ParseException;
@@ -66,8 +68,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Maps;
-import com.google.common.collect.Multimap;
-import com.google.common.collect.Multimaps;
 import com.google.common.collect.Streams;
 import com.google.common.primitives.Ints;
 
@@ -136,7 +136,13 @@ public class ConceptPathFinderBidirectionalUtils {
         return result;
     }
 	
-    public static Flowable<SimplePath> findPaths(
+//	Collection<BiPredicate<? super SimplePath, ? super P_Path0>> pathValidators,
+//	PathConstraintBase pathConstraint,
+//	BiFunction<? super GraphPath<RDFNode, Statement>, ? super Model, SimplePath> convertGraphPathToSparqlPath) {
+
+
+
+    public static Flowable<SimplePath> findPathsCore(
     		SparqlQueryConnection conn,
     		UnaryRelation sourceConcept,
     		UnaryRelation tmpTargetConcept,
@@ -308,7 +314,7 @@ public class ConceptPathFinderBidirectionalUtils {
         } else {
         	
         	if(n == 0) {
-        		// Prevent illegale argument exception at jgrapht
+        		// Prevent illegal argument exception at jgrapht
         		candidateGraphPaths = Collections.emptyList();         		        		
         	} else {
 	        	KShortestPathAlgorithm<RDFNode, Statement> kShortestPaths = _maxPathLength == null
@@ -317,139 +323,124 @@ public class ConceptPathFinderBidirectionalUtils {
 
 	        	candidateGraphPaths = kShortestPaths.getPaths(startVertex, endVertex, n);
         	}        	
-//        	if(n < 0) {
-////            	candidateGraphPaths = Collections.emptyList();         		
-//        	} else {
-//                KShortestPathAlgorithm<Node, Triple> kShortestPaths = new KShortestSimplePaths<>(graph, n);
-//        	}                	
         }
-        
-        		//candidateGraphPaths.forEach(p -> logger.debug("  Candidate Path: " + p));
-            	
- //            	if(tmp != null) {
-//                    candidateGraphPaths.add(tmp);
-//                    System.out.println("  " + tmp);
-//                }
-
-
-                // This code fires an exception if start equals target
-                /*
-                List<GraphPath<Node, DefaultEdge>> tmp = kShortestPaths.getPaths(candidate);
-                if(tmp != null) {
-                    candidateGraphPaths.addAll(tmp);
-                }
-                */
-//            }
-
-            //NeighborProvider<Resource> np = new NeighborProviderModel(joinSummaryModel);
-
-
-            //BreathFirstTask.run(np, VocabPath.start, dest, new ArrayList<Step>(), callback);
-            //BreathFirstTask.runFoo(np, VocabPath.start, dest, new ArrayList<Step>(), new ArrayList<Step>(), callback);
-        //}
     	
     	logger.info("Found " + candidateGraphPaths.size() + " candidate paths");
 
-        Collections.sort(candidateGraphPaths, new GraphPathComparator<>());
+//        Collections.sort(candidateGraphPaths, new GraphPathComparator<>());
 
 
 
-        boolean detectEquivalentPaths = false;
-        if(detectEquivalentPaths) {
-            Multimap<SimplePath, GraphPath<RDFNode, Statement>> index = Multimaps.index(candidateGraphPaths, path -> convertGraphPathToSparqlPath.apply(path, joinSummaryGraph));
-	        for(Entry<SimplePath, Collection<GraphPath<RDFNode, Statement>>> entry : index.asMap().entrySet()) {
-	        	if(entry.getValue().size() > 1) {
-	        		System.out.println("MULTI MAP " + entry.getKey());
-	        		entry.getValue().forEach(System.out::println);
-	        	}
-	        }
-        }
-
+//        boolean detectEquivalentPaths = false;
+//        if(detectEquivalentPaths) {
+//            Multimap<SimplePath, GraphPath<RDFNode, Statement>> index = Multimaps.index(candidateGraphPaths, path -> convertGraphPathToSparqlPath.apply(path, joinSummaryGraph));
+//	        for(Entry<SimplePath, Collection<GraphPath<RDFNode, Statement>>> entry : index.asMap().entrySet()) {
+//	        	if(entry.getValue().size() > 1) {
+//	        		System.out.println("MULTI MAP " + entry.getKey());
+//	        		entry.getValue().forEach(System.out::println);
+//	        	}
+//	        }
+//        }
         
         
-        // Convert the graph paths to 'ConceptPaths'   
-        Stream<SimplePath> tmp = candidateGraphPaths.stream()
-            	.map(path -> convertGraphPathToSparqlPath.apply(path, unionModel))
-            	.filter(x -> x != null);
-        
-        
-        
-        if(pathValidators != null && !pathValidators.isEmpty()) {
-        	//Set<SimplePath> rejectedPaths = new HashSet<>();
-        	tmp = tmp.filter(x -> testPath(x, pathValidators));
-//        	tmp = tmp.filter(x -> {
-//        		
-//        		SimplePath parent = x.parentPath();
-//        		boolean hasRejectedParent = false;
-//        		while(parent != null) {
-//        			hasRejectedParent = rejectedPaths.contains(parent);
-//        			if(hasRejectedParent) {
-//        				break;
-//        			} else {
-//        				parent = parent.parentPath();
-//        			}
-//        		}
-//        		
-//        		boolean r;
-//        		if(!hasRejectedParent) {
-//	        		Entry<SimplePath, P_Path0> e = SimplePath.seperateLastStep(x);
-//	        		r = pathValidators.stream().allMatch(p -> p.test(e.getKey(), e.getValue()));	        		
-//
-//	        		if(!r) {
-//	        			rejectedPaths.add(x);
-//	        		}
-//        		} else {
-//        			r = false;
-//        		}
-//
-//        		return r;
-//        	});
-        }
-        
-            	
-        List<SimplePath> paths = tmp 
-        	.distinct() // TODO I would like to get rid of this distinct here; I am not totally sure how duplicates come into existence in the first place; it has something to do with enumeration of paths in the data summary
-        	.collect(Collectors.toList());
 
-
-
+        // Note: We could invoke the graph computations in a FlowableOnSubscribe implementation
+    	Stream<SimplePath> tmp = candidateGraphPaths.stream()
+    		.map(path -> convertGraphPathToSparqlPath.apply(path, unionModel))
+    		.filter(Objects::nonNull)
+    		.distinct();
+    	
+	    if(pathValidators != null && !pathValidators.isEmpty()) {
+	    	tmp = tmp.filter(x -> testPath(x, pathValidators));
+	    }
+    	
+    	List<SimplePath> paths = tmp.collect(Collectors.toList());
         // Sort paths for determinism
         Collections.sort(paths);
+
+//        Flowable<SimplePath> result =
+//        		Flowable.fromIterable(candidateGraphPaths)
+//        		.map(path -> convertGraphPathToSparqlPath.apply(path, unionModel))
+//        		.filter(Objects::nonNull);
         
-        if(n >= 0) {
-        	paths = paths.subList(0, Math.min(n, paths.size()));
-        }
+        Flowable<SimplePath> result = Flowable.fromIterable(paths);
+        //result.toList().map(c -> Collections.shuffle(c));
+        return result;
+    }        
+
+    
+//    public static Flowable<SimplePath> applyPathValidators(Flowable<SimplePath> tmp, Collection<BiPredicate<? super SimplePath, ? super P_Path0>> pathValidators) {
+//    
+//		// Convert the graph paths to 'ConceptPaths'   
+////	    Stream<SimplePath> tmp = candidateGraphPaths.stream()
+////	        	.map(path -> convertGraphPathToSparqlPath.apply(path, unionModel))
+////	        	.filter(x -> x != null);
+//	    
+//	    
+//	    
+//	    if(pathValidators != null && !pathValidators.isEmpty()) {
+//	    	tmp = tmp.filter(x -> testPath(x, pathValidators));
+//	    }
+//        List<SimplePath> paths = tmp 
+//            	.distinct() // TODO I would like to get rid of this distinct here; I am not totally sure how duplicates come into existence in the first place; it has something to do with enumeration of paths in the data summary
+//            	.collect(Collectors.toList());
+//
+//            // Sort paths for determinism
+//            Collections.sort(paths);
+//
+//            
+//            if(n >= 0) {
+//            	paths = paths.subList(0, Math.min(n, paths.size()));
+//            }
+//
+//    }
+
+    public static Predicate<SimplePath> createSparqlPathValidator(
+    	SparqlQueryConnection conn,
+    	UnaryRelation sourceConcept,
+    	UnaryRelation tmpTargetConcept) {
+
+
+    	UnaryRelation targetConcept = ConceptUtils.makeDistinctFrom(tmpTargetConcept, sourceConcept);
+
 
         //List<Path> paths = callback.getCandidates();
 
         // Cross check whether the path actually connects the source and target concepts
-        Set<Var> vars = new HashSet<>();
-        vars.addAll(sourceConcept.getVarsMentioned());
-        vars.addAll(targetConcept.getVarsMentioned());
-
-        Generator<Var> generator = VarGeneratorBlacklist.create("v", vars);
 
         //List<SimplePath> result = new ArrayList<SimplePath>();
 
-        // TODO Make configurable
-        boolean abortOnFailedValidation = true;
-        Flowable<SimplePath> result = Flowable.fromIterable(paths)
-        	.filter(path -> {
-        		boolean r;
-        		try {
-        			r = validatePath(conn, sourceConcept, targetConcept, path, generator);
-        		} catch(Exception e) {
-        			if(abortOnFailedValidation) {
-        				throw new RuntimeException(e);
-        			} else {
-        				r = false;
-        			}
-        		}
-        		
-        		return r;
-        	});
+        Predicate<SimplePath> result = path -> {
+            Set<Var> vars = new HashSet<>();
+            vars.addAll(sourceConcept.getVarsMentioned());
+            vars.addAll(targetConcept.getVarsMentioned());
+
+            Generator<Var> generator = VarGeneratorBlacklist.create("v", vars);
         	
+        	boolean r = validatePath(conn, sourceConcept, targetConcept, path, generator);
+        	return r;
+        };
         return result;
+        
+//        // TODO Make configurable
+//        boolean abortOnFailedValidation = true;
+//        Flowable<SimplePath> result = Flowable.fromIterable(paths)
+//        	.filter(path -> {
+//        		boolean r;
+//        		try {
+//        			r = validatePath(conn, sourceConcept, targetConcept, path, generator);
+//        		} catch(Exception e) {
+//        			if(abortOnFailedValidation) {
+//        				throw new RuntimeException(e);
+//        			} else {
+//        				r = false;
+//        			}
+//        		}
+//        		
+//        		return r;
+//        	});
+//        	
+//        return result;
         	
 //        
 //        for(SimplePath path : paths) {
@@ -576,6 +567,8 @@ public class ConceptPathFinderBidirectionalUtils {
 
         // TODO Make timeouts configurable
         boolean result;
+		Rewrite rewrite = AlgebraUtils.createDefaultRewriter();
+		query = QueryUtils.rewrite(query, rewrite::rewrite);
         try(QueryExecution qe = conn.query(query)) {
         	//qe.setTimeout(30, TimeUnit.SECONDS, 30, TimeUnit.SECONDS);
         	result = qe.execAsk();

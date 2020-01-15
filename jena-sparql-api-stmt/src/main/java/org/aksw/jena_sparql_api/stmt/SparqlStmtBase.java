@@ -84,8 +84,12 @@ public abstract class SparqlStmtBase
 
     @Override
     public String toString() {
-        return "SparqlStmtBase [originalString=" + originalString
+    	String result = parseException == null
+    			? originalString
+    			: "SparqlStmtBase [originalString=" + originalString
                 + ", parseException=" + parseException + "]";
+    	
+        return result; 
     }
 
 

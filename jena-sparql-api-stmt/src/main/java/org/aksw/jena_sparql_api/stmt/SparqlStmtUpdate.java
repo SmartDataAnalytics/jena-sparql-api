@@ -76,6 +76,10 @@ public class SparqlStmtUpdate
 
     @Override
     public String toString() {
-        return "SparqlStmtUpdate [updateRequest=" + updateRequest + "]";
+    	String result = updateRequest != null
+    			? updateRequest.toString()
+    			: super.toString();
+
+        return result;
     }
 }

@@ -29,6 +29,7 @@ import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprList;
 import org.apache.jena.sparql.expr.ExprTransform;
+import org.apache.jena.sparql.expr.ExprTransformCopy;
 import org.apache.jena.sparql.expr.ExprTransformer;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementAssign;
@@ -138,6 +139,10 @@ public class ElementTransformer {
         public ApplyTransformVisitor(ElementTransform transform, ExprTransform exprTransform) {
             if ( transform == null )
                 transform = ElementTransformIdentity.get() ;
+            
+            if ( exprTransform == null )
+            	exprTransform = new ExprTransformCopy();
+
             this.transform = transform ;
             this.exprTransform = exprTransform ;
         }

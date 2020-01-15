@@ -4,25 +4,57 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 
 import org.apache.jena.atlas.io.AWriter;
 import org.apache.jena.atlas.io.StringWriterI;
 import org.apache.jena.datatypes.RDFDatatype;
 import org.apache.jena.datatypes.TypeMapper;
+import org.apache.jena.ext.com.google.common.base.Strings;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.riot.out.NodeFormatterNT;
 import org.apache.jena.sparql.core.Var;
-import org.apache.jena.sparql.expr.NodeValue;
 
 import com.google.common.collect.Iterables;
 
 public class NodeUtils {
 	
-	public static final Node nullUriNode = NodeFactory.createURI("http://null.null/null");
+	public static final String nullUri = "http://null.null/null";
+	public static final Node nullUriNode = NodeFactory.createURI(nullUri);
 
 //	public static final Node N_ABSENT = NodeFactory.createURI("http://special.absent/none");
 
+	// Note to myself because I repeatedly added node/prefix utils here:
+	// Prefix / PrefixMapping related utils are in PrefixUtils ~ Claus
+	
+	public static Node substWithLookup(Node node, Function<String, String> lookup) {
+		String ENV = "env:";
+		
+		Node result = node;
+		if(node.isURI()) {
+			String str = node.getURI();
+			if(str.startsWith(ENV)) {
+				String key = str.substring(ENV.length());
+
+				boolean isUri = false;
+				if(key.startsWith("//")) {
+					key = key.substring(2);
+					isUri = true;
+				}
+
+				
+				String value = lookup.apply(key);
+				if(!Strings.isNullOrEmpty(value)) {
+					result = isUri
+						? NodeFactory.createURI(value)
+						: NodeFactory.createLiteral(value);
+				}
+			}
+		}
+		
+		return result;
+	}
 	
     public static Node asNullableNode(String uri) {
         Node result = uri == null ? null : NodeFactory.createURI(uri);
@@ -69,7 +101,8 @@ public class NodeUtils {
         return result;
     }
 
-    
+
+    @Deprecated // Use NodeFmtLib.str
     public static String toNTriplesString(Node node) {
         NodeFormatterNT formatter = new NodeFormatterNT();
         AWriter writer = new StringWriterI();

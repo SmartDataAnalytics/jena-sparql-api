@@ -2,6 +2,7 @@ package org.aksw.jena_sparql_api.core.utils;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -10,7 +11,6 @@ import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.utils.GeneratorBlacklist;
 import org.aksw.jena_sparql_api.utils.QuadPatternUtils;
-import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.aksw.jena_sparql_api.utils.VarUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.ext.com.google.common.collect.Maps;
@@ -121,25 +121,64 @@ public class QueryGenerationUtils {
     public static Entry<Var, Query> createQueryCount(Query query) {
     	return createQueryCount(query, null, null);
     }
-    
-    public static Entry<Var, Query> createQueryCount(Query query, Long itemLimit, Long rowLimit) {
-        Var resultVar = Vars.c;
-    	
+
+    public static Entry<Var, Query> createQueryCountPartition(Query query, Collection<Var> partitionVars, Long itemLimit, Long rowLimit) {
     	query = query.cloneQuery();
 
     	if(query.isConstructType()) {
         	Template template = query.getConstructTemplate();
-        	Set<Var> vars = QuadPatternUtils.getVarsMentioned(template.getQuads());
+        	Set<Var> vars = partitionVars == null
+        			? QuadPatternUtils.getVarsMentioned(template.getQuads())
+        			: new LinkedHashSet<>(partitionVars);
+
+            query.setQuerySelectType();
+
         	// TODO Vars may be empty, in case we deal with a partitioned query
-        	
-        	query.setQuerySelectType();
         	if(vars.isEmpty()) {
-        		query.setQueryResultStar(true);
+        		//query.setQueryResultStar(true);
+        		throw new RuntimeException("Variables required for counting");
         	} else {
+        		query.setQueryResultStar(false);
 	        	query.addProjectVars(vars);
+	        	query.setDistinct(true);
         	}
+        } else {
+        	throw new RuntimeException("Not implemented for select queries");
+        	// TODO We need to check whether the partition variables are mapped to expressions in the projection
         }
 
+    	Entry<Var, Query> result = createQueryCountCore(query, itemLimit, rowLimit);
+    	return result;
+    }
+
+    public static Entry<Var, Query> createQueryCount(Query query, Long itemLimit, Long rowLimit) {
+    	Entry<Var, Query> result = createQueryCountPartition(query, null, itemLimit, rowLimit);
+    	return result;
+    }
+
+//    public static Entry<Var, Query> createQueryCount(Query query, Long itemLimit, Long rowLimit) {    	
+//    	query = query.cloneQuery();
+//
+//    	if(query.isConstructType()) {
+//        	Template template = query.getConstructTemplate();
+//        	Set<Var> vars = QuadPatternUtils.getVarsMentioned(template.getQuads());
+//        	// TODO Vars may be empty, in case we deal with a partitioned query
+//        	
+//        	query.setQuerySelectType();
+//        	if(vars.isEmpty()) {
+//        		query.setQueryResultStar(true);
+//        	} else {
+//	        	query.addProjectVars(vars);
+//        	}
+//        }
+//    	
+//    	Entry<Var, Query> result = createQueryCountCore(query, itemLimit, rowLimit);
+//    	return result;
+//    }
+
+    
+    public static Entry<Var, Query> createQueryCountCore(Query query, Long itemLimit, Long rowLimit) {
+        Var resultVar = Vars.c;
     	
     	boolean needsWrapping = !query.getGroupBy().isEmpty() || !query.getAggregators().isEmpty();
 	
@@ -162,9 +201,11 @@ public class QueryGenerationUtils {
         Var singleResultVar = null;
         VarExprList project = query.getProject();
         if(project.size() == 1) {
-        	Entry<Var, Expr> tmp = project.getExprs().entrySet().iterator().next();
-        	Var v = tmp.getKey();
-        	Expr e = tmp.getValue();
+        	Var v = project.getVars().iterator().next();
+        	Expr e = project.getExpr(v);
+//        	Entry<Var, Expr> tmp = project.getExprs().entrySet().iterator().next();
+//        	Var v = tmp.getKey();
+//        	Expr e = tmp.getValue();
         	if(e == null || (e.isVariable() && e.asVar().equals(v))) {
         		singleResultVar = v;
         	}

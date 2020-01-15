@@ -1,8 +1,10 @@
 package org.aksw.jena_sparql_api.mapper.proxy;
 
 import java.beans.Introspector;
+import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles.Lookup;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -512,7 +514,7 @@ public class MapperProxyUtils {
 			
 			// Deal with (non-nested) collections first
 			if(!Iterable.class.isAssignableFrom(paramType)) {
-				boolean isFluentCompatible = clazz.isAssignableFrom(returnType);
+				boolean isFluentCompatible = returnType.isAssignableFrom(clazz);
 				
 				result = MethodDescriptor.simpleSetter(m, isFluentCompatible, paramType);
 			}
@@ -543,7 +545,7 @@ public class MapperProxyUtils {
 			// Deal with (non-nested) collections first
 			if(Iterable.class.isAssignableFrom(paramType)) {
 				Class<?> itemType = extractItemType(m.getParameters()[0].getParameterizedType());
-				boolean isFluentCompatible = clazz.isAssignableFrom(returnType);
+				boolean isFluentCompatible = returnType.isAssignableFrom(clazz);
 				
 				result = MethodDescriptor.collectionSetter(m, isFluentCompatible, paramType, itemType);
 			}
@@ -915,8 +917,14 @@ public class MapperProxyUtils {
 	
 	public static String deriveBeanPropertyName(String methodName) {
 		// TODO Check whether the subsequent character is upper case
-		boolean isGetterOrSetter = methodName.startsWith("get") || methodName.startsWith("set") || methodName.startsWith("is");
-		String result = isGetterOrSetter ? methodName.substring(3) : methodName;
+		List<String> prefixes = Arrays.asList("get", "set", "is");
+		
+		String usedPrefix = prefixes.stream()
+				.filter(methodName::startsWith)
+				.findAny()
+				.orElse(null);
+		
+		String result = usedPrefix != null ? methodName.substring(usedPrefix.length()) : methodName;
 		
 		// TODO We may want to use the Introspector's public decapitalize method
 		result = Introspector.decapitalize(result);
@@ -939,8 +947,8 @@ public class MapperProxyUtils {
 			String pathStr = "<" + expanded + ">";
 			
 			result = (P_Path0)PathParser.parse(pathStr, pm);
-			
-			logger.debug("Parsed path " + pathStr + " into " + result);
+
+			logger.debug("Parsed bean property RDF annotation " + pathStr + " into " + result);
 			
 			//Node p = NodeFactory.createURI(rdfPropertyStr);
 			
@@ -1056,6 +1064,26 @@ public class MapperProxyUtils {
 		Method[] methods = clazz.getMethods();
 		
 		for(Method method : methods) {
+			
+			// Proxy default methods
+	    	// Performance note: Without caching of the default method delegate,
+	    	// VisualVM reported around 80% of CPU time being used on
+	    	// repeatedly setting up that method handle
+	    	// These figures were observed with our "Conjure" system which
+	    	// heavily uses the visitor pattern in conjunction with default methods
+	    	// on Jena Resource classes
+			if(method.isDefault()) {
+				BiFunction<Object, Object[], Object> defaultMethodDelegate;
+				try {
+					defaultMethodDelegate = proxyDefaultMethod(method);
+				} catch(Exception e) {
+					throw new RuntimeException(e);
+				}
+				
+				methodImplMap.put(method, defaultMethodDelegate);
+				continue;
+			}
+
 			MethodDescriptor descriptor = classifyMethod(method);
 			if(descriptor == null) {
 				continue;
@@ -1067,6 +1095,7 @@ public class MapperProxyUtils {
 			if(method.isBridge()) {
 				continue;
 			}
+			
 			
 			String beanPropertyName = deriveBeanPropertyName(method.getName());
 
@@ -1452,7 +1481,7 @@ public class MapperProxyUtils {
 
 			Enhancer enhancer = new Enhancer();
 			if(clazz.isInterface()) {
-				enhancer.setSuperclass(ResourceImpl.class);
+				enhancer.setSuperclass(ResourceProxyBase.class);
 				enhancer.setInterfaces(new Class<?>[] { clazz });
 			} else {
 				if(!Resource.class.isAssignableFrom(clazz)) {
@@ -1466,6 +1495,12 @@ public class MapperProxyUtils {
 			enhancer.setCallback(new MethodInterceptor() {				
 			    public Object intercept(Object obj, java.lang.reflect.Method method, Object[] args,
                         MethodProxy proxy) throws Throwable {
+//			    	try {
+//			    		Method m = obj.getClass().getMethod(method.getName(), method.getParameterTypes());
+//			    		System.out.println("Found Method: " + m + " - " + m.isDefault());
+//			    	} catch(Exception e) {
+//			    		System.out.println(e);
+//			    	}
 			    	
 				    BiFunction<Object, Object[], Object> delegate = methodImplMap.get(method);
 //				    System.out.println(methodMap);
@@ -1473,17 +1508,16 @@ public class MapperProxyUtils {
 				    if(delegate != null) {
 				    	r = delegate.apply(obj, args);
 				    } else if(method.isDefault()) {
-				    	Class<?> declaringClass = method.getDeclaringClass();
-				    	Constructor<Lookup> constructor =
-			    			Lookup.class.getDeclaredConstructor(Class.class);
-		                constructor.setAccessible(true);
+				    	throw new RuntimeException("Should never come here anymore");
 
-		                r = constructor.newInstance(declaringClass)
-	                    .in(declaringClass)
-	                    .unreflectSpecial(method, declaringClass)
-	                    .bindTo(obj)
-	                    .invokeWithArguments(args);
-			                
+//				    	BiFunction<Object, Object[], Object> defaultMethodDelegate;
+//				    	synchronized (methodImplMap) {
+//						    defaultMethodDelegate = proxyDefaultMethod(method);
+//			                
+//			                methodImplMap.put(method, defaultMethodDelegate);
+//						}
+//				    	r = defaultMethodDelegate.apply(obj, args);
+				    	
 
 			                //r = method.invoke(hack, args);
 			                
@@ -1511,7 +1545,15 @@ public class MapperProxyUtils {
 			});
 			
 			result = (n, g) -> {
-				Object o = enhancer.create(new Class<?>[] {Node.class, EnhGraph.class}, new Object[] {n, g});
+				Class<?>[] argTypes = new Class<?>[] {Node.class, EnhGraph.class};
+				Object[] argValues = new Object[] {n, g};
+				Object o;
+				
+				// Synchronization due to ISSUE #30 - Race condition in mapper-proxy
+				// Also see test case {@link TestMapperProxyRaceCondiditon}
+				synchronized(MapperProxyUtils.class) {
+					o = enhancer.create(argTypes, argValues);
+				}
 				return (T)o;
 			};
 		}		
@@ -1567,5 +1609,30 @@ public class MapperProxyUtils {
 		}
 
 		return result;
+	}
+	
+	public static BiFunction<Object, Object[], Object> proxyDefaultMethod(Method method)
+			throws NoSuchMethodException, SecurityException, IllegalAccessException, InstantiationException, IllegalArgumentException, InvocationTargetException {
+		BiFunction<Object, Object[], Object> defaultMethodDelegate;
+		Class<?> declaringClass = method.getDeclaringClass();
+		Constructor<Lookup> constructor =
+			Lookup.class.getDeclaredConstructor(Class.class);
+		constructor.setAccessible(true);
+
+		MethodHandle undboundHandle = constructor.newInstance(declaringClass)
+				.in(declaringClass)
+				.unreflectSpecial(method, declaringClass);
+		
+		defaultMethodDelegate = (o, a) -> {
+		    MethodHandle boundHandle = undboundHandle.bindTo(o);
+		    Object r;
+			try {
+				r = boundHandle.invokeWithArguments(a);
+			} catch (Throwable e) {
+				throw new RuntimeException(e);
+			}
+		    return r;
+		};
+		return defaultMethodDelegate;
 	}
 }

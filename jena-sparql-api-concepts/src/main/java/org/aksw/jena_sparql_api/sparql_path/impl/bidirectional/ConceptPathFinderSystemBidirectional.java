@@ -6,7 +6,7 @@ import org.aksw.jena_sparql_api.sparql_path.api.ConceptPathFinderBase;
 import org.aksw.jena_sparql_api.sparql_path.api.ConceptPathFinderFactorySummaryBase;
 import org.aksw.jena_sparql_api.sparql_path.api.ConceptPathFinderSystem;
 import org.aksw.jena_sparql_api.sparql_path.api.PathSearch;
-import org.aksw.jena_sparql_api.sparql_path.api.PathSearchBase;
+import org.aksw.jena_sparql_api.sparql_path.api.PathSearchSparqlBase;
 import org.aksw.jena_sparql_api.sparql_path.core.PathConstraint2;
 import org.aksw.jena_sparql_api.util.sparql.syntax.path.SimplePath;
 import org.apache.jena.rdf.model.Model;
@@ -45,13 +45,24 @@ public class ConceptPathFinderSystemBidirectional
 
 				@Override
 				public PathSearch<SimplePath> createSearch(UnaryRelation sourceConcept, UnaryRelation targetConcept) {
-					return new PathSearchBase<SimplePath>() {
+					return new PathSearchSparqlBase(dataConnection, sourceConcept, targetConcept) {
 						@Override
-						public Flowable<SimplePath> exec() {
+						public Flowable<SimplePath> execCore() {
 							Long effectiveLength = maxLength == null ? null : 2 * maxLength;
 							
 							return ConceptPathFinderBidirectionalUtils
-								.findPaths(dataConnection, sourceConcept, targetConcept, maxResults, effectiveLength, dataSummary, shortestPathsOnly, simplePathsOnly, pathValidators, new PathConstraint2(), ConceptPathFinderBidirectionalUtils::convertGraphPathToSparqlPath);
+								.findPathsCore(
+										dataConnection,
+										sourceConcept,
+										targetConcept,
+										maxResults,
+										effectiveLength,
+										dataSummary,
+										shortestPathsOnly,
+										simplePathsOnly,
+										pathValidators,
+										new PathConstraint2(),
+										ConceptPathFinderBidirectionalUtils::convertGraphPathToSparqlPath);
 						}
 					};
 				}					

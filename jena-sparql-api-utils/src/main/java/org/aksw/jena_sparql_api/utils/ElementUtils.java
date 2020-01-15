@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.aksw.commons.collections.MapUtils;
@@ -15,6 +16,10 @@ import org.aksw.jena_sparql_api.backports.syntaxtransform.ExprTransformNodeEleme
 import org.aksw.jena_sparql_api.utils.transform.NodeTransformCollectNodes;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
+import org.apache.jena.query.Query;
+import org.apache.jena.sparql.algebra.Algebra;
+import org.apache.jena.sparql.algebra.Op;
+import org.apache.jena.sparql.algebra.OpAsQuery;
 import org.apache.jena.sparql.core.BasicPattern;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.TriplePath;
@@ -54,6 +59,14 @@ public class ElementUtils {
 //        return result;
 //    }
 	
+	
+	public static Element applyOpTransform(Element elt, Function<? super Op, ? extends Op> transform) {
+		Op beforeOp = Algebra.compile(elt);
+		Op afterOp = transform.apply(beforeOp);
+		Query query = OpAsQuery.asQuery(afterOp);
+		Element r = query.getQueryPattern();
+		return r;
+	}
 	
 	// PatternVars only returns visible vars, this returns all mentioned vars
 	public static Set<Var> getVarsMentioned(Element e) {
