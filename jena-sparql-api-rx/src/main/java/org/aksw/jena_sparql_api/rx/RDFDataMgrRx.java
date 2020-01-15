@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 import org.aksw.jena_sparql_api.utils.DatasetUtils;
 import org.aksw.jena_sparql_api.utils.IteratorClosable;
 import org.aksw.jena_sparql_api.utils.QuadPatternUtils;
+import org.apache.jena.atlas.web.TypedInputStream;
 import org.apache.jena.ext.com.google.common.collect.Iterators;
 import org.apache.jena.ext.com.google.common.collect.Sets;
 import org.apache.jena.graph.Node;
@@ -27,6 +28,7 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
+import org.apache.jena.riot.RDFLanguages;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.util.iterator.ClosableIterator;
 
@@ -142,11 +144,26 @@ public class RDFDataMgrRx {
 		return result;
 	}
 	
+	public static Flowable<Dataset> createFlowableDatasets(Callable<TypedInputStream> inSupplier) {
+		
+		Flowable<Dataset> result = createFlowableFromInputStream(inSupplier,
+				in -> RDFDataMgr.createIteratorQuads(
+						in,
+						RDFLanguages.contentTypeToLang(in.getContentType()),
+						in.getBaseURI()))
+		.compose(Transformers.<Quad>toListWhile(
+	            (list, t) -> list.isEmpty() 
+	                         || list.get(0).getGraph().equals(t.getGraph())))
+		.map(DatasetGraphQuadsImpl::create)
+		.map(DatasetFactory::wrap);
+
+		return result;
+	}
 	
-	public static <T> Flowable<T> createFlowableFromInputStream(Callable<? extends InputStream> inSupplier, Function<? super InputStream, ? extends Iterator<T>> fn) {
+	public static <T, I extends InputStream> Flowable<T> createFlowableFromInputStream(Callable<I> inSupplier, Function<? super I, ? extends Iterator<T>> fn) {
 		Flowable<T> result = Flowable.generate(
 				() -> {
-					InputStream in = inSupplier.call();
+					I in = inSupplier.call();
 					Iterator<T> it = fn.apply(in);
 					return new IteratorClosable<>(it, () -> {
 						// Try to close the iterator 'it'
