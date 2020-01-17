@@ -213,6 +213,22 @@ public class HttpResourceRepositoryFromFileSystemImpl
 		return result;
 	}
 
+	public static BasicHttpRequest createRequest(String url, String contentType, List<String> encodings) {
+		BasicHttpRequest result = new BasicHttpRequest("GET", url);
+		result.setHeader(HttpHeaders.ACCEPT, contentType);
+		
+		List<String> effectiveEncodings = new ArrayList<>(encodings);
+		if(!encodings.contains(IDENTITY_ENCODING) && !encodings.isEmpty()) {
+			effectiveEncodings.add("identity;q=0");
+		}
+		
+		String encoding = effectiveEncodings.stream().collect(Collectors.joining(","));
+		
+		result.setHeader(HttpHeaders.ACCEPT_ENCODING, encoding);
+		
+		return result;
+	}
+	
 	/**
 	 * Convenience method for requesting a resource with given content type and encodingsS
 	 * @param url
@@ -222,19 +238,9 @@ public class HttpResourceRepositoryFromFileSystemImpl
 	 * @throws IOException
 	 */
 	public static RdfHttpEntityFile get(HttpResourceRepositoryFromFileSystem repo, String url, String contentType, List<String> encodings) throws IOException {
-		BasicHttpRequest r = new BasicHttpRequest("GET", url);
-		r.setHeader(HttpHeaders.ACCEPT, contentType);
-		
-		List<String> effectiveEncodings = new ArrayList<>(encodings);
-		if(!encodings.contains(IDENTITY_ENCODING)) {
-			effectiveEncodings.add("identity;q=0");
-		}
-		
-		String encoding = effectiveEncodings.stream().collect(Collectors.joining(","));
-		
-		r.setHeader(HttpHeaders.ACCEPT_ENCODING, encoding);
+		BasicHttpRequest request = createRequest(url, contentType, encodings);
 
-		RdfHttpEntityFile result = repo.get(r, HttpResourceRepositoryFromFileSystemImpl::resolveRequest);
+		RdfHttpEntityFile result = repo.get(request, HttpResourceRepositoryFromFileSystemImpl::resolveRequest);
 		return result;
 	}
 	
