@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api.rx;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -14,6 +15,7 @@ import org.aksw.jena_sparql_api.stmt.SparqlStmtUtils;
 import org.aksw.jena_sparql_api.utils.NodeUtils;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
+import org.apache.jena.query.Query;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdfconnection.RDFConnection;
@@ -69,6 +71,33 @@ public class RDFDataMgrEx {
 	public static void readConnection(RDFConnection conn, String filenameOrURI, Consumer<Quad> quadConsumer) {
 		readConnection(conn, filenameOrURI, quadConsumer, System::getenv);
 		
+	}
+	
+	/**
+	 * Load a single query from a given file, URL or classpath resource
+	 * 
+	 * @param filenameOrURI
+	 * @return
+	 * @throws FileNotFoundException
+	 * @throws IOException
+	 * @throws ParseException
+	 */
+	public static Query loadQuery(String filenameOrURI) throws FileNotFoundException, IOException, ParseException {
+		return loadQuery(filenameOrURI, DefaultPrefixes.prefixes);
+	}
+	
+	public static Query loadQuery(String filenameOrURI, PrefixMapping pm) throws FileNotFoundException, IOException, ParseException {
+		List<SparqlStmt> stmts = Streams.stream(SparqlStmtUtils.processFile(pm, filenameOrURI))
+				.collect(Collectors.toList());
+
+		Query result;
+		if(stmts.size() == 1) {
+			result = stmts.iterator().next().getQuery();
+		} else {
+			throw new RuntimeException("Expected a single query in " + filenameOrURI + "; got " + stmts.size());
+		}
+
+		return result;
 	}
 	
 	public static void readConnection(RDFConnection conn, String filenameOrURI, Consumer<Quad> quadConsumer, Function<String, String> envLookup) {

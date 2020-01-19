@@ -403,7 +403,7 @@ public class SparqlRx {
 				? true
 				: itemLimit != null && count > itemLimit;
 	
-	    Range<Long> r = mayHaveMoreItems ? Range.atLeast(itemLimit) : Range.singleton(count);        		
+	    Range<Long> r = mayHaveMoreItems ? Range.atLeast(count) : Range.singleton(count);        		
 	    return r;
     }
 

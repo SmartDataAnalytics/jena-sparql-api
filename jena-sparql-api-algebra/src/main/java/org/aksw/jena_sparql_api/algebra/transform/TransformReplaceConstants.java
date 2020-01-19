@@ -3,12 +3,14 @@ package org.aksw.jena_sparql_api.algebra.transform;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
 
 import org.aksw.commons.collections.generator.Generator;
+import org.aksw.jena_sparql_api.utils.TripleUtils;
 import org.aksw.jena_sparql_api.utils.VarGeneratorBlacklist;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
@@ -53,22 +55,6 @@ public class TransformReplaceConstants
     }
 
 
-    public static Triple listToTriple(List<Node> nodes) {
-        return new Triple(nodes.get(0), nodes.get(1), nodes.get(2));
-    }
-
-    public static List<Node> tripleToList(Triple triple)
-    {
-        List<Node> result = new ArrayList<Node>();
-        result.add(triple.getSubject());
-        result.add(triple.getPredicate());
-        result.add(triple.getObject());
-
-        return result;
-    }
-
-
-
     public static Op transform(Op op, Predicate<Node> testTransform)
     {
         Collection<Var> mentionedVars = OpVars.mentionedVars(op);
@@ -97,7 +83,22 @@ public class TransformReplaceConstants
     	return result;
     }
 
-    public static Node transform(Map<Node, Var> nodeToVar, Node node, boolean isGraphNode, Generator<Var> generator, ExprList filters, boolean omitDefaultGraphFilter) {
+    
+    public static Map<Node, Var> transform(Map<Node, Var> nodeToVar, Iterable<Node> inNodes, Generator<Var> generator) {
+        //Node result;
+    	Map<Node, Var> result = new LinkedHashMap<>();
+
+    	for(Node node : inNodes) {
+    		Node n = transform(nodeToVar, node, false, generator, null, false);
+    		if(n.isVariable() && !n.equals(node)) {
+    			result.put(node, (Var)n);
+    		}
+    	}
+
+        return result;
+    }
+
+    public static Node transform(Map<Node, Var> nodeToVar, Node node, boolean isNodeInGraphComponent, Generator<Var> generator, ExprList filters, boolean omitDefaultGraphFilter) {
         Node result;
 
         if(node.isConcrete()) {
@@ -107,7 +108,7 @@ public class TransformReplaceConstants
                 nodeToVar.put(node, var);
 
                 // Use of the constant Quad.defaultGraphNodeGenerated in the graph position results in a free variable.
-                if(!omitDefaultGraphFilter || !(isGraphNode && node.equals(Quad.defaultGraphNodeGenerated))) {
+                if(filters != null && (!omitDefaultGraphFilter || !(isNodeInGraphComponent && node.equals(Quad.defaultGraphNodeGenerated)))) {
                     Expr condition = new E_Equals(new ExprVar(var), NodeValue.makeNode(node));
                     filters.add(condition);
                 }
@@ -118,8 +119,6 @@ public class TransformReplaceConstants
         }
 
         return result;
-
-
     }
 
     @Override
@@ -160,14 +159,14 @@ public class TransformReplaceConstants
         for(Triple triple : ts) {
 
 
-            for(Node node : tripleToList(triple)) {
+            for(Node node : TripleUtils.tripleToList(triple)) {
                 Node n = testTransform.test(node)
                 		? transform(nodeToVar, node, false, generator, filters, omitDefaultGraphFilter)
                 		: node;
                 nodes.add(n);
             }
 
-            Triple t = listToTriple(nodes);
+            Triple t = TripleUtils.listToTriple(nodes);
 
             triples.add(t);
 

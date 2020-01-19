@@ -331,7 +331,7 @@ public class ElementUtils {
     }
 
 
-    public static void copyElements(ElementGroup target, Element source) {
+    public static ElementGroup copyElements(ElementGroup target, Element source) {
         if(source instanceof ElementGroup) {
             ElementGroup es = (ElementGroup)source;
 
@@ -341,6 +341,8 @@ public class ElementUtils {
         } else {
             target.addElement(source);
         }
+        
+        return target;
     }
 
     public static void mergeElements(ElementGroup target, ElementTriplesBlock etb, Element source) {

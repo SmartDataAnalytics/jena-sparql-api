@@ -45,7 +45,9 @@ import org.apache.jena.sparql.syntax.syntaxtransform.NodeTransformSubst;
 import com.google.common.collect.Sets;
 
 public class RelationUtils {
-
+	public static final TernaryRelation SPO = new TernaryRelationImpl(
+			ElementUtils.createElementTriple(Vars.s, Vars.p, Vars.o),
+			Vars.s, Vars.p, Vars.o);
 	
 
 	/**

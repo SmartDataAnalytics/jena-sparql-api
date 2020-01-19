@@ -103,7 +103,7 @@ public class SimpleProcessExecutor {
 	            }
 	
 	            exitValue = p.waitFor();
-	            sink.accept("Process terminated with exit code " + exitValue);
+	            //sink.accept("Process terminated with exit code " + exitValue);
             }
 //        }
 //        catch(IOException e) {

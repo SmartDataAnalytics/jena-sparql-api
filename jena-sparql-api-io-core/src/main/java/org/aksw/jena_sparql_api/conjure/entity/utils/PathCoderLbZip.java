@@ -9,7 +9,7 @@ public class PathCoderLbZip
 	public static void main(String[] args) throws Exception {
 		
 		PathCoderLbZip test = new PathCoderLbZip();
-		System.out.println("Cmd exists? " + test.cmdExists());
+		//System.out.println("Cmd exists? " + test.cmdExists());
 		
 		test.encode(Paths.get("/tmp/test.txt"), Paths.get("/tmp/test.bz2"));
 		test.decode(Paths.get("/tmp/test.bz2"), Paths.get("/tmp/hello.txt"));

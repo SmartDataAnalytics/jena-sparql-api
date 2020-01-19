@@ -237,6 +237,8 @@ public class ContentTypeUtils {
 	 * @return
 	 */
 	public static RdfEntityInfo deriveHeadersFromFileExtension(String fileName) {
+		// TODO This method expects a file name - not the file extension alone - so
+		// an argument of x.ttl works, but just ttl will fail - fix that!S
 		// TODO Should we remove trailing slashes?
 		
 		String contentType = null;
