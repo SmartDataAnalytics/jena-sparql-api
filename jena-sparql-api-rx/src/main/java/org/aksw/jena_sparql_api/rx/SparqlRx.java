@@ -408,6 +408,17 @@ public class SparqlRx {
 	    return r;
     }
 
+    public static Flowable<RDFNode> execConstructGrouped(SparqlQueryConnection conn, Entry<? extends Node, Query> e) {
+    	return execConstructGrouped(conn, e, true);
+    }
+
+    public static Flowable<RDFNode> execConstructGrouped(SparqlQueryConnection conn, Entry<? extends Node, Query> e, boolean sortRowsByPartitionVar) {
+    	Node s = e.getKey();
+    	Query q = e.getValue();
+    	
+    	return execConstructGrouped(conn, s, q, sortRowsByPartitionVar);
+    }
+
     public static Flowable<RDFNode> execPartitioned(SparqlQueryConnection conn, Entry<? extends Node, Query> e) {
     	return execPartitioned(conn, e, true);
     }
