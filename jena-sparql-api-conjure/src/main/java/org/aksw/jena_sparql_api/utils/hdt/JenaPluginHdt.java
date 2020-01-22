@@ -15,9 +15,20 @@ import org.apache.jena.riot.ReaderRIOTFactory;
 import org.apache.jena.riot.WriterGraphRIOT;
 import org.apache.jena.riot.WriterGraphRIOTFactory;
 import org.apache.jena.riot.system.ParserProfile;
+import org.apache.jena.sys.JenaSubsystemLifecycle;
 
 
-public class JenaPluginHdt {
+public class JenaPluginHdt
+	implements JenaSubsystemLifecycle {
+	
+	public void start() {
+		init();
+	}
+	
+	@Override
+	public void stop() {
+	}
+
 	public static final Lang LANG_HDT = LangBuilder.create("hdt", "application/x-hdt")
 			.addFileExtensions("hdt")
 			.build();
@@ -28,7 +39,7 @@ public class JenaPluginHdt {
 	 * Register the HDT language with readers and writers.
 	 * 
 	 */
-	public static void register() {
+	public static void init() {
 		// Check to not overwrite a possibly official HDT integration
 		 if(RDFLanguages.fileExtToLang("hdt") != null) {
 			 return;
@@ -60,6 +71,7 @@ public class JenaPluginHdt {
 	
 		RDFLanguages.register(LANG_HDT);
 		RDFWriterRegistry.register(FORMAT_HDT, writerFactory);
+		RDFWriterRegistry.register(LANG_HDT, FORMAT_HDT);
 		RDFParserRegistry.registerLangTriples(LANG_HDT, readerFactory);
 	}
 }

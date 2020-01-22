@@ -4,24 +4,28 @@ import java.util.List;
 
 import org.aksw.jena_sparql_api.conjure.dataref.core.api.PlainDataRefSparqlEndpoint;
 import org.aksw.jena_sparql_api.mapper.annotation.Iri;
-import org.aksw.jena_sparql_api.mapper.annotation.RdfType;
+import org.aksw.jena_sparql_api.mapper.annotation.IriType;
+import org.aksw.jena_sparql_api.mapper.annotation.RdfTypeNs;
 import org.aksw.jena_sparql_api.mapper.annotation.ResourceView;
 import org.apache.jena.rdf.model.Model;
 
 @ResourceView
-@RdfType
+@RdfTypeNs("rpif")
 public interface DataRefSparqlEndpoint
 	extends PlainDataRefSparqlEndpoint, DataRef
 {
-	@Iri("eg:serviceUrl")
+	@Iri("rpif:serviceUrl")
+	@IriType
 	DataRefSparqlEndpoint setServiceUrl(String serviceUrl);
 	
 	@Override
-	@Iri("eg:namedGraph")
+	@Iri("rpif:namedGraph")
+	@IriType
 	List<String> getNamedGraphs();
 
 	@Override
-	@Iri("eg:defaultGraph")
+	@Iri("rpif:defaultGraph")
+	@IriType
 	List<String> getDefaultGraphs();
 
 	@Override

@@ -1,1 +1,2 @@
 org.aksw.jena_sparql_api.conjure.plugin.JenaPluginConjure
+org.aksw.jena_sparql_api.utils.hdt.JenaPluginHdt

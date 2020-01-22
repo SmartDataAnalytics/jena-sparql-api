@@ -31,6 +31,7 @@ import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.expr.E_Equals;
 import org.apache.jena.sparql.expr.E_LogicalNot;
 import org.apache.jena.sparql.expr.Expr;
+import org.apache.jena.sparql.expr.ExprFunctionOp;
 import org.apache.jena.sparql.expr.ExprList;
 import org.apache.jena.sparql.expr.ExprSystem;
 import org.apache.jena.sparql.expr.ExprTransform;
@@ -56,7 +57,9 @@ public class TransformFilterSimplify
 
     	Expr result;
     	
-    	if(!(expr instanceof ExprSystem) && boundVars.containsAll(vars)) {
+    	// FIXME Evaluation of ExprFunctionOp such as EXISTS and NOT EXIST
+    	// yields an NPE - if the expression uses this feature anywhere, we need to skip the eval
+    	if(!(expr instanceof ExprFunctionOp) && !(expr instanceof ExprSystem) && boundVars.containsAll(vars)) {
         	Binding binding = BindingUtils.fromMap(map);
 
         	result = ExprUtils.eval(expr, binding);

@@ -40,7 +40,7 @@ public class DataPodFactoryAdvancedImpl
 		String url = dataRef.getDataRefUrl();
 
 		TaskContext context = ((OpExecutorDefault)opExecutor).getTaskContext();
-		Model m = context.getCtxModels().get(url);
+		Model m = context == null ? null : context.getCtxModels().get(url);
 		RdfDataPod result;
 		if(m != null) {
 			logger.info("Accessed input model for url " + url);

@@ -24,7 +24,7 @@ public class JenaPluginConjure
 	
 	public static void init() {
 		TurtleWriterNoBase.register();
-		JenaPluginHdt.register();
+		JenaPluginHdt.init();
 
 		JenaPluginUtils.scan(Job.class);
 		JenaPluginUtils.scan(OpTraversal.class);
