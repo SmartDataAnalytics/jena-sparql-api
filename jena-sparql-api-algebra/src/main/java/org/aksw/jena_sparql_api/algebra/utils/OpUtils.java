@@ -65,6 +65,8 @@ public class OpUtils {
     public static OpTable createEmptyTableUnionVars(Op ... subOps) {
     	List<Var> vars = Arrays.asList(subOps).stream()
     			.flatMap(op -> OpVars.visibleVars(op).stream())
+    			// Exclude special purpose vars 
+    			.filter(v -> !Var.isBlankNodeVar(v))
     			.distinct()
     			.collect(Collectors.toList());
     	

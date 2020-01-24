@@ -5,6 +5,7 @@ import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.Table;
 import org.apache.jena.sparql.algebra.Transform;
 import org.apache.jena.sparql.algebra.Transformer;
+import org.apache.jena.sparql.algebra.op.OpFilter;
 import org.apache.jena.sparql.algebra.op.OpJoin;
 import org.apache.jena.sparql.algebra.op.OpLeftJoin;
 import org.apache.jena.sparql.algebra.op.OpMinus;
@@ -26,6 +27,14 @@ public class TransformPromoteTableEmptyVarPreserving
         Transform transform = new TransformPromoteTableEmptyVarPreserving();
         Op result = Transformer.transform(transform, op);
         return result;
+    }
+
+    @Override
+    public Op transform(OpFilter opFilter, Op subOp) {
+        if(isTableEmpty(subOp)) {
+            return subOp;
+        }
+        return super.transform(opFilter, subOp);
     }
 
     @Override

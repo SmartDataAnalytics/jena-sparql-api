@@ -12,6 +12,7 @@ import org.apache.jena.sparql.algebra.Transformer;
 import org.apache.jena.sparql.algebra.op.OpBGP;
 import org.apache.jena.sparql.algebra.op.OpFilter;
 import org.apache.jena.sparql.algebra.op.OpJoin;
+import org.apache.jena.sparql.algebra.op.OpLeftJoin;
 import org.apache.jena.sparql.algebra.op.OpSequence;
 import org.apache.jena.sparql.algebra.optimize.TransformMergeBGPs;
 import org.apache.jena.sparql.expr.ExprList;
@@ -77,7 +78,7 @@ public class TransformPullFiltersIfCanMergeBGPs
 			}
 				
 				
-			if(subOp instanceof OpBGP) {
+			if(subOp instanceof OpBGP) { // || subOp instanceof OpLeftJoin) {
 				newSubOps.add(subOp);
 			} else {
 				newSubOps = null;

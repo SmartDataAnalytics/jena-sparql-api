@@ -261,20 +261,20 @@ public class SparqlRx {
 	//
 	// }
 
-	public static void main(String[] args) {
-		// Some tests for whether timeouts actually work - so far it worked...
-		String queryStr = "CONSTRUCT { ?p a ?c } { { SELECT ?p (COUNT(DISTINCT ?s) AS ?c) { ?s ?p ?o } GROUP BY ?p } }";
-		//String queryStr = "CONSTRUCT WHERE { ?s ?p ?o . ?x ?y ?z }";
-		Query query = QueryFactory.create(queryStr);
-
-		RDFConnection conn = RDFConnectionFactory.connect("http://localhost:8890/sparql");
-		List<RDFNode> rdfNodes = SparqlRx.execPartitioned(conn, Vars.p, query, true)
-			.timeout(300, TimeUnit.MILLISECONDS)
-			.toList()
-			.blockingGet();
-		
-		System.out.println(rdfNodes);
-	}
+//	public static void main(String[] args) {
+//		// Some tests for whether timeouts actually work - so far it worked...
+//		String queryStr = "CONSTRUCT { ?p a ?c } { { SELECT ?p (COUNT(DISTINCT ?s) AS ?c) { ?s ?p ?o } GROUP BY ?p } }";
+//		//String queryStr = "CONSTRUCT WHERE { ?s ?p ?o . ?x ?y ?z }";
+//		Query query = QueryFactory.create(queryStr);
+//
+//		RDFConnection conn = RDFConnectionFactory.connect("http://localhost:8890/sparql");
+//		List<RDFNode> rdfNodes = SparqlRx.execPartitioned(conn, Vars.p, query, true)
+//			.timeout(300, TimeUnit.MILLISECONDS)
+//			.toList()
+//			.blockingGet();
+//		
+//		System.out.println(rdfNodes);
+//	}
 	
 	public static void main2(String[] args) {
 //		List<Entry<Integer, List<Entry<Integer, Integer>>>> list = groupByOrdered(Flowable.range(0, 10).map(i -> Maps.immutableEntry((int)(i / 3), i)),

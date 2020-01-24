@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.DataRef;
 import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.DataRefUrl;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.Op;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpCoalesce;
@@ -46,6 +47,11 @@ public class ConjureBuilderImpl
 		return wrap(OpVar.create(context.getModel(), name));
 	}
 
+	@Override
+	public ConjureFluent fromDataRef(DataRef dataRef) {
+		throw new RuntimeException("not yet implemented");
+//		return wrap(OpDataRefResource.from(context.getModel(), DataRefUrl.create(context.getModel(), url)));
+	}
 	
 	public static List<Op> toOps(ConjureFluent... conjureFluents) {
 		return toOps(Arrays.asList(conjureFluents));

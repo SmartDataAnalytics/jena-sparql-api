@@ -1,8 +1,11 @@
 package org.aksw.jena_sparql_api.conjure.fluent;
 
+import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.DataRef;
+
 public interface ConjureBuilder {
 	ConjureContext getContext();
-	
+
+	ConjureFluent fromDataRef(DataRef dataRef);
 	ConjureFluent fromUrl(String url);
 	ConjureFluent fromVar(String name);
 	ConjureFluent fromEmptyModel();

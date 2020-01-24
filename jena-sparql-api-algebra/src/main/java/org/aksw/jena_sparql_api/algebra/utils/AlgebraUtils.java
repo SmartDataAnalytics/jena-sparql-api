@@ -19,12 +19,15 @@ import org.aksw.commons.collections.generator.Generator;
 import org.aksw.commons.collections.multimaps.BiHashMultimap;
 import org.aksw.commons.collections.multimaps.IBiSetMultimap;
 import org.aksw.jena_sparql_api.algebra.analysis.VarInfo;
+import org.aksw.jena_sparql_api.algebra.transform.TransformAddFilterFromExtend;
 import org.aksw.jena_sparql_api.algebra.transform.TransformDeduplicatePatterns;
 import org.aksw.jena_sparql_api.algebra.transform.TransformDistributeJoinOverUnion;
 import org.aksw.jena_sparql_api.algebra.transform.TransformFilterFalseToEmptyTable;
 import org.aksw.jena_sparql_api.algebra.transform.TransformFilterSimplify;
+import org.aksw.jena_sparql_api.algebra.transform.TransformJoinOverLeftJoin;
 import org.aksw.jena_sparql_api.algebra.transform.TransformPromoteTableEmptyVarPreserving;
 import org.aksw.jena_sparql_api.algebra.transform.TransformPruneEmptyLeftJoin;
+import org.aksw.jena_sparql_api.algebra.transform.TransformPullExtend;
 import org.aksw.jena_sparql_api.algebra.transform.TransformPullFiltersIfCanMergeBGPs;
 import org.aksw.jena_sparql_api.algebra.transform.TransformPushFiltersIntoBGP;
 import org.aksw.jena_sparql_api.algebra.transform.TransformRedundantFilterRemoval;
@@ -115,7 +118,14 @@ public class AlgebraUtils {
 
         Context context = new Context();
         context.put(ARQ.optPromoteTableEmpty, false);
-        
+
+        // context.put(ARQ.optFilterImplicitJoin, true);
+
+        // Path flatten creates these ??P variables which break the resulting query
+        // I don't know yet of the proper way to get rid of these
+        // Maybe I am accidently calling NodeValue.makeNode(var) at some point
+        // context.put(ARQ.optPathFlatten, false);
+
         //context.put(ARQ.optReorderBGP, true);
         
         context.put(ARQ.optMergeBGPs, false); // We invoke this manually
@@ -171,24 +181,52 @@ public class AlgebraUtils {
         		op = Rename.reverseVarRename(op, true);
 
         		op = FixpointIteration.apply(op, x -> {
-            		x = TransformPullFiltersIfCanMergeBGPs.transform(x);
-            		x = Transformer.transform(new TransformMergeBGPs(), x);
-            		return x;
+        			x = TransformDistributeJoinOverUnion.transform(x);
+        			return x;
         		});
+
+        		op = FixpointIteration.apply(op, x -> {
+        			x = TransformJoinOverLeftJoin.transform(x);
+        			return x;
+        		});
+
+//        		op = FixpointIteration.apply(op, x -> {
+//            		x = TransformPullFiltersIfCanMergeBGPs.transform(x);
+//            		x = Transformer.transform(new TransformMergeBGPs(), x);
+//            		return x;
+//        		});
 
         		op = TransformPushFiltersIntoBGP.transform(op);
         		op = TransformDeduplicatePatterns.transform(op);        		
-        		op = TransformRedundantFilterRemoval.transform(op);
+        		op = TransformAddFilterFromExtend.transform(op);
         		op = TransformFilterSimplify.transform(op);
+        		op = TransformRedundantFilterRemoval.transform(op);
+
+
+//        		op = TransformPushFiltersIntoBGP.transform(op);
+//        		op = TransformDeduplicatePatterns.transform(op);        		
+//        		op = TransformRedundantFilterRemoval.transform(op);
+//        		op = TransformFilterSimplify.transform(op);
 
         		op = TransformPruneEmptyLeftJoin.transform(op);
         		
         		op = TransformFilterFalseToEmptyTable.transform(op);
         		op = TransformPromoteTableEmptyVarPreserving.transform(op);
+        		
+        		op = FixpointIteration.apply(op, x -> {
+        			x = TransformPullExtend.transform(x);
+            		x = TransformPullFiltersIfCanMergeBGPs.transform(x);
+            		x = Transformer.transform(new TransformMergeBGPs(), x);
+            		return x;
+        		});
+
+
         		return op;
         };
         
-        return result;
+        Rewrite result2 = op -> FixpointIteration.apply(op, result::rewrite);
+        return result2;
+        //return result;
 	}
 
     
