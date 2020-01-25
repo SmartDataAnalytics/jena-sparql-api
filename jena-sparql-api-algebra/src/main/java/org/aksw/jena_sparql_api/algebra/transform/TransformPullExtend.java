@@ -3,15 +3,18 @@ package org.aksw.jena_sparql_api.algebra.transform;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+import org.aksw.jena_sparql_api.utils.VarExprListUtils;
 import org.apache.jena.ext.com.google.common.collect.Sets;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.Transform;
 import org.apache.jena.sparql.algebra.TransformCopy;
 import org.apache.jena.sparql.algebra.Transformer;
 import org.apache.jena.sparql.algebra.op.OpExtend;
+import org.apache.jena.sparql.algebra.op.OpFilter;
 import org.apache.jena.sparql.algebra.op.OpJoin;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.core.VarExprList;
+import org.apache.jena.sparql.expr.ExprList;
 
 /**
  * Pulls up Extend over joins
@@ -35,6 +38,41 @@ public class TransformPullExtend
 		//Op result = FixpointIteration.apply(op, o -> Transformer.transform(transform, o));
         //Op result = Transformer.transform(transform, op);
         return result;
+	}
+
+	// Filter(Extend(X, e), f) -> Extend(Filter(X, f), e) if filter does not depend on any variable
+	// of e
+	@Override
+	public Op transform(OpFilter opFilter, Op subOp) {
+		Op result = null;
+		if(subOp instanceof OpExtend) {
+			OpExtend e = (OpExtend)subOp;
+			
+			VarExprList vel = e.getVarExprList();
+			Set<Var> extendVars = VarExprListUtils.getVarsMentioned(vel);
+			
+			ExprList el = opFilter.getExprs();
+			Set<Var> usedVars = el.getVarsMentioned();
+
+			
+			Set<Var> conflicts = Sets.intersection(extendVars, usedVars);
+			if(conflicts.isEmpty()) {
+				boolean containsSpecialVars =
+						TransformPullFiltersIfCanMergeBGPs.containsSpecialVar(extendVars) ||
+						TransformPullFiltersIfCanMergeBGPs.containsSpecialVar(usedVars);
+				
+				if(!containsSpecialVars) {
+					result = OpExtend.create(OpFilter.filterBy(el, e.getSubOp()), vel);
+				}
+			}
+			
+		}
+		
+		if(result == null) {
+			result = super.transform(opFilter, subOp);
+		}
+		
+		return result;
 	}
 
 	@Override

@@ -15,6 +15,7 @@ import org.apache.jena.sparql.algebra.op.OpJoin;
 import org.apache.jena.sparql.algebra.op.OpLeftJoin;
 import org.apache.jena.sparql.algebra.op.OpSequence;
 import org.apache.jena.sparql.algebra.optimize.TransformMergeBGPs;
+import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.ExprList;
 
 /**
@@ -63,6 +64,11 @@ public class TransformPullFiltersIfCanMergeBGPs
 		return result;
 	}
 	
+	public static boolean containsSpecialVar(Collection<Var> vars) {
+		boolean result = vars.stream()
+				.anyMatch(v -> Var.isAllocVar(v) || Var.isAnonVar(v));
+		return result;
+	}
 	
 	public static Op xtransform(Collection<? extends Op> subOps, Function<? super List<Op>, ? extends Op> joinCtor) {
 		// For every subOp tidy the filters
@@ -72,13 +78,24 @@ public class TransformPullFiltersIfCanMergeBGPs
 			
 			if(subOp instanceof OpFilter) {
 				OpFilter tidied = OpFilter.tidy((OpFilter)subOp);
-				exprs.addAll(tidied.getExprs());
 				
-				subOp = tidied.getSubOp();
+				// If the filter contains special variables, such as introduced by group by, we need to skip this
+				boolean containsSpecialVar = containsSpecialVar(tidied.getExprs().getVarsMentioned());
+				
+				if(containsSpecialVar) {
+					newSubOps = null;
+				} else {
+				
+					exprs.addAll(tidied.getExprs());
+					
+					subOp = tidied.getSubOp();
+				}
 			}
 				
 				
-			if(subOp instanceof OpBGP) { // || subOp instanceof OpLeftJoin) {
+			// Experiment for TransformJoinOverLeftJoin
+			if(subOp instanceof OpBGP || subOp instanceof OpLeftJoin) {
+//			if(subOp instanceof OpBGP) {
 				newSubOps.add(subOp);
 			} else {
 				newSubOps = null;

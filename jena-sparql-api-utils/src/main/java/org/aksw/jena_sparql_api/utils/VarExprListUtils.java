@@ -1,8 +1,10 @@
 package org.aksw.jena_sparql_api.utils;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -130,12 +132,43 @@ public class VarExprListUtils {
     }
 
 
-    /**
-     * Get the referenced variables
-     *
-     * @param vel
-     * @return
-     */
+    public static Set<Var> getDefinedVars(VarExprList vel) {
+    	Set<Var> result = definedVars(new LinkedHashSet<>(), vel);
+        return result;
+    }
+
+    public static <T extends Collection<Var>> T definedVars(T acc, VarExprList vel) {
+    	acc.addAll(vel.getVars());
+    	return acc;
+    }
+
+    public static Set<Var> getVarsMentionedInBody(VarExprList vel) {
+    	Set<Var> result = varsMentionedInBody(new LinkedHashSet<>(), vel);
+    	return result;
+    }
+
+    public static <T extends Collection<Var>> T varsMentionedInBody(T acc, VarExprList vel) {
+        for(Entry<Var, Expr> entry : vel.getExprs().entrySet()) {
+        	Expr e = entry.getValue();
+            if(e != null) {
+                ExprVars.varsMentioned(acc, e);
+            }
+        }
+        return acc;
+    }
+
+    public static Set<Var> getVarsMentioned(VarExprList vel) {
+    	Set<Var> result = varsMentioned(new LinkedHashSet<>(), vel);
+    	return result;
+    }
+
+    public static <T extends Collection<Var>> T varsMentioned(T acc, VarExprList vel) {
+    	definedVars(acc, vel);
+    	varsMentionedInBody(acc, vel);
+    	return acc;
+    }
+
+    @Deprecated // This method has unclear semantics ; use the getVarsMentioned variants instead
     public static Set<Var> getRefVars(VarExprList vel) {
         Set<Var> result = new HashSet<Var>();
 
