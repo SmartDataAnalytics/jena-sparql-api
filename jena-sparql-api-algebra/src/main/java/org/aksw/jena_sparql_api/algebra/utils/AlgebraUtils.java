@@ -176,7 +176,7 @@ public class AlgebraUtils {
         		// Issue with Jena 3.8.0 (possibly other versions too)
         		// Jena's rewriter returned by Optimize.getFactory() renames variables (due to scoping)
         		// but does not reverse the renaming - so we need to do it explicitly here
-        		// (also, without reversing, variable syntax is invalid, such as "?/0")
+        		// TODO Is reversing really needed? If our code is correct, then Jena should just cope with it
         		op = Rename.reverseVarRename(op, true);
 
         		op = FixpointIteration.apply(op, x -> {
@@ -192,7 +192,6 @@ public class AlgebraUtils {
 
         		op = TransformPushFiltersIntoBGP.transform(op);
         		op = TransformDeduplicatePatterns.transform(op);        		
-        		op = TransformAddFilterFromExtend.transform(op);
         		op = TransformFilterSimplify.transform(op);
         		op = TransformRedundantFilterRemoval.transform(op);
 
@@ -224,13 +223,19 @@ public class AlgebraUtils {
 		};
 		
 
-        Rewrite result2 = op -> FixpointIteration.apply(op, x -> {
-        	x = FixpointIteration.apply(x, pushDown::rewrite);
-        	x = pullUp.rewrite(x);
+        Rewrite result = op -> {
+        	// Extract filters only once from extend
+    		op = TransformAddFilterFromExtend.transform(op);
+
+        	op = FixpointIteration.apply(op, x -> {
+	        	x = FixpointIteration.apply(x, pushDown::rewrite);
+	        	x = pullUp.rewrite(x);
         	//x = FixpointIteration.apply(x, pullUp::rewrite);
-        	return x;
-        });
-        return result2;
+	        	return x;
+        	});
+        	return op;
+        };
+        return result;
         //return result;
 	}
 

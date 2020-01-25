@@ -13,6 +13,7 @@ import org.aksw.jena_sparql_api.stmt.SPARQLResultSinkQuads;
 import org.aksw.jena_sparql_api.stmt.SparqlStmt;
 import org.aksw.jena_sparql_api.stmt.SparqlStmtUtils;
 import org.aksw.jena_sparql_api.utils.NodeUtils;
+import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.query.Query;
@@ -93,9 +94,13 @@ public class RDFDataMgrEx {
 		Query result;
 		if(stmts.size() == 1) {
 			result = stmts.iterator().next().getQuery();
+			result.setBaseURI((String)null);
+			QueryUtils.optimizePrefixes(result);
 		} else {
 			throw new RuntimeException("Expected a single query in " + filenameOrURI + "; got " + stmts.size());
 		}
+		
+
 
 		return result;
 	}
