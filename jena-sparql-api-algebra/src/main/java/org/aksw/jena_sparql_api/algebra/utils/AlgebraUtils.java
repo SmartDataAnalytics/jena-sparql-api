@@ -28,6 +28,7 @@ import org.aksw.jena_sparql_api.algebra.transform.TransformJoinOverLeftJoin;
 import org.aksw.jena_sparql_api.algebra.transform.TransformPromoteTableEmptyVarPreserving;
 import org.aksw.jena_sparql_api.algebra.transform.TransformPruneEmptyLeftJoin;
 import org.aksw.jena_sparql_api.algebra.transform.TransformPullExtend;
+import org.aksw.jena_sparql_api.algebra.transform.TransformPullFilters;
 import org.aksw.jena_sparql_api.algebra.transform.TransformPullFiltersIfCanMergeBGPs;
 import org.aksw.jena_sparql_api.algebra.transform.TransformPushFiltersIntoBGP;
 import org.aksw.jena_sparql_api.algebra.transform.TransformRedundantFilterRemoval;
@@ -224,6 +225,14 @@ public class AlgebraUtils {
 		
 
         Rewrite result = op -> {
+        	
+//        	op = FixpointIteration.apply(op, x -> {
+//        		x = TransformPullFilters.transform(x);
+//        		return x;
+//        	});
+
+        	
+        	
         	// Extract filters only once from extend
     		op = TransformAddFilterFromExtend.transform(op);
 

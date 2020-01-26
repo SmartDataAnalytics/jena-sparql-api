@@ -18,6 +18,7 @@
 		<module>jena-sparql-api-vocabs</module>
 		<module>jena-sparql-api-rdf-stream</module>
 
+		<module>jena-sparql-api-json</module>
 		<module>jena-sparql-api-stmt</module>
 		<module>jena-sparql-api-rx</module>
 		<module>jena-sparql-api-resources-test-config</module>
@@ -25,6 +26,7 @@
 
 		<module>jena-sparql-api-resources-sparqlqc</module>
 
+		<module>jena-sparql-api-io-hdt</module>
 		<module>jena-sparql-api-io-core</module>
 
 		<module>jena-sparql-api-collections</module>
@@ -424,6 +426,12 @@
 			</dependency>
 
 			<dependency>
+				<groupId>eu.wdaqua</groupId>
+				<artifactId>hdt-jena</artifactId>
+				<version>2.1</version>
+			</dependency>
+
+			<dependency>
 				<groupId>org.aksw.jena-sparql-api</groupId>
 				<artifactId>jena-sparql-api-vocabs</artifactId>
 				<version>${project.version}</version>
@@ -440,6 +448,13 @@
 				<artifactId>jena-sparql-api-io-core</artifactId>
 				<version>${project.version}</version>
 			</dependency>
+
+			<dependency>
+				<groupId>org.aksw.jena-sparql-api</groupId>
+				<artifactId>jena-sparql-api-io-hdt</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+
 
 			<!-- <dependency> -->
 			<!-- <groupId>org.aksw.jena-sparql-api</groupId> -->
@@ -613,6 +628,12 @@
 			<dependency>
 				<groupId>org.apache.jena</groupId>
 				<artifactId>jena-rdfconnection</artifactId>
+				<version>${jena.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.apache.jena</groupId>
+				<artifactId>jena-geosparql</artifactId>
 				<version>${jena.version}</version>
 			</dependency>
 
@@ -868,9 +889,9 @@
 
 			<!-- Java Topology Suite -->
 			<dependency>
-				<groupId>com.vividsolutions</groupId>
+				<groupId>org.locationtech.jts</groupId>
 				<artifactId>jts-core</artifactId>
-				<version>1.14.0</version>
+				<version>1.16.1</version>
 				<!-- Xerces delivered by Jena -->
 				<exclusions>
 					<exclusion>
@@ -881,9 +902,9 @@
 			</dependency>
 			<!-- https://mvnrepository.com/artifact/com.vividsolutions/jts-io -->
 			<dependency>
-				<groupId>com.vividsolutions</groupId>
-				<artifactId>jts-io</artifactId>
-				<version>1.14.0</version>
+				<groupId>org.locationtech.jts.io</groupId>
+				<artifactId>jts-io-common</artifactId>
+				<version>1.16.1</version>
 			</dependency>
 
 			<!-- Embedded Databases (will be moved to separate package) -->

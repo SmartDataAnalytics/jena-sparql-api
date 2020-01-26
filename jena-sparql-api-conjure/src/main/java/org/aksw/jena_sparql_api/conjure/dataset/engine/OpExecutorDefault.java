@@ -1,7 +1,9 @@
 package org.aksw.jena_sparql_api.conjure.dataset.engine;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -12,9 +14,13 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.aksw.jena_sparql_api.algebra.utils.VirtualPartitionedQuery;
+import org.aksw.jena_sparql_api.common.DefaultPrefixes;
+import org.aksw.jena_sparql_api.concepts.TernaryRelation;
 import org.aksw.jena_sparql_api.conjure.algebra.common.ResourceTreeUtils;
 import org.aksw.jena_sparql_api.conjure.datapod.api.RdfDataPod;
 import org.aksw.jena_sparql_api.conjure.datapod.impl.DataPods;
+import org.aksw.jena_sparql_api.conjure.datapod.impl.RdfDataPodBase;
 import org.aksw.jena_sparql_api.conjure.datapod.impl.RdfDataPodHdt;
 import org.aksw.jena_sparql_api.conjure.dataref.core.api.PlainDataRef;
 import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.DataRef;
@@ -27,6 +33,7 @@ import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpError;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpHdtHeader;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpMacroCall;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpPersist;
+import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpQueryOverViews;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpSequence;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpSet;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpUnion;
@@ -36,11 +43,13 @@ import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpVar;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpVisitor;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpWhen;
 import org.aksw.jena_sparql_api.conjure.traversal.engine.FunctionAssembler;
+import org.aksw.jena_sparql_api.core.connection.RDFConnectionBuilder;
 import org.aksw.jena_sparql_api.http.repository.api.HttpResourceRepositoryFromFileSystem;
 import org.aksw.jena_sparql_api.http.repository.api.RdfHttpEntityFile;
 import org.aksw.jena_sparql_api.http.repository.api.ResourceStore;
 import org.aksw.jena_sparql_api.http.repository.impl.HttpResourceRepositoryFromFileSystemImpl;
 import org.aksw.jena_sparql_api.http.repository.impl.ResourceStoreImpl;
+import org.aksw.jena_sparql_api.rx.RDFDataMgrEx;
 import org.aksw.jena_sparql_api.rx.SparqlRx;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.apache.http.HttpHeaders;
@@ -63,6 +72,7 @@ import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.binding.BindingHashMap;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.NodeValue;
+import org.apache.jena.sparql.lang.arq.ParseException;
 import org.apache.jena.sparql.path.Path;
 import org.apache.jena.sparql.path.PathParser;
 import org.apache.jena.sparql.util.ExprUtils;
@@ -522,4 +532,63 @@ public class OpExecutorDefault
 		throw new RuntimeException("not implemented");
 	}
 
+	
+	@Override
+	public RdfDataPod visit(OpQueryOverViews op) {
+		Op subOp = op.getSubOp();
+		RdfDataPod subPod = subOp.accept(this);
+		
+		// This is not a good place to resolve resources
+		// Ideally, resource resolution is done when preprocessing the initial model
+		
+//		ResourceSpecProcessor rsp = new ResourceSpecProcessor();
+//		List<ResourceSpec> views = op.getViews();
+//		// Turns all views into sequences of queries
+//		for(ResourceSpec view : views) {
+//			
+//		}
+
+		List<TernaryRelation> views = new ArrayList<>();
+		List<String> viewDefs = op.getViewDefs();
+		for(String viewDef : viewDefs) {
+			try(ByteArrayInputStream in = new ByteArrayInputStream(viewDef.getBytes())) {
+				// TODO Actually preprocessing should have already taken care of the prefixes
+				List<Query> queries;
+				try {
+					queries = RDFDataMgrEx.loadQueries(in, DefaultPrefixes.prefixes);
+				} catch (IOException | ParseException e) {
+					throw new RuntimeException(e);
+				}
+				for(Query query : queries) {
+					Collection<TernaryRelation> viewContribs = VirtualPartitionedQuery.toViews(query);
+					views.addAll(viewContribs);
+				}
+			} catch (IOException e1) {
+				throw new RuntimeException(e1);
+			}
+		}
+
+		// Wrap the underlying pod's connection factory
+		RdfDataPod result = new RdfDataPodBase() {
+			@Override
+			protected RDFConnection newConnection() {
+				RDFConnection raw = subPod.openConnection();
+				RDFConnection result = RDFConnectionBuilder.from(raw)
+					.addQueryTransform(q -> VirtualPartitionedQuery.rewrite(views, q))
+					.getConnection();
+				return result;
+			}
+			@Override
+			public boolean isMutable() {
+				return false;
+			}
+			
+			@Override
+			public void close() throws Exception {
+				subPod.close();
+			}
+		};
+		
+		return result;
+	}
 }

@@ -243,11 +243,11 @@ public class SparqlStmtUtils {
 //			baseIri = parent.toString();
         }
 
-		return extracted(pm, baseIri, in);
+		return processInputStream(pm, baseIri, in);
 		//stmts.forEach(stmt -> process(conn, stmt, sink));
 	}
 
-	private static SparqlStmtIterator extracted(PrefixMapping pm, String baseIri, InputStream in)
+	public static SparqlStmtIterator processInputStream(PrefixMapping pm, String baseIri, InputStream in)
 			throws IOException, ParseException {
 
 //		File file = new File(filename).getAbsoluteFile();

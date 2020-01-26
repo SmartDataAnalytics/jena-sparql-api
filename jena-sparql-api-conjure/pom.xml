@@ -52,20 +52,18 @@
 		</dependency>
 
 		<dependency>
-			<groupId>eu.wdaqua</groupId>
-			<artifactId>hdt-jena</artifactId>
-			<version>2.1</version>
-			<!-- <exclusions> -->
-			<!-- <exclusion> -->
-			<!-- <groupId>org.apache.jena</groupId> -->
-			<!-- <artifactId>jena-base</artifactId> -->
-			<!-- </exclusion> -->
-			<!-- </exclusions> -->
+			<groupId>org.aksw.jena-sparql-api</groupId>
+			<artifactId>jena-sparql-api-io-core</artifactId>
 		</dependency>
 
 		<dependency>
 			<groupId>org.aksw.jena-sparql-api</groupId>
-			<artifactId>jena-sparql-api-io-core</artifactId>
+			<artifactId>jena-sparql-api-io-hdt</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.aksw.jena-sparql-api</groupId>
+			<artifactId>jena-sparql-api-algebra</artifactId>
 		</dependency>
 
 		<dependency>

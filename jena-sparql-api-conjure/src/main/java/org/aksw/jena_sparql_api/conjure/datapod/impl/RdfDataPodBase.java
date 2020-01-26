@@ -20,7 +20,7 @@ public abstract class RdfDataPodBase
 	}
 
 	@Override
-	public synchronized void close() {
+	public synchronized void close() throws Exception{
 		if(!isClosed) {
 			isClosed = true;
 

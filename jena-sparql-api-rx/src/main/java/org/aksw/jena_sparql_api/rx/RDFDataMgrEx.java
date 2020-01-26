@@ -2,6 +2,8 @@ package org.aksw.jena_sparql_api.rx;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -87,21 +89,73 @@ public class RDFDataMgrEx {
 		return loadQuery(filenameOrURI, DefaultPrefixes.prefixes);
 	}
 	
-	public static Query loadQuery(String filenameOrURI, PrefixMapping pm) throws FileNotFoundException, IOException, ParseException {
+//	public static List<Query> loadQueries(String filenameOrURI, PrefixMapping pm) throws FileNotFoundException, IOException, ParseException {
+//		List<SparqlStmt> stmts = Streams.stream(SparqlStmtUtils.processFile(pm, filenameOrURI))
+//				.collect(Collectors.toList());
+//
+//		Query result;
+//		if(stmts.size() == 1) {
+//			result = stmts.iterator().next().getQuery();
+//			result.setBaseURI((String)null);
+//			QueryUtils.optimizePrefixes(result);
+//		} else {
+//			throw new RuntimeException("Expected a single query in " + filenameOrURI + "; got " + stmts.size());
+//		}
+//		
+//
+//
+//		return result;
+//	}
+	
+	public static List<Query> loadQueries(InputStream in, PrefixMapping pm) throws FileNotFoundException, IOException, ParseException {
+		List<SparqlStmt> stmts = Streams.stream(SparqlStmtUtils.processInputStream(pm, null, in))
+				.collect(Collectors.toList());
+
+		List<Query> result = new ArrayList<>();
+		for(SparqlStmt stmt : stmts) {
+			Query query = stmt.getQuery();
+			query.setBaseURI((String)null);
+			QueryUtils.optimizePrefixes(query);
+			result.add(query);
+		}
+
+		return result;
+	}
+
+	public static List<Query> loadQueries(String filenameOrURI, PrefixMapping pm) throws FileNotFoundException, IOException, ParseException {
 		List<SparqlStmt> stmts = Streams.stream(SparqlStmtUtils.processFile(pm, filenameOrURI))
 				.collect(Collectors.toList());
 
-		Query result;
-		if(stmts.size() == 1) {
-			result = stmts.iterator().next().getQuery();
-			result.setBaseURI((String)null);
-			QueryUtils.optimizePrefixes(result);
-		} else {
-			throw new RuntimeException("Expected a single query in " + filenameOrURI + "; got " + stmts.size());
+		List<Query> result = new ArrayList<>();
+		for(SparqlStmt stmt : stmts) {
+			Query query = stmt.getQuery();
+			query.setBaseURI((String)null);
+			QueryUtils.optimizePrefixes(query);
+			result.add(query);
+		}
+
+		return result;
+	}
+
+	/**
+	 * Load exactly a single query from a file or URI.
+	 * Search includes the classpath.
+	 * 
+	 * @param filenameOrURI
+	 * @param pm Prefix mapping
+	 * @return Exactly a single query - nevel null.
+	 * @throws FileNotFoundException
+	 * @throws IOException
+	 * @throws ParseException
+	 */
+	public static Query loadQuery(String filenameOrURI, PrefixMapping pm) throws FileNotFoundException, IOException, ParseException {
+		List<Query> queries = loadQueries(filenameOrURI, pm);
+		
+		if(queries.size() != 1) {
+			throw new RuntimeException("Expected a single query in " + filenameOrURI + "; got " + queries.size());
 		}
 		
-
-
+		Query result = queries.get(0);
 		return result;
 	}
 	
