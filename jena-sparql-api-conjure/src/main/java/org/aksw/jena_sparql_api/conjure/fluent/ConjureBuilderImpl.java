@@ -13,12 +13,18 @@ import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpDataRefResource;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpSequence;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpUnion;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpVar;
+import org.aksw.jena_sparql_api.mapper.proxy.JenaPluginUtils;
+import org.apache.jena.rdf.model.ModelFactory;
 
 public class ConjureBuilderImpl
 	implements ConjureBuilder
 {	
 	protected ConjureContext context;
-	
+
+	public static ConjureBuilder start() {
+		return new ConjureBuilderImpl();
+	}
+
 	public ConjureBuilderImpl() {
 		this(new ConjureContext());
 	}
@@ -49,8 +55,9 @@ public class ConjureBuilderImpl
 
 	@Override
 	public ConjureFluent fromDataRef(DataRef dataRef) {
-		throw new RuntimeException("not yet implemented");
-//		return wrap(OpDataRefResource.from(context.getModel(), DataRefUrl.create(context.getModel(), url)));
+		// Copy all triples of the dataref into the model of the fluent
+		DataRef copy = JenaPluginUtils.copyInto(dataRef, DataRef.class, context.getModel());
+		return wrap(OpDataRefResource.from(context.getModel(), copy));
 	}
 	
 	public static List<Op> toOps(ConjureFluent... conjureFluents) {

@@ -1,0 +1,2 @@
+CONSTRUCT WHERE { ?s a eg:Person }
+CONSTRUCT WHERE { ?s rdfs:label ?l }

@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -28,10 +29,11 @@ import org.aksw.jena_sparql_api.conjure.traversal.engine.FunctionAssembler;
 import org.aksw.jena_sparql_api.http.repository.api.HttpResourceRepositoryFromFileSystem;
 import org.aksw.jena_sparql_api.http.repository.api.RdfHttpEntityFile;
 import org.aksw.jena_sparql_api.http.repository.api.ResourceStore;
+import org.aksw.jena_sparql_api.http.repository.impl.HttpResourceRepositoryFromFileSystemImpl;
 import org.aksw.jena_sparql_api.http.repository.impl.ResourceStoreImpl;
+import org.aksw.jena_sparql_api.mapper.proxy.JenaPluginUtils;
 import org.aksw.jena_sparql_api.rdf.collections.ResourceUtils;
 import org.aksw.jena_sparql_api.utils.BindingUtils;
-import org.aksw.jena_sparql_api.utils.NodeUtils;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -87,6 +89,32 @@ public class ExecutionUtils {
 	    String result = ResourceTreeUtils.createGenericHash(semanticJobOp);
 
 	    return result;
+	}
+	
+	/**
+	 * Execute a basic workflow
+	 * 
+	 * @param op
+	 * @return
+	 * @throws IOException
+	 */
+	public static RdfDataPod executeJob(Op op) throws IOException {
+		Model core = op.getModel();
+		Model copy = ModelFactory.createDefaultModel();
+		copy.add(core);
+		
+		Op x = JenaPluginUtils.polymorphicCast(op.inModel(copy), Op.class);
+		
+		Job job = Job.create(copy);
+		job.setOp(x);
+
+		
+		HttpResourceRepositoryFromFileSystemImpl repo = HttpResourceRepositoryFromFileSystemImpl.createDefault();		
+		ResourceStore cacheStore = repo.getCacheStore();
+		OpExecutorDefault catalogExecutor = new OpExecutorDefault(repo, null, new LinkedHashMap<>(), RDFFormat.TURTLE_PRETTY);
+
+		RdfDataPod result = op.accept(catalogExecutor);
+		return result;
 	}
 	
 	/**
@@ -213,7 +241,7 @@ public class ExecutionUtils {
 	 * @param inputRecord
 	 * @return
 	 */
-	private static RdfDataPod executeJob(
+	public static RdfDataPod executeJob(
 			Job job,
 			HttpResourceRepositoryFromFileSystem repo,
 			TaskContext taskContext,

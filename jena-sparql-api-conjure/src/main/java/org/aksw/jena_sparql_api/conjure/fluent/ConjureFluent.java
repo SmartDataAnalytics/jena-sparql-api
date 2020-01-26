@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api.conjure.fluent;
 
+import java.util.Collection;
 import java.util.function.Function;
 
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.Op;
@@ -17,6 +18,8 @@ public interface ConjureFluent {
 	
 	ConjureFluent construct(String queryStr);
 	ConjureFluent update(String updateRequest);
+	ConjureFluent views(String ... queryStrs);
+	ConjureFluent views(Collection<Query> queries);
 	
 
 	ConjureFluent set(String ctxVar, String selector, String path);

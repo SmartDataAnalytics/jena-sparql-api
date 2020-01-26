@@ -19,11 +19,13 @@ import org.apache.jena.enhanced.Personality;
 import org.apache.jena.ext.com.google.common.reflect.ClassPath;
 import org.apache.jena.ext.com.google.common.reflect.ClassPath.ClassInfo;
 import org.apache.jena.graph.Node;
+import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.impl.ResourceImpl;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sys.JenaSystem;
+import org.apache.jena.util.ResourceUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,6 +59,53 @@ public class JenaPluginUtils {
 		T result = RDFNodeMapperImpl.castRdfNode(rdfNode, viewClass, typeDecider, false);
 		return result;
 	}
+	
+	
+	public static <T extends Resource> T inModel(T rdfNode, Class<T> viewClass, Model target) {
+		Resource r = rdfNode.inModel(target);
+		T result = polymorphicCast(r, viewClass);
+		return result;
+	}
+
+	/**
+	 * Copy all triples of the given rdf node into the target model and return
+	 * the result of a polymorphic cast
+	 * 
+	 * @param <T>
+	 * @param rdfNode
+	 * @param viewClass
+	 * @param target
+	 * @return
+	 */
+	public static <T extends Resource> T copyInto(T rdfNode, Class<T> viewClass, Model target) {
+		Model m = rdfNode.getModel();
+		target.add(m);
+		T result = inModel(rdfNode, viewClass, target);
+		return result;
+	}
+
+	/**
+	 * Copy only the triples of the closure of the given rdf node into the target model and return
+	 * the result of a polymorphic cast
+	 * 
+	 * @param <T>
+	 * @param rdfNode
+	 * @param viewClass
+	 * @param target
+	 * @return
+	 */
+	public static <T extends Resource> T copyClosureInto(T rdfNode, Class<T> viewClass, Model target) {
+		Model closure = ResourceUtils.reachableClosure(rdfNode);
+		target.add(closure);
+		T result = inModel(rdfNode, viewClass, target);
+		return result;
+	}
+
+//	public static <T extends Resource> T copyClosure(T rdfNode, Class<T> viewClass) {
+//		Model m = ResourceUtils.reachableClosure(rdfNode);		
+//		T result = inModel(rdfNode, viewClass, m);
+//		return result;
+//	}
 	
 	public static synchronized TypeDecider getTypeDecider() {
 		if(typeDecider == null) {

@@ -26,7 +26,7 @@ public interface OpQueryOverViews
 
 	@Iri("rpif:views")
 	List<String> getViewDefs();
-	OpQueryOverViews setViews(Collection<String> views);
+	OpQueryOverViews setViewDefs(Collection<String> views);
 	
 	@Override
 	OpQueryOverViews setSubOp(Op subOp);
@@ -41,7 +41,7 @@ public interface OpQueryOverViews
 	default OpQueryOverViews clone(Model cloneModel, List<Op> subOps) {
 		return this.inModel(cloneModel).as(OpQueryOverViews.class)
 				.setSubOp(subOps.iterator().next())
-				.setViews(getViewDefs());
+				.setViewDefs(getViewDefs());
 	}
 
 	
@@ -54,7 +54,7 @@ public interface OpQueryOverViews
 	public static OpQueryOverViews create(Model model, Op subOp, Collection<String> views) {
 		OpQueryOverViews result = model.createResource().as(OpQueryOverViews.class)
 			.setSubOp(subOp)
-			.setViews(views);
+			.setViewDefs(views);
 		
 		return result;
 	}

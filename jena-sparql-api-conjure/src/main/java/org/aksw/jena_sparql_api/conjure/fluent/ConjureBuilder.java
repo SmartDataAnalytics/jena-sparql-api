@@ -14,6 +14,7 @@ public interface ConjureBuilder {
 	ConjureFluent union(ConjureFluent ...conjureFluents);
 	ConjureFluent coalesce(ConjureFluent ...conjureFluents);
 
+	
 	ConjureFluent call(String macroName, ConjureFluent ...conjureFluents);
 
 	//ConjureFluent when(String condition, ConjureFluent subFluent);

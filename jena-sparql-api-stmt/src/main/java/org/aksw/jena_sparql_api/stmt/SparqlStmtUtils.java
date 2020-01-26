@@ -28,6 +28,7 @@ import org.apache.http.client.HttpClient;
 import org.apache.jena.atlas.json.JsonObject;
 import org.apache.jena.atlas.lib.Sink;
 import org.apache.jena.atlas.web.TypedInputStream;
+import org.apache.jena.ext.com.google.common.base.Charsets;
 import org.apache.jena.ext.com.google.common.collect.Streams;
 import org.apache.jena.ext.com.google.common.io.CharStreams;
 import org.apache.jena.graph.Triple;
@@ -192,6 +193,15 @@ public class SparqlStmtUtils {
 //		String result = parent.toString();
 //		return result;
         return parent;
+	}
+	
+	public static String loadString(String filenameOrURI) throws IOException {
+		String result;
+		try(InputStream in = openInputStream(filenameOrURI)) {
+			result = CharStreams.toString(new InputStreamReader(in, Charsets.UTF_8));
+		}
+		
+		return result;
 	}
 	
 	public static TypedInputStream openInputStream(String filenameOrURI) {
