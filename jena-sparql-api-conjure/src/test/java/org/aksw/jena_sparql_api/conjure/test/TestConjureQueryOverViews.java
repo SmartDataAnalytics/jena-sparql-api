@@ -25,12 +25,10 @@ public class TestConjureQueryOverViews {
 	public void testViews() throws Exception {
 		Model expected = RDFDataMgr.loadModel("expected.ttl");
 		
-		ConjureBuilder builder = ConjureBuilderImpl.start();
-		Model model = builder.getContext().getModel();
-		
 		List<Query> queries = RDFDataMgrEx.loadQueries("views.sparql", new PrefixMapping2(PrefixMapping.Extended));
 		
-		Op op = builder.fromDataRef(DataRefUrl.create(model, "test-data.ttl"))
+		Op op = ConjureBuilderImpl.start()
+			.fromDataRefFn(model -> DataRefUrl.create(model, "test-data.ttl"))
 			.views(queries)
 			.getOp();
 

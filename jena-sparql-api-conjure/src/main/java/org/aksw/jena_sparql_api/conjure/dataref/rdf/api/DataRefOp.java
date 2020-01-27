@@ -4,15 +4,15 @@ import org.aksw.jena_sparql_api.conjure.dataref.core.api.PlainDataRefOp;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.Op;
 import org.aksw.jena_sparql_api.mapper.annotation.IriNs;
 import org.aksw.jena_sparql_api.mapper.annotation.PolymorphicOnly;
-import org.aksw.jena_sparql_api.mapper.annotation.RdfType;
+import org.aksw.jena_sparql_api.mapper.annotation.RdfTypeNs;
 import org.aksw.jena_sparql_api.mapper.annotation.ResourceView;
 
 @ResourceView
-@RdfType
+@RdfTypeNs("rpif")
 public interface DataRefOp
 	extends PlainDataRefOp, DataRef
 {
-	@IriNs("eg")
+	@IriNs("rpif")
 	@PolymorphicOnly
 	DataRefOp setOp(Op dataRef);
 	Op getOp();

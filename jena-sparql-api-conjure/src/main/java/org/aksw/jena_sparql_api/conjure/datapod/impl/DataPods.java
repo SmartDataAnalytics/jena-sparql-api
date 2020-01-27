@@ -18,6 +18,7 @@ import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.DataRef;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.Op;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpDataRefResource;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpVisitor;
+import org.aksw.jena_sparql_api.conjure.dataset.engine.ExecutionUtils;
 import org.aksw.jena_sparql_api.conjure.dataset.engine.OpExecutorDefault;
 import org.aksw.jena_sparql_api.http.repository.api.HttpResourceRepositoryFromFileSystem;
 import org.aksw.jena_sparql_api.http.repository.api.RdfHttpEntityFile;
@@ -58,12 +59,13 @@ public class DataPods {
 	private static final Logger logger = LoggerFactory.getLogger(DataPods.class);
 	
 	public static RdfDataPod fromDataRef(DataRef dataRef) {
-		OpExecutorDefault catalogExecutor = new OpExecutorDefault(null, null, new LinkedHashMap<>(), RDFFormat.TURTLE_PRETTY);
+		//OpExecutorDefault catalogExecutor = new OpExecutorDefault(null, null, new LinkedHashMap<>(), RDFFormat.TURTLE_PRETTY);
 
 		Resource rawCopy = dataRef.inModel(ResourceUtils.reachableClosure(dataRef));
 		DataRef copy = JenaPluginUtils.polymorphicCast(rawCopy, DataRef.class);
 		Op basicWorkflow = OpDataRefResource.from(copy.getModel(), copy);
-		RdfDataPod result = basicWorkflow.accept(catalogExecutor);
+		RdfDataPod result = ExecutionUtils.executeJob(basicWorkflow);
+		//RdfDataPod result = basicWorkflow.accept(catalogExecutor);
 		return result;
 	}
 	

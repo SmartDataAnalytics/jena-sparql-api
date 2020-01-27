@@ -98,7 +98,7 @@ public class ExecutionUtils {
 	 * @return
 	 * @throws IOException
 	 */
-	public static RdfDataPod executeJob(Op op) throws IOException {
+	public static RdfDataPod executeJob(Op op) {
 		Model core = op.getModel();
 		Model copy = ModelFactory.createDefaultModel();
 		copy.add(core);
@@ -109,7 +109,12 @@ public class ExecutionUtils {
 		job.setOp(x);
 
 		
-		HttpResourceRepositoryFromFileSystemImpl repo = HttpResourceRepositoryFromFileSystemImpl.createDefault();		
+		HttpResourceRepositoryFromFileSystemImpl repo;
+		try {
+			repo = HttpResourceRepositoryFromFileSystemImpl.createDefault();
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}		
 		ResourceStore cacheStore = repo.getCacheStore();
 		OpExecutorDefault catalogExecutor = new OpExecutorDefault(repo, null, new LinkedHashMap<>(), RDFFormat.TURTLE_PRETTY);
 

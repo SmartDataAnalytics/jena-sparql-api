@@ -195,10 +195,12 @@ public class SparqlStmtUtils {
         return parent;
 	}
 	
+	// TODO Move to utils or io - also, internally uses rdf content type for requests, which
+	// is not what we want
 	public static String loadString(String filenameOrURI) throws IOException {
 		String result;
 		try(InputStream in = openInputStream(filenameOrURI)) {
-			result = CharStreams.toString(new InputStreamReader(in, Charsets.UTF_8));
+			result = in != null ? CharStreams.toString(new InputStreamReader(in, Charsets.UTF_8)) : null;
 		}
 		
 		return result;
