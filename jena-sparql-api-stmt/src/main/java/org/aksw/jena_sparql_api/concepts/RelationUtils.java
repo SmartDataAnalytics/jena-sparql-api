@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 
 import org.aksw.commons.collections.generator.Generator;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
+import org.aksw.jena_sparql_api.utils.QuadPatternUtils;
 import org.aksw.jena_sparql_api.utils.VarGeneratorBlacklist;
 import org.aksw.jena_sparql_api.utils.VarUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
@@ -40,6 +41,7 @@ import org.apache.jena.sparql.syntax.ElementGroup;
 import org.apache.jena.sparql.syntax.ElementSubQuery;
 import org.apache.jena.sparql.syntax.ElementUnion;
 import org.apache.jena.sparql.syntax.PatternVars;
+import org.apache.jena.sparql.syntax.Template;
 import org.apache.jena.sparql.syntax.syntaxtransform.NodeTransformSubst;
 
 import com.google.common.collect.Sets;
@@ -231,8 +233,14 @@ public class RelationUtils {
 			List<Var> vars = query.getProjectVars();
 			Element element = query.getQueryPattern();
 			result = new RelationImpl(element, vars);
+		} else if(query.isConstructType()) {
+			Template template = query.getConstructTemplate();
+			List<Var> vars = new ArrayList<>(QuadPatternUtils.getVarsMentioned(template.getQuads()));
+			Element element = query.getQueryPattern();
+			result = new RelationImpl(element, vars);
 		} else {
-			throw new RuntimeException("SELECT query form expected, instead got " + query);
+			
+			throw new RuntimeException("SELECT o CONSTRUCT query form expected, instead got " + query);
 		}
 		
 		return result;

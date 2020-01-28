@@ -8,8 +8,8 @@ import java.util.concurrent.TimeUnit;
 
 import org.aksw.jena_sparql_api.conjure.datapod.impl.RdfDataPodHdtImpl;
 import org.aksw.jena_sparql_api.conjure.datapod.impl.ReferenceImpl;
+import org.aksw.jena_sparql_api.io.hdt.JenaPluginHdt;
 import org.aksw.jena_sparql_api.utils.GraphUtils;
-import org.aksw.jena_sparql_api.utils.hdt.JenaPluginHdt;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QueryExecutionFactory;

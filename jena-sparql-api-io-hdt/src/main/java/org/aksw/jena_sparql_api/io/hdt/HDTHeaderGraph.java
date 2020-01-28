@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.utils.hdt;
+package org.aksw.jena_sparql_api.io.hdt;
 
 import java.io.IOException;
 

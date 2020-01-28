@@ -6,8 +6,8 @@ import org.aksw.jena_sparql_api.conjure.job.api.Job;
 import org.aksw.jena_sparql_api.conjure.resourcespec.ResourceSpec;
 import org.aksw.jena_sparql_api.conjure.traversal.api.OpTraversal;
 import org.aksw.jena_sparql_api.http.domain.api.RdfEntityInfoDefault;
+import org.aksw.jena_sparql_api.io.hdt.JenaPluginHdt;
 import org.aksw.jena_sparql_api.mapper.proxy.JenaPluginUtils;
-import org.aksw.jena_sparql_api.utils.hdt.JenaPluginHdt;
 import org.aksw.jena_sparql_api.utils.turtle.TurtleWriterNoBase;
 import org.apache.jena.sys.JenaSubsystemLifecycle;
 
