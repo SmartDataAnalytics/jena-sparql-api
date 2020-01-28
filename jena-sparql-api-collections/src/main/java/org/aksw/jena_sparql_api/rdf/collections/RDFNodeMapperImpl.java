@@ -16,7 +16,8 @@ public class RDFNodeMapperImpl<T>
 	protected TypeDecider typeDecider;
 	protected Class<T> viewClass;
 	
-	// Flag to indicate that requested resource views should be applied even if the TypeDecider cannot find a better view class
+	// Flag to indicate that requested resource views should be applied even
+	// if the TypeDecider cannot find a better view class
 	protected boolean isViewAll;
 
 	protected transient NodeMapper<T> nodeMapper;

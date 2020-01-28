@@ -20,7 +20,10 @@ public class JenaExtensionFs {
         FunctionRegistry.get().put(ns + "isDirectory", E_UnaryPathFunction.newFactory(path -> NodeValue.makeBoolean(Files.isDirectory(path))));
         FunctionRegistry.get().put(ns + "isRegularFile", E_UnaryPathFunction.newFactory(path -> NodeValue.makeBoolean(Files.isRegularFile(path))));
         //FunctionRegistry.get().put(ns + "lastModifiedTime", E_UnaryPathFunction.newFactory(path -> NodeValue.makeInteger(Files.getLastModifiedTime(path).toInstant())));
-        
+
+        FunctionRegistry.get().put(ns + "probeContentType", E_UnaryPathFunction.newFactory(path -> NodeValue.makeString(Files.probeContentType(path))));
+        FunctionRegistry.get().put(ns + "probeEncoding", E_UnaryPathFunction.newFactory(path -> NodeValue.makeString(probeEncoding.doProbeEncoding(path))));
+
 		PropertyFunctionRegistry.get().put(ns + "find", new PropertyFunctionFactoryFsFind(PropertyFunctionFactoryFsFind::find));
 		PropertyFunctionRegistry.get().put(ns + "parents", new PropertyFunctionFactoryFsFind(PropertyFunctionFactoryFsFind::parents));
     }

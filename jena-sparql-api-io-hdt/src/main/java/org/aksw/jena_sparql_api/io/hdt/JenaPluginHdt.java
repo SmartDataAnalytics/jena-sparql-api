@@ -60,12 +60,11 @@ public class JenaPluginHdt
 	        @Override
 	        public WriterGraphRIOT create(RDFFormat serialization)
 	        {
-	    		WriterGraphRIOT tmp = new WriterGraphRIOT_HDT();
-	        	if (Objects.equals(FORMAT_HDT, serialization) ) {
-	                return tmp ;
-	        	} else {
-	        		return null;
-	        	}
+	    		WriterGraphRIOT result = Objects.equals(FORMAT_HDT, serialization)
+	    			? new WriterGraphRIOT_HDT()
+	    			: null;
+
+	    		return result;
 	        }
 		};
 	
