@@ -1,11 +1,10 @@
 package org.aksw.jena_sparql_api.utils.views.map;
 
 import java.util.AbstractMap;
-import java.util.Iterator;
+import java.util.Objects;
 import java.util.Set;
 
 import org.aksw.commons.accessors.CollectionFromConverter;
-import org.aksw.commons.collections.SinglePrefetchIterator;
 import org.aksw.commons.collections.sets.SetFromCollection;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.RelationUtils;
@@ -15,7 +14,6 @@ import org.aksw.jena_sparql_api.rdf.collections.SetFromPropertyValues;
 import org.aksw.jena_sparql_api.rx.SparqlRx;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
-import org.apache.jena.enhanced.EnhGraph;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecutionFactory;
@@ -26,8 +24,13 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
 
 import com.google.common.base.Converter;
+import com.google.common.collect.Maps;
 
 /**
+ * !Entry resources are not managed in this map - i.e. the put method requires a resource
+ * with appropriate entry information which is probably not what you want!
+ * Use {@link MapFromResource} instead which creates anonymous resources for map entries.
+ * 
  * A map view for over the values of a specific property of a specific resource,
  * modeled in the following way:
  * 
@@ -45,53 +48,42 @@ import com.google.common.base.Converter;
  * @author raven
  *
  */
-public class MapFromResource2
-	extends AbstractMap<RDFNode, RDFNode>
+public class MapFromResourceUnmanaged
+	extends AbstractMap<RDFNode, Resource>
 {
 	protected final Resource subject;
 	protected final Property entryProperty;
+	//protected final boolean isReverseEntryProperty;
 	protected final Property keyProperty;
-	protected final Property valueProperty;
 
 	//protected fin
 	//protected Function<String, Resource> entryResourceFactory;
 	
-	public MapFromResource2(
-			Resource subject,
-			Property entryProperty,
-			Property keyProperty,
-			Property valueProperty) {
+	public MapFromResourceUnmanaged(
+			Resource subject, Property entryProperty, Property keyProperty) {
 		super();
 		this.subject = subject;
 		this.entryProperty = entryProperty;
+		//this.isReverseEntryProperty = false;
 		this.keyProperty = keyProperty;
-		this.valueProperty = valueProperty;
 	}
 
 	@Override
-	public RDFNode get(Object key) {
-		Resource entry = key instanceof RDFNode ? getEntry((RDFNode)key) : null;
-		
-		RDFNode result = entry == null ? null : ResourceUtils.getPropertyValue(entry, valueProperty);
-
+	public Resource get(Object key) {
+		Resource result = key instanceof RDFNode ? get((RDFNode)key) : null;
 		return result;
 	}
 
-//	public Resource getEntry( key) {
-//		Resource result = key instanceof RDFNode ? getEntry((RDFNode)key) : null;
-//		return result;
-//	}
-
-	public Resource getEntry(RDFNode key) {
+	public Resource get(RDFNode key) {
 //		Stopwatch sw = Stopwatch.createStarted();
-		Resource result = getEntryViaModel(key);
+		Resource result = getViaModel(key);
 //		System.out.println("Elapsed (s): " + sw.stop().elapsed(TimeUnit.NANOSECONDS) / 1000000000.0);
 
 		return result;
 	}
 	
 	
-	public Resource getEntryViaModel(RDFNode key) {
+	public Resource getViaModel(RDFNode key) {
 		Model model = subject.getModel();
 		Resource result = model.listStatements(null, keyProperty, key)
 			.mapWith(Statement::getSubject)
@@ -102,7 +94,7 @@ public class MapFromResource2
 		return result;
 	}
 
-	public Resource getEntryViaSparql(RDFNode key) {
+	public Resource getViaSparql(RDFNode key) {
 
 		UnaryRelation e = new Concept(
 				ElementUtils.createElementTriple(
@@ -124,91 +116,45 @@ public class MapFromResource2
 	
 	@Override
 	public boolean containsKey(Object key) {
-		RDFNode r = get(key);
+		Resource r = get(key);
 		boolean result = r != null;
 		return result;
 	}
 	
 	@Override
-	public Resource put(RDFNode key, RDFNode value) {
-		Resource entry = getEntry(key);
+	public Resource put(RDFNode key, Resource entry) {
+		Resource existing = get(key);
 		
-		if(entry == null) {
-			entry = subject.getModel().createResource();
-			// TODO Add support for custom (non-blank node) resource generation here
+		Resource e = entry.inModel(subject.getModel());
+		
+		if(!Objects.equals(existing, entry)) {
+			if(existing != null) {
+				subject.getModel().remove(subject, entryProperty, existing);
+			}
 		}
-		
-		//Resource e = entry.inModel(subject.getModel());
-		
-//		if(!Objects.equals(existing, entry)) {
-//			if(existing != null) {
-//				subject.getModel().remove(subject, entryProperty, existing);
-//			}
-//		}
 
-		subject.addProperty(entryProperty, entry);
+		subject.addProperty(entryProperty, e);
 		
-		ResourceUtils.setProperty(entry, keyProperty, key);
-		ResourceUtils.setProperty(entry, valueProperty, value);
+		ResourceUtils.setProperty(e, keyProperty, key);
 		
 		return entry;
 	}
 
 	
 	@Override
-	public Set<Entry<RDFNode, RDFNode>> entrySet() {
-		Converter<Resource, Entry<RDFNode, RDFNode>> converter = Converter.from(
-				e -> new RdfEntry(e.asNode(), (EnhGraph)e.getModel(), keyProperty, valueProperty),
-				e -> (Resource)e); // TODO Ensure to add the resource and its key to the subject model
+	public Set<Entry<RDFNode, Resource>> entrySet() {
+		Converter<Resource, Entry<RDFNode, Resource>> converter = Converter.from(
+				e -> Maps.immutableEntry(ResourceUtils.getPropertyValue(e, keyProperty), e),
+				e -> e.getValue()); // TODO Ensure to add the resource and its key to the subject model
 
-		Set<Entry<RDFNode, RDFNode>> result =
+		Set<Entry<RDFNode, Resource>> result =
 			new SetFromCollection<>(
 				new CollectionFromConverter<>(
-					new SetFromPropertyValues<Resource>(subject, entryProperty, Resource.class) {
-						public Iterator<Resource> iterator() {
-							Iterator<Resource> baseIt = super.iterator();
-
-							return new SinglePrefetchIterator<Resource>() {
-								@Override
-								protected Resource prefetch() throws Exception {
-									return baseIt.hasNext() ? baseIt.next() : finish();
-								}
-								
-								protected void doRemove(Resource item) {
-									item.removeAll(keyProperty);
-									item.removeAll(valueProperty);
-									baseIt.remove();
-								};
-								
-							};
-						};
-//						@Override
-//						public void clear() {
-//							System.out.println("here");
-//							super.clear();
-//						}
-//						@Override
-//						public boolean remove(Object key) {
-//							boolean r = super.remove(key);
-//							if(r) {
-//								((RdfEntry)key).clear();
-//							}
-//							return r;
-//						}
-					},
+					new SetFromPropertyValues<>(subject, entryProperty, Resource.class),
 					converter));
 		
 		return result;
 	}
 	
-//	@Override
-//	public void clear() {
-//		for(Object r : entrySet()) {
-//			RdfEntry e = (RdfEntry)r;
-//			e.clear();
-//		}
-//		
-//		super.clear();
-//	}
 	
 }

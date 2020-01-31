@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
@@ -18,6 +19,8 @@ import org.apache.jena.ext.com.google.common.collect.Sets;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.sys.JenaSystem;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
@@ -52,6 +55,8 @@ public class TestMapperProxyUtils {
 		String getRandomItem();
 
 		
+		Map<String, Object> getSimpleMap();
+
 //		@Iri("eg:collection")
 //		TestResource setList(List<String> strs);
 //		List<String> getList();
@@ -91,6 +96,9 @@ public class TestMapperProxyUtils {
 		@Iri("eg:dynamicSet")
 		<T> Collection<T> getDynamicSet(Class<T> clazz);
 		//TestResource setDynamicSet(Iterable<T> items);
+		
+		@Iri("eg:simpleMap")
+		Map<String, Object> getSimpleMap();
 		
 	
 //	@Iri("eg:collection")
@@ -211,5 +219,27 @@ public class TestMapperProxyUtils {
 		//Assert.assertEquals(sb, sb.setList(list));
 		Assert.assertEquals(set, sb.getDynamicSet(Integer.class));
 	}
+	
+	
+	@Test
+	public void testSimpleMap() {		
+		JenaSystem.init();
+		JenaPluginUtils.registerResourceClasses(TestResourceDefault.class);
+		TestResource sb = ModelFactory.createDefaultModel().createResource().as(TestResource.class);
+		
+		Assert.assertEquals(Collections.emptyMap(), sb.getSimpleMap());
+		sb.getSimpleMap().put("hello", "world");
+		sb.getSimpleMap().put("value", 123);
+		
+		// RDFDataMgr.write(System.out, sb.getModel(), RDFFormat.TURTLE);
+		
+//		Set<Integer> set = new HashSet<>(Arrays.asList(1, 2));
+//		sb.getDynamicSet(Integer.class).addAll(set);
+		//Assert.assertEquals(sb, sb.setList(list));
+		//Assert.assertEquals(set, sb.getDynamicSet(Integer.class));
+		Assert.assertEquals(sb.getSimpleMap().get("hello"), "world");
+		Assert.assertEquals(sb.getSimpleMap().get("value"), 123);
+	}
+
 }
 

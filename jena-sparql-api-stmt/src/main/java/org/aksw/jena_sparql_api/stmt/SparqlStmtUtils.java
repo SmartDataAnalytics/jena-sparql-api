@@ -10,9 +10,13 @@ import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.aksw.jena_sparql_api.backports.syntaxtransform.ExprTransformNodeElement;
@@ -21,9 +25,11 @@ import org.aksw.jena_sparql_api.core.utils.UpdateUtils;
 import org.aksw.jena_sparql_api.http.HttpExceptionUtils;
 import org.aksw.jena_sparql_api.utils.ElementTransformSubst2;
 import org.aksw.jena_sparql_api.utils.GraphUtils;
+import org.aksw.jena_sparql_api.utils.NodeUtils;
 import org.aksw.jena_sparql_api.utils.PrefixUtils;
 import org.aksw.jena_sparql_api.utils.QuadUtils;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
+import org.aksw.jena_sparql_api.utils.transform.NodeTransformCollectNodes;
 import org.apache.http.client.HttpClient;
 import org.apache.jena.atlas.json.JsonObject;
 import org.apache.jena.atlas.lib.Sink;
@@ -31,6 +37,7 @@ import org.apache.jena.atlas.web.TypedInputStream;
 import org.apache.jena.ext.com.google.common.base.Charsets;
 import org.apache.jena.ext.com.google.common.collect.Streams;
 import org.apache.jena.ext.com.google.common.io.CharStreams;
+import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
@@ -53,6 +60,7 @@ import org.apache.jena.riot.system.stream.StreamManager;
 import org.apache.jena.riot.web.HttpOp;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.shared.impl.PrefixMappingImpl;
+import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.core.Prologue;
 import org.apache.jena.sparql.core.Quad;
@@ -60,6 +68,8 @@ import org.apache.jena.sparql.expr.ExprTransform;
 import org.apache.jena.sparql.graph.NodeTransform;
 import org.apache.jena.sparql.lang.arq.ParseException;
 import org.apache.jena.sparql.modify.request.UpdateData;
+import org.apache.jena.sparql.modify.request.UpdateModify;
+import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransform;
 import org.apache.jena.sparql.syntax.syntaxtransform.UpdateTransformOps;
 import org.apache.jena.sparql.util.Context;
@@ -72,6 +82,17 @@ public class SparqlStmtUtils {
 	// TODO Duplicate symbol definition; exists in E_Benchmark
 	public static final Symbol symConnection = Symbol.create("http://jsa.aksw.org/connection");
 
+	public static Map<String, Boolean> mentionedEnvVars(SparqlStmt stmt) {
+		NodeTransformCollectNodes xform = new NodeTransformCollectNodes();
+		applyNodeTransform(stmt, xform);
+		Set<Node> nodes = xform.getNodes();
+		Map<String, Boolean> result = nodes.stream()
+			.map(NodeUtils::getEnvKey)
+			.filter(Objects::nonNull)
+			.collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+		
+		return result;
+	}
 
 	/**
 	 * Removes all unused prefixes from a stmt
@@ -564,5 +585,24 @@ public class SparqlStmtUtils {
 
 			conn.update(u);
 		}
+	}
+
+	public static Op toAlgebra(SparqlStmt stmt) {
+		Op result = null;
+	
+		if(stmt.isQuery()) {
+			Query q = stmt.getAsQueryStmt().getQuery();
+			result = Algebra.compile(q);
+		} else if(stmt.isUpdateRequest()) {
+			UpdateRequest ur = stmt.getAsUpdateStmt().getUpdateRequest();
+			for(Update u : ur) {
+				if(u instanceof UpdateModify) {
+					Element e = ((UpdateModify)u).getWherePattern();
+					result = Algebra.compile(e);
+				}
+			}
+		}
+	
+		return result;
 	}
 }

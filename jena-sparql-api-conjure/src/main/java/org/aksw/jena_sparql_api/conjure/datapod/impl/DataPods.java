@@ -3,12 +3,10 @@ package org.aksw.jena_sparql_api.conjure.datapod.impl;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Supplier;
 
-import org.aksw.jena_sparql_api.conjure.datapod.api.DataPod;
 import org.aksw.jena_sparql_api.conjure.datapod.api.RdfDataPod;
 import org.aksw.jena_sparql_api.conjure.dataref.core.api.PlainDataRef;
 import org.aksw.jena_sparql_api.conjure.dataref.core.api.PlainDataRefSparqlEndpoint;
@@ -19,7 +17,6 @@ import org.aksw.jena_sparql_api.conjure.dataset.algebra.Op;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpDataRefResource;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpVisitor;
 import org.aksw.jena_sparql_api.conjure.dataset.engine.ExecutionUtils;
-import org.aksw.jena_sparql_api.conjure.dataset.engine.OpExecutorDefault;
 import org.aksw.jena_sparql_api.http.repository.api.HttpResourceRepositoryFromFileSystem;
 import org.aksw.jena_sparql_api.http.repository.api.RdfHttpEntityFile;
 import org.aksw.jena_sparql_api.http.repository.impl.HttpResourceRepositoryFromFileSystemImpl;
@@ -40,7 +37,6 @@ import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.rdfconnection.RDFConnectionRemote;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
-import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.riot.RDFLanguages;
 import org.apache.jena.riot.WebContent;
 import org.apache.jena.util.ResourceUtils;
@@ -100,9 +96,7 @@ public class DataPods {
 		return result;
 	}
 	
-	public static RdfDataPod fromModel(Model model) {
-		Dataset dataset = DatasetFactory.wrap(model);
-		
+	public static RdfDataPod fromDataset(Dataset dataset) {
 		return new RdfDataPodBase() {
 			@Override
 			protected RDFConnection newConnection() {
@@ -110,11 +104,36 @@ public class DataPods {
 				return result;
 			}
 			
+			/**
+			 * Only returns the default model
+			 */
 			@Override
 			public Model getModel() {
-				return model;
+				Model r = dataset.getDefaultModel();
+				return r;
 			}
 		};
+	}
+
+	
+	public static RdfDataPod fromModel(Model model) {
+		Dataset dataset = DatasetFactory.wrap(model);
+
+		RdfDataPod result = fromDataset(dataset);
+		return result;
+		
+//		return new RdfDataPodBase() {
+//			@Override
+//			protected RDFConnection newConnection() {
+//				RDFConnection result = RDFConnectionFactory.connect(dataset);
+//				return result;
+//			}
+//			
+//			@Override
+//			public Model getModel() {
+//				return model;
+//			}
+//		};
 	}
 
 	public static RdfDataPod fromUrl(PlainDataRefUrl dataRef) {

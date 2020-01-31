@@ -36,6 +36,7 @@ import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpPersist;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpQueryOverViews;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpSequence;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpSet;
+import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpStmtList;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpUnion;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpUpdateRequest;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpUtils;
@@ -51,15 +52,24 @@ import org.aksw.jena_sparql_api.http.repository.impl.HttpResourceRepositoryFromF
 import org.aksw.jena_sparql_api.http.repository.impl.ResourceStoreImpl;
 import org.aksw.jena_sparql_api.rx.RDFDataMgrEx;
 import org.aksw.jena_sparql_api.rx.SparqlRx;
+import org.aksw.jena_sparql_api.stmt.SPARQLResultSinkQuads;
+import org.aksw.jena_sparql_api.stmt.SPARQLResultVisitor;
+import org.aksw.jena_sparql_api.stmt.SparqlStmt;
+import org.aksw.jena_sparql_api.stmt.SparqlStmtParser;
+import org.aksw.jena_sparql_api.stmt.SparqlStmtParserImpl;
+import org.aksw.jena_sparql_api.stmt.SparqlStmtUtils;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpRequest;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.methods.RequestBuilder;
+import org.apache.jena.atlas.lib.Sink;
 import org.apache.jena.ext.com.google.common.hash.HashCode;
 import org.apache.jena.ext.com.google.common.hash.HashFunction;
 import org.apache.jena.ext.com.google.common.hash.Hashing;
 import org.apache.jena.graph.Node;
+import org.apache.jena.query.Dataset;
+import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryFactory;
 import org.apache.jena.rdf.model.Model;
@@ -67,7 +77,9 @@ import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.riot.RDFFormat;
+import org.apache.jena.riot.lang.SinkQuadsToDataset;
 import org.apache.jena.shared.PrefixMapping;
+import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.binding.BindingHashMap;
 import org.apache.jena.sparql.expr.Expr;
@@ -589,6 +601,37 @@ public class OpExecutorDefault
 			}
 		};
 		
+		return result;
+	}
+
+	@Override
+	public RdfDataPod visit(OpStmtList op) {
+		Op subOp = op.getSubOp();
+		Dataset resultDataset = DatasetFactory.create();
+		RdfDataPod result = DataPods.fromDataset(resultDataset);
+		
+//		DataPods.from(resultDataset);
+
+		Sink<Quad> tmp = new SinkQuadsToDataset(true, resultDataset.asDatasetGraph());
+		SPARQLResultVisitor sink = new SPARQLResultSinkQuads(tmp);
+		
+		SparqlStmtParser parser = SparqlStmtParserImpl.create(DefaultPrefixes.prefixes);
+		
+		try(RdfDataPod subPod = subOp.accept(this)) {
+			try(RDFConnection conn = subPod.openConnection()) {
+				List<String> stmts = op.getStmts();
+				for(String stmt : stmts) {
+					SparqlStmt s = parser.apply(stmt);
+					SparqlStmtUtils.process(conn, s, sink);
+				}
+			}
+			
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		} finally {
+			tmp.close();
+		}
+
 		return result;
 	}
 }

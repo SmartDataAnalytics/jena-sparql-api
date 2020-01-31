@@ -10,12 +10,14 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.lang.reflect.WildcardType;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -43,10 +45,15 @@ import org.aksw.jena_sparql_api.rdf.collections.ResourceUtils;
 import org.aksw.jena_sparql_api.rdf.collections.SetFromLiteralPropertyValues;
 import org.aksw.jena_sparql_api.rdf.collections.SetFromMappedPropertyValues;
 import org.aksw.jena_sparql_api.rdf.collections.SetFromPropertyValues;
+import org.aksw.jena_sparql_api.utils.views.map.MapFromKeyConverter;
+import org.aksw.jena_sparql_api.utils.views.map.MapFromResource;
+import org.aksw.jena_sparql_api.utils.views.map.MapFromValueConverter;
+import org.aksw.jena_sparql_api.utils.views.map.MapVocab;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.jena.datatypes.RDFDatatype;
 import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.enhanced.EnhGraph;
+import org.apache.jena.ext.com.google.common.collect.Maps;
 import org.apache.jena.ext.com.google.common.collect.Sets;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
@@ -95,109 +102,7 @@ import net.sf.cglib.proxy.Proxy;
  * 
  */
 
-interface MethodDescriptor {
-	Method getMethod();
-	
-	boolean isGetter();
-	default boolean isSetter() { return !isGetter(); }
-	boolean isCollectionValued();
-	
-	boolean isDynamicCollection();
-	
-	Class<?> getType();
 
-	Class<?> getItemType();
-	Class<?> getCollectionType();
-	
-	
-	/**
-	 * Only applicable to setters - is the method's return type
-	 * assignable from the method's declaring class?
-	 *  
-	 * @return
-	 */
-	boolean isFluentCompatible();
-	
-	public static MethodDescriptor simpleGetter(Method method, Class<?> type) {
-		return new MethodDescriptorSimple(method, true, false, type);
-	}
-
-	public static MethodDescriptor simpleSetter(Method method, boolean fluentCapable, Class<?> type) {
-		return new MethodDescriptorSimple(method, false, fluentCapable, type);
-	}
-	
-	public static MethodDescriptor collectionGetter(Method method, Class<?> collectionType, Class<?> itemType) {
-		return new MethodDescriptorCollection(method, true, false, collectionType, itemType, false);
-	}
-
-	public static MethodDescriptor collectionSetter(Method method, boolean fluentCapable, Class<?> collectionType, Class<?> itemType) {
-		return new MethodDescriptorCollection(method, false, fluentCapable, collectionType, itemType, false);
-	}
-
-	public static MethodDescriptor dynamicCollectionGetter(Method method, Class<?> collectionType, Class<?> boundedItemType) {
-		return new MethodDescriptorCollection(method, true, false, collectionType, boundedItemType, true);
-	}
-}
-
-abstract class MethodDescriptorBase
-	implements MethodDescriptor
-{
-	protected Method method; 
-	protected boolean isGetter;
-	protected boolean isFluentCompatible;
-	
-	public MethodDescriptorBase(Method method, boolean isGetter, boolean isFluentCompatible) {
-		this.method = method;
-		this.isGetter = isGetter;
-		this.isFluentCompatible = isFluentCompatible;
-	}
-	
-	@Override public Method getMethod() { return method; }
-	@Override public boolean isGetter() { return isGetter; }
-	@Override public boolean isFluentCompatible() { return isFluentCompatible; } //throw new RuntimeException("not applicable"); }
-}
-
-class MethodDescriptorCollection
-	extends MethodDescriptorBase
-{
-	protected Class<?> collectionType;
-	protected Class<?> itemType;
-	protected boolean isDynamic;
-	
-	public MethodDescriptorCollection(Method method, boolean isGetter, boolean isFluentCompatible, Class<?> collectionType, Class<?> itemType, boolean isDynamic) {
-		super(method, isGetter, isFluentCompatible);
-		this.collectionType = collectionType;
-		this.itemType = itemType;
-		this.isDynamic = isDynamic;
-	}
-
-//	@Override public boolean isSetter() { return false; }
-	@Override public boolean isCollectionValued() { return true; }
-	@Override public boolean isDynamicCollection() { return isDynamic; }
-	
-	@Override public Class<?> getType() { return null; }	
-	@Override public Class<?> getCollectionType() { return collectionType; }
-	@Override public Class<?> getItemType() { return itemType; }	
-
-}
-
-class MethodDescriptorSimple
-	extends MethodDescriptorBase
-{
-	protected Class<?> type;
-
-	public MethodDescriptorSimple(Method method, boolean isGetter, boolean isFluentCompatible, Class<?> type) {
-		super(method, isGetter, isFluentCompatible);
-		this.type = type;
-		this.isFluentCompatible = isFluentCompatible;
-	}
-
-	@Override public boolean isCollectionValued() { return false; }
-	@Override public boolean isDynamicCollection() { return false; }
-	@Override public Class<?> getType() { return type; }	
-	@Override public Class<?> getCollectionType() { return null; }
-	@Override public Class<?> getItemType() { return null; }	
-}
 
 
 //class CollectionGetter {
@@ -233,24 +138,68 @@ public class MapperProxyUtils {
 	// Getter must be no-arg methods, whose result type is either a subclass of
 	// RDFNode or a type registered at jena's type factory
 	
-    public static Class<?> extractItemType(Type genericType) {
-        Class<?> result = null;
+    public static List<Class<?>> extractItemTypes(Type genericType) {
+        List<Class<?>> result = new ArrayList<>();
         if(genericType instanceof ParameterizedType) {
             ParameterizedType pt = (ParameterizedType)genericType;
             java.lang.reflect.Type[] types = pt.getActualTypeArguments();
-            if(types.length == 1) {
-            	Type argType = types[0];
+            for( java.lang.reflect.Type argType : types) {
             	if(argType instanceof Class) {
-            		result = (Class<?>)argType;
+            		result.add((Class<?>)argType);
             	} else if(argType instanceof WildcardType) {
             		// TODO We should take bounds into account
-            		result = Object.class;
+            		result.add(Object.class);
             	} else {
-            		throw new RuntimeException("Don't know how to handle " + argType);
-            	}
+            		result.add(null);
+            		//throw new RuntimeException("Don't know how to handle " + argType);
+            	}            	
             }
-
         }
+        return result;
+    }
+
+    public static Entry<Class<?>, Class<?>> extractMapTypes(Type genericType) {
+    	Entry<Class<?>, Class<?>> result = null;
+        List<Class<?>> types = extractItemTypes(genericType);
+        if(types.size() == 2) {
+        	Class<?> keyType = types.get(0);
+        	Class<?> valueType = types.get(1);
+        	if(keyType != null && valueType != null) {
+        		result = Maps.immutableEntry(keyType, valueType);
+        	} else {
+        		throw new RuntimeException("Don't know how to handle " + genericType);        		
+        	}
+        }
+        return result;
+    }
+
+    public static Class<?> extractItemType(Type genericType) {
+    	Class<?> result = null;
+        List<Class<?>> types = extractItemTypes(genericType);
+        if(types.size() == 1) {
+        	Class<?> argType = types.get(0);
+        	if(argType != null) {
+        		result = argType;
+        	} else {
+        		throw new RuntimeException("Don't know how to handle " + genericType);        		
+        	}
+        }
+    	
+//        if(genericType instanceof ParameterizedType) {
+//            ParameterizedType pt = (ParameterizedType)genericType;
+//            java.lang.reflect.Type[] types = pt.getActualTypeArguments();
+//            if(types.length == 1) {
+//            	Type argType = types[0];
+//            	if(argType instanceof Class) {
+//            		result = (Class<?>)argType;
+//            	} else if(argType instanceof WildcardType) {
+//            		// TODO We should take bounds into account
+//            		result = Object.class;
+//            	} else {
+//            		throw new RuntimeException("Don't know how to handle " + argType);
+//            	}
+//            }
+//        }
 
         return result;
     }
@@ -372,6 +321,34 @@ public class MapperProxyUtils {
 		return result;
 	}
 	
+	
+	public static Function<Property, Function<Resource, Object>>
+		viewAsMap(Method m, boolean isValueIriType, boolean isViewAll, Class<?> keyType, Class<?> valueType, TypeMapper typeMapper, TypeDecider typeDecider)
+	{
+		Function<Property, Function<Resource, Object>> result = null;
+		
+	//	boolean isIriType = m.getAnnotation(IriType.class) != null;
+		if(String.class.isAssignableFrom(valueType) && isValueIriType) {
+			throw new RuntimeException("Not implemented yet");
+//			result = p -> s ->
+//				new ListFromConverter<String, RDFNode>(
+//						new ListFromRDFList(s, p),
+//						new ConverterFromNodeMapperAndModel<>(s.getModel(), RDFNode.class, new ConverterFromNodeMapper<>(NodeMappers.uriString)));						
+		} else {
+			RDFNodeMapper<?> rdfNodeMapper = RDFNodeMappers.from(valueType, typeMapper, typeDecider, isViewAll);
+			Converter<RDFNode, ?> converter  = new ConverterFromRDFNodeMapper<>(rdfNodeMapper);
+			
+			result = p -> s -> 
+					new MapFromValueConverter<>(new MapFromKeyConverter<>(
+						new MapFromResource(s, p, MapVocab.key, MapVocab.value),
+					converter), converter);						
+		}
+	
+		return result;
+	}
+
+	
+	
 	public static Function<Property, Function<Resource, Object>>
 		viewAsList(Method m, boolean isIriType, boolean isViewAll, Class<?> itemType, TypeMapper typeMapper, TypeDecider typeDecider)
 	{
@@ -433,6 +410,8 @@ public class MapperProxyUtils {
 		MethodDescriptor result = null;
 
 		result = ObjectUtils.firstNonNull(
+				tryClassifyAsMapGetter(m),
+				//tryClassifyAsMapSetter(m),
 				tryClassifyAsDynamicCollectionGetter(m),
 				tryClassifyAsCollectionGetter(m),
 				tryClassifyAsCollectionSetter(m),
@@ -555,6 +534,54 @@ public class MapperProxyUtils {
 	}
 
 	
+
+	public static MethodDescriptor tryClassifyAsMapGetter(Method m) {
+		MethodDescriptor result = null;
+		Class<?> returnType = m.getReturnType();
+		
+		int paramCount = m.getParameterCount();
+
+		//boolean isIterableReturnType = false;
+		// Class<?> itemType = null;
+	
+		
+		if(paramCount == 0) {
+			// Deal with (non-nested) collections first
+			if(Map.class.isAssignableFrom(returnType)) {
+				Entry<Class<?>, Class<?>> mapTypes = extractMapTypes(m.getGenericReturnType());
+				if(mapTypes != null) {
+					result = MethodDescriptor.mapGetter(m, mapTypes);
+				}				
+			}
+		}
+		
+		return result;
+	}
+	
+	/* TODO TBD
+	public static MethodDescriptor tryClassifyAsMapSetter(Method m) {
+		MethodDescriptor result = null;
+
+		Class<?> clazz = m.getDeclaringClass();
+		Class<?> returnType = m.getReturnType();
+		
+		int paramCount = m.getParameterCount();
+		
+		if(paramCount == 1) {
+			Class<?> paramType = m.getParameterTypes()[0];
+			
+			// Deal with (non-nested) collections first
+			if(Iterable.class.isAssignableFrom(paramType)) {
+				Class<?> itemType = extractItemType(m.getParameters()[0].getParameterizedType());
+				boolean isFluentCompatible = returnType.isAssignableFrom(clazz);
+				
+				result = MethodDescriptor.collectionSetter(m, isFluentCompatible, paramType, itemType);
+			}
+		}
+		
+		return result;
+	}
+	*/
 	
 	
 	public static MethodDescriptor tryClassifyAsCollectionGetter(Method m) {
@@ -1153,6 +1180,7 @@ public class MapperProxyUtils {
 			Class<?> readType = null;
 			Class<?> readCollectionType = null;
 			Class<?> readItemType = null;
+//			Class<?> readKeyType = null;
 			boolean isReadIriType = false;
 			boolean isReadViewAll = false;
 
@@ -1191,7 +1219,8 @@ public class MapperProxyUtils {
 			if(readMethod != null) {
 				boolean isCollectionValued = readMethodDescriptor.isCollectionValued();
 				boolean isDynamicGetter = readMethodDescriptor.isDynamicCollection();
-
+				boolean isMapValued = readMethodDescriptor.isMapType();
+				
 //				if(isDynamicGetter) {
 //					System.out.println("DEBUG POINT");
 //				}
@@ -1319,6 +1348,17 @@ public class MapperProxyUtils {
 //							throw new RuntimeException("Unsupported collection type");
 //						}
 
+				} else if(isMapValued) { // Case for maps
+					//System.out.println("Map type detected");
+					Class<?> keyType = readMethodDescriptor.getKeyType();
+					Class<?> valueType = readMethodDescriptor.getValueType();
+					
+					Function<Property, Function<Resource, Object>> getter =
+							viewAsMap(readMethod, isIriType, isViewAll, keyType, valueType, typeMapper, typeDecider);
+					
+					Function<Resource, Object> g = getter.apply(p);
+						methodImplMap.put(readMethod, (o, args) -> g.apply((Resource)o)); 
+					
 				} else { // Case for scalar values / non-collections
 					
 					if(effectiveType == null) {

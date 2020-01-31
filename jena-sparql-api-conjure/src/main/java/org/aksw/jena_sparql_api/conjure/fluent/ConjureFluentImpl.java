@@ -12,6 +12,7 @@ import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpHdtHeader;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpPersist;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpQueryOverViews;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpSet;
+import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpStmtList;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpUpdateRequest;
 import org.apache.jena.query.Query;
 
@@ -32,9 +33,13 @@ public class ConjureFluentImpl
 	}
 
 	@Override
-	public ConjureFluent construct(String queryStr) {
-		String validatedString = context.getSparqlStmtParser().apply(queryStr).toString();
-		return wrap(OpConstruct.create(context.getModel(), op, validatedString));
+	public ConjureFluent construct(Collection<String> queryStrs) {
+		List<String> validatedStrs = new ArrayList<>();
+		for(String str : queryStrs) {
+			String validatedStr = context.getSparqlStmtParser().apply(str).toString();
+			validatedStrs.add(validatedStr);
+		}
+		return wrap(OpConstruct.create(context.getModel(), op, validatedStrs));
 	}
 
 	@Override
@@ -97,5 +102,15 @@ public class ConjureFluentImpl
 		String parsedSelctor = context.getSparqlStmtParser().apply(selector).toString();
 		// TODO Parse path
 		return wrap(OpSet.create(context.getModel(), op, ctxVarName, null, parsedSelctor, path));
+	}
+
+	@Override
+	public ConjureFluent stmts(Collection<String> stmtStrs) {
+		List<String> validatedStrs = new ArrayList<>();
+		for(String str : stmtStrs) {
+			String validatedStr = context.getSparqlStmtParser().apply(str).toString();
+			validatedStrs.add(validatedStr);
+		}
+		return wrap(OpStmtList.create(context.getModel(), op, validatedStrs));
 	}
 }

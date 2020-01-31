@@ -1,14 +1,20 @@
 package org.aksw.jena_sparql_api.conjure.test;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.common.DefaultPrefixes;
 import org.aksw.jena_sparql_api.conjure.algebra.common.ResourceTreeUtils;
@@ -38,6 +44,7 @@ import org.aksw.jena_sparql_api.conjure.fluent.ConjureFluent;
 import org.aksw.jena_sparql_api.conjure.fluent.QLib;
 import org.aksw.jena_sparql_api.conjure.job.api.Job;
 import org.aksw.jena_sparql_api.conjure.job.api.JobBinding;
+import org.aksw.jena_sparql_api.conjure.job.api.JobInstance;
 import org.aksw.jena_sparql_api.conjure.traversal.api.OpTraversalSelf;
 import org.aksw.jena_sparql_api.http.repository.api.ResourceStore;
 import org.aksw.jena_sparql_api.http.repository.impl.HttpResourceRepositoryFromFileSystemImpl;
@@ -46,7 +53,9 @@ import org.aksw.jena_sparql_api.mapper.proxy.JenaPluginUtils;
 import org.aksw.jena_sparql_api.rx.SparqlRx;
 import org.aksw.jena_sparql_api.stmt.SparqlStmt;
 import org.aksw.jena_sparql_api.stmt.SparqlStmtParserImpl;
+import org.aksw.jena_sparql_api.stmt.SparqlStmtUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
+import org.apache.jena.ext.com.google.common.collect.Streams;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.query.Syntax;
@@ -57,6 +66,7 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
+import org.apache.jena.sparql.lang.arq.ParseException;
 import org.apache.jena.sys.JenaSystem;
 import org.apache.jena.util.ResourceUtils;
 import org.slf4j.Logger;
@@ -68,22 +78,87 @@ import com.google.gson.GsonBuilder;
 public class MainConjurePlayground {
 	private static final Logger logger = LoggerFactory.getLogger(MainConjurePlayground.class);
 	
+	
+	public static JobInstance createJobInstance(
+			Job job,
+			Map<String, String> env,
+			Map<String, RDFNode> map) {
+		Model model = ModelFactory.createDefaultModel();
+		Job j = JenaPluginUtils.copyClosureInto(job, Job.class, model);
+		
+		JobInstance result = model.createResource().as(JobInstance.class);
+
+		//ji.getEnvMap().putAll(env);
+		
+		return result;
+	}
+
+	public static Object execute(JobInstance jobInstance) {
+		return null;
+	}
+	
+	
+	
+	public static Op fromSparqlFile(String path) throws FileNotFoundException, IOException, ParseException {
+		// TODO Add API for Query objects to fluent
+		List<SparqlStmt> stmts = Streams.stream(SparqlStmtUtils.processFile(DefaultPrefixes.prefixes, path))
+				.collect(Collectors.toList());
+		
+		List<String> stmtStrs = stmts.stream()
+				.map(Object::toString)
+				.collect(Collectors.toList());
+		
+		
+		//RDFDataMgrRx
+		//SparqlStmtUtils.
+		
+		
+//		
+//		List<String> queries = RDFDataMgrEx.loadQueries(path, DefaultPrefixes.prefixes).stream()
+//				.map(Object::toString)
+//				.collect(Collectors.toList());
+		ConjureBuilder cj = new ConjureBuilderImpl();
+
+		Op op = cj.fromVar("ARG").stmts(stmtStrs).getOp();
+		
+		Set<String> vars = OpUtils.mentionedVarNames(op);
+		for(SparqlStmt stmt : stmts) {
+			System.out.println("Env vars: " + SparqlStmtUtils.mentionedEnvVars(stmt));
+		}
+		
+		Map<String, Boolean> combinedMap = stmts.stream()
+			.map(SparqlStmtUtils::mentionedEnvVars)
+			.map(Map::entrySet)
+			.flatMap(Collection::stream)
+			.distinct()
+			.collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+		System.out.println("All env vars: " + combinedMap);
+
+		
+		// TODO Parse out all <env:> Nodes from the environment...
+		
+		
+		System.out.println("MentionedVars: " + vars);
+		return op;
+	}
+	
+	
 	public static void main2(String[] args) {
-		
-		
+				
 		String url = "http://localhost/~raven/test.hdt";
 
 
-		ConjureContext ctx = new ConjureContext();
-		Model model = ctx.getModel();
-
-		ConjureBuilder cj = new ConjureBuilderImpl(ctx);
+//		ConjureContext ctx = new ConjureContext();
+//		Model model = ctx.getModel();
+//
+		ConjureBuilder cj = new ConjureBuilderImpl();
 
 		
 		Op op = cj.coalesce(
 				cj.fromUrl(url).hdtHeader().construct("CONSTRUCT WHERE { ?s <urn:tripleCount> ?o }"),
 				cj.fromUrl(url).tripleCount().cache()).getOp();
 
+		Model model = cj.getContext().getModel();
 		Job job = Job.create(model);
 		job.setOp(op);
 		job.getJobBindings().add(JobBinding.create(model, "datasetId", OpTraversalSelf.create(model)));
@@ -99,7 +174,13 @@ public class MainConjurePlayground {
 
 
 	public static void main(String[] args) throws Exception {
+		JenaSystem.init();
+//		fromSparqlFile("/home/raven/Projects/limbo/git/poi-rostock/dcat.sparql");
+		fromSparqlFile("replacens.sparql");
 
+		if(true) {
+			return;
+		}
 		/*
 		HashCode a = Hashing.sha256().hashString("a", StandardCharsets.UTF_8);
 		HashCode b = Hashing.sha256().hashString("b", StandardCharsets.UTF_8);
