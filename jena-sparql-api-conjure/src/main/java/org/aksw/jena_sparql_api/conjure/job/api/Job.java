@@ -1,9 +1,12 @@
 package org.aksw.jena_sparql_api.conjure.job.api;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.Op;
 import org.aksw.jena_sparql_api.conjure.traversal.api.OpTraversal;
+import org.aksw.jena_sparql_api.mapper.annotation.Iri;
 import org.aksw.jena_sparql_api.mapper.annotation.IriNs;
 import org.aksw.jena_sparql_api.mapper.annotation.PolymorphicOnly;
 import org.aksw.jena_sparql_api.mapper.annotation.RdfType;
@@ -31,6 +34,41 @@ public interface Job
 	Op getOp();
 	Job setOp(Op op);
 	
+//	@IriNs("rpif")
+//	List<JobBinding> getVars();
+//	Job setJobBindings(List<JobBinding> bindings);
+
+	/**
+	 * Explicitly declared variables for the job.
+	 * Can be automatically derived from the description (TODO add link to util method),
+	 * but an explicit description can be useful.
+	 * 
+	 * 
+	 * @return
+	 */
+	@Iri("rpif:declaredVar")
+	Set<String> getDeclaredVars();
+	Job setDeclaredVars(Collection<String> varNames);
+
+	@Iri("rpif:opVar")
+	Set<String> getOpVars();
+	Job setOpVars(Collection<String> varNames);
+
+	
+	
+//	default Set<Var> getMentionedVars() {
+//		throw new RuntimeException("Not implemented yet");
+//	}
+	
+
+	/**
+	 * Specification of a mapping from resource to literal in order to
+	 * create binding of the job's variables to values based on a another resource
+	 * 
+	 * TODO Probably this should go to a higher level class that combines a job with a default binding
+	 * 
+	 * @return
+	 */
 	@IriNs("rpif")
 	List<JobBinding> getJobBindings();
 	Job setJobBindings(List<JobBinding> bindings);

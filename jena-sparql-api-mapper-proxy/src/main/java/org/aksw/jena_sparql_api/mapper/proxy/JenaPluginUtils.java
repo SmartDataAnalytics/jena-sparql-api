@@ -61,8 +61,8 @@ public class JenaPluginUtils {
 	}
 	
 	
-	public static <T extends Resource> T inModel(T rdfNode, Class<T> viewClass, Model target) {
-		Resource r = rdfNode.inModel(target);
+	public static <T extends RDFNode> T inModel(T rdfNode, Class<T> viewClass, Model target) {
+		RDFNode r = rdfNode.inModel(target);
 		T result = polymorphicCast(r, viewClass);
 		return result;
 	}
@@ -94,9 +94,13 @@ public class JenaPluginUtils {
 	 * @param target
 	 * @return
 	 */
-	public static <T extends Resource> T copyClosureInto(T rdfNode, Class<T> viewClass, Model target) {
-		Model closure = ResourceUtils.reachableClosure(rdfNode);
-		target.add(closure);
+	public static <T extends RDFNode> T copyClosureInto(T rdfNode, Class<T> viewClass, Model target) {
+		if(rdfNode.isResource()) {
+			Resource r = rdfNode.asResource();
+			Model closure = ResourceUtils.reachableClosure(r);
+			target.add(closure);
+		}
+
 		T result = inModel(rdfNode, viewClass, target);
 		return result;
 	}
