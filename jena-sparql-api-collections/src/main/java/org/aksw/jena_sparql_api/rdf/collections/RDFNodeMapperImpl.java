@@ -30,7 +30,10 @@ public class RDFNodeMapperImpl<T>
 		this.viewClass = viewClass;
 		this.isViewAll = isViewAll;
 
-		this.nodeMapper = new NodeMapperFromTypeMapper<>(viewClass, typeMapper); //NodeMapperFactory.from(viewClass, typeMapper);
+		this.nodeMapper = Node.class.isAssignableFrom(viewClass)
+				? (NodeMapper<T>)new NodeMapperPassthrough()
+				: new NodeMapperFromTypeMapper<>(viewClass, typeMapper) //NodeMapperFactory.from(viewClass, typeMapper);
+				;
 	}
 	
 	public boolean canMap(RDFNode rdfNode) {			

@@ -2,10 +2,11 @@ package org.aksw.jena_sparql_api.conjure.job.api;
 
 import java.util.Map;
 
+import org.aksw.jena_sparql_api.conjure.dataset.algebra.Op;
 import org.aksw.jena_sparql_api.mapper.annotation.IriNs;
 import org.aksw.jena_sparql_api.mapper.annotation.RdfTypeNs;
 import org.aksw.jena_sparql_api.mapper.annotation.ResourceView;
-import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Resource;
 
 /**
@@ -26,7 +27,7 @@ public interface JobInstance
 	// These are variables that are substituted with literals
 	//Map<String, RDFNode> setEnvMap();
 	@IriNs("rpif")
-	Map<String, Object> getEnvMap();
+	Map<String, Node> getEnvMap();
 
 	// Mapping of OpVar variables - these are variables that are substituted by sub workflows
 	// I.e. their evaluation yields datasets
@@ -35,6 +36,6 @@ public interface JobInstance
 	// can be injected
 	//Map<String, RDFNode> setOpVarMap();
 	@IriNs("rpif")
-	Map<String, RDFNode> getOpVarMap();
+	Map<String, Op> getOpVarMap();
 
 }

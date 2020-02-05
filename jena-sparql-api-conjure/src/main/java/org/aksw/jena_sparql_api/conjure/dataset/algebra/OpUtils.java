@@ -9,7 +9,9 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.aksw.jena_sparql_api.conjure.dataset.engine.OpVisitorApplyNodeTransform;
 import org.aksw.jena_sparql_api.mapper.proxy.JenaPluginUtils;
+import org.aksw.jena_sparql_api.stmt.SparqlStmtParser;
 import org.apache.jena.ext.com.google.common.collect.Streams;
 import org.apache.jena.ext.com.google.common.graph.Traverser;
 import org.apache.jena.rdf.model.Model;
@@ -17,10 +19,32 @@ import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.sparql.graph.NodeTransform;
+import org.apache.jena.util.ResourceUtils;
 
 
 public class OpUtils {
 
+	/**
+	 * In-place node transform for referenced SPARQL queries
+	 * 
+	 * @param op
+	 * @param nodeTransform
+	 * @return
+	 */
+	public static Op applyNodeTransform(Op op, NodeTransform nodeTransform, SparqlStmtParser parser) {
+		OpVisitor<Op> visitor = new OpVisitorApplyNodeTransform(nodeTransform, parser);
+		
+		//Consumer<Op> inPlaceOpTransform = x -> x.accept(visitor);
+		
+		Streams.stream(Traverser.forTree(Op::getChildren).depthFirstPostOrder(op))
+			.peek(x -> x.accept(visitor))
+			.count()
+		;
+		
+		return op;
+	}
+	
 	public static Op stripCache(Op in) {
 		Model cloneModel = ModelFactory.createDefaultModel();
 		//Resource root = in.inModel(cloneModel.add(in.getModel()));
@@ -115,7 +139,9 @@ public class OpUtils {
 		Resource tgtRes = tgtNode.asResource();
 		tgtRes.removeProperties();
 		
-		tgtRes.getModel().add(replRes.getModel());
+		// TODO Align with JenaPluginUtils.copyClosure
+		Model closure = ResourceUtils.reachableClosure(replRes);
+		tgtRes.getModel().add(closure);
 		
 		replRes.inModel(tgtRes.getModel()).removeProperties();
 

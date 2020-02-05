@@ -11,7 +11,6 @@ import org.apache.jena.atlas.io.AWriter;
 import org.apache.jena.atlas.io.StringWriterI;
 import org.apache.jena.datatypes.RDFDatatype;
 import org.apache.jena.datatypes.TypeMapper;
-import org.apache.jena.ext.com.google.common.base.Strings;
 import org.apache.jena.ext.com.google.common.collect.Maps;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
@@ -59,31 +58,67 @@ public class NodeUtils {
 		return result;
 	}
 	
-	public static Node substWithLookup(Node node, Function<String, String> lookup) {
-		
+	
+	public static Node substWithLookup2(Node node, Function<String, Node> lookup) {
+		Entry<String, Boolean> e = getEnvKey(node);
+
 		Node result = node;
-		if(node.isURI()) {
-			String str = node.getURI();
-			if(str.startsWith(ENV_PREFIX)) {
-				String key = str.substring(ENV_PREFIX.length());
-
-				boolean isUri = false;
-				if(key.startsWith("//")) {
-					key = key.substring(2);
-					isUri = true;
-				}
-
-				
-				String value = lookup.apply(key);
-				if(!Strings.isNullOrEmpty(value)) {
-					result = isUri
-						? NodeFactory.createURI(value)
-						: NodeFactory.createLiteral(value);
-				}
+		if(e != null) {
+			String key = e.getKey();
+			boolean isUri = e.getValue();
+			Node value = lookup.apply(key);
+			if(value != null) {
+				result = isUri
+					? NodeFactory.createURI(value.toString())
+					: value; // NodeFactory.createLiteral(value);
 			}
 		}
 		
 		return result;
+	}
+	
+	public static Node substWithLookup(Node node, Function<String, String> lookup) {
+		
+		Entry<String, Boolean> e = getEnvKey(node);
+
+		Node result = node;
+		if(e != null) {
+			String key = e.getKey();
+			boolean isUri = e.getValue();
+			String value = lookup.apply(key);
+			if(value != null) {
+				result = isUri
+					? NodeFactory.createURI(value)
+					: NodeFactory.createLiteral(value);
+			}
+
+		}
+		
+		return result;
+		
+//		Node result = node;
+//		if(node.isURI()) {
+//			String str = node.getURI();
+//			if(str.startsWith(ENV_PREFIX)) {
+//				String key = str.substring(ENV_PREFIX.length());
+//
+//				boolean isUri = false;
+//				if(key.startsWith("//")) {
+//					key = key.substring(2);
+//					isUri = true;
+//				}
+//
+//				
+//				String value = lookup.apply(key);
+//				if(!Strings.isNullOrEmpty(value)) {
+//					result = isUri
+//						? NodeFactory.createURI(value)
+//						: NodeFactory.createLiteral(value);
+//				}
+//			}
+//		}
+//		
+//		return result;
 	}
 	
     public static Node asNullableNode(String uri) {

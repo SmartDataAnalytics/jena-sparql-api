@@ -20,6 +20,7 @@ import org.apache.jena.ext.com.google.common.reflect.ClassPath;
 import org.apache.jena.ext.com.google.common.reflect.ClassPath.ClassInfo;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.impl.ResourceImpl;
@@ -99,6 +100,19 @@ public class JenaPluginUtils {
 			Resource r = rdfNode.asResource();
 			Model closure = ResourceUtils.reachableClosure(r);
 			target.add(closure);
+		}
+
+		T result = inModel(rdfNode, viewClass, target);
+		return result;
+	}
+
+	public static <T extends RDFNode> T reachableClosure(T rdfNode, Class<T> viewClass) {
+		Model target;
+		if(rdfNode.isResource()) {
+			Resource r = rdfNode.asResource();
+			target = ResourceUtils.reachableClosure(r);
+		} else {
+			target = ModelFactory.createDefaultModel();
 		}
 
 		T result = inModel(rdfNode, viewClass, target);

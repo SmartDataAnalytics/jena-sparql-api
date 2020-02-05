@@ -335,13 +335,16 @@ public class MapperProxyUtils {
 //						new ListFromRDFList(s, p),
 //						new ConverterFromNodeMapperAndModel<>(s.getModel(), RDFNode.class, new ConverterFromNodeMapper<>(NodeMappers.uriString)));						
 		} else {
-			RDFNodeMapper<?> rdfNodeMapper = RDFNodeMappers.from(valueType, typeMapper, typeDecider, isViewAll);
-			Converter<RDFNode, ?> converter  = new ConverterFromRDFNodeMapper<>(rdfNodeMapper);
+			RDFNodeMapper<?> keyMapper = RDFNodeMappers.from(keyType, typeMapper, typeDecider, isViewAll);
+			Converter<RDFNode, ?> keyConverter  = new ConverterFromRDFNodeMapper<>(keyMapper);
+
+			RDFNodeMapper<?> valueMapper = RDFNodeMappers.from(valueType, typeMapper, typeDecider, isViewAll);
+			Converter<RDFNode, ?> valueConverter  = new ConverterFromRDFNodeMapper<>(valueMapper);
 			
 			result = p -> s -> 
 					new MapFromValueConverter<>(new MapFromKeyConverter<>(
 						new MapFromResource(s, p, MapVocab.key, MapVocab.value),
-					converter), converter);						
+					keyConverter), valueConverter);						
 		}
 	
 		return result;

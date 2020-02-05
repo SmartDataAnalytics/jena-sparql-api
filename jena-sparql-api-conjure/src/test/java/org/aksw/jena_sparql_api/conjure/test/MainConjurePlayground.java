@@ -55,9 +55,12 @@ import org.aksw.jena_sparql_api.rx.SparqlRx;
 import org.aksw.jena_sparql_api.stmt.SparqlStmt;
 import org.aksw.jena_sparql_api.stmt.SparqlStmtParserImpl;
 import org.aksw.jena_sparql_api.stmt.SparqlStmtUtils;
+import org.aksw.jena_sparql_api.utils.NodeUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.ext.com.google.common.collect.ImmutableMap;
 import org.apache.jena.ext.com.google.common.collect.Streams;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.query.Syntax;
@@ -68,6 +71,7 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
+import org.apache.jena.sparql.graph.NodeTransform;
 import org.apache.jena.sparql.lang.arq.ParseException;
 import org.apache.jena.sys.JenaSystem;
 import org.apache.jena.util.ResourceUtils;
@@ -83,8 +87,8 @@ public class MainConjurePlayground {
 	
 	public static JobInstance createJobInstance(
 			Job job,
-			Map<String, ?> env,
-			Map<String, ? extends RDFNode> map) {
+			Map<String, ? extends Node> env,
+			Map<String, ? extends Op> map) {
 		Model model = ModelFactory.createDefaultModel();
 		Job j = JenaPluginUtils.copyClosureInto(job, Job.class, model);
 
@@ -93,11 +97,11 @@ public class MainConjurePlayground {
 
 		result.getEnvMap().putAll(env);
 
-		for(Entry<String, ? extends RDFNode> e : map.entrySet()) {
+		for(Entry<String, ? extends Op> e : map.entrySet()) {
 			String k = e.getKey();
-			RDFNode v = e.getValue();
+			Op v = e.getValue();
 			
-			RDFNode vv = JenaPluginUtils.copyClosureInto(v, RDFNode.class, model);
+			Op vv = JenaPluginUtils.copyClosureInto(v, Op.class, model);
 			result.getOpVarMap().put(k, vv);
 		}
 		
@@ -193,18 +197,50 @@ public class MainConjurePlayground {
 		RDFDataMgr.write(System.out, job.getModel(), RDFFormat.TURTLE_PRETTY);
 	}
 
+	
+	/**
+	 * Return the associated op with all all variables (literals and resources) substituted
+	 * 
+	 * @param jobInstance
+	 * @return
+	 */
+	public static Op materializeJobInstance(JobInstance jobInstance) {
+		Map<String, Node> envMap = jobInstance.getEnvMap();
+		Map<String, Op> opMap = jobInstance.getOpVarMap();
+		
+		Job job = jobInstance.getJob();
+		Op tmp = job.getOp();
+		Op op = JenaPluginUtils.reachableClosure(tmp, Op.class);
+		
+		NodeTransform nodeTransform = x -> NodeUtils.substWithLookup2(x, envMap::get);
+		//NodeTransform nodeTransform = new NodeTransformRenameMap(envMap);
+		OpUtils.applyNodeTransform(op, nodeTransform, stmt -> SparqlStmtUtils.optimizePrefixes(SparqlStmtParserImpl.create(DefaultPrefixes.prefixes).apply(stmt)));
+
+		// OpUtils.applyNodeTransform();
+		
+		
+		//ResourceUtils.reachableClosure(root)
+		
+		Op inst = OpUtils.substituteVars(op, opMap::get);
+		
+		return inst;
+	}
 
 	public static void main(String[] args) throws Exception {
 		JenaSystem.init();
 //		fromSparqlFile("/home/raven/Projects/limbo/git/poi-rostock/dcat.sparql");
 		Job job = fromSparqlFile("replacens.sparql");
 
-		Map<String, Object> env = ImmutableMap.<String, Object>builder()
-				.put("SOURCE_NS", "src")
-				.put("TARGET_NS", "tgt")
+		Map<String, Node> env = ImmutableMap.<String, Node>builder()
+				.put("SOURCE_NS", NodeFactory.createLiteral("src"))
+				.put("TARGET_NS", NodeFactory.createLiteral("tgt"))
 				.build();
 		
-		Map<String, Resource> map = Collections.singletonMap("ARG", ModelFactory.createDefaultModel().createResource("http://test"));
+		Op op = ConjureBuilderImpl.start().fromUrl("http://foo.bar/baz").getOp();
+		//DataRef dataRef = DataRefUrl.create(ModelFactory.createDefaultModel(), "http://foo.bar/baz");
+		
+		Map<String, Op> map = Collections.singletonMap("ARG", op);
+		
 		System.out.println("Op Vars: " + job.getOpVars());
 		System.out.println("Literal Vars: " + job.getDeclaredVars());
 		
@@ -214,7 +250,11 @@ public class MainConjurePlayground {
 		System.out.println("OpMap: " + ji.getOpVarMap());
 		
 		
-		RDFDataMgr.write(System.out, ji.getModel(), RDFFormat.TURTLE_PRETTY);
+//		RDFDataMgr.write(System.out, ji.getModel(), RDFFormat.TURTLE_PRETTY);
+		Op inst = materializeJobInstance(ji);
+		RDFDataMgr.write(System.out, inst.getModel(), RDFFormat.TURTLE_PRETTY);
+		
+		
 		
 		// TODO Parse out all <env:> Nodes from the environment...
 		//Job job = Job.create(cj.getContext().getModel(), "todoJobName");
@@ -423,10 +463,10 @@ public class MainConjurePlayground {
 //						parser.apply("INSERT DATA { [] dataid:group eg:mygrp ; dcat:distribution [ dcat:downloadURL <file:///home/raven/tmp/test.hdt> ] }").toString()));
 							parser.apply("INSERT DATA { <http://mydata> dataid:group eg:mygrp ; dcat:distribution [ dcat:downloadURL <http://localhost/~raven/009e80050fa7f4279596956477157ec2.hdt> ] }").toString()));
 
-		DataRef dataRef = dataRef4;
+		DataRef dataRefX = dataRef4;
 		
 		// Set up the workflow that makes a digital copy of a dataset available
-		Op basicWorkflow = OpDataRefResource.from(model, dataRef);
+		Op basicWorkflow = OpDataRefResource.from(model, dataRefX);
 		
 		// So far so good - all we need now, is some data and we can start execution
 
