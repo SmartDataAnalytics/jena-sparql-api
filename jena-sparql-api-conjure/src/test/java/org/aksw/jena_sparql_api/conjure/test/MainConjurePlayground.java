@@ -1,21 +1,15 @@
 package org.aksw.jena_sparql_api.conjure.test;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.common.DefaultPrefixes;
 import org.aksw.jena_sparql_api.conjure.algebra.common.ResourceTreeUtils;
@@ -42,6 +36,7 @@ import org.aksw.jena_sparql_api.conjure.fluent.ConjureBuilder;
 import org.aksw.jena_sparql_api.conjure.fluent.ConjureBuilderImpl;
 import org.aksw.jena_sparql_api.conjure.fluent.ConjureContext;
 import org.aksw.jena_sparql_api.conjure.fluent.ConjureFluent;
+import org.aksw.jena_sparql_api.conjure.fluent.JobUtils;
 import org.aksw.jena_sparql_api.conjure.fluent.QLib;
 import org.aksw.jena_sparql_api.conjure.job.api.Job;
 import org.aksw.jena_sparql_api.conjure.job.api.JobBinding;
@@ -54,11 +49,8 @@ import org.aksw.jena_sparql_api.mapper.proxy.JenaPluginUtils;
 import org.aksw.jena_sparql_api.rx.SparqlRx;
 import org.aksw.jena_sparql_api.stmt.SparqlStmt;
 import org.aksw.jena_sparql_api.stmt.SparqlStmtParserImpl;
-import org.aksw.jena_sparql_api.stmt.SparqlStmtUtils;
-import org.aksw.jena_sparql_api.utils.NodeUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.ext.com.google.common.collect.ImmutableMap;
-import org.apache.jena.ext.com.google.common.collect.Streams;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.Query;
@@ -71,8 +63,6 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
-import org.apache.jena.sparql.graph.NodeTransform;
-import org.apache.jena.sparql.lang.arq.ParseException;
 import org.apache.jena.sys.JenaSystem;
 import org.apache.jena.util.ResourceUtils;
 import org.slf4j.Logger;
@@ -85,28 +75,6 @@ public class MainConjurePlayground {
 	private static final Logger logger = LoggerFactory.getLogger(MainConjurePlayground.class);
 	
 	
-	public static JobInstance createJobInstance(
-			Job job,
-			Map<String, ? extends Node> env,
-			Map<String, ? extends Op> map) {
-		Model model = ModelFactory.createDefaultModel();
-		Job j = JenaPluginUtils.copyClosureInto(job, Job.class, model);
-
-		JobInstance result = model.createResource().as(JobInstance.class)
-				.setJob(j);
-
-		result.getEnvMap().putAll(env);
-
-		for(Entry<String, ? extends Op> e : map.entrySet()) {
-			String k = e.getKey();
-			Op v = e.getValue();
-			
-			Op vv = JenaPluginUtils.copyClosureInto(v, Op.class, model);
-			result.getOpVarMap().put(k, vv);
-		}
-		
-		return result;
-	}
 
 	public static Object execute(JobInstance jobInstance) {
 		
@@ -117,56 +85,7 @@ public class MainConjurePlayground {
 	
 	
 	
-	public static Job fromSparqlFile(String path) throws FileNotFoundException, IOException, ParseException {
-		// TODO Add API for Query objects to fluent
-		List<SparqlStmt> stmts = Streams.stream(SparqlStmtUtils.processFile(DefaultPrefixes.prefixes, path))
-				.collect(Collectors.toList());
-		
-		List<String> stmtStrs = stmts.stream()
-				.map(Object::toString)
-				.collect(Collectors.toList());
-		
-		
-		//RDFDataMgrRx
-		//SparqlStmtUtils.
-		
-		
-//		
-//		List<String> queries = RDFDataMgrEx.loadQueries(path, DefaultPrefixes.prefixes).stream()
-//				.map(Object::toString)
-//				.collect(Collectors.toList());
-		ConjureBuilder cj = new ConjureBuilderImpl();
 
-		String opVarName = "ARG"; 
-		Op op = cj.fromVar(opVarName).stmts(stmtStrs).getOp();
-		
-		Set<String> vars = OpUtils.mentionedVarNames(op);
-		for(SparqlStmt stmt : stmts) {
-			System.out.println("Env vars: " + SparqlStmtUtils.mentionedEnvVars(stmt));
-		}
-		
-		Map<String, Boolean> combinedMap = stmts.stream()
-			.map(SparqlStmtUtils::mentionedEnvVars)
-			.map(Map::entrySet)
-			.flatMap(Collection::stream)
-			.distinct()
-			.collect(Collectors.toMap(Entry::getKey, Entry::getValue));
-		
-		Set<String> envVars = combinedMap.keySet();
-		System.out.println("All env vars: " + combinedMap);
-		
-		
-		System.out.println("MentionedVars: " + vars);
-		
-		Job result = Job.create(cj.getContext().getModel())
-				.setOp(op)
-				.setDeclaredVars(envVars)
-				.setOpVars(Collections.singleton(opVarName));
-		
-		
-		return result;
-	}
-	
 	
 	public static void main2(String[] args) {
 				
@@ -188,55 +107,23 @@ public class MainConjurePlayground {
 		job.setOp(op);
 		job.getJobBindings().add(JobBinding.create(model, "datasetId", OpTraversalSelf.create(model)));
 
-		
-
 		// Goal: spark-submit-cj.sh catalog macrolib macroname	
 //		cj.call("myMacro", cj.fromUrl(url));
-
 		
 		RDFDataMgr.write(System.out, job.getModel(), RDFFormat.TURTLE_PRETTY);
 	}
-
 	
-	/**
-	 * Return the associated op with all all variables (literals and resources) substituted
-	 * 
-	 * @param jobInstance
-	 * @return
-	 */
-	public static Op materializeJobInstance(JobInstance jobInstance) {
-		Map<String, Node> envMap = jobInstance.getEnvMap();
-		Map<String, Op> opMap = jobInstance.getOpVarMap();
-		
-		Job job = jobInstance.getJob();
-		Op tmp = job.getOp();
-		Op op = JenaPluginUtils.reachableClosure(tmp, Op.class);
-		
-		NodeTransform nodeTransform = x -> NodeUtils.substWithLookup2(x, envMap::get);
-		//NodeTransform nodeTransform = new NodeTransformRenameMap(envMap);
-		OpUtils.applyNodeTransform(op, nodeTransform, stmt -> SparqlStmtUtils.optimizePrefixes(SparqlStmtParserImpl.create(DefaultPrefixes.prefixes).apply(stmt)));
-
-		// OpUtils.applyNodeTransform();
-		
-		
-		//ResourceUtils.reachableClosure(root)
-		
-		Op inst = OpUtils.substituteVars(op, opMap::get);
-		
-		return inst;
-	}
-
 	public static void main(String[] args) throws Exception {
 		JenaSystem.init();
 //		fromSparqlFile("/home/raven/Projects/limbo/git/poi-rostock/dcat.sparql");
-		Job job = fromSparqlFile("replacens.sparql");
+		Job job = JobUtils.fromSparqlFile("replacens.sparql");
 
 		Map<String, Node> env = ImmutableMap.<String, Node>builder()
-				.put("SOURCE_NS", NodeFactory.createLiteral("src"))
-				.put("TARGET_NS", NodeFactory.createLiteral("tgt"))
+				.put("SOURCE_NS", NodeFactory.createLiteral("https://portal.limbo-project.org"))
+				.put("TARGET_NS", NodeFactory.createLiteral("https://data.limbo-project.org"))
 				.build();
-		
-		Op op = ConjureBuilderImpl.start().fromUrl("http://foo.bar/baz").getOp();
+
+		Op op = ConjureBuilderImpl.start().fromUrl("file:///home/raven/Projects/limbo/git/train_2-dataset/train_2-dataset.ttl").getOp();
 		//DataRef dataRef = DataRefUrl.create(ModelFactory.createDefaultModel(), "http://foo.bar/baz");
 		
 		Map<String, Op> map = Collections.singletonMap("ARG", op);
@@ -244,17 +131,22 @@ public class MainConjurePlayground {
 		System.out.println("Op Vars: " + job.getOpVars());
 		System.out.println("Literal Vars: " + job.getDeclaredVars());
 		
-		JobInstance ji = createJobInstance(job, env, map);
+		JobInstance ji = JobUtils.createJobInstance(job, env, map);
 
 		System.out.println("EnvMap: " + ji.getEnvMap());
 		System.out.println("OpMap: " + ji.getOpVarMap());
 		
 		
 //		RDFDataMgr.write(System.out, ji.getModel(), RDFFormat.TURTLE_PRETTY);
-		Op inst = materializeJobInstance(ji);
+		Op inst = JobUtils.materializeJobInstance(ji);
 		RDFDataMgr.write(System.out, inst.getModel(), RDFFormat.TURTLE_PRETTY);
 		
 		
+		try(RdfDataPod pod = ExecutionUtils.executeJob(inst)) {
+			Model m = pod.getModel();
+			System.out.println("Transformed Model:");
+			RDFDataMgr.write(System.out, m, RDFFormat.TURTLE_PRETTY);
+		}
 		
 		// TODO Parse out all <env:> Nodes from the environment...
 		//Job job = Job.create(cj.getContext().getModel(), "todoJobName");

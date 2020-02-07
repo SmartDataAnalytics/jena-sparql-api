@@ -606,31 +606,39 @@ public class OpExecutorDefault
 
 	@Override
 	public RdfDataPod visit(OpStmtList op) {
-		Op subOp = op.getSubOp();
 		Dataset resultDataset = DatasetFactory.create();
 		RdfDataPod result = DataPods.fromDataset(resultDataset);
-		
-//		DataPods.from(resultDataset);
 
-		Sink<Quad> tmp = new SinkQuadsToDataset(true, resultDataset.asDatasetGraph());
-		SPARQLResultVisitor sink = new SPARQLResultSinkQuads(tmp);
-		
-		SparqlStmtParser parser = SparqlStmtParserImpl.create(DefaultPrefixes.prefixes);
-		
+		// HACK Copy the prior model into the result dataset
+		// TODO Can we do better than copying the data?
+		Op subOp = op.getSubOp();
 		try(RdfDataPod subPod = subOp.accept(this)) {
-			try(RDFConnection conn = subPod.openConnection()) {
-				List<String> stmts = op.getStmts();
-				for(String stmt : stmts) {
-					SparqlStmt s = parser.apply(stmt);
-					SparqlStmtUtils.process(conn, s, sink);
-				}
-			}
+			Model model = subPod.getModel();
+			resultDataset.setDefaultModel(model);
+//			try(RDFConnection conn = subPod.openConnection()) {
+//			}
 			
 		} catch (Exception e) {
 			throw new RuntimeException(e);
+		}
+
+		Sink<Quad> tmp = new SinkQuadsToDataset(true, resultDataset.asDatasetGraph());
+		SPARQLResultVisitor sink = new SPARQLResultSinkQuads(tmp);		
+		SparqlStmtParser parser = SparqlStmtParserImpl.create(DefaultPrefixes.prefixes);
+
+		try(RDFConnection conn = result.openConnection()) {
+			List<String> stmts = op.getStmts();
+			for(String stmt : stmts) {
+				SparqlStmt s = parser.apply(stmt);
+				SparqlStmtUtils.process(conn, s, sink);
+			}
 		} finally {
 			tmp.close();
 		}
+
+
+//		DataPods.from(resultDataset);
+		
 
 		return result;
 	}

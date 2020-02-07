@@ -138,17 +138,16 @@ public class OpUtils {
 		// HACK - We just assume its resources and copy the outgoing properties...
 		Resource tgtRes = tgtNode.asResource();
 		tgtRes.removeProperties();
-		
+
 		// TODO Align with JenaPluginUtils.copyClosure
 		Model closure = ResourceUtils.reachableClosure(replRes);
 		tgtRes.getModel().add(closure);
-		
+
 		replRes.inModel(tgtRes.getModel()).removeProperties();
 
 		for(Statement stmt : stmts) {
 			tgtRes.addProperty(stmt.getPredicate(), stmt.getObject());
 		}
-		
 		
 		return tgtNode;
 	}
