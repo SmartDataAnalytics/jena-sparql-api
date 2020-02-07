@@ -25,6 +25,13 @@ import org.apache.jena.util.ResourceUtils;
 
 public class OpUtils {
 
+	
+//	public static Op transform(Op op, OpVisitor<Op> visitor) {
+//		Streams.stream(Traverser.forTree(Op::getChildren).depthFirstPostOrder(op))
+//			.peek(x -> x.accept(visitor))
+//			.count();
+//	}
+	
 	/**
 	 * In-place node transform for referenced SPARQL queries
 	 * 
