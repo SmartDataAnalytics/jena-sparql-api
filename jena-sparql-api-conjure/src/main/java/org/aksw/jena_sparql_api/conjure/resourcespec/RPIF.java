@@ -10,10 +10,13 @@ public class RPIF {
 
 	public static final Property op = ResourceFactory.createProperty(Strs.op);
 
+	public static final Property targetBaseName = ResourceFactory.createProperty(Strs.targetBaseName);
+
 	public static class Strs {
 		public static final String resourceUrl = ns + "resourceUrl";	
 
 		// Relation of an entity to an instance of a (conjure) operation
 		public static final String op = ns + "op";	
+		public static final String targetBaseName = ns + "targetBaseName";	
 	}
 }

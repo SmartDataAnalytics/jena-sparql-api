@@ -213,7 +213,7 @@ public class ContentTypeUtils {
 	}
 
 	
-	public  String toFileExtension(String contentType, List<String> codings) {
+	public static String toFileExtension(String contentType, List<String> codings) {
 		List<String> parts = new ArrayList<>(1 + codings.size());
 		
 		String part = Objects.requireNonNull(ctExtensions.getPrimary().get(contentType));
