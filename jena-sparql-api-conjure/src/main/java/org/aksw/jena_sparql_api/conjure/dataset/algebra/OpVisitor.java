@@ -21,6 +21,7 @@ public interface OpVisitor<T> {
 
 
 	T visit(OpVar op);
+	T visit(OpJobInstance op);
 	
 	T visit(OpQueryOverViews op);
 }

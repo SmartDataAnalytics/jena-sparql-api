@@ -116,7 +116,7 @@ public class ExecutionUtils {
 			throw new RuntimeException(e);
 		}		
 		ResourceStore cacheStore = repo.getCacheStore();
-		OpExecutorDefault catalogExecutor = new OpExecutorDefault(repo, null, new LinkedHashMap<>(), RDFFormat.TURTLE_PRETTY);
+		OpExecutorDefault catalogExecutor = new OpExecutorDefault(repo, TaskContext.empty(), new LinkedHashMap<>(), RDFFormat.TURTLE_PRETTY);
 
 		RdfDataPod result = op.accept(catalogExecutor);
 		return result;
@@ -259,7 +259,7 @@ public class ExecutionUtils {
 		Set<String> mentionedVars = OpUtils.mentionedVarNames(job.getOp());
 		logger.debug("Mentioned vars: " + mentionedVars);
 		
-		Map<String, DataRef> dataRefMapping = taskContext.getDataRefMapping();
+		Map<String, Op> dataRefMapping = taskContext.getDataRefMapping();
 		// Get the subset of mentioned vars for which no entry in the task context
 		// exists
 		// If there is just a single dataref and one unbound var
@@ -272,7 +272,7 @@ public class ExecutionUtils {
 		} else if(unmatchedVars.size() == 1) {
 			String unmatchedVarName = unmatchedVars.iterator().next();
 			if(dataRefMapping.size() == 1) {
-				DataRef entry = dataRefMapping.values().iterator().next();
+				Op entry = dataRefMapping.values().iterator().next();
 				dataRefMapping.put(unmatchedVarName, entry);
 				logger.info("Autobind of " + unmatchedVarName + " to " + entry);
 			} else {

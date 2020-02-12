@@ -397,7 +397,7 @@ public class MainConjurePlayground {
 
 	    		// For every input record is a dcat entry, assign an anonymous dataref
 	    		for(Resource inputRecord : inputRecords) {
-	    			Map<String, DataRef> nameToDataRef = new HashMap<>();
+	    			Map<String, Op> nameToDataRef = new HashMap<>();
 
 	    			Query q = parser.apply("SELECT DISTINCT ?x { ?x dcat:distribution [] }").getQuery();
 	    			Model m = inputRecord.getModel();
@@ -417,10 +417,11 @@ public class MainConjurePlayground {
 	    				r = r.inModel(xxmodel);
 
 	    				DataRefDcat dr = DataRefDcat.create(xxmodel, r);
+	    				Op odr = OpDataRefResource.from(dr.getModel(), dr);
 	    				
 	    				RDFDataMgr.write(System.err, dr.getModel(), RDFFormat.TURTLE_PRETTY);
 	    				
-	    				nameToDataRef.put("unnamedDataRef" + (i++), dr);
+	    				nameToDataRef.put("unnamedDataRef" + (i++), odr);
 	    			}
 	    			
 		    		logger.info("Registered data refs for input " + inputRecord + " are: " + nameToDataRef);

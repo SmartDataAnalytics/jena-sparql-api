@@ -6,6 +6,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -23,7 +24,6 @@ import org.aksw.jena_sparql_api.conjure.datapod.impl.DataPods;
 import org.aksw.jena_sparql_api.conjure.datapod.impl.RdfDataPodBase;
 import org.aksw.jena_sparql_api.conjure.datapod.impl.RdfDataPodHdt;
 import org.aksw.jena_sparql_api.conjure.dataref.core.api.PlainDataRef;
-import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.DataRef;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.Op;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpCoalesce;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpConstruct;
@@ -31,6 +31,7 @@ import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpData;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpDataRefResource;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpError;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpHdtHeader;
+import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpJobInstance;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpMacroCall;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpPersist;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpQueryOverViews;
@@ -43,6 +44,8 @@ import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpUtils;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpVar;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpVisitor;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpWhen;
+import org.aksw.jena_sparql_api.conjure.job.api.Job;
+import org.aksw.jena_sparql_api.conjure.job.api.JobInstance;
 import org.aksw.jena_sparql_api.conjure.traversal.engine.FunctionAssembler;
 import org.aksw.jena_sparql_api.core.connection.RDFConnectionBuilder;
 import org.aksw.jena_sparql_api.http.repository.api.HttpResourceRepositoryFromFileSystem;
@@ -119,6 +122,7 @@ public class OpExecutorDefault
 	
 	// Execution context
 	// TODO Maybe rename this to 'substitution context' as it is mainly used for this purpose
+	// TODO Decide whether execCtx be made an attribute of taskContext?
 	protected Map<String, Node> execCtx;
 	// protected BindingMap execCtx;
 	
@@ -131,7 +135,7 @@ public class OpExecutorDefault
 		super();
 		// TODO HACK Avoid the down cast
 		this.repo = (HttpResourceRepositoryFromFileSystemImpl)repo;
-		this.taskContext = taskContext;
+		this.taskContext = Objects.requireNonNull(taskContext);
 		
 		this.execCtx = execCtx; 
 		this.persistRdfFormat = persistRdfFormat;
@@ -368,9 +372,12 @@ public class OpExecutorDefault
 	@Override
 	public RdfDataPod visit(OpVar op) {
 		String varName = op.getName();
-		Map<String, DataRef> map = taskContext.getDataRefMapping();
-		DataRef dataRef = map.get(varName);
-		RdfDataPod result = DataPods.fromDataRef(dataRef, repo, this);
+		Map<String, Op> map = taskContext.getDataRefMapping();
+		Op dataRef = map.get(varName);
+		
+		RdfDataPod result = dataRef.accept(this);
+		
+		//RdfDataPod result = DataPods.fromDataRef(dataRef, repo, this);
 
 		//RdfDataPod result = dataRef.visit(this);
 		return result;
@@ -641,5 +648,32 @@ public class OpExecutorDefault
 		
 
 		return result;
+	}
+	
+	@Override
+	public RdfDataPod visit(OpJobInstance op) {
+		OpExecutorDefault subExecutor = new OpExecutorDefault(repo, taskContext,
+				new LinkedHashMap<>(), persistRdfFormat);
+		
+		JobInstance ji = op.getJobInstance();
+		Map<String, Node> envMap = ji.getEnvMap();
+		Map<String, Op> opMap = ji.getOpVarMap();
+		
+		subExecutor.getExecCtx().putAll(envMap);
+		subExecutor.getTaskContext().getDataRefMapping().putAll(opMap);
+		
+
+		Job job = ji.getJob();
+		Op subOp = job.getOp();
+		
+		RdfDataPod result = subOp.accept(subExecutor);
+		return result;
+//		
+//		throw new RuntimeException("not implemented yet");
+		//TaskContext ctx = new TaskContext(inputRecord, dataRefMapping, ctxModels);
+	}
+	
+	public Map<String, Node> getExecCtx() {
+		return execCtx;
 	}
 }

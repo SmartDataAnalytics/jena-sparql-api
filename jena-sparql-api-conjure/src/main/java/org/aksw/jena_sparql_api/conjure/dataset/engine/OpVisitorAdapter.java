@@ -6,6 +6,7 @@ import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpData;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpDataRefResource;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpError;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpHdtHeader;
+import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpJobInstance;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpMacroCall;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpPersist;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpQueryOverViews;
@@ -98,6 +99,11 @@ public class OpVisitorAdapter<T>
 
 	@Override
 	public T visit(OpQueryOverViews op) {
+		return null;
+	}
+	
+	@Override
+	public T visit(OpJobInstance op) {
 		return null;
 	}
 }
