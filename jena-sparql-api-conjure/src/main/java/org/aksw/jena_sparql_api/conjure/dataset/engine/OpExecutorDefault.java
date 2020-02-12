@@ -61,6 +61,7 @@ import org.aksw.jena_sparql_api.stmt.SparqlStmt;
 import org.aksw.jena_sparql_api.stmt.SparqlStmtParser;
 import org.aksw.jena_sparql_api.stmt.SparqlStmtParserImpl;
 import org.aksw.jena_sparql_api.stmt.SparqlStmtUtils;
+import org.aksw.jena_sparql_api.utils.NodeUtils;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpRequest;
@@ -192,8 +193,9 @@ public class OpExecutorDefault
 
 					// Apply substitution of variables in the query pattern
 					// with values of variables in the context
-					Query effQuery = QueryUtils.applyNodeTransform(query,
-							x -> x.isVariable() ? execCtx.getOrDefault(x.getName(), x) : x);
+					Query effQuery = QueryUtils.applyNodeTransform(query, x -> NodeUtils.substWithLookup2(x, execCtx::get));
+//					Query effQuery = QueryUtils.applyNodeTransform(query,
+//							x -> x.isVariable() ? execCtx.getOrDefault(x.getName(), x) : x);
 					
 					// TODO Check whether substitution is needed
 //					logger.info("Query before substitution: " + queryStr);
@@ -636,8 +638,11 @@ public class OpExecutorDefault
 		try(RDFConnection conn = result.openConnection()) {
 			List<String> stmts = op.getStmts();
 			for(String stmt : stmts) {
-				SparqlStmt s = parser.apply(stmt);
-				SparqlStmtUtils.process(conn, s, sink);
+				SparqlStmt before = parser.apply(stmt);
+				SparqlStmt after = SparqlStmtUtils.applyNodeTransform(before, x -> NodeUtils.substWithLookup2(x, execCtx::get));
+
+				
+				SparqlStmtUtils.process(conn, after, sink);
 			}
 		} finally {
 			tmp.close();
