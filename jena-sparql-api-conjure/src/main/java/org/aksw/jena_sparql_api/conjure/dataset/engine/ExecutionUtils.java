@@ -83,7 +83,16 @@ public class ExecutionUtils {
 		return result;
 	}
 
-	public static String getJobId(Job job) {
+	/**
+	 * Create a hash for a given job
+	 * Note, that this does not take any variable substitutions into account
+	 * 
+	 * TODO The method should in addition to the hash return a label for the hash method used
+	 * 
+	 * @param job
+	 * @return
+	 */
+	public static String createDefaultJobHash(Job job) {
 		Op jobOp = job.getOp();
 	    Op semanticJobOp = OpUtils.stripCache(jobOp);
 	    String result = ResourceTreeUtils.createGenericHash(semanticJobOp);
@@ -147,7 +156,7 @@ public class ExecutionUtils {
 		
 		// Op jobOp = job.getOp();
 	    // Op semanticJobOp = OpUtils.stripCache(jobOp);
-	    String jobId = getJobId(job); //ResourceTreeUtils.createGenericHash(semanticJobOp);
+	    String jobHash = createDefaultJobHash(job); //ResourceTreeUtils.createGenericHash(semanticJobOp);
 
 		
 		//for(TaskContext taskContext : taskContexts) {
@@ -157,10 +166,11 @@ public class ExecutionUtils {
 		// Try to create a hash from the input record
 		String inputRecordId = deriveId(inputRecord);
 
-		String completeId = inputRecordId + "/" + jobId;
+		// The id of the target artifact
+		String targetArtifactId = inputRecordId + "/" + jobHash;
 
 		logger.info("Processing: " + inputRecord);
-		logger.info("  Complete id     : " + completeId);
+		logger.info("  Target artifact id     : " + targetArtifactId);
 		logger.info("  Input model size: " + inputRecord.getModel().size()); 
 		logger.info("  Job model size  : " + job.getModel().size()); 
 		
@@ -178,7 +188,7 @@ public class ExecutionUtils {
 //			}
 		try {
 
-			Entry<RdfHttpEntityFile, Model> dataEntry = ResourceStoreImpl.requestModel(repo, cacheStore, completeId + "/data", dataFormat,		
+			Entry<RdfHttpEntityFile, Model> dataEntry = ResourceStoreImpl.requestModel(repo, cacheStore, targetArtifactId + "/data", dataFormat,		
 					() -> {
 						// TODO taskContext already contains the input record; clarify whether
 						// inputRecord arg may differ from that of the context
@@ -192,7 +202,7 @@ public class ExecutionUtils {
 						return r;
 					});
 
-			Model provModel = ResourceStoreImpl.requestModel(repo, cacheStore, completeId + "/dcat", provenanceFormat,		
+			Model provModel = ResourceStoreImpl.requestModel(repo, cacheStore, targetArtifactId + "/dcat", provenanceFormat,		
 					() -> {
 						Model r = createProvenanceData(job, inputRecord).getModel();
 						//RdfDataPod tmp = executeJob(job, repo, taskContext, inputRecord);							

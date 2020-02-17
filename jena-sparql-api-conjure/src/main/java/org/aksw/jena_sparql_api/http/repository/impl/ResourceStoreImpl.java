@@ -132,6 +132,18 @@ public class ResourceStoreImpl
 	
 	private static final Logger logger = LoggerFactory.getLogger(ResourceStore.class);
 
+	/**
+	 * Find a model in the given resource repository or create one it in the given store based on
+	 * the lambda if it does not yet exist
+	 * 
+	 * @param repo
+	 * @param store
+	 * @param uri
+	 * @param preferredOutputFormat
+	 * @param modelSupplier
+	 * @return
+	 * @throws IOException
+	 */
 	public static Entry<RdfHttpEntityFile, Model> requestModel(HttpResourceRepositoryFromFileSystem repo, ResourceStore store, String uri, RDFFormat preferredOutputFormat, Supplier<Model> modelSupplier) throws IOException {
 		Entry<RdfHttpEntityFile, Model> result = getOrCacheEntity(repo, store, uri, new HttpObjectSerializerModel(preferredOutputFormat), modelSupplier);
 		

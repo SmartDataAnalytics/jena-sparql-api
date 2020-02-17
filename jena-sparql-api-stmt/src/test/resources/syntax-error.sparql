@@ -1,0 +1,10 @@
+SELECT ?a { ?a ?b ?c }
+
+CONSTRUCT WHERE { ?x ?y ?z }
+
+SELECT ?h { ?h ?i ?j }
+
+HERE_IS_A_SYNTAX_ERROR
+
+SELECT ?u { ?u ?v ?w }
+

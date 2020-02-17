@@ -1,0 +1,65 @@
+@prefix eg: <http://www.example.org/> .
+
+@prefix r: <http://www.example.org/> .
+@prefix o: <http://www.example.org/> .
+
+
+r:rdfxml
+  a o:ContentType ;
+  skos:prefLabel "RDF/XML" ;
+  skos:altLabel "RDFXML", "RDF/XML-ABBREV", "RDFXML-ABBREV" ;
+  o:prefFileExtension "rdf" ;
+#  o:altFileExtension "owl", "xml" ;
+  o:prefContentType "application/n-triples" ;
+  .
+
+r:turtle
+  a o:ContentType ;
+  skos:prefLabel "Turtle" ;
+  skos:altLabel "TTL" ;
+  o:prefFileExtension "ttl" ;
+  o:prefContentType "text/turtle" ;
+  o:prefAltContentType "application/turtle", "application/x-turtle" ;
+  .
+
+r:n3
+  a o:ContentType ;
+  skos:prefLabel "N3" ;
+  o:prefFileExtension "n3" ;
+  o:prefContentType "text/rdf+n3" ;
+  o:prefAltContentType "application/n3", "text/n3" ;
+  .
+
+r:ntriples
+  a o:ContentType ;
+  skos:prefLabel "N-Triples" ;
+  skos:altLabel "NT", "NTriples", "NTriple", "N-Triple", "N-Triples" ;
+  o:prefFileExtension "nt" ;
+  o:prefContentType "application/n-triples" ;
+#  o:prefAltContentType "text/plain" ;
+  .
+
+r:rdfJson
+  a o:ContentType ;
+  skos:prefLabel "RDF/JSON" ;
+  skos:altLabel "RDFJSON" ;
+  o:prefContentType "application/rdf+json" ;  
+  o:prefFileExtension "rj" ;
+  .
+
+
+
+r:bzip2
+  a o:ByteEncoding ;
+  skos:prefLabel "bzip2" ;
+  o:prefFileExtension "bz2" ;
+  o:httpFieldValue "bzip2" ;
+  .
+
+r:gzip
+  a o:ByteEncoding ;
+  skos:prefLabel "gzip" ;
+  o:prefFileExtension "gz" ;
+  o:httpFieldValue "gzip" ;
+  .
+  

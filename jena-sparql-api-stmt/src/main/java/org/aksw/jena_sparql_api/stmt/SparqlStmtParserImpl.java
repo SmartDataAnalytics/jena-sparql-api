@@ -53,6 +53,7 @@ public class SparqlStmtParserImpl
         return actAsClassifier;
     }
 
+    
     @Override
     public SparqlStmt apply(String stmtStr) {
         SparqlStmt result;
@@ -60,13 +61,13 @@ public class SparqlStmtParserImpl
             Query query = queryParser.apply(stmtStr);
             result = new SparqlStmtQuery(query);
         } catch(QueryParseException queryException) {
-
+        	
             try {
                 UpdateRequest updateRequest = updateParser.apply(stmtStr);
                 result = new SparqlStmtUpdate(updateRequest);
 
             } catch(QueryParseException updateException) {
-                int delta = QueryParseExceptionComparator.doCompare(queryException, updateException);
+                int delta = QueryParseExceptionUtils.doCompare(queryException, updateException);
 
                 boolean isQueryException = delta <= 0;
                 if(isQueryException) {

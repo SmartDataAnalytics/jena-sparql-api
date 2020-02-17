@@ -18,11 +18,14 @@ public interface SparqlStmt {
     
     
     default Query getQuery() {
-    	return getAsQueryStmt().getQuery();
+    	SparqlStmtQuery stmt = getAsQueryStmt();
+    	Query result = stmt == null ? null : stmt.getQuery();
+    	return result;
     }
 
     default UpdateRequest getUpdateRequest() {
-    	return getAsUpdateStmt().getUpdateRequest();
+    	SparqlStmtUpdate stmt = getAsUpdateStmt();
+    	UpdateRequest result = stmt == null ? null : stmt.getUpdateRequest();
+    	return result;
     }
-
 }

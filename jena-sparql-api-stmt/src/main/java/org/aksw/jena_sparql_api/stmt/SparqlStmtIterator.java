@@ -1,22 +1,10 @@
 package org.aksw.jena_sparql_api.stmt;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.StringReader;
-import java.nio.charset.StandardCharsets;
 import java.util.function.Function;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.stream.Stream;
 
-import org.apache.jena.ext.com.google.common.collect.Streams;
-import org.apache.jena.ext.com.google.common.io.CharStreams;
+import org.aksw.commons.util.strings.StringUtils;
 import org.apache.jena.query.QueryParseException;
-import org.apache.jena.sparql.lang.arq.ParseException;
 
-import com.google.common.base.Strings;
 import com.google.common.collect.AbstractIterator;
 
 /**
@@ -57,28 +45,28 @@ public class SparqlStmtIterator extends AbstractIterator<SparqlStmt> {
 	}
 
 
-	public static int toCharPos(String str, int lineNumber, int columnNumber) {
-		BufferedReader br = new BufferedReader(new StringReader(str));
-
-		int lineIndex = Math.max(0, lineNumber - 1);
-		int columnIndex = Math.max(0, columnNumber - 1);
-
-		int result = 0;
-		for (int i = 0; i < lineIndex; ++i) {
-			String l;
-			try {
-				l = br.readLine();
-			} catch (IOException e) {
-				// Should never happen
-				throw new RuntimeException(e);
-			}
-			result = result + l.length() + 1; // +1 -> the newline character
-		}
-
-		result += columnIndex;
-
-		return result;
-	}
+//	public static int toCharPos(String str, int lineNumber, int columnNumber) {
+//		BufferedReader br = new BufferedReader(new StringReader(str));
+//
+//		int lineIndex = Math.max(0, lineNumber - 1);
+//		int columnIndex = Math.max(0, columnNumber - 1);
+//
+//		int result = 0;
+//		for (int i = 0; i < lineIndex; ++i) {
+//			String l;
+//			try {
+//				l = br.readLine();
+//			} catch (IOException e) {
+//				// Should never happen
+//				throw new RuntimeException(e);
+//			}
+//			result = result + l.length() + 1; // +1 -> the newline character
+//		}
+//
+//		result += columnIndex;
+//
+//		return result;
+//	}
 
 	public static boolean isEmptyString(String str) {
         return str == null ? true : str.trim().isEmpty();
@@ -88,16 +76,6 @@ public class SparqlStmtIterator extends AbstractIterator<SparqlStmt> {
 	//
 	// }
 
-	public static Pattern posPattern = Pattern.compile("line (\\d+), column (\\d+)");
-
-	public static int[] parsePos(String str) {
-		Matcher m = posPattern.matcher(str);
-
-		int[] result = m.find() ? new int[] { Integer.parseInt(m.group(1)), Integer.parseInt(m.group(2)) }
-				: new int[] { 0, 0 };
-
-		return result;
-	}
 
 	@Override
 	protected SparqlStmt computeNext() {
@@ -109,11 +87,15 @@ public class SparqlStmtIterator extends AbstractIterator<SparqlStmt> {
 
 		// Get the string up to the point where a parse error was encountered
 		QueryParseException ex = result.getParseException();
-		if (ex != null) {
-			int[] exPos = parsePos(ex.getMessage());
+		int[] exPos = ex == null
+				? null
+				: QueryParseExceptionUtils.parseLineAndCol(ex);
 
-			int pos = toCharPos(str, exPos[0], exPos[1]);
+		int pos = exPos == null
+				? -1
+				: StringUtils.findCharPos(str, exPos[0], exPos[1]);
 
+		if(pos != -1) {
 			line = line + Math.max(0, exPos[0] - 1);
 			column = column + Math.max(0, exPos[1] - 1);
 
@@ -121,19 +103,19 @@ public class SparqlStmtIterator extends AbstractIterator<SparqlStmt> {
 			try {
 				retryStr = str.substring(0, pos);
 			} catch(StringIndexOutOfBoundsException e) {
-				throw new RuntimeException("Error near line " + line + ", column " + column + ".", ex);
+				throw new QueryParseException("Error near line " + line + ", column " + column + ".", ex, line, column);
 			}
 
 			// Note: Jena parses an empty string as a sparql update statement without errors
 			if (isEmptyString(retryStr)) {
-				throw new RuntimeException("Error near line " + line + ", column " + column + ".", ex);
+				throw new QueryParseException("Error near line " + line + ", column " + column + ".", ex, line, column);
 			}
 
 			result = parser.apply(retryStr);
 
 			QueryParseException retryEx = result.getParseException();
 			if (retryEx != null) {
-				throw new RuntimeException("Error near line " + line + ", column " + column + ".", retryEx);
+				throw new QueryParseException("Error near line " + line + ", column " + column + ".", retryEx, line, column);
 			}
 
 			str = str.substring(pos);
