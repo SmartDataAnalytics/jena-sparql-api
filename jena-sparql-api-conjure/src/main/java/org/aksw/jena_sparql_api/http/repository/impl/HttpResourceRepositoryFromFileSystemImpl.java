@@ -334,6 +334,9 @@ public class HttpResourceRepositoryFromFileSystemImpl
 		Multimap<RdfHttpEntityFile, Entry<Plan, Float>> entityToPlan = HashMultimap.create();
 
 		for(RdfHttpEntityFile entity : entities) {
+			// TODO Ensure entities are valid
+			// - e.g. manual deletion of files in the http cache can cause corruption
+			
 			RdfEntityInfo info = entity.getCombinedInfo().as(RdfEntityInfo.class);
 			//MediaType mt = MediaType.parse(info.getContentType());
 			
@@ -412,6 +415,13 @@ public class HttpResourceRepositoryFromFileSystemImpl
 		return result;
 	}
 
+	public boolean validateEntity(RdfHttpEntityFile entity) {
+		Path path = entity.getAbsolutePath();
+		boolean result = Files.exists(path);
+
+		return result;
+	}
+	
 	/**
 	 * Lookup an entity
 	 * 
@@ -448,10 +458,13 @@ public class HttpResourceRepositoryFromFileSystemImpl
 		
 		
 		Collection<RdfHttpEntityFile> entities = getEntities(uri);
+		List<RdfHttpEntityFile> validatedEntities = entities.stream()
+				.filter(this::validateEntity)
+				.collect(Collectors.toList());
 
 		OpExecutor opExecutor = new OpExecutor(this, hashStore);
 
-		Plan plan = findBestPlanToServeRequest(request, entities, opExecutor);
+		Plan plan = findBestPlanToServeRequest(request, validatedEntities, opExecutor);
 		
 		//result = null;
 		if(plan == null) {

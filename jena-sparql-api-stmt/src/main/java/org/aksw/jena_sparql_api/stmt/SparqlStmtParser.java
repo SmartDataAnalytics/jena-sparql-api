@@ -7,10 +7,17 @@ import org.apache.jena.shared.PrefixMapping;
 public interface SparqlStmtParser
     extends Function<String, SparqlStmt>
 {
-
-	public static SparqlStmtParser wrapWithNamespaceTracking(PrefixMapping pm, Function<String, SparqlStmt> raw) {
+	public static SparqlStmtParser wrapWithOptimizePrefixes(Function<String, SparqlStmt> delegate) {
+		return str -> {
+			SparqlStmt r = delegate.apply(str);
+			SparqlStmtUtils.optimizePrefixes(r);
+			return r;
+		};
+	}
+	
+	public static SparqlStmtParser wrapWithNamespaceTracking(PrefixMapping pm, Function<String, SparqlStmt> delegate) {
 		return s -> {
-			SparqlStmt r = raw.apply(s);
+			SparqlStmt r = delegate.apply(s);
 			if(r.isParsed()) {
 				PrefixMapping pm2 = null;
 				if(r.isQuery()) {

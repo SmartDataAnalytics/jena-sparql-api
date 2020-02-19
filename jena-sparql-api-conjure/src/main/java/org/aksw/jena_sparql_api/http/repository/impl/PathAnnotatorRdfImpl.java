@@ -26,15 +26,16 @@ public class PathAnnotatorRdfImpl
 	protected String suffix = ".meta";
 
 	public Resource getRecord(Path path) {
+		Resource result;
 		try {
-			return cache.get(path, () -> getRecordUncached(path));
+			result = cache.get(path, () -> getRecordUncached(path));
 		} catch (ExecutionException e) {
 			throw new RuntimeException(e);
 		}
+		return result;
 	}
 
 	public Resource getRecordUncached(Path path) {
-		
 		Resource result;
 		
 		if(Files.exists(path)) {

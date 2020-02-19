@@ -1,7 +1,9 @@
 package org.aksw.jena_sparql_api.stmt;
 
+import java.util.function.Function;
 import java.util.function.Supplier;
 
+import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryFactory;
 import org.apache.jena.query.Syntax;
@@ -61,4 +63,12 @@ public class SparqlQueryParserImpl
         return result;
     }
 
+    // TODO Move to common query parser utils
+    public static SparqlQueryParser wrapWithOptimizePrefixes(Function<String, Query> delegate) {
+    	return str -> {
+    		Query r = delegate.apply(str);
+    		QueryUtils.optimizePrefixes(r);
+    		return r;
+    	};
+    }
 }

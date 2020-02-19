@@ -4,6 +4,7 @@ import java.util.function.Function;
 
 import org.aksw.jena_sparql_api.common.DefaultPrefixes;
 import org.aksw.jena_sparql_api.stmt.SparqlStmt;
+import org.aksw.jena_sparql_api.stmt.SparqlStmtParser;
 import org.aksw.jena_sparql_api.stmt.SparqlStmtParserImpl;
 import org.apache.jena.query.Syntax;
 import org.apache.jena.rdf.model.Model;
@@ -25,7 +26,8 @@ public class ConjureContext {
 	public ConjureContext() {
 		this(
 			ModelFactory.createDefaultModel(),
-			SparqlStmtParserImpl.create(Syntax.syntaxARQ, DefaultPrefixes.prefixes, false));
+			SparqlStmtParser.wrapWithOptimizePrefixes(
+					SparqlStmtParserImpl.create(Syntax.syntaxARQ, DefaultPrefixes.prefixes, false)));
 	}
 
 	public ConjureContext(Model model, Function<String, SparqlStmt> sparqlStmtParser) {

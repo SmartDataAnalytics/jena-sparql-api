@@ -175,6 +175,12 @@ public class OpExecutorDefault
 		return result;
 	}
 
+	
+	public Node substNode(Node node) {
+		Node r = NodeUtils.substWithLookup2(node, execCtx::get);
+		r = r.isVariable() ? execCtx.getOrDefault(r.getName(), r) : r;
+		return r;
+	}
 
 	@Override
 	public RdfDataPod visit(OpConstruct op) {
@@ -193,7 +199,7 @@ public class OpExecutorDefault
 
 					// Apply substitution of variables in the query pattern
 					// with values of variables in the context
-					Query effQuery = QueryUtils.applyNodeTransform(query, x -> NodeUtils.substWithLookup2(x, execCtx::get));
+					Query effQuery = QueryUtils.applyNodeTransform(query, this::substNode);
 //					Query effQuery = QueryUtils.applyNodeTransform(query,
 //							x -> x.isVariable() ? execCtx.getOrDefault(x.getName(), x) : x);
 					
@@ -633,13 +639,14 @@ public class OpExecutorDefault
 
 		Sink<Quad> tmp = new SinkQuadsToDataset(true, resultDataset.asDatasetGraph());
 		SPARQLResultVisitor sink = new SPARQLResultSinkQuads(tmp);		
-		SparqlStmtParser parser = SparqlStmtParserImpl.create(DefaultPrefixes.prefixes);
+		SparqlStmtParser parser = SparqlStmtParser.wrapWithOptimizePrefixes(
+				SparqlStmtParserImpl.create(DefaultPrefixes.prefixes));
 
 		try(RDFConnection conn = result.openConnection()) {
 			List<String> stmts = op.getStmts();
 			for(String stmt : stmts) {
 				SparqlStmt before = parser.apply(stmt);
-				SparqlStmt after = SparqlStmtUtils.applyNodeTransform(before, x -> NodeUtils.substWithLookup2(x, execCtx::get));
+				SparqlStmt after = SparqlStmtUtils.applyNodeTransform(before, this::substNode);
 
 				
 				SparqlStmtUtils.process(conn, after, sink);
