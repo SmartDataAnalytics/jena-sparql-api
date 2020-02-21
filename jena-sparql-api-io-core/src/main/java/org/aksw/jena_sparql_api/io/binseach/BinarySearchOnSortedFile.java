@@ -176,7 +176,7 @@ public class BinarySearchOnSortedFile
 					satisfied = nextKnownDelimPos - currentDelimPos;
 				} while(currentPage == nextKnownPage && satisfied < wanted);
 	
-				MappedByteBuffer rawBuf = getBufferForPageUnsafe(currentPage);
+				ByteBuffer rawBuf = getBufferForPageUnsafe(currentPage);
 				ByteBuffer buffer = rawBuf.duplicate();
 
 				int availableInPage = buffer.remaining() - currentIndex;
@@ -260,7 +260,7 @@ public class BinarySearchOnSortedFile
 					nextKnownPage = getPageForPos(nextKnownDelimPos);
 				} while(currentPage == nextKnownPage);
 
-				MappedByteBuffer rawBuf = getBufferForPageUnsafe(currentPage);
+				ByteBuffer rawBuf = getBufferForPageUnsafe(currentPage);
 				ByteBuffer buffer = rawBuf.duplicate();
 
 				int available = buffer.remaining() - currentIndex;
@@ -491,8 +491,8 @@ public class BinarySearchOnSortedFile
 		return result;
 	}
 
-	public MappedByteBuffer getBufferForPageUnsafe(long page)  {
-		MappedByteBuffer result;
+	public ByteBuffer getBufferForPageUnsafe(long page)  {
+		ByteBuffer result;
 		try {
 			result = getBufferForPage(page);
 		} catch (Exception e) {
@@ -501,7 +501,7 @@ public class BinarySearchOnSortedFile
 		return result;
 	}
 
-	public MappedByteBuffer getBufferForPage(long page) throws IOException {
+	public ByteBuffer getBufferForPage(long page) throws IOException {
         long start = page * pageSize;
         long end = Math.min(channelSize, start + pageSize);
         long length = end - start;
@@ -529,9 +529,9 @@ public class BinarySearchOnSortedFile
         return result;
 	}
 	
-	public MappedByteBuffer getBufferForPos(long pos) throws IOException {
+	public ByteBuffer getBufferForPos(long pos) throws IOException {
         long page = getPageForPos(pos);
-        MappedByteBuffer result = getBufferForPage(page);
+        ByteBuffer result = getBufferForPage(page);
 		return result;
 	}
 	
@@ -545,7 +545,7 @@ public class BinarySearchOnSortedFile
 		int n = prefix.length;
 		
 		int result = 0;
-		MappedByteBuffer buffer;
+		ByteBuffer buffer;
 		outer: for(long p = page; x < n && (buffer = getBufferForPage(p)) != null; ++p) {
 			int r = buffer.remaining();
 			for(int i = index; i < r && x < n; ++i, ++x) {
@@ -575,7 +575,7 @@ public class BinarySearchOnSortedFile
 		int index = getIndexForPos(pos);
 		
 		int x = 0;
-		MappedByteBuffer buffer;
+		ByteBuffer buffer;
 		for(long p = page; x < n && (buffer = getBufferForPage(p)) != null; ++p) {
 			int r = buffer.remaining();
 			for(int i = index; i < r && x < n; ++i, ++x) {
@@ -599,7 +599,7 @@ public class BinarySearchOnSortedFile
 		// alot more efficient - so this should be replaced
 		List<Byte> list = new ArrayList<Byte>();
 		
-		MappedByteBuffer buffer;
+		ByteBuffer buffer;
 		outer: for(long p = page; (buffer = getBufferForPage(p)) != null; ++p) {
 			int r = buffer.remaining();
 			for(int i = index; i < r; ++i) {
@@ -626,7 +626,7 @@ public class BinarySearchOnSortedFile
 		long page = getPageForPos(pos);
 		int index = getIndexForPos(pos);
 		
-		MappedByteBuffer buffer;
+		ByteBuffer buffer;
 		long p;
 		int i = index;
 		outer: for(p = page; (buffer = getBufferForPage(p)) != null; ++p) {
@@ -667,7 +667,7 @@ public class BinarySearchOnSortedFile
 		long p;
         int i = index;
         outer: for(p = page; p >= 0; --p) {
-            MappedByteBuffer buffer = getBufferForPage(p);
+            ByteBuffer buffer = getBufferForPage(p);
 
 	        for(i = index; i >= 0; --i) {
 	            byte c = buffer.get(i);

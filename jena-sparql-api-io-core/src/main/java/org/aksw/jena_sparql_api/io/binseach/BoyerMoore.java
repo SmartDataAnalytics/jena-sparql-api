@@ -1,8 +1,6 @@
 package org.aksw.jena_sparql_api.io.binseach;
 
-import java.net.URI;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import org.apache.jena.ext.com.google.common.primitives.Bytes;
 
 /* Java program for Boyer Moore Algorithm with  
 Good Suffix heuristic to find pattern in 
@@ -25,7 +23,7 @@ class BoyerMoore {
 	 * @param pattern
 	 * @param m
 	 */
-	static void preprocess_strong_suffix(int[] shift, int[] bpos, char[] pattern, int m) {
+	public static void preprocess_strong_suffix(int[] shift, int[] bpos, byte[] pattern, int m) {
 		// m is the length of pattern
 		int i = m, j = m + 1;
 		bpos[i] = j;
@@ -65,7 +63,7 @@ class BoyerMoore {
 	 * @param pat
 	 * @param m
 	 */
-	static void preprocess_case2(int[] shift, int[] bpos, char[] pat, int m) {
+	public static void preprocess_case2(int[] shift, int[] bpos, byte[] pat, int m) {
 		int i, j;
 		j = bpos[0];
 		for (i = 0; i <= m; i++) {
@@ -89,12 +87,12 @@ class BoyerMoore {
 	 * Search for a pattern in given text using Boyer Moore algorithm with Good
 	 * suffix rule
 	 */
-	static void search(char[] text, char[] pat) {
+	static long searchForwardSimple(byte[] text, byte[] pat) {
 		// s is shift of the pattern
 		// with respect to text
 		int s = 0, j;
 		int m = pat.length;
-		int n = text.length;
+		long n = text.length;
 
 		int[] bpos = new int[m + 1];
 		int[] shift = new int[m + 1];
@@ -107,6 +105,7 @@ class BoyerMoore {
 		preprocess_strong_suffix(shift, bpos, pat, m);
 		preprocess_case2(shift, bpos, pat, m);
 
+		long result = -1;
 		while (s <= n - m) {
 			j = m - 1;
 
@@ -123,8 +122,10 @@ class BoyerMoore {
 			 * after the above loop
 			 */
 			if (j < 0) {
-				System.out.printf("pattern occurs at shift = %d\n", s);
-				s += shift[0];
+				result = s;
+				break;
+//				System.out.printf("pattern occurs at shift = %d\n", s);
+//				s += shift[0];
 			} else {
 
 				/*
@@ -133,21 +134,80 @@ class BoyerMoore {
 				s += shift[j + 1];
 			}
 		}
+		
+		return result;
+	}
+	
+	static long searchBackwards(byte[] text, int startPos, byte[] fwdPat) {
+		
+		byte[] pat = fwdPat.clone();
+		Bytes.reverse(fwdPat);
+		
+		// s is shift of the pattern
+		// with respect to text
+		int s = startPos, j;
+		int m = pat.length;
+		//int n = text.length;
 
+		int[] bpos = new int[m + 1];
+		int[] shift = new int[m + 1];
+
+		// initialize all occurrence of shift to 0
+		for (int i = 0; i < m + 1; i++)
+			shift[i] = 0;
+
+		// do preprocessing
+		preprocess_strong_suffix(shift, bpos, pat, m);
+		preprocess_case2(shift, bpos, pat, m);
+
+		long result = -1;
+		while (s >= m) {
+			j = m - 1;
+
+			/*
+			 * Keep reducing index j of pattern while characters of pattern and text are
+			 * matching at this shift s
+			 */
+			while (j >= 0 && pat[j] == text[s - j]) {
+				j--;
+			}
+
+			/*
+			 * If the pattern is present at the current shift, then index j will become -1
+			 * after the above loop
+			 */
+			if (j < 0) {
+				result = s - (m - 1);
+				break;
+//				System.out.printf("pattern occurs at shift = %d\n", s);
+//				s += shift[0];
+			} else {
+
+				/*
+				 * pat[i] != pat[s+j] so shift the pattern shift[j+1] times
+				 */
+				int delta = shift[j + 1];
+				s -= delta;
+			}
+		}
+		
+		return result;
 	}
 
 // Driver Code 
 	public static void main(String[] args) throws Exception {
-		URI uri = new URI("file:///tmp/foobar.txt?test=true");
-		System.out.println(uri.toString().replaceAll("\\?.*", ""));
+//		URI uri = new URI("file:///tmp/foobar.txt?test=true");
+//		System.out.println(uri.toString().replaceAll("\\?.*", ""));
 
 //		Path path = Paths.get(uri);
 //		System.out.println(path);
 		
 		
-		char[] text = "ABAAAABAACD".toCharArray();
-		char[] pat = "ABA".toCharArray();
-		search(text, pat);
+		byte[] text = "ABAAAABAACDABA".getBytes();
+		byte[] pat = "ABA".getBytes();
+		//long pos = searchForwardSimple(text, pat);
+		long pos = searchBackwards(text, text.length, pat);
+		System.out.println(pos);
 	}
 }
 
