@@ -2,13 +2,16 @@ package org.aksw.jena_sparql_api.utils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import org.aksw.commons.collections.MapUtils;
 import org.apache.jena.graph.Node;
@@ -19,7 +22,6 @@ import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.engine.binding.BindingHashMap;
 import org.apache.jena.sparql.graph.NodeTransform;
-import org.apache.jena.sparql.graph.NodeTransformLib;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementGroup;
 import org.apache.jena.sparql.syntax.ElementNamedGraph;
@@ -48,12 +50,24 @@ public class QuadUtils {
 
 
     public static Map<Node, Set<Quad>> partitionByGraph(Iterable<Quad> quads) {
-        Map<Node, Set<Quad>> result = new HashMap<Node, Set<Quad>>();
-        for (Quad quad : quads) {
+    	Map<Node, Set<Quad>> result = new HashMap<>();
+    	
+    	partitionByGraph(quads.iterator(), result, HashSet::new);
+    	
+    	return result;
+    }
+
+    public static <C extends Collection<Quad>, M extends Map<Node, C>> M partitionByGraph(
+    		Iterator<Quad> it,
+    		M result,
+    		Supplier<? extends C> supplier) {
+        //Map<Node, Set<Quad>> result = new HashMap<Node, Set<Quad>>();
+        while(it.hasNext()) {
+        	Quad quad = it.next();
             Node g = quad.getGraph();
-            Set<Quad> qs = result.get(g);
+            C qs = result.get(g);
             if (qs == null) {
-                qs = new HashSet<Quad>();
+                qs = supplier.get();
                 result.put(g, qs);
             }
             qs.add(quad);

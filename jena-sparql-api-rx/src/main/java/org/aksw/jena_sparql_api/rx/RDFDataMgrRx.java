@@ -5,18 +5,25 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.utils.DatasetGraphUtils;
 import org.aksw.jena_sparql_api.utils.DatasetUtils;
 import org.aksw.jena_sparql_api.utils.IteratorClosable;
 import org.aksw.jena_sparql_api.utils.QuadPatternUtils;
+import org.aksw.jena_sparql_api.utils.QuadUtils;
 import org.apache.jena.atlas.web.TypedInputStream;
 import org.apache.jena.ext.com.google.common.collect.Iterators;
 import org.apache.jena.ext.com.google.common.collect.Sets;
@@ -273,8 +280,64 @@ public class RDFDataMgrRx {
 		}
 	}
 
-	
 	public static class QuadEncoderMerge {
+		protected Map<Node, Set<Quad>> pending = new LinkedHashMap<>();
+
+		public synchronized Dataset accept(Dataset dataset) {
+			Supplier<Set<Quad>> setSupp = () -> new LinkedHashSet<Quad>(); 
+			
+			Iterator<Quad> it = dataset.asDatasetGraph().find();
+			Map<Node, Set<Quad>> index = QuadUtils.partitionByGraph(
+					it,
+					new LinkedHashMap<Node, Set<Quad>>(),
+					setSupp);
+			
+			Set<Node> before = pending.keySet();
+			Set<Node> now = index.keySet();
+			
+			Set<Node> overlap = Sets.intersection(now, before);
+			Set<Node> newGraphs = Sets.difference(now, before);
+//					readyGraphs,
+//					Sets.difference(now, before));
+
+			for(Node appending : overlap) {
+				Set<Quad> tgt = pending.get(appending);
+				Set<Quad> src = index.get(appending);
+				tgt.addAll(src);
+			}
+			
+			for(Node newGraph : newGraphs) {
+				Set<Quad> src = index.get(newGraph);
+				pending.put(newGraph, src);
+			}
+
+			// Emit the ready graphs
+			Dataset result = DatasetFactory.create();
+			Set<Node> readyGraphs = new HashSet<>(Sets.difference(before, now));
+
+			for(Node ready : readyGraphs) {
+				Set<Quad> quads = pending.get(ready);
+				
+				DatasetGraphUtils.addAll(result.asDatasetGraph(), quads);
+				
+				pending.remove(ready);
+			}
+			
+			//System.err.println("Pending size " + pending..size());
+			
+			return result;
+		}
+		
+		public Dataset getPendingDataset() {
+			Dataset result = DatasetFactory.create();
+			for(Collection<Quad> quads : pending.values()) {
+				DatasetGraphUtils.addAll(result.asDatasetGraph(), quads);
+			}
+
+			return result;
+		}
+	}	
+	public static class QuadEncoderMergeOld {
 		protected Dataset pending = DatasetFactory.create();
 
 		public synchronized Dataset accept(Dataset dataset) {
@@ -301,6 +364,8 @@ public class RDFDataMgrRx {
 				
 				pending.asDatasetGraph().removeGraph(ready);
 			}
+			
+			System.err.println("Pending size " + pending.asDatasetGraph().size());
 			
 			return result;
 		}
