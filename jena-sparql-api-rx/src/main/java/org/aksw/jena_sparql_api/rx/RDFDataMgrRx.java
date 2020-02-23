@@ -92,7 +92,7 @@ public class RDFDataMgrRx {
 		return result;
 	}
 	
-	public static final String DISTINGUISHED_PREFIX = "distinguished://";
+	public static final String DISTINGUISHED_PREFIX = "x-distinguished:";
 	public static final int DISTINGUISHED_PREFIX_LENGTH = DISTINGUISHED_PREFIX.length();
 	
 	public static Node encodeDistinguished(Node g) {
