@@ -3,6 +3,7 @@ package org.aksw.jena_sparql_api.io.utils;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.PrintStream;
 import java.util.Map.Entry;
 import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
@@ -136,6 +137,53 @@ public class SimpleProcessExecutor {
     public Process execute() throws IOException, InterruptedException {
     	Process result = executeCore().getValue();
     	return result;
+    }
+    
+    public void executeReadLines(Flowable<String> upstream, FlowableEmitter<String> emitter) throws IOException {
+
+    	logger.debug("Starting process: " + processBuilder.command());
+    	
+    	processBuilder.redirectErrorStream(true);
+        Process p;
+		try {
+			p = processBuilder.start();
+		} catch (IOException e1) {
+			emitter.onError(e1);
+			return;
+		}
+
+		PrintStream out = new PrintStream(p.getOutputStream());
+
+    	//Thread t = Thread.currentThread();
+    	Thread t = new Thread(() -> {	
+
+	        //int exitValue;
+	        try(BufferedReader br = new BufferedReader(new InputStreamReader(p.getInputStream()))) {
+	
+	            String line;
+	            boolean isInterrupted = false;
+	            while((line = br.readLine()) != null && !(isInterrupted = Thread.interrupted())) {
+	                emitter.onNext(line);
+	            }
+	
+//	            System.out.println("Thread state: " + isInterrupted);
+	            if(!isInterrupted) {
+//	            	System.out.println("Waitfor");
+	            	p.waitFor();
+	            	emitter.onComplete();
+	            }
+//	            System.out.println("Done");
+	            emitter.onComplete();
+	            //sink.accept("Process terminated with exit code " + exitValue);
+	        } catch(Exception e) {
+	        	p.destroy();
+	        	emitter.onError(e);
+	        }
+    	});    	
+    	t.start();
+
+    	emitter.setCancellable(() -> { t.interrupt(); });
+		upstream.subscribe(out::println, e -> logger.warn("error", e), out::close);
     }
 
     public Single<Integer> executeFuture() throws IOException, InterruptedException {
