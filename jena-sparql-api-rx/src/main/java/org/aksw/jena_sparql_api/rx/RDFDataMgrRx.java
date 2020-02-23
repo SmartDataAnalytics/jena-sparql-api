@@ -13,12 +13,15 @@ import java.util.concurrent.Callable;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.aksw.jena_sparql_api.utils.DatasetGraphUtils;
 import org.aksw.jena_sparql_api.utils.DatasetUtils;
 import org.aksw.jena_sparql_api.utils.IteratorClosable;
 import org.aksw.jena_sparql_api.utils.QuadPatternUtils;
 import org.apache.jena.atlas.web.TypedInputStream;
 import org.apache.jena.ext.com.google.common.collect.Iterators;
 import org.apache.jena.ext.com.google.common.collect.Sets;
+import org.apache.jena.graph.Graph;
+import org.apache.jena.graph.GraphUtil;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
@@ -270,6 +273,42 @@ public class RDFDataMgrRx {
 		}
 	}
 
+	
+	public static class QuadEncoderMerge {
+		protected Dataset pending = DatasetFactory.create();
+
+		public synchronized Dataset accept(Dataset dataset) {
+			Set<Node> before = Sets.newHashSet(pending.asDatasetGraph().listGraphNodes());
+			Set<Node> now = Sets.newHashSet(dataset.asDatasetGraph().listGraphNodes());
+			
+			Set<Node> readyGraphs = Sets.difference(before, now);
+			Set<Node> appendings = Sets.union(
+					Sets.intersection(before, now),
+					Sets.difference(now, before));
+
+			for(Node appending : appendings) {
+				Graph tgt = pending.asDatasetGraph().getGraph(appending);
+				Graph src = dataset.asDatasetGraph().getGraph(appending);
+				
+				GraphUtil.addInto(tgt, src);
+			}
+
+			// Emit the ready graphs
+			Dataset result = DatasetFactory.create();
+			for(Node ready : readyGraphs) {
+				Graph src = pending.asDatasetGraph().getGraph(ready);
+				DatasetGraphUtils.addAll(result.asDatasetGraph(), ready, src);
+				
+				pending.asDatasetGraph().removeGraph(ready);
+			}
+			
+			return result;
+		}
+		
+		public Dataset getPendingDataset() {
+			return pending;
+		}
+	}
 	// A better approach would be to transform a flowable to write to a file as a side effect
 	// Upon flowable completion, copy the file to its final location
 	public static void writeDatasets(Flowable<? extends Dataset> flowable, Path file, RDFFormat format) throws Exception {

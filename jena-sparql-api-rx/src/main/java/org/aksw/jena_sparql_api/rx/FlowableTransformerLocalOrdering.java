@@ -171,7 +171,11 @@ public class FlowableTransformerLocalOrdering<T, S extends Comparable<S>>
 				@Override
 				public void subscribe(FlowableEmitter<T> e) throws Exception {
 					Subscriber<T> tmp = wrap(initiallyExpectedId, incrementSeqId, extractSeqId, e);
-					upstream.subscribe(tmp); //tmp::onNext, tmp::onError, tmp::onComplete);
+
+					upstream.subscribe(tmp::onNext, tmp::onError, tmp::onComplete);
+					// FIXME Something is broken in the design, as the
+					// upstream.subscribe(tmp) does NOT work
+					// upstream.subscribe(tmp);
 				}
 			}, BackpressureStrategy.BUFFER);
 			
