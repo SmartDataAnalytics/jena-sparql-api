@@ -43,7 +43,6 @@ import org.apache.jena.riot.RDFLanguages;
 import org.apache.jena.riot.RDFParser;
 import org.apache.jena.riot.lang.PipedQuadsStream;
 import org.apache.jena.riot.lang.PipedRDFIterator;
-import org.apache.jena.riot.lang.PipedRDFStream;
 import org.apache.jena.riot.lang.RiotParsers;
 import org.apache.jena.riot.system.RiotLib;
 import org.apache.jena.riot.system.StreamRDF;
@@ -442,9 +441,15 @@ public class RDFDataMgrRx {
 	public static void writeDatasets(Flowable<? extends Dataset> flowable, OutputStream out, RDFFormat format) throws Exception {
 		try {
 			QuadEncoderDistinguish encoder = new QuadEncoderDistinguish();
-			flowable.blockingForEach(d -> {
-				RDFDataMgr.write(out, encoder.encode(d), format);
-//				out.flush();
+			flowable
+			// Flush every 1000 graphs
+			.buffer(1000)
+			.blockingForEach(items -> {
+				for(Dataset item : items) {
+					Dataset encoded = encoder.encode(item);
+					RDFDataMgr.write(out, encoded, format);
+				}
+				out.flush();
 			});
 		} finally {
 			out.flush();
