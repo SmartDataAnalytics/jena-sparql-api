@@ -24,6 +24,7 @@ import org.aksw.jena_sparql_api.utils.DatasetUtils;
 import org.aksw.jena_sparql_api.utils.IteratorClosable;
 import org.aksw.jena_sparql_api.utils.QuadPatternUtils;
 import org.aksw.jena_sparql_api.utils.QuadUtils;
+import org.apache.jena.atlas.iterator.IteratorResourceClosing;
 import org.apache.jena.atlas.web.TypedInputStream;
 import org.apache.jena.ext.com.google.common.collect.Iterators;
 import org.apache.jena.ext.com.google.common.collect.Sets;
@@ -39,7 +40,15 @@ import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.riot.RDFLanguages;
+import org.apache.jena.riot.RDFParser;
+import org.apache.jena.riot.lang.PipedQuadsStream;
+import org.apache.jena.riot.lang.PipedRDFIterator;
+import org.apache.jena.riot.lang.PipedRDFStream;
+import org.apache.jena.riot.lang.RiotParsers;
+import org.apache.jena.riot.system.RiotLib;
+import org.apache.jena.riot.system.StreamRDF;
 import org.apache.jena.sparql.core.Quad;
+import org.apache.jena.sparql.util.Context;
 import org.apache.jena.util.iterator.ClosableIterator;
 
 import com.github.davidmoten.rx2.flowable.Transformers;
@@ -54,6 +63,46 @@ import io.reactivex.Flowable;
  *
  */
 public class RDFDataMgrRx {
+
+    /**
+     * Adaption from RDFDataMgr.createIteratorQuads that waits for data on the input stream
+     * indefinitely
+     * 
+     * Creates an iterator over parsing of quads
+     * @param input Input Stream
+     * @param lang Language
+     * @param baseIRI Base IRI
+     * @return Iterator over the quads
+     */
+    public static Iterator<Quad> createIteratorQuads(
+    		InputStream input,
+    		Lang lang,
+    		String baseIRI,
+    		int bufferSize, boolean fair, int pollTimeout, int maxPolls) {
+        // Special case N-Quads, because the RIOT reader has a pull interface
+        if ( RDFLanguages.sameLang(RDFLanguages.NQUADS, lang) ) {
+            return new IteratorResourceClosing<>(
+                RiotParsers.createIteratorNQuads(input, null, RiotLib.dftProfile()),
+                input);
+        }
+        // Otherwise, we have to spin up a thread to deal with it
+        final PipedRDFIterator<Quad> it = new PipedRDFIterator<>(bufferSize, fair, pollTimeout, maxPolls);
+        final PipedQuadsStream out = new PipedQuadsStream(it);
+
+        Thread t = new Thread(()-> parseFromInputStream(out, input, baseIRI, lang, null)) ;
+        t.start();
+        return it;
+    }
+	
+    
+    public static void parseFromInputStream(StreamRDF destination, InputStream in, String baseUri, Lang lang, Context context) {
+        RDFParser.create()
+            .source(in)
+            .base(baseUri)
+            .lang(lang)
+            .context(context)
+            .parse(destination);
+    }
 
 	public static Flowable<Quad> createFlowableQuads(Callable<InputStream> inSupplier, Lang lang, String baseIRI) {
 		return createFlowableFromInputStream(inSupplier, in -> RDFDataMgr.createIteratorQuads(in, lang, baseIRI));
@@ -157,10 +206,15 @@ public class RDFDataMgrRx {
 	public static Flowable<Dataset> createFlowableDatasets(Callable<TypedInputStream> inSupplier) {
 		
 		Flowable<Dataset> result = createFlowableFromInputStream(inSupplier,
-				in -> RDFDataMgr.createIteratorQuads(
+				in -> createIteratorQuads(
 						in,
 						RDFLanguages.contentTypeToLang(in.getContentType()),
-						in.getBaseURI()))
+						in.getBaseURI(),
+						PipedRDFIterator.DEFAULT_BUFFER_SIZE,
+						false,
+						PipedRDFIterator.DEFAULT_POLL_TIMEOUT,
+						Integer.MAX_VALUE
+						))
 		.compose(Transformers.<Quad>toListWhile(
 	            (list, t) -> list.isEmpty() 
 	                         || list.get(0).getGraph().equals(t.getGraph())))
