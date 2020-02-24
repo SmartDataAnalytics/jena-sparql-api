@@ -65,6 +65,8 @@ import io.reactivex.Flowable;
 public class RDFDataMgrRx {
 
     /**
+     * TODO Adapt for createIteratorTriples
+     * 
      * Adaption from RDFDataMgr.createIteratorQuads that waits for data on the input stream
      * indefinitely
      * 
