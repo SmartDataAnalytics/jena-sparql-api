@@ -179,6 +179,7 @@ public class QueryUtils {
 			//proto.result
 		}
 
+		result.setSyntax(proto.getSyntax());
 		result.setPrefixMapping(proto.getPrefixMapping());
 
 		

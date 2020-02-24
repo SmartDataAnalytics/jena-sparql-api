@@ -29,6 +29,15 @@ public class SparqlStmtQuery
         this.query = query;
     }
 
+    @Override
+    public SparqlStmtQuery clone() {
+    	Query clone = query != null
+    			? query.cloneQuery()
+    			: null;
+
+    	return new SparqlStmtQuery(clone, originalString, parseException);
+    }
+    
     public Query getQuery() {
         return query;
     }

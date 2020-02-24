@@ -19,6 +19,9 @@ public abstract class SparqlStmtBase
     }
 
     @Override
+    public abstract SparqlStmt clone();
+    
+    @Override
     public String getOriginalString() {
         return originalString;
     }

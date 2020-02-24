@@ -1,5 +1,7 @@
 package org.aksw.jena_sparql_api.stmt;
 
+import org.aksw.jena_sparql_api.core.utils.UpdateRequestUtils;
+import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryParseException;
 import org.apache.jena.update.UpdateRequest;
 
@@ -29,6 +31,16 @@ public class SparqlStmtUpdate
         this.updateRequest = updateRequest;
     }
 
+    @Override
+    public SparqlStmtUpdate clone() {
+    	UpdateRequest clone = updateRequest != null
+    			? UpdateRequestUtils.clone(updateRequest)
+    			: null;
+
+    	return new SparqlStmtUpdate(clone, originalString, parseException);
+    }
+
+    
     public UpdateRequest getUpdateRequest() {
         return updateRequest;
     }

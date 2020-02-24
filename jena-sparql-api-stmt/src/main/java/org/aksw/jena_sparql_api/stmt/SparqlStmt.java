@@ -16,6 +16,7 @@ public interface SparqlStmt {
     QueryParseException getParseException();
     String getOriginalString();
     
+    SparqlStmt clone();
     
     default Query getQuery() {
     	SparqlStmtQuery stmt = getAsQueryStmt();
