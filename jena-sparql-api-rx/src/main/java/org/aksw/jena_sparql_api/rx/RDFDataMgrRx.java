@@ -2,6 +2,7 @@ package org.aksw.jena_sparql_api.rx;
 
 import java.io.Closeable;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Path;
@@ -15,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -437,23 +439,50 @@ public class RDFDataMgrRx {
 		}
 	}
 
-	// Does not close the stream
-	public static void writeDatasets(Flowable<? extends Dataset> flowable, OutputStream out, RDFFormat format) throws Exception {
-		try {
-			QuadEncoderDistinguish encoder = new QuadEncoderDistinguish();
-			flowable
-			// Flush every 1000 graphs
-			.buffer(1000)
-			.blockingForEach(items -> {
-				for(Dataset item : items) {
-					Dataset encoded = encoder.encode(item);
-					RDFDataMgr.write(out, encoded, format);
-				}
+//	public Consumer<? extends Dataset> createWriter(OutputStream out, RDFFormat format, int flushSize) {
+//		
+//	}
+	
+	public static Consumer<Dataset> createDatasetWriter(OutputStream out, RDFFormat format) {
+		return ds -> RDFDataMgr.write(out, ds, format);
+	}
+
+	public static <D extends Dataset, C extends Collection<D>> Consumer<C> createDatasetBatchWriter(OutputStream out, RDFFormat format) {
+		QuadEncoderDistinguish encoder = new QuadEncoderDistinguish();
+		return batch -> {
+			for(Dataset item : batch) {
+				Dataset encoded = encoder.encode(item);
+				RDFDataMgr.write(out, encoded, format);
+			}
+			try {
 				out.flush();
-			});
-		} finally {
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+		};
+	}
+
+	/**
+	 *  Does not close the stream
+	 *  
+	 *  Deprecated use .createDatasetBatchWriter()
+	 *  ....blockingForEach(createDatasetBatchWriter())
+	 *  
+	 *  This does not break the chain and gives freedom over the choice of forEach type (non-/blocking)
+	 */
+	@Deprecated
+	public static void writeDatasets(Flowable<? extends Dataset> flowable, OutputStream out, RDFFormat format) throws Exception {
+		QuadEncoderDistinguish encoder = new QuadEncoderDistinguish();
+		flowable
+		// Flush every 1000 graphs
+		.buffer(1000)
+		.forEach(items -> {
+			for(Dataset item : items) {
+				Dataset encoded = encoder.encode(item);
+				RDFDataMgr.write(out, encoded, format);
+			}
 			out.flush();
-		}
+		});
 	}
 
 }

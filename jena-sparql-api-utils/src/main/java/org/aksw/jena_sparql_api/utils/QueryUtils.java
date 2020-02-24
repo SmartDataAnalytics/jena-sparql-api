@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 
 import org.aksw.commons.collections.generator.Generator;
 import org.aksw.jena_sparql_api.backports.syntaxtransform.ExprTransformNodeElement;
+import org.aksw.jena_sparql_api.backports.syntaxtransform.QueryTransformOps;
 import org.aksw.jena_sparql_api.utils.transform.NodeTransformCollectNodes;
 import org.apache.jena.ext.com.google.common.collect.Sets;
 import org.apache.jena.graph.Node;
@@ -53,6 +54,20 @@ import com.google.common.collect.DiscreteDomain;
 import com.google.common.collect.Range;
 
 public class QueryUtils {
+	
+	/**
+	 * Experimental clone that does not de-/serialize the query to string
+	 * 
+	 * @param query
+	 * @return
+	 */
+	public static Query fastClone(Query query) {
+		ElementTransform eltXform = new ElementTransformCopyBase2(true);
+        ExprTransform exprXform = new ExprTransformApplyElementTransform2(eltXform, true);
+
+		Query result = QueryTransformOps.transform(query, eltXform, exprXform);
+		return result;
+	}
 	
 	public static Query applyOpTransform(Query beforeQuery, Function<? super Op, ? extends Op> transform) {
 		Op beforeOp = Algebra.compile(beforeQuery);
