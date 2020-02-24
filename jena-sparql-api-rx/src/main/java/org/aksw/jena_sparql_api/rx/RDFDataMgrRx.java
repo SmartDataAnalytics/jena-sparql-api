@@ -101,6 +101,9 @@ public class RDFDataMgrRx {
     public static void parseFromInputStream(StreamRDF destination, InputStream in, String baseUri, Lang lang, Context context) {
         RDFParser.create()
             .source(in)
+            // Disabling checking does not seem to give a significant performance gain
+            // For a 3GB Trig file parsing took ~1:45 min +- 5 seconds either way 
+            //.checking(false)
             .base(baseUri)
             .lang(lang)
             .context(context)
