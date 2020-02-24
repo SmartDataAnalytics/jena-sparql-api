@@ -284,13 +284,13 @@ public class RDFDataMgrRx {
 		protected Map<Node, Set<Quad>> pending = new LinkedHashMap<>();
 
 		public synchronized Dataset accept(Dataset dataset) {
-			Supplier<Set<Quad>> setSupp = () -> new LinkedHashSet<Quad>(); 
+			Supplier<Set<Quad>> setSupplier = LinkedHashSet::new; 
 			
 			Iterator<Quad> it = dataset.asDatasetGraph().find();
 			Map<Node, Set<Quad>> index = QuadUtils.partitionByGraph(
 					it,
 					new LinkedHashMap<Node, Set<Quad>>(),
-					setSupp);
+					setSupplier);
 			
 			Set<Node> before = pending.keySet();
 			Set<Node> now = index.keySet();
