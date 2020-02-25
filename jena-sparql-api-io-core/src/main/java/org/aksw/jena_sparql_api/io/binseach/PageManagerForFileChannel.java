@@ -81,7 +81,7 @@ public class PageManagerForFileChannel
         
         ByteBuffer result;
 		try {
-			result = length <= 0
+			result = page < 0 || length <= 0
 					? null
 					: pageCache.get(page, () -> {
 						ByteBuffer r = channel.map(MapMode.READ_ONLY, start, length);

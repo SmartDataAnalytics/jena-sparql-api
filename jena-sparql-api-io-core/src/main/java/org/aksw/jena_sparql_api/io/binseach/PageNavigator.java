@@ -9,16 +9,61 @@ public class PageNavigator {
 	// Copy of pageManager.getPageSize()
 	protected int pageSize;
 
+	/**
+	 * Current page
+	 */
 	protected long page = 0;
+	
+	/**
+	 * Index is relative to the the page's buffer.position()
+	 */
 	protected int index = 0;
 	
+	/*
+	 * Fields for caching attributes of the
+	 * buffer at the last valid position
+	 * Initialization happens in getBufferForPage()
+	 */
 	protected ByteBuffer pageBuffer = null;
 	protected long bufferForPage = -1;
+	protected int absMaxIndexInPage;
+	protected int absMinIndexInPage;
+	
+	
+	protected long minPos;
+	protected long minPage;
+	protected int minIndex;
+	
+	protected long maxPos;
+	protected long maxPage;
+	protected int maxIndex;
 	
 	public PageNavigator(PageManager pageManager) {
+		this(pageManager, 0, pageManager.getEndPos());
+	}
+
+	public PageNavigator(PageManager pageManager, long minPos, long maxPos) {
 		super();
+		
+		if(minPos > maxPos) {
+			throw new IndexOutOfBoundsException("min pos must not exceed max " + minPos + " " + maxPos);
+		}
+		
+		long endPos = pageManager.getEndPos();
+		minPos = Math.min(minPos, endPos);
+		maxPos = Math.min(maxPos, endPos);
+
 		this.pageManager = pageManager;
 		this.pageSize = pageManager.getPageSize();
+		this.minPos = minPos;
+		this.maxPos = maxPos;
+		
+		this.minPage = getPageForPos(minPos);
+		this.minIndex = getIndexForPos(minPos);
+		
+		this.maxPage = getPageForPos(maxPos);
+		this.maxIndex = getIndexForPos(maxPos);
+		
 		if(pageSize == 0) {
 			throw new RuntimeException("Page size must never be 0");
 		}
@@ -33,9 +78,21 @@ public class PageNavigator {
 		if(page == bufferForPage) {
 			return pageBuffer;
 		} else {
-			pageBuffer = pageManager.requestBufferForPage(page);
-			bufferForPage = page;
-			return pageBuffer;
+			if(page < minPage || page > maxPage) {
+				return null;
+			}
+
+			ByteBuffer buf = pageManager.requestBufferForPage(page);
+			if(buf != null) {
+				pageBuffer = buf;
+				bufferForPage = page;
+			
+				int displacement = buf.position();
+				absMaxIndexInPage = page == maxPage ? displacement + maxIndex : buf.limit();
+				absMinIndexInPage = page == minPage ? displacement + minIndex : displacement;
+			}
+			
+			return buf;
 		}
 	}
 
@@ -55,15 +112,30 @@ public class PageNavigator {
         return result;
 	}
 	
+	public void posToStart() {
+		page = minPage;
+		index = minIndex;
+//		page = minPage;
+//		index = minIndex;
+	}
+	
 	public void posToEnd() {
-		long endPos = pageManager.getEndPos();
-		setPos(endPos);
+		page = maxPage;
+		index = maxIndex;
 	}
 	
 	public void setPos(long pos) {
 		page = getPageForPos(pos);
 		index = getIndexForPos(pos);
 		// pageBuffer = getBufferForPage(page);
+	}
+
+	public long getMinPos() {
+		return minPos;
+	}
+	
+	public long getMaxPos() {
+		return maxPos;
 	}
 	
 	/**
@@ -91,8 +163,9 @@ public class PageNavigator {
 	public boolean hasMoreData() throws IOException {
 		ByteBuffer buf = getBufferForPage(page);
 		if(buf != null) {
-			int r = buf.remaining();
-			if(index + 1 < r) {
+			int o = buf.position();
+			int r = buf.limit(); //buf.remaining();
+			if(o + index + 1 < r) {
 				return true;
 			} else { // index >= r
 				buf = getBufferForPage(page + 1);
@@ -111,7 +184,7 @@ public class PageNavigator {
 	/**
 	 * Attempts to advance the position by 1 byte
 	 * and returns true if this succeeded.
-	 * Can advance one byte beyond the end of data
+	 * Cannot advance beyond the last byte.
 	 * 
 	 * @return
 	 * @throws IOException
@@ -119,43 +192,76 @@ public class PageNavigator {
 	public boolean nextPos() throws IOException {
 		ByteBuffer buf = getBufferForPage(page);
 		if(buf != null) {
-			int r = buf.remaining();
-			if(index + 1 < r) {
+			// int r = page == maxPage ? maxIndex : pageSize; //buf.remaining();
+			if(index + 1 < absMaxIndexInPage) {
 				++index;
 				return true;
 			} else {
-				buf = getBufferForPage(page + 1);
-				if(buf != null) {
-					++page;
-					index = 0;
-					return true;
-				} else {
+				if(page >= maxPage) {
 					return false;
+				} else {
+					buf = getBufferForPage(page + 1);
+					if(buf != null) {
+						++page;
+						index = 0;
+						return true;
+					} else {
+						return false;
+					}
 				}
 			}
 		}
 		return false;
 	}
-
 	
 	public boolean prevPos() throws IOException {
-		if(page >= 0) {
-			if(index > 0) {
+		ByteBuffer buf = getBufferForPage(page);
+		if(buf != null) {
+			int r = absMinIndexInPage; // page == minPage ? minIndex : 0; //buf.position();
+			if(index - 1 >= r) {
 				--index;
+				return true;
 			} else {
-				--page;
-//				ByteBuffer buf = getBufferForPage(page);
-//				index = buf.remaining() - 1;
-				index = pageSize - 1;
+				if(page <= minPage) {
+					return false;
+				} else {
+					buf = getBufferForPage(page - 1);
+					if(buf != null) {
+						--page;
+						index = pageSize - 1;
+						return true;
+					} else {
+						return false;
+					}
+				}
+//				} else {
+//					return false;
+//				}
 			}
-			return true;
-		} else {
-			return false;
 		}
+		return false;
 	}
+	
+//	public boolean prevPos() throws IOException {
+//		if(page >= 0) {
+//			if(index > 0) {
+//				--index;
+//			} else {
+//				--page;
+////				ByteBuffer buf = getBufferForPage(page);
+////				index = buf.remaining() - 1;
+//				index = pageSize - 1;
+//			}
+//			return true;
+//		} else {
+//			return false;
+//		}
+//	}
 
 	/**
-	 * Advances the position to the next delimiter or the end of the stream.
+	 * Advances the position to the next matching delimiter or
+	 * one byte past the end of the stream.
+	 * 
 	 * 
 	 * Returns true if and only if the position was changed.
 	 * Note, true does NOT mean that the byte at the new position matches delim
@@ -169,12 +275,26 @@ public class PageNavigator {
 		int i = index;
 		ByteBuffer buffer;
 		outer: for(; (buffer = getBufferForPage(p)) != null; ++p) {
-			int r = buffer.remaining();
-			for(; i < r; ++i) {
-				byte a = buffer.get(i);
+			// int absMaxIndexInPage = page == maxPage ? maxIndex : buffer.limit();
+			int displacement = buffer.position();
+			int absGetIndexInPage = displacement + i;
+
+			for(; absGetIndexInPage < absMaxIndexInPage; ++absGetIndexInPage) {
+				byte a = buffer.get(absGetIndexInPage);
 				if(a == delimiter) {
+		            i = absGetIndexInPage - displacement;
 					break outer;
 				}
+			}
+
+			if(p == maxPage) {
+				i = absGetIndexInPage - displacement;
+				// if(absGetIndexInPage == absMaxIndexInPage) {
+				if(i == pageSize) {
+					i = 0;
+					++p;
+				}
+				break;
 			}
 			i = 0;
 		}
@@ -188,19 +308,35 @@ public class PageNavigator {
 		}
 	}
 	
+	
+	
 	public boolean posToPrev(byte delimiter) throws IOException {
 		long p = page;
 		int i = index;
-        outer: for(; p >= 0; --p) {
-            ByteBuffer buffer = getBufferForPage(p);
-
-	        for(; i >= 0; --i) {
-	            byte c = buffer.get(i);
+		ByteBuffer buffer;
+        outer: for(; (buffer = getBufferForPage(p)) != null; --p) {
+//			int relMinIndexInPage = page == minPage ? minIndex : 0;
+            int displacement = buffer.position();
+            int absGetIndexInPage = displacement + i;
+//            int absMinIndexInPage = displacement + relMinIndexInPage;
+            
+	        //for(; i >= r; --i, --x) {
+            for(; absGetIndexInPage >= absMinIndexInPage; --absGetIndexInPage) {
+	            byte c = buffer.get(absGetIndexInPage);
 	            if(c == delimiter) {
+	                i = absGetIndexInPage - displacement;
 	            	break outer;
 	            }
 	        }
 	        
+	        if(p == minPage) {
+                i = absGetIndexInPage - displacement;
+	        	if(i == -1) {
+	        		i = pageSize - 1;
+	        		--p;
+	        	}
+	        	break;
+	        }
 	        i = pageSize - 1;
         }
 		
@@ -225,9 +361,10 @@ public class PageNavigator {
 		ByteBuffer buffer;
 		outer: for(p = page; (buffer = getBufferForPage(p)) != null; ++p) {
 //			byte[] arr = buffer.array();
+			int o = buffer.position();
 			int r = buffer.remaining();
 			for(i = index; i < r; ++i) {
-				byte a = buffer.get(i);
+				byte a = buffer.get(o + i);
 				if(a == delimiter) {
 					break outer;
 				}
@@ -244,9 +381,9 @@ public class PageNavigator {
         int i = index;
         outer: for(p = page; p >= 0; --p) {
             ByteBuffer buffer = getBufferForPage(p);
-
+            int o = buffer.position();
 	        for(i = index; i >= 0; --i) {
-	            byte c = buffer.get(i);
+	            byte c = buffer.get(o + i);
 	            if(c == delimiter) {
 	            	break outer;
 	            }
@@ -295,24 +432,26 @@ public class PageNavigator {
 	 * @return
 	 * @throws IOException
 	 */
-	public byte[] readBytes(int n) throws IOException {
+	public int readBytes(byte[] dst, int offset, int len) throws IOException {
 		//long end = findFollowingDelimiter(pos, delimiter);
 
 		// TODO use this guava safe int feature
 		//int n = (int)(end - pos);
-		byte[] dst = new byte[n];
-		
+		//byte[] dst = new byte[n];
 		int x = 0;
 		ByteBuffer buffer;
-		for(long p = page; x < n && (buffer = getBufferForPage(p)) != null; ++p) {
-			int r = buffer.remaining();
-			for(int i = index; i < r && x < n; ++i, ++x) {
+		int delta = index;
+		for(long p = page; x < len && (buffer = getBufferForPage(p)) != null; ++p) {
+			int displacement = buffer.position();
+			int absMaxIndexInPage = buffer.limit(); //buffer.remaining();
+			//int absGetIndexInPage = displacement + delta;
+			for(int i = displacement + delta; i < absMaxIndexInPage && x < len; ++i, ++x) {
 				byte b = buffer.get(i);
-				dst[x] = b;
+				dst[offset + x] = b;
 			}
-			index = 0;
+			delta = 0;
 		}
 		
-		return dst;
+		return x;
 	}
 }
