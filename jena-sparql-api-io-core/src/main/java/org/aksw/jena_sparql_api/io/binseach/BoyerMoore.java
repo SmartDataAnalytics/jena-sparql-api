@@ -140,6 +140,7 @@ class BoyerMoore {
 	
 	static long searchBackwards(byte[] text, int startPos, byte[] fwdPat) {
 		
+		// TODO The even nicer solution might even avoid cloning the pattern
 		byte[] pat = fwdPat.clone();
 		Bytes.reverse(fwdPat);
 		

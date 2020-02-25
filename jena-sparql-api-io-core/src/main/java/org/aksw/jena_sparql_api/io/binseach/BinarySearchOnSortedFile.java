@@ -622,6 +622,15 @@ public class BinarySearchOnSortedFile
 
 
 	
+	/**
+	 * If there is no more delimiter char, 
+	 * the position one past the end of the stream is returned - i.e. returned pos = channel.size
+	 * 
+	 * @param pos
+	 * @param delimiter
+	 * @return
+	 * @throws IOException
+	 */
 	public long findFollowingDelimiter(long pos, byte delimiter) throws IOException {
 		long page = getPageForPos(pos);
 		int index = getIndexForPos(pos);

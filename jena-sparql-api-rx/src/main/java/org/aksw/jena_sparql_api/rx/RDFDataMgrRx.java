@@ -107,6 +107,7 @@ public class RDFDataMgrRx {
             .base(baseUri)
             .lang(lang)
             .context(context)
+            //.errorHandler(handler)
             .parse(destination);
     }
 
