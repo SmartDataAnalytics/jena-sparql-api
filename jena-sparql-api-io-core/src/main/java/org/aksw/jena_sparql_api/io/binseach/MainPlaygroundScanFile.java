@@ -1,54 +1,93 @@
 package org.aksw.jena_sparql_api.io.binseach;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Scanner;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import com.google.common.base.Stopwatch;
+import org.apache.jena.ext.com.google.common.base.Stopwatch;
+import org.apache.jena.ext.com.google.common.collect.Maps;
+
 
 public class MainPlaygroundScanFile {
-	public static long wcFwd(PageNavigator pageNavigator) throws IOException {
-		System.out.println("Thread: " + Thread.currentThread());
-		long result = 0;
+	/**
+	 * Count the number of occurrences of '\n' together with a flag
+	 * whether it ocurred at the end
+	 * 
+	 * @param pageNavigator
+	 * @return
+	 * @throws IOException
+	 */
+	public static Entry<Long, Boolean> wcFwd(PageNavigator pageNavigator) throws IOException {
+//		System.out.println("Thread: " + Thread.currentThread());
+		byte delim = (byte)'\n';
+		
+		boolean endsOnDelim = false;
+		long count = 0;
 		pageNavigator.posToStart();
+		
 		for(;;) {
-			boolean a = pageNavigator.posToNext((byte)'\n');
-			boolean b = pageNavigator.nextPos();
-			boolean posChanged = a || b;
+			pageNavigator.posToNext(delim);
+			boolean posChanged = pageNavigator.nextPos();
 			if(!posChanged) {
+				// we may be on the last byte or one beyond
+				endsOnDelim = !pageNavigator.isPosAfterEnd();				
+				if(endsOnDelim) {
+					++count;
+				}
 				break;
 			}
-			++result;
+			++count;
 		}
 
-		return result;
+		return Maps.immutableEntry(count, endsOnDelim);
 	}
 	
-	public static long wcBwd(PageNavigator pageNavigator) throws IOException {
-		System.out.println("Thread: " + Thread.currentThread());
-		long result = 0;
+	/**
+	 * Return the line count and whether the first position was a newline
+	 * 
+	 * @param pageNavigator
+	 * @return
+	 * @throws IOException
+	 */
+	public static Entry<Long, Boolean> wcBwd(PageNavigator pageNavigator) throws IOException {
+//		System.out.println("Thread: " + Thread.currentThread());
+		byte delim = (byte)'\n';
+
+		long count = 0;
+
 		pageNavigator.posToEnd();
 		pageNavigator.prevPos();
+		
+		//boolean startsOnDelim = !pageNavigator.isPosBeforeStart() && pageNavigator.get() == delim;
+		boolean endsOnDelim = false;
 	
 		for(;;) {
-			boolean a = pageNavigator.prevPos();
 			// Pos to prev can move one character before the stream if the char is not found
-			boolean b = pageNavigator.posToPrev((byte)'\n');
-			boolean posChanged = a || b;
+			pageNavigator.posToPrev(delim);
+			//byte bAt = pageNavigator.get();
+			//System.out.println("Got byte: " + bAt + " at " + pageNavigator.getPos());
+			boolean posChanged = pageNavigator.prevPos();
 			if(!posChanged) {
+				endsOnDelim = !pageNavigator.isPosBeforeStart();
+				if(endsOnDelim) {
+					++count;
+				}
 				break;
 			}
-			++result;
+
+			++count;
 		}
 		
-		return result;
+		return Maps.immutableEntry(count, endsOnDelim);
 	}
 	
 	
@@ -56,39 +95,139 @@ public class MainPlaygroundScanFile {
 		Path path = Paths.get("/home/raven/Projects/Eclipse/sparql-integrate-parent/ngs/test2.nq");
 //		Path path = Paths.get("/tmp/test.txt");
 
+		String str1 = "\n   "
+				   + "   \n"
+				   + "  \n "
+				   + "   \n"
+				   ;
+
+		String str = " \n  "
+				   + "   \n"
+				   + "  \n "
+				   + "   \n"
+				   ;
+		
+		// The first newline in a chunk does not count, unless the preceeding chunk ended on a newline
+		// Conversely: If the previous chunk does not end in a newline, subtract one from the chunk's count 
+		
+//		String str = "  \n "
+//				   + "  \n "
+//				   + "  \n "
+//				   + "  \n "
+//				   ;
+
 		try(FileChannel fileChannel = FileChannel.open(path, StandardOpenOption.READ)) {
 			PageManager pageManager = PageManagerForFileChannel.create(fileChannel);
+//			PageManager pageManager = new PageManagerForByteBuffer(ByteBuffer.wrap(str.getBytes()));
 			
-			long size = fileChannel.size();			
-			int n = 32;
+			long size = pageManager.getEndPos();
+			//long size = fileChannel.size();			
+			int numChunks = 4; //32;
+			boolean fwd = true;
+			int numRuns = 5;
+
+			long chunkSize = size / numChunks;
+			int remainder = (int)size % numChunks;
 			
-			long chunkSize = size / n;
-			List<PageNavigator> navs = new ArrayList<>();
-			for(int i = 0; i < n; ++i) {
-				long start = i * chunkSize;
-				long end = i + 1 != n ? start + chunkSize : size;
-				
-				navs.add(new PageNavigator(pageManager, start, end));
+			Map<Integer, PageNavigator> navs = new HashMap<>();
+			long start = 0;
+			for(int i = 0; i < numChunks; ++i) {
+				long extra = i < remainder ? 1 : 0;
+				long end = start + chunkSize + extra;
+//				System.out.println("Chunk: " + start + " -> " + end);
+				navs.put(i, new PageNavigator(pageManager, start, end));
+				start = end;
 			}
 
-			for(int i = 0; i < 5; ++i) {
+				
+			for(int i = 0; i < numRuns; ++i) {
 				Stopwatch sw = Stopwatch.createStarted();
 
+				List<Entry<Integer, PageNavigator>> ready = navs.entrySet().stream()
+						.sorted((a, b) -> (a.getKey() - b.getKey()) * (fwd ? 1 : -1))
+						.collect(Collectors.toList());
+								
 				// TODO Counts are not yet exact because of lack of boundary handling
-				long rawCount = navs.parallelStream()
-					.mapToLong(t -> {
+				List<Entry<Integer, Entry<Long, Boolean>>> contribs = ready.parallelStream()
+					.map(e -> {
 						try {
-							return wcBwd(t);
-						} catch (IOException e) {
-							throw new RuntimeException(e);
+							Entry<Long, Boolean> f = fwd
+									? wcFwd(e.getValue())
+									: wcBwd(e.getValue());
+							return Maps.immutableEntry(e.getKey(), f);
+						} catch (IOException x) {
+							throw new RuntimeException(x);
 						}
 					})
-					.sum();
+					.sorted((a, b) -> (a.getKey() - b.getKey()) * (fwd ? 1 : -1))
+					.collect(Collectors.toList());
+
+// If the last chunk does not end on a newline, increase the count by 1
+				
+				
+				long count = contribs.stream().mapToLong(e -> e.getValue().getKey()).sum();
+				
+				boolean endsOnDelim = contribs.get(contribs.size() - 1).getValue().getValue();
+				if(!endsOnDelim) {
+					// TODO Only if the chunk is not empty
+					if(fwd) {
+						++count;
+					}
+				}
+				
+				System.out.println("Contribs: " + contribs + " raw sum: " + contribs.stream().mapToLong(e -> e.getValue().getKey()).sum());
+					//.collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+
+//				long count = 0;
+//				//Entry<Long, Boolean> before = Maps.immutableEntry(0l, true);
+//				boolean prevEndsOnDelim = true;
+//				for(int x = 0; x < contribs.size(); ++x) {
+//					Entry<Long, Boolean> contrib = contribs.get(x).getValue();
+//					long contribCount = contrib.getKey();					
+//					boolean endsOnDelim = contrib.getValue();
+//					
+//					boolean isLastChunk = x + 1 == contribs.size();
+//					if(!prevEndsOnDelim) {
+//						--contribCount;
+//					}
+////					if(!prevEndsOnDelim) {
+////						--contribCount;
+////					}
+////
+//					if(!fwd && isLastChunk) {
+//						if(!endsOnDelim) {
+//							--contribCount;
+//						}
+//					}
+//
+//					count += contribCount;
+//
+//
+//					prevEndsOnDelim = endsOnDelim;
+//				}
+
+				
+//				System.out.println("Contribs: " + contribs);
+//				long count = contribs.stream()
+//						.map(Entry::getValue)
+//						.reduce(Maps.immutableEntry(0l, true), (a, b) -> {
+//							long tmpCount = a.getKey() + b.getKey();
+//							// If fwd and prior chunk not ended on newline or
+//							// bwd and prior chunk started with newline
+//							if(fwd && !a.getValue() || (!fwd && a.getValue())) {
+//							//if(!a.getValue()) {
+//								--tmpCount;
+//							}
+//							
+//							return Maps.immutableEntry(tmpCount, b.getValue());
+//						})
+//						.getKey();
+//						;//.co
 					
 				//long count = rawCount - n + 1;
 					//.collect(Collectors.toList());
 				
-				System.out.println("fwd: " + rawCount + " " + sw.elapsed(TimeUnit.MILLISECONDS) * 0.001);
+				System.out.println("count, fwd=" + fwd + ": "  + count + " "+ sw.elapsed(TimeUnit.MILLISECONDS) * 0.001);
 			}
 //
 	

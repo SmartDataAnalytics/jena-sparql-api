@@ -74,7 +74,7 @@ public class PageManagerForFileChannel
 		return channelSize;
 	}
 	
-	public ByteBuffer getBufferForPage(long page) throws IOException {
+	public synchronized ByteBuffer getBufferForPage(long page) throws IOException {
         long start = page * pageSize;
         long end = Math.min(channelSize, start + pageSize);
         long length = end - start;

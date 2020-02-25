@@ -25,9 +25,12 @@ public class PageNavigator {
 	 * Initialization happens in getBufferForPage()
 	 */
 	protected ByteBuffer pageBuffer = null;
+	protected int displacement;
 	protected long bufferForPage = -1;
 	protected int absMaxIndexInPage;
 	protected int absMinIndexInPage;
+	protected int relMinIndexInPage;
+	protected int relMaxIndexInPage;
 	
 	
 	protected long minPos;
@@ -42,6 +45,13 @@ public class PageNavigator {
 		this(pageManager, 0, pageManager.getEndPos());
 	}
 
+	/**
+	 * 
+	 * 
+	 * @param pageManager
+	 * @param minPos inclusive
+	 * @param maxPos exclusive
+	 */
 	public PageNavigator(PageManager pageManager, long minPos, long maxPos) {
 		super();
 		
@@ -74,10 +84,24 @@ public class PageNavigator {
 		return result;
 	}
 	
+	public boolean isPosAfterEnd() {
+		boolean result = page > maxPage || (page == maxPage && index >= maxIndex);
+		return result;
+	}
+
+	public boolean isPosBeforeStart() {
+		boolean result = page < minPage || (page == minPage && index < minIndex);
+		return result;
+	}
+
 	public ByteBuffer getBufferForPage(long page) throws IOException {
 		if(page == bufferForPage) {
 			return pageBuffer;
 		} else {
+//			System.out.println("Loading page " + page);
+//			if(page == -1) {
+//				System.out.println("wtf");
+//			}
 			if(page < minPage || page > maxPage) {
 				return null;
 			}
@@ -87,13 +111,54 @@ public class PageNavigator {
 				pageBuffer = buf;
 				bufferForPage = page;
 			
-				int displacement = buf.position();
-				absMaxIndexInPage = page == maxPage ? displacement + maxIndex : buf.limit();
-				absMinIndexInPage = page == minPage ? displacement + minIndex : displacement;
+				displacement = buf.position();
+//				absMinIndexInPage = page == minPage ? displacement + minIndex : displacement;
+//				absMaxIndexInPage = page == maxPage ? displacement + maxIndex : buf.limit();
+			} else {
+				// Special case, where the position after the last byte
+				// is on the next page
+				// This leads to a dummy zero-size page
+				displacement = 0;
 			}
+
+			// updateRelCache(page);
+			
+			absMinIndexInPage = displacement + relMinIndexInPage;
+			absMaxIndexInPage = displacement + relMaxIndexInPage;
 			
 			return buf;
 		}
+	}
+	
+	/**
+	 * Update relative min and max index for the given page,
+	 * taking one byte before and after the selected range into account 
+	 * 
+	 * @param page
+	 */
+	public void updateRelCache(long page) {
+		relMinIndexInPage = getRelMinIndex(page);			
+		relMaxIndexInPage = getRelMaxIndex(page);
+	}
+
+	public int getRelMaxIndex(long page) {
+		int result = page < maxPage
+			? pageSize
+			: page == maxPage
+				? maxIndex
+				: 0;
+
+		return result;
+	}
+	
+	public int getRelMinIndex(long page) {
+		int result = page > minPage
+			? 0
+			: page == minPage
+				? minIndex
+				: pageSize - 1; // page < minPage
+
+		return result;
 	}
 
 	public ByteBuffer getBufferForPos(long pos) throws IOException {
@@ -113,20 +178,26 @@ public class PageNavigator {
 	}
 	
 	public void posToStart() {
-		page = minPage;
-		index = minIndex;
+		setPos(minPage, minIndex);
+
 //		page = minPage;
 //		index = minIndex;
 	}
 	
 	public void posToEnd() {
-		page = maxPage;
-		index = maxIndex;
+		setPos(maxPage, maxIndex);
+	}
+	
+	public void setPos(long page, int index) {
+		this.page = page;
+		this.index = index;
+		updateRelCache(page);
 	}
 	
 	public void setPos(long pos) {
 		page = getPageForPos(pos);
 		index = getIndexForPos(pos);
+		setPos(page, index);
 		// pageBuffer = getBufferForPage(page);
 	}
 
@@ -147,7 +218,7 @@ public class PageNavigator {
 	 */
 	public byte get() throws IOException {
 		ByteBuffer buf = getBufferForPage(page);
-		byte result = buf.get(index);
+		byte result = buf.get(displacement + index);
 		return result;
 	}
 
@@ -181,6 +252,26 @@ public class PageNavigator {
 		}
 	}
 	
+	public boolean canNextPos() {
+		if(index + 1 < relMaxIndexInPage) {
+			return true;
+		} else {
+			int nextRelMaxIndex = getRelMaxIndex(page + 1);
+			boolean result = nextRelMaxIndex > 0;
+			return result;
+		}
+	}
+
+	public boolean canPrevPos() {
+		if(index - 1 >= relMinIndexInPage) {
+			return true;
+		} else {
+			int nextRelMinIndex = getRelMinIndex(page - 1);
+			boolean result = nextRelMinIndex < pageSize - 1;
+			return result;
+		}
+	}
+
 	/**
 	 * Attempts to advance the position by 1 byte
 	 * and returns true if this succeeded.
@@ -190,56 +281,51 @@ public class PageNavigator {
 	 * @throws IOException
 	 */
 	public boolean nextPos() throws IOException {
-		ByteBuffer buf = getBufferForPage(page);
-		if(buf != null) {
-			// int r = page == maxPage ? maxIndex : pageSize; //buf.remaining();
-			if(index + 1 < absMaxIndexInPage) {
-				++index;
+		//getBufferForPage(page);
+//		getBufferForPage(page);
+
+		int nextIndex = index + 1;
+//		boolean isNextIndexInRange = page < maxPage
+//				? nextIndex < pageSize
+//				: nextIndex < maxIndex;
+		
+		if(nextIndex < relMaxIndexInPage) {
+			index = nextIndex;
+			return true;
+		} else {
+			ByteBuffer buf = getBufferForPage(page + 1);
+			if(buf != null) {
+				++page;
+				index = 0;
 				return true;
 			} else {
-				if(page >= maxPage) {
-					return false;
-				} else {
-					buf = getBufferForPage(page + 1);
-					if(buf != null) {
-						++page;
-						index = 0;
-						return true;
-					} else {
-						return false;
-					}
-				}
+				return false;
 			}
 		}
-		return false;
 	}
 	
 	public boolean prevPos() throws IOException {
-		ByteBuffer buf = getBufferForPage(page);
-		if(buf != null) {
-			int r = absMinIndexInPage; // page == minPage ? minIndex : 0; //buf.position();
-			if(index - 1 >= r) {
-				--index;
+		//getBufferForPage(page);
+		// getBufferForPage(page);
+
+		int prevIndex = index - 1;
+//		boolean isPrevIndexInRange = page > minPage
+//				? prevIndex > 0
+//				: prevIndex > minIndex;
+		
+		if(prevIndex >= relMinIndexInPage) {
+			index = prevIndex;
+			return true;
+		} else {
+			ByteBuffer buf = getBufferForPage(page - 1);
+			if(buf != null) {
+				--page;
+				index = pageSize - 1;
 				return true;
 			} else {
-				if(page <= minPage) {
-					return false;
-				} else {
-					buf = getBufferForPage(page - 1);
-					if(buf != null) {
-						--page;
-						index = pageSize - 1;
-						return true;
-					} else {
-						return false;
-					}
-				}
-//				} else {
-//					return false;
-//				}
+				return false;
 			}
 		}
-		return false;
 	}
 	
 //	public boolean prevPos() throws IOException {
@@ -276,7 +362,7 @@ public class PageNavigator {
 		ByteBuffer buffer;
 		outer: for(; (buffer = getBufferForPage(p)) != null; ++p) {
 			// int absMaxIndexInPage = page == maxPage ? maxIndex : buffer.limit();
-			int displacement = buffer.position();
+			//int displacement = buffer.position();
 			int absGetIndexInPage = displacement + i;
 
 			for(; absGetIndexInPage < absMaxIndexInPage; ++absGetIndexInPage) {
@@ -300,8 +386,7 @@ public class PageNavigator {
 		}
 		
 		if(i != index || p != page) {
-			page = p;
-			index = i;
+			setPos(p, i);
 			return true;
 		} else {
 			return false;
@@ -316,7 +401,7 @@ public class PageNavigator {
 		ByteBuffer buffer;
         outer: for(; (buffer = getBufferForPage(p)) != null; --p) {
 //			int relMinIndexInPage = page == minPage ? minIndex : 0;
-            int displacement = buffer.position();
+            //int displacement = buffer.position();
             int absGetIndexInPage = displacement + i;
 //            int absMinIndexInPage = displacement + relMinIndexInPage;
             
@@ -341,8 +426,7 @@ public class PageNavigator {
         }
 		
 		if(i != index || p != page) {
-			page = p;
-			index = i;
+			setPos(p, i);
 			return true;
 		} else {
 			return false;
@@ -442,7 +526,7 @@ public class PageNavigator {
 		ByteBuffer buffer;
 		int delta = index;
 		for(long p = page; x < len && (buffer = getBufferForPage(p)) != null; ++p) {
-			int displacement = buffer.position();
+			//int displacement = buffer.position();
 			int absMaxIndexInPage = buffer.limit(); //buffer.remaining();
 			//int absGetIndexInPage = displacement + delta;
 			for(int i = displacement + delta; i < absMaxIndexInPage && x < len; ++i, ++x) {
