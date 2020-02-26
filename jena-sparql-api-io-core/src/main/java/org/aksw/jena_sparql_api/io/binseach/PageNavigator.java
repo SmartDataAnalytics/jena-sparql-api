@@ -219,6 +219,7 @@ public class PageNavigator {
 	public byte get() throws IOException {
 		ByteBuffer buf = getBufferForPage(page);
 		byte result = buf.get(displacement + index);
+//		byte result = pageBuffer.get(displacement + index);
 		return result;
 	}
 
@@ -231,26 +232,26 @@ public class PageNavigator {
 //	}
 
 	
-	public boolean hasMoreData() throws IOException {
-		ByteBuffer buf = getBufferForPage(page);
-		if(buf != null) {
-			int o = buf.position();
-			int r = buf.limit(); //buf.remaining();
-			if(o + index + 1 < r) {
-				return true;
-			} else { // index >= r
-				buf = getBufferForPage(page + 1);
-				if(buf != null) {
-					int r2 = buf.remaining();
-					return r2 > 0;
-				} else {
-					return false;
-				}
-			}
-		} else {
-			return false;
-		}
-	}
+//	public boolean hasMoreData() throws IOException {
+//		ByteBuffer buf = getBufferForPage(page);
+//		if(buf != null) {
+//			int o = buf.position();
+//			int r = buf.limit(); //buf.remaining();
+//			if(o + index + 1 < r) {
+//				return true;
+//			} else { // index >= r
+//				buf = getBufferForPage(page + 1);
+//				if(buf != null) {
+//					int r2 = buf.remaining();
+//					return r2 > 0;
+//				} else {
+//					return false;
+//				}
+//			}
+//		} else {
+//			return false;
+//		}
+//	}
 	
 	public boolean canNextPos() {
 		if(index + 1 < relMaxIndexInPage) {
@@ -272,6 +273,10 @@ public class PageNavigator {
 		}
 	}
 
+	public boolean nextPos() throws IOException {
+		return nextPos(1);
+	}
+	
 	/**
 	 * Attempts to advance the position by 1 byte
 	 * and returns true if this succeeded.
@@ -280,11 +285,11 @@ public class PageNavigator {
 	 * @return
 	 * @throws IOException
 	 */
-	public boolean nextPos() throws IOException {
+	public boolean nextPos(int delta) throws IOException {
 		//getBufferForPage(page);
 //		getBufferForPage(page);
 
-		int nextIndex = index + 1;
+		int nextIndex = index + delta;
 //		boolean isNextIndexInRange = page < maxPage
 //				? nextIndex < pageSize
 //				: nextIndex < maxIndex;
@@ -293,10 +298,23 @@ public class PageNavigator {
 			index = nextIndex;
 			return true;
 		} else {
-			ByteBuffer buf = getBufferForPage(page + 1);
+			boolean simpleDelta = delta < pageSize; // avoid division
+			long tgtPage;
+			int tgtIndex;
+			if(simpleDelta) {
+				tgtPage = page + 1;
+				tgtIndex = nextIndex - relMaxIndexInPage;
+			} else {
+				long p = getPos() + delta;
+				tgtPage = getPageForPos(p);
+				tgtIndex = getIndexForPos(p);
+			}
+			
+			ByteBuffer buf = getBufferForPage(tgtPage);
 			if(buf != null) {
-				++page;
-				index = 0;
+				page = tgtPage;
+				index = tgtIndex;
+				setPos(page, index);
 				return true;
 			} else {
 				return false;
@@ -305,10 +323,14 @@ public class PageNavigator {
 	}
 	
 	public boolean prevPos() throws IOException {
+		return prevPos(1);
+	}
+	
+	public boolean prevPos(int delta) throws IOException {
 		//getBufferForPage(page);
 		// getBufferForPage(page);
 
-		int prevIndex = index - 1;
+		int prevIndex = index - delta;
 //		boolean isPrevIndexInRange = page > minPage
 //				? prevIndex > 0
 //				: prevIndex > minIndex;
@@ -317,10 +339,25 @@ public class PageNavigator {
 			index = prevIndex;
 			return true;
 		} else {
-			ByteBuffer buf = getBufferForPage(page - 1);
+			boolean simpleDelta = delta < pageSize; // avoid division
+			long tgtPage;
+			int tgtIndex;
+			if(simpleDelta) {
+				tgtPage = page - 1;
+				tgtIndex = pageSize - (relMinIndexInPage - prevIndex);
+			} else {
+				long p = getPos() + delta;
+				tgtPage = getPageForPos(p);
+				tgtIndex = getIndexForPos(p);
+			}
+			ByteBuffer buf = getBufferForPage(tgtPage);
 			if(buf != null) {
-				--page;
-				index = pageSize - 1;
+				page = tgtPage;
+				index = tgtIndex;
+				setPos(page, index);
+
+//				--page;
+//				index = pageSize - 1;
 				return true;
 			} else {
 				return false;
@@ -344,6 +381,7 @@ public class PageNavigator {
 //		}
 //	}
 
+	
 	/**
 	 * Advances the position to the next matching delimiter or
 	 * one byte past the end of the stream.
@@ -538,4 +576,22 @@ public class PageNavigator {
 		
 		return x;
 	}
+	
+	
+	// Convenience method
+	public String readLine() throws IOException {
+		long start = getPos();
+		posToNext((byte)'\n');
+		long end = getPos();
+		
+		setPos(start);
+		int len = (int)(end - start);
+		byte[] arr = new byte[len];
+		readBytes(arr, 0, len);
+		String result = new String(arr);
+		return result;
+	}
+	
+	
+	
 }
