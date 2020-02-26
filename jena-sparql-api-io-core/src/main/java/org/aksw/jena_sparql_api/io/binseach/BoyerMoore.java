@@ -23,7 +23,9 @@ class BoyerMoore {
 	 * @param pattern
 	 * @param m
 	 */
-	public static void preprocess_strong_suffix(int[] shift, int[] bpos, byte[] pattern, int m) {
+	public static void preprocess_strong_suffix(int[] shift, int[] bpos, byte[] pattern) {
+		int m = pattern.length;
+
 		// m is the length of pattern
 		int i = m, j = m + 1;
 		bpos[i] = j;
@@ -39,8 +41,9 @@ class BoyerMoore {
 				 * the mismatching character in P, we stop skipping the occurrences and shift
 				 * the pattern from i to j
 				 */
-				if (shift[j] == 0)
+				if (shift[j] == 0) {
 					shift[j] = j - i;
+				}
 
 				// Update the position of next border
 				j = bpos[j];
@@ -63,7 +66,9 @@ class BoyerMoore {
 	 * @param pat
 	 * @param m
 	 */
-	public static void preprocess_case2(int[] shift, int[] bpos, byte[] pat, int m) {
+	public static void preprocess_case2(int[] shift, int[] bpos, byte[] pat) {
+		int m = pat.length;
+
 		int i, j;
 		j = bpos[0];
 		for (i = 0; i <= m; i++) {
@@ -71,15 +76,17 @@ class BoyerMoore {
 			 * set the border position of the first character of the pattern to all indices
 			 * in array shift having shift[i] = 0
 			 */
-			if (shift[i] == 0)
+			if (shift[i] == 0) {
 				shift[i] = j;
+			}
 
 			/*
 			 * suffix becomes shorter than bpos[0], use the position of next widest border
 			 * as value of j
 			 */
-			if (i == j)
+			if (i == j) {
 				j = bpos[j];
+			}
 		}
 	}
 
@@ -102,8 +109,8 @@ class BoyerMoore {
 			shift[i] = 0;
 
 		// do preprocessing
-		preprocess_strong_suffix(shift, bpos, pat, m);
-		preprocess_case2(shift, bpos, pat, m);
+		preprocess_strong_suffix(shift, bpos, pat);
+		preprocess_case2(shift, bpos, pat);
 
 		long result = -1;
 		while (s <= n - m) {
@@ -158,8 +165,8 @@ class BoyerMoore {
 			shift[i] = 0;
 
 		// do preprocessing
-		preprocess_strong_suffix(shift, bpos, pat, m);
-		preprocess_case2(shift, bpos, pat, m);
+		preprocess_strong_suffix(shift, bpos, pat);
+		preprocess_case2(shift, bpos, pat);
 
 		long result = -1;
 		while (s >= m) {
@@ -205,9 +212,11 @@ class BoyerMoore {
 		
 		
 		byte[] text = "ABAAAABAACDABA".getBytes();
-		byte[] pat = "ABA".getBytes();
-		//long pos = searchForwardSimple(text, pat);
-		long pos = searchBackwards(text, text.length, pat);
+		byte[] pat = "AAACD".getBytes();
+
+		long pos = searchForwardSimple(text, pat);
+//		byte[] pat = "ABA".getBytes();
+		//long pos = searchBackwards(text, text.length, pat);
 		System.out.println(pos);
 	}
 }

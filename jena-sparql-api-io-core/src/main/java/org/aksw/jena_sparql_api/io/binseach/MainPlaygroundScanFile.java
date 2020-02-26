@@ -1,6 +1,7 @@
 package org.aksw.jena_sparql_api.io.binseach;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -92,6 +93,14 @@ public class MainPlaygroundScanFile {
 	
 
 	public static void main(String[] args) throws IOException {
+		
+//		if(true) {
+//			byte x = -5;
+//			System.out.println(x & 0xff);
+//			
+//			return;
+//		}
+		
 		String str = "aaaabbbbccccdddd";
 		
 		// Simulate access to the string using multiple pages
@@ -100,8 +109,10 @@ public class MainPlaygroundScanFile {
 
 		try(FileChannel fileChannel = FileChannel.open(path, StandardOpenOption.READ)) {
 			PageManager pageManager = PageManagerForFileChannel.create(fileChannel);
-	
-			//PageManager pageManager = new PageManagerForByteBuffer(ByteBuffer.wrap(str.getBytes()));
+
+			byte[] text = "ABAAAABAACDABA".getBytes(); 
+//			byte[] text = "BAACDABA".getBytes(); 
+//			pageManager = new PageManagerForByteBuffer(ByteBuffer.wrap(text));
 //			pageManager = new PageManagerWrapper(pageManager, 0, pageManager.getPageSize() / 4);
 //			pageManager = new PageManagerWrapper(pageManager, 0, pageManager.getPageSize());
 			
@@ -109,16 +120,23 @@ public class MainPlaygroundScanFile {
 			nav.posToStart();
 			//nav.nextPos();
 			
-			String pattern = "t%2FP625%3E++%3Fvar4+.%0";
+//			String pattern = "t%2FP625%3E++%3Fvar4+.%0";
+			String pattern = "SELECT";
+//			String pattern = "AACD";
+//			String pattern = "BAA";
 			//String pattern = "cddd".getBytes();
-			BoyerMooreMatcher matcher = BoyerMooreMatcher.create(pattern.getBytes());
+			
+			byte[] patternBytes = pattern.getBytes();
+			BoyerMooreMatcher matcher = BoyerMooreMatcher.create(patternBytes);
+			// nav.setPos(patternBytes.length);
 			
 			Stopwatch sw = Stopwatch.createStarted();
 			int matchCnt = 0;
 			while(matcher.searchFwd(nav)) {
-				//String line = nav.readLine();
 				++matchCnt;
-				//System.out.println("Pos after match: " + nav.getPos() + " " + line);				
+//				System.out.println("Got match");
+//				String line = nav.readLine();
+//				System.out.println("Pos after match: " + nav.getPos() + " " + line);				
 			}
 			System.out.println("Got " + matchCnt + " matches in " + sw.elapsed(TimeUnit.MILLISECONDS) * 0.001);
 			
