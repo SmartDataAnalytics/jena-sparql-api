@@ -1,5 +1,7 @@
 package org.aksw.jena_sparql_api.io.binseach;
 
+import org.apache.jena.ext.com.google.common.primitives.Bytes;
+
 public class BoyerMooreByteFromWikipedia {
     /**
      * Returns the index within this string of the first occurrence of the
@@ -35,12 +37,14 @@ public class BoyerMooreByteFromWikipedia {
         int[] table = new int[ALPHABET_SIZE];
 
         for (int i = 0; i < ALPHABET_SIZE; i++) {
-            table[i] = m;
+            //table[i] = m;
+        	table[i] = -1;
         }
         for (int i = 0; i < m - 1; i++) {
         	int value = pattern[i] & 0xff; // & 0xff -> get unsigned int value of the byte
-        	int shift = m - 1 - i;
-            table[value] = shift;
+//        	int shift = m - 1 - i;
+//            table[value] = shift;
+        	table[value] = i;
         }
         return table;
     }
@@ -67,23 +71,68 @@ public class BoyerMooreByteFromWikipedia {
      * Makes the jump table based on the scan offset which mismatch occurs.
      * (bad character rule).
      */
+//    public static int[] createGoodSuffixTable(byte[] pattern) {
+//    	int m = pattern.length;
+//        int[] table = new int[m];
+//        int lastPrefixPosition = m;
+//        for (int i = m; i > 0; --i) {
+//            if (isPrefix(pattern, i)) {
+//                lastPrefixPosition = i;
+//            }
+//            table[m - i] = lastPrefixPosition - i + m;
+//        }
+//        for (int i = 0; i < m - 1; ++i) {
+//            int slen = suffixLength(pattern, i);
+//            table[m - 1 - slen] = m - 1 - i + slen;
+//        }
+//        return table;
+//    }
+
     public static int[] createGoodSuffixTable(byte[] pattern) {
     	int m = pattern.length;
-        int[] table = new int[m];
-        int lastPrefixPosition = m;
-        for (int i = m; i > 0; --i) {
-            if (isPrefix(pattern, i)) {
-                lastPrefixPosition = i;
-            }
-            table[m - i] = lastPrefixPosition - i + m;
+        int[] f = new int[m + 1];
+        int[] s = new int[m + 1];
+        
+        int i = m;
+        int j = m + 1;
+        f[i] = j;
+        //int i = m;
+        //for(int i = m - 1; i >= 0; --i) {
+        while(i > 0) {
+        	// https://www.inf.hs-flensburg.de/lang/algorithmen/pattern/bmen.htm
+        	while(j <= m && pattern[i - 1] != pattern[j - 1]) {
+        		if(s[j] == 0) {
+        			s[j] = j - i;
+        		}
+    			j = f[j];
+        	}
+        	--i;
+        	--j;
+        	f[i] = j;
+        	
+//            if (isPrefix(pattern, i)) {
+//                lastPrefixPosition = i;
+//            }
+            //table[i] = lastPrefixPosition;
+            //table[m - i] = j - i + m;
         }
-        for (int i = 0; i < m - 1; ++i) {
-            int slen = suffixLength(pattern, i);
-            table[m - 1 - slen] = m - 1 - i + slen;
+        
+        j = f[0];
+        for(i = 0; i <= m; ++i) {
+        	if(s[i] == 0) {
+        		s[i] = j;
+        	}
+        	
+        	if(i == j) {
+        		j = f[j];
+        	}
         }
-        return table;
+//        for (int i = 0; i < m - 1; ++i) {
+//            int slen = suffixLength(pattern, i);
+//            table[m - 1 - slen] = m - 1 - i + slen;
+//        }
+        return s;
     }
-
     
     /**
      * Makes the jump table based on the scan offset which mismatch occurs.
@@ -133,10 +182,10 @@ public class BoyerMooreByteFromWikipedia {
     /**
      * Is needle[p:end] a prefix of needle?
      */
-    public static boolean isPrefix(byte[] needle, int p) {
-    	int m = needle.length;
+    public static boolean isPrefix(byte[] pattern, int p) {
+    	int m = pattern.length;
         for (int i = p, j = 0; i < m; ++i, ++j) {
-            if (needle[i] != needle[j]) {
+            if (pattern[i] != pattern[j]) {
                 return false;
             }
         }

@@ -1,7 +1,7 @@
 package org.aksw.jena_sparql_api.io.binseach;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
+import java.math.BigInteger;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -106,11 +106,12 @@ public class MainPlaygroundScanFile {
 		// Simulate access to the string using multiple pages
 		// FIXME Disposition is broken and therefore 0 for now
 		Path path = Paths.get("/home/raven/Projects/Eclipse/sparql-integrate-parent/ngs/test2.nq");
+//		Path path = Paths.get("/home/raven/Downloads/2015-11-02-Amenity.node.sorted.nt.bz2");
 
 		try(FileChannel fileChannel = FileChannel.open(path, StandardOpenOption.READ)) {
 			PageManager pageManager = PageManagerForFileChannel.create(fileChannel);
 
-			byte[] text = "ABAAAABAACDABA".getBytes(); 
+			byte[] text = "ABAAAABAACDABA".getBytes();
 //			byte[] text = "BAACDABA".getBytes(); 
 //			pageManager = new PageManagerForByteBuffer(ByteBuffer.wrap(text));
 //			pageManager = new PageManagerWrapper(pageManager, 0, pageManager.getPageSize() / 4);
@@ -124,22 +125,32 @@ public class MainPlaygroundScanFile {
 			String pattern = "SELECT";
 //			String pattern = "AACD";
 //			String pattern = "BAA";
+//			String pattern = "ABA";
 			//String pattern = "cddd".getBytes();
 			
 			byte[] patternBytes = pattern.getBytes();
+			
+			//.compressed_magic:48 0x314159265359 (BCD (pi))
+			//
+//			patternBytes = new BigInteger("425a6839", 16).toByteArray();
+//			patternBytes = new BigInteger("314159265359", 16).toByteArray();
 			BoyerMooreMatcher matcher = BoyerMooreMatcher.create(patternBytes);
 			// nav.setPos(patternBytes.length);
 			
+			for(int xx = 0; xx < 3; ++xx) {
 			Stopwatch sw = Stopwatch.createStarted();
+			matcher.reset();
+			nav.posToStart();
 			int matchCnt = 0;
 			while(matcher.searchFwd(nav)) {
 				++matchCnt;
-//				System.out.println("Got match");
+//				System.out.println("Got match at pos " + nav.getPos());
 //				String line = nav.readLine();
 //				System.out.println("Pos after match: " + nav.getPos() + " " + line);				
 			}
+			System.out.println("Nav at pos: " + nav.getPos());
 			System.out.println("Got " + matchCnt + " matches in " + sw.elapsed(TimeUnit.MILLISECONDS) * 0.001);
-			
+			}
 			if(true) {
 				return;
 			}

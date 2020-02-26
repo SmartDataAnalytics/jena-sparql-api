@@ -54,6 +54,10 @@ public class BoyerMooreMatcher {
 //		return new BoyerMooreMatcher(pat, bpos, shift);
 	}
 	
+	public void reset() {
+		this.returningFromMatch = false;
+	}
+	
 	
 	public boolean searchFwd(PageNavigator pn) throws IOException {
 		
@@ -67,10 +71,15 @@ public class BoyerMooreMatcher {
 //				return false;
 //			}
 ////			System.out.println("Now at: " + pn.getPos());
-			start += m;
+			//start += m; // + goodSuffixTable[0];
+			//start += 1;
+			start += goodSuffixTable[0];
 		}
+		//start += m - 1;
 		start += m - 1;
-		pn.nextPos(start);
+		if(!pn.nextPos(start)) {
+			return false;
+		}
 		
 
 		while(true) {
@@ -88,6 +97,9 @@ public class BoyerMooreMatcher {
 //				break;
 //			}
 	
+//			if(pn.getPos() > 5) {
+//				System.out.println("Greater");
+//			}
 			/*
 			 * Keep reducing index j of pattern while characters of pattern and text are
 			 * matching at this shift s
@@ -126,14 +138,27 @@ public class BoyerMooreMatcher {
 				// The bytes we have to go back in order to reach the position
 				// from where we started matching 
 				int backtrack = m - 1 - j;
-				int rawCharShift = badCharacterTable[byteAtPos & 0xff];
-				int charShift = backtrack + rawCharShift;
-				int suffixShift = goodSuffixTable[j];
-				
+				int charShiftEntry = badCharacterTable[byteAtPos & 0xff];
+//				if(j == 0) {
+//					System.out.println("wtf");
+//				}
+				int suffixEntry = goodSuffixTable[j + 1];
+				int suffixShift = suffixEntry;
+				//int charShift = backtrack + charShiftEntry;
+				int charShift = backtrack + j - charShiftEntry;
+
 				int effectiveShift = charShift > suffixShift
 						? charShift
 						: suffixShift;
 				
+				if(effectiveShift == suffixShift && effectiveShift != charShift) {
+//					System.out.println("Used suffix shift");
+				}
+//				effectiveShift = charShift;
+				effectiveShift += backtrack;
+				
+				
+				//effectiveShift += backtrack;
 				if(!pn.nextPos(effectiveShift)) {
 					break;
 				}
