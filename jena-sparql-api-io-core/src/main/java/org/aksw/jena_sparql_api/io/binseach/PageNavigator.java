@@ -549,6 +549,7 @@ public class PageNavigator {
 	}
 	
 	/**
+	 * Reads bytes at the current position; does not advance pos
 	 * 
 	 * @param n
 	 * @return

@@ -1,9 +1,7 @@
 package org.aksw.jena_sparql_api.io.binseach;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -98,39 +96,55 @@ public class MainPlaygroundScanFile {
 		
 		// Simulate access to the string using multiple pages
 		// FIXME Disposition is broken and therefore 0 for now
-		PageManager pageManager = new PageManagerForByteBuffer(ByteBuffer.wrap(str.getBytes()));
-		pageManager = new PageManagerWrapper(pageManager, 0, pageManager.getPageSize() / 4);
-		pageManager = new PageManagerWrapper(pageManager, 0, pageManager.getPageSize());
-		
-		PageNavigator nav = new PageNavigator(pageManager);
-		nav.posToStart();
-		//nav.nextPos();
-		
-		BoyerMooreMatcher matcher = BoyerMooreMatcher.create("cddd".getBytes());
-		matcher.searchFwd(nav);
-		String line = nav.readLine();
-		
-		System.out.println("Pos after match: " + nav.getPos() + " " + line);
-		
-		
-		
-		for(int i = 0; i < str.length(); ++i) {
-			System.out.println(i);
+		Path path = Paths.get("/home/raven/Projects/Eclipse/sparql-integrate-parent/ngs/test2.nq");
+
+		try(FileChannel fileChannel = FileChannel.open(path, StandardOpenOption.READ)) {
+			PageManager pageManager = PageManagerForFileChannel.create(fileChannel);
+	
+			//PageManager pageManager = new PageManagerForByteBuffer(ByteBuffer.wrap(str.getBytes()));
+//			pageManager = new PageManagerWrapper(pageManager, 0, pageManager.getPageSize() / 4);
+//			pageManager = new PageManagerWrapper(pageManager, 0, pageManager.getPageSize());
+			
+			PageNavigator nav = new PageNavigator(pageManager);
 			nav.posToStart();
-			nav.nextPos();
-			nav.nextPos(i);
+			//nav.nextPos();
 			
-			System.out.println("got: " + (char)nav.get());
-		}
-		
-//		for(int i = str.length(); i >= 0; --i) {
-		for(int i = 4; i >= 0; --i) {
-			System.out.println(i);
-			nav.posToEnd();
-			nav.prevPos();
-			nav.prevPos(i);
+			String pattern = "t%2FP625%3E++%3Fvar4+.%0";
+			//String pattern = "cddd".getBytes();
+			BoyerMooreMatcher matcher = BoyerMooreMatcher.create(pattern.getBytes());
 			
-			System.out.println("got: " + (char)nav.get());
+			Stopwatch sw = Stopwatch.createStarted();
+			int matchCnt = 0;
+			while(matcher.searchFwd(nav)) {
+				//String line = nav.readLine();
+				++matchCnt;
+				//System.out.println("Pos after match: " + nav.getPos() + " " + line);				
+			}
+			System.out.println("Got " + matchCnt + " matches in " + sw.elapsed(TimeUnit.MILLISECONDS) * 0.001);
+			
+			if(true) {
+				return;
+			}
+			
+			
+			for(int i = 0; i < str.length(); ++i) {
+				System.out.println(i);
+				nav.posToStart();
+				nav.nextPos();
+				nav.nextPos(i);
+				
+				System.out.println("got: " + (char)nav.get());
+			}
+			
+	//		for(int i = str.length(); i >= 0; --i) {
+			for(int i = 4; i >= 0; --i) {
+				System.out.println(i);
+				nav.posToEnd();
+				nav.prevPos();
+				nav.prevPos(i);
+				
+				System.out.println("got: " + (char)nav.get());
+			}
 		}
 	}
 	

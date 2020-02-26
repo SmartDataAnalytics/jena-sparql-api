@@ -8,6 +8,8 @@ public class BoyerMooreMatcher {
 	protected int[] shift;
 	protected int m; // pattern length
 
+	protected boolean returningFromMatch = false;
+	
 	public BoyerMooreMatcher(byte[] pat, int[] bpos, int[] shift, int m) {
 		super();
 		this.pat = pat;
@@ -37,7 +39,13 @@ public class BoyerMooreMatcher {
 	}
 	
 	
-	public void searchFwd(PageNavigator pn) throws IOException {		
+	public boolean searchFwd(PageNavigator pn) throws IOException {
+		
+		if(returningFromMatch) {
+			int delta = shift[0];
+			pn.nextPos(delta);
+		}
+
 		while(pn.canNextPos()) {
 			int j = m - 1;
 
@@ -68,8 +76,9 @@ public class BoyerMooreMatcher {
 			 */
 			//if (j < 0) {
 			if(isMatch) {
+				returningFromMatch = true;
 				// pn.nextPos();
-				break;
+				return true;
 //				System.out.printf("pattern occurs at shift = %d\n", s);
 //				s += shift[0];
 			} else {
@@ -87,6 +96,7 @@ public class BoyerMooreMatcher {
 			}
 		}
 		
+		return false;
 		//return result;
 	}
 //	public static searchBackwards(ByteBufferSupplier pager, long pos) {
