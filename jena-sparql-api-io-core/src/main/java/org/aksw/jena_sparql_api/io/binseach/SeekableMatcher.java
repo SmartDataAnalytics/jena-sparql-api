@@ -26,7 +26,7 @@ public interface SeekableMatcher {
 	boolean isForward();
 	
 	/**
-	 * Reset thet state of the matcher such that it can be used with a fresh seekable
+	 * Reset the state of the matcher such that it can be used with a fresh seekable
 	 * 
 	 */
 	void resetState();

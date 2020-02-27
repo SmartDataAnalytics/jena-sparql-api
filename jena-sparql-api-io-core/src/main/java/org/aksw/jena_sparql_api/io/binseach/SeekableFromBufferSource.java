@@ -24,7 +24,13 @@ public class SeekableFromBufferSource
 		if(currentBlock != null) {
 			n = Math.min(dst.remaining(), currentBlock.data.length - index);
 			dst.put(currentBlock.data, index, n);
-			nextPos(n);
+			if(!nextPos(n)) {
+				// If we reached the end, force the position to the end
+				// TODO Avoid doing nextPos twice; add a method to force immediatly
+				nextPos(n - 1);
+				++index;
+				n = -1;
+			}
 		}
 		return n;
 		//PageNavigator.readRemaining(dst, src)
@@ -69,13 +75,14 @@ public class SeekableFromBufferSource
 
 	@Override
 	public boolean isPosBeforeStart() throws IOException {
-		// TODO Auto-generated method stub
-		return false;
+		boolean result = index < 0;
+		return result;
 	}
+
 	@Override
 	public boolean isPosAfterEnd() throws IOException {
-		// TODO Auto-generated method stub
-		return false;
+		boolean result = index >= currentBlock.blockSize();
+		return result;
 	}
 
 	@Override

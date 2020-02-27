@@ -47,6 +47,10 @@ public class BoyerMooreMatcher
 		return seekable.prevPos(delta);
 	}
 	
+	protected byte getByte(Seekable seekable) throws IOException {
+		return seekable.get();
+	}
+	
 	@Override
 	public boolean find(Seekable pn) throws IOException {
 		
@@ -72,7 +76,7 @@ public class BoyerMooreMatcher
 			 */
 //			System.out.println("pos: " + pn.getPos());
 			byte byteAtPos = 0;
-			while(j > 0 && pat[j] == (byteAtPos = pn.get())) {
+			while(j > 0 && pat[j] == (byteAtPos = getByte(pn))) {
 				--j;
 				prevPos(pn, 1);
 				// NOTE prevPos is assumed to always change position
@@ -81,7 +85,7 @@ public class BoyerMooreMatcher
 //				}
 			}
 			// If the final pattern character equals the one in the buffer, we have a match
-			boolean isMatch = j == 0 && pat[j] == (byteAtPos = pn.get());
+			boolean isMatch = j == 0 && pat[j] == (byteAtPos = getByte(pn));
 
 			/*
 			 * If the pattern is present at the current shift, then index j will become -1

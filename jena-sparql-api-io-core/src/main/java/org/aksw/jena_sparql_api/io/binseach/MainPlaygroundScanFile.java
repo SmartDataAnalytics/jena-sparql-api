@@ -1,9 +1,11 @@
 package org.aksw.jena_sparql_api.io.binseach;
 
 import java.io.BufferedReader;
+import java.io.DataInput;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
@@ -16,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 
 import org.apache.jena.ext.com.google.common.base.Stopwatch;
@@ -115,7 +118,7 @@ public class MainPlaygroundScanFile {
 			BufferSource bufferSource = BufferSourceBzip2.create(pagedSource);
 			
 			SeekableSource decodedViewSource = new SeekableSourceFromBufferSource(bufferSource);
-			Seekable decodedView = decodedViewSource.get(100000000);
+			Seekable decodedView = decodedViewSource.get(511604800);
 			
 //			decodedView.posToPrev(delimiter)
 			decodedView.posToNext((byte)'\n');
@@ -159,7 +162,8 @@ public class MainPlaygroundScanFile {
 
 		try(FileChannel fileChannel = FileChannel.open(path, StandardOpenOption.READ)) {
 			PageManager pageManager = PageManagerForFileChannel.create(fileChannel);
-
+			
+			
 			byte[] text = "ABAAAABAACDABA".getBytes();
 //			byte[] text = "BAACDABA".getBytes(); 
 //			pageManager = new PageManagerForByteBuffer(ByteBuffer.wrap(text));
