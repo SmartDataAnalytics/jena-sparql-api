@@ -55,6 +55,9 @@ public class PageNavigator
 	public PageNavigator clone() {
 		PageNavigator result = new PageNavigator(pageManager, minPos, maxPos);
 		
+		result.page = this.page;
+		result.index = this.index;
+		
 		result.pageBuffer = this.pageBuffer;
 		result.displacement = this.displacement;
 		result.bufferForPage = this.bufferForPage;
