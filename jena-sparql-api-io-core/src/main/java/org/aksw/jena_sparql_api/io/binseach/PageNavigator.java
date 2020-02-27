@@ -3,7 +3,9 @@ package org.aksw.jena_sparql_api.io.binseach;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-public class PageNavigator {
+public class PageNavigator
+	implements Seekable
+{
 	protected PageManager pageManager;
 
 	// Copy of pageManager.getPageSize()
@@ -36,7 +38,7 @@ public class PageNavigator {
 	protected long minPos;
 	protected long minPage;
 	protected int minIndex;
-	
+
 	protected long maxPos;
 	protected long maxPage;
 	protected int maxIndex;
@@ -84,11 +86,13 @@ public class PageNavigator {
 		return result;
 	}
 	
+	@Override
 	public boolean isPosAfterEnd() {
 		boolean result = page > maxPage || (page == maxPage && index >= maxIndex);
 		return result;
 	}
 
+	@Override
 	public boolean isPosBeforeStart() {
 		boolean result = page < minPage || (page == minPage && index < minIndex);
 		return result;
@@ -216,6 +220,7 @@ public class PageNavigator {
 	 * @return
 	 * @throws IOException
 	 */
+	@Override
 	public byte get() throws IOException {
 		ByteBuffer buf = getBufferForPage(page);
 		byte result = buf.get(displacement + index);
@@ -285,6 +290,7 @@ public class PageNavigator {
 	 * @return
 	 * @throws IOException
 	 */
+	@Override
 	public boolean nextPos(int delta) throws IOException {
 		//getBufferForPage(page);
 //		getBufferForPage(page);
@@ -322,9 +328,10 @@ public class PageNavigator {
 		}
 	}
 	
-	public boolean prevPos() throws IOException {
-		return prevPos(1);
-	}
+//	@Override
+//	public boolean prevPos() throws IOException {
+//		return prevPos(1);
+//	}
 	
 	public boolean prevPos(int delta) throws IOException {
 		//getBufferForPage(page);
@@ -394,6 +401,7 @@ public class PageNavigator {
 	 * @return
 	 * @throws IOException
 	 */
+	@Override
 	public boolean posToNext(byte delimiter) throws IOException {
 		long p = page;
 		int i = index;
@@ -431,8 +439,7 @@ public class PageNavigator {
 		}
 	}
 	
-	
-	
+	@Override
 	public boolean posToPrev(byte delimiter) throws IOException {
 		long p = page;
 		int i = index;
@@ -555,7 +562,8 @@ public class PageNavigator {
 	 * @return
 	 * @throws IOException
 	 */
-	public int readBytes(byte[] dst, int offset, int len) throws IOException {
+	@Override
+	public int peekNextBytes(byte[] dst, int offset, int len) throws IOException {
 		//long end = findFollowingDelimiter(pos, delimiter);
 
 		// TODO use this guava safe int feature
@@ -580,6 +588,7 @@ public class PageNavigator {
 	
 	
 	// Convenience method
+	// TODO Move to Seekables
 	public String readLine() throws IOException {
 		long start = getPos();
 		posToNext((byte)'\n');
@@ -588,9 +597,46 @@ public class PageNavigator {
 		setPos(start);
 		int len = (int)(end - start);
 		byte[] arr = new byte[len];
-		readBytes(arr, 0, len);
+		peekNextBytes(arr, 0, len);
 		String result = new String(arr);
 		return result;
+	}
+
+	@Override
+	public int read(ByteBuffer dst) throws IOException {
+		ByteBuffer buffer = getBufferForPage(page);
+
+		int n = 0;
+		if(buffer != null) {
+			ByteBuffer src = buffer.duplicate();
+			src.position(src.position() + index);
+			n = readRemaining(dst, src);
+			// Adjust limit of the source buffer, because
+			// ByteBuffer.put demands that dst's remaining size is not exceeded
+		}
+		nextPos(n);
+		return n;
+	}
+
+	// Copy as much as possible into dst
+	public static int readRemaining(ByteBuffer dst, ByteBuffer src) {
+		int n = Math.min(src.remaining(), dst.remaining());
+		src.limit(src.position() + n);
+		dst.put(src);
+
+		return n;
+	}
+	
+	@Override
+	public boolean isOpen() {
+		// TODO Auto-generated method stub
+		return true;
+	}
+
+	@Override
+	public void close() throws IOException {
+		// TODO Auto-generated method stub
+		
 	}
 	
 	

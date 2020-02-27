@@ -1,10 +1,11 @@
 package org.aksw.jena_sparql_api.io.binseach;
 
 import java.io.IOException;
-import java.nio.channels.SeekableByteChannel;
-import java.util.Arrays;
 
-public class BoyerMooreMatcher {
+public class BoyerMooreMatcher
+	implements SeekableMatcher
+{
+	protected boolean isFwd;
 	protected byte[] pat;
 	
 	/**
@@ -17,67 +18,47 @@ public class BoyerMooreMatcher {
 
 	protected boolean returningFromMatch = false;
 	
-	public BoyerMooreMatcher(byte[] pat, int[] badCharacter, int[] goodSuffix) {
+	
+	
+	public BoyerMooreMatcher(boolean isFwd, byte[] pat, int[] badCharacter, int[] goodSuffix) {
 		super();
+		this.isFwd = isFwd;
 		this.pat = pat;
 		this.badCharacterTable = badCharacter;
 		this.goodSuffixTable = goodSuffix;
 	}
 	
-	public static BoyerMooreMatcher create(byte[] pat) {
-		// s is shift of the pattern
-		// with respect to text
-		//long n = text.length;
-		int[] byteTable = BoyerMooreByteFromWikipedia.createBadCharacterTable(pat);
-		
-//		int[] argh = BoyerMooreByteFromWikipedia.makeOffsetTableFromC(pat);
-		int[] delta2 = BoyerMooreByteFromWikipedia.createGoodSuffixTable(pat);
-		
-		System.out.println(Arrays.toString(byteTable));
-//		System.out.println(Arrays.toString(argh));
-		System.out.println(Arrays.toString(delta2));
-		return new BoyerMooreMatcher(pat, byteTable, delta2);
-		
-		
-//		int[] bpos = new int[m + 1];
-//		int[] shift = new int[m + 1];
-//
-//		// initialize all occurrence of shift to 0
-//		for (int i = 0; i < m + 1; i++) {
-//			shift[i] = 0;
-//		}
-//
-//		// do preprocessing
-//		BoyerMoore.preprocess_strong_suffix(shift, bpos, pat);
-//		BoyerMoore.preprocess_case2(shift, bpos, pat);
-//		
-//		return new BoyerMooreMatcher(pat, bpos, shift);
-	}
-	
-	public void reset() {
+
+	@Override
+	public void resetState() {
 		this.returningFromMatch = false;
 	}
 	
+	@Override
+	public boolean isForward() {
+		return true;
+	}
+
+	protected boolean nextPos(Seekable seekable, int delta) throws IOException {
+		return seekable.nextPos(delta);
+	}
+
+	protected boolean prevPos(Seekable seekable, int delta) throws IOException {
+		return seekable.prevPos(delta);
+	}
 	
-	public boolean searchFwd(PageNavigator pn) throws IOException {
+	@Override
+	public boolean find(Seekable pn) throws IOException {
 		
 		int m = pat.length;
 
 		int start = 0;
 		if(returningFromMatch) {
-//			System.out.println("Returning at: " + pn.getPos());
-//			int delta = pat.length;//shift[0];
-//			if(!pn.nextPos(delta)) {
-//				return false;
-//			}
-////			System.out.println("Now at: " + pn.getPos());
-			//start += m; // + goodSuffixTable[0];
-			//start += 1;
 			start += goodSuffixTable[0];
 		}
-		//start += m - 1;
 		start += m - 1;
-		if(!pn.nextPos(start)) {
+		// Bail out if there is insufficient data available
+		if(!nextPos(pn, start)) {
 			return false;
 		}
 		
@@ -85,21 +66,6 @@ public class BoyerMooreMatcher {
 		while(true) {
 			int j = m - 1;
 
-//			// Start maching from the end of the pattern
-//			// If we cannot advance to that pos, we are done
-//			if(!pn.nextPos(j)) {
-//				break;
-//			}
-
-			//pn.setPos(s + j);
-//			boolean couldMove = pn.nextPos(j);
-//			if(!couldMove) {
-//				break;
-//			}
-	
-//			if(pn.getPos() > 5) {
-//				System.out.println("Greater");
-//			}
 			/*
 			 * Keep reducing index j of pattern while characters of pattern and text are
 			 * matching at this shift s
@@ -108,7 +74,7 @@ public class BoyerMooreMatcher {
 			byte byteAtPos = 0;
 			while(j > 0 && pat[j] == (byteAtPos = pn.get())) {
 				--j;
-				pn.prevPos();
+				prevPos(pn, 1);
 				// NOTE prevPos is assumed to always change position
 //				if(!pn.prevPos()) {
 //					throw new RuntimeException("should not happen");
@@ -116,10 +82,6 @@ public class BoyerMooreMatcher {
 			}
 			// If the final pattern character equals the one in the buffer, we have a match
 			boolean isMatch = j == 0 && pat[j] == (byteAtPos = pn.get());
-
-//			while (j >= 0 && pat[j] == pn.get()) {
-//				j--;
-//			}
 
 			/*
 			 * If the pattern is present at the current shift, then index j will become -1
@@ -129,50 +91,41 @@ public class BoyerMooreMatcher {
 			if(isMatch) {
 //				System.out.println("Match at: " + pn.getPos());
 				returningFromMatch = true;
-				// pn.nextPos();
 				return true;
-//				System.out.printf("pattern occurs at shift = %d\n", s);
-//				s += shift[0];
 			} else {
 
 				// The bytes we have to go back in order to reach the position
 				// from where we started matching 
 				int backtrack = m - 1 - j;
-				int charShiftEntry = badCharacterTable[byteAtPos & 0xff];
-//				if(j == 0) {
-//					System.out.println("wtf");
-//				}
-				int suffixEntry = goodSuffixTable[j + 1];
-				int suffixShift = suffixEntry;
-				//int charShift = backtrack + charShiftEntry;
-				int charShift = backtrack + j - charShiftEntry;
 
-				int effectiveShift = charShift > suffixShift
+				int charShiftEntry = badCharacterTable[byteAtPos & 0xff];
+				
+				int charShift = backtrack + j - charShiftEntry;
+				int suffixShift = goodSuffixTable[j + 1];
+
+				int bestShift = charShift > suffixShift
 						? charShift
 						: suffixShift;
 				
-				if(effectiveShift == suffixShift && effectiveShift != charShift) {
+//				if(effectiveShift == suffixShift && effectiveShift != charShift) {
 //					System.out.println("Used suffix shift");
-				}
+//				}
 //				effectiveShift = charShift;
-				effectiveShift += backtrack;
+				int effectiveShift = bestShift + backtrack;
 				
 				
 				//effectiveShift += backtrack;
-				if(!pn.nextPos(effectiveShift)) {
+				if(!nextPos(pn, effectiveShift)) {
 					break;
-				}
-				
-//				long after = pn.getPos();
-//				if(after - before != shift) {
-//					System.out.println("Fail");
-//				}
+				}				
 			}
 		}
 		
 		return false;
 		//return result;
 	}
+	
+
 //	public static searchBackwards(ByteBufferSupplier pager, long pos) {
 //		long p = pos;
 //        outer: while(p > 0) {
@@ -196,4 +149,5 @@ public class BoyerMooreMatcher {
 //        return result;
 //		
 //	}
+
 }

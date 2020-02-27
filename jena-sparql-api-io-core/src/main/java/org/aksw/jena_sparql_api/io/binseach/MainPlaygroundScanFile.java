@@ -1,13 +1,17 @@
 package org.aksw.jena_sparql_api.io.binseach;
 
+import java.io.BufferedReader;
 import java.io.IOException;
-import java.math.BigInteger;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -16,6 +20,9 @@ import java.util.stream.Collectors;
 
 import org.apache.jena.ext.com.google.common.base.Stopwatch;
 import org.apache.jena.ext.com.google.common.collect.Maps;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.riot.Lang;
+import org.apache.jena.riot.RDFDataMgr;
 
 
 public class MainPlaygroundScanFile {
@@ -66,7 +73,7 @@ public class MainPlaygroundScanFile {
 		long count = 0;
 
 		pageNavigator.posToEnd();
-		pageNavigator.prevPos();
+		pageNavigator.prevPos(1);
 		
 		//boolean startsOnDelim = !pageNavigator.isPosBeforeStart() && pageNavigator.get() == delim;
 		boolean endsOnDelim = false;
@@ -76,7 +83,7 @@ public class MainPlaygroundScanFile {
 			pageNavigator.posToPrev(delim);
 			//byte bAt = pageNavigator.get();
 			//System.out.println("Got byte: " + bAt + " at " + pageNavigator.getPos());
-			boolean posChanged = pageNavigator.prevPos();
+			boolean posChanged = pageNavigator.prevPos(1);
 			if(!posChanged) {
 				endsOnDelim = !pageNavigator.isPosBeforeStart();
 				if(endsOnDelim) {
@@ -91,8 +98,50 @@ public class MainPlaygroundScanFile {
 		return Maps.immutableEntry(count, endsOnDelim);
 	}
 	
-
+	
 	public static void main(String[] args) throws IOException {
+//		if(true) {
+//			mainBoyerMooreTest(args);
+//			return;
+//		}
+		
+		
+		Path path = Paths.get("/home/raven/Downloads/2015-11-02-Amenity.node.sorted.nt.bz2");
+
+		try(FileChannel fileChannel = FileChannel.open(path, StandardOpenOption.READ)) {
+			PageManager pageManager = PageManagerForFileChannel.create(fileChannel);
+			
+			SeekableSource pagedSource = new SeekableSourceFromPageManager(pageManager);
+			BufferSource bufferSource = BufferSourceBzip2.create(pagedSource);
+			
+			SeekableSource decodedViewSource = new SeekableSourceFromBufferSource(bufferSource);
+			Seekable decodedView = decodedViewSource.get(100000000);
+			
+//			decodedView.posToPrev(delimiter)
+			decodedView.posToNext((byte)'\n');
+			InputStream in = Channels.newInputStream(decodedView);
+			
+			Iterator<Triple> it = RDFDataMgr.createIteratorTriples(in, Lang.NTRIPLES, null);
+			while(it.hasNext()) {
+				Triple t = it.next();
+				System.out.println(t);
+			}
+//			BufferedReader br = new BufferedReader(new InputStreamReader(in));
+//			
+//			// We may be in the middle of a line, go to the next one
+//			br.readLine();
+			
+//			String line;
+//			while((line = br.readLine()) != null) {
+//				System.out.println(line);
+//			}
+			
+			//bufferSource.contentBefore(10000000);
+			
+		}
+	}
+
+	public static void mainBoyerMooreTest(String[] args) throws IOException {
 		
 //		if(true) {
 //			byte x = -5;
@@ -134,15 +183,15 @@ public class MainPlaygroundScanFile {
 			//
 //			patternBytes = new BigInteger("425a6839", 16).toByteArray();
 //			patternBytes = new BigInteger("314159265359", 16).toByteArray();
-			BoyerMooreMatcher matcher = BoyerMooreMatcher.create(patternBytes);
+			SeekableMatcher matcher = BoyerMooreMatcherFactory.createFwd(patternBytes).newMatcher();
 			// nav.setPos(patternBytes.length);
 			
-			for(int xx = 0; xx < 3; ++xx) {
+			for(int xx = 0; xx < 10; ++xx) {
 			Stopwatch sw = Stopwatch.createStarted();
-			matcher.reset();
+			matcher.resetState();
 			nav.posToStart();
 			int matchCnt = 0;
-			while(matcher.searchFwd(nav)) {
+			while(matcher.find(nav)) {
 				++matchCnt;
 //				System.out.println("Got match at pos " + nav.getPos());
 //				String line = nav.readLine();
@@ -169,7 +218,7 @@ public class MainPlaygroundScanFile {
 			for(int i = 4; i >= 0; --i) {
 				System.out.println(i);
 				nav.posToEnd();
-				nav.prevPos();
+				nav.prevPos(1);
 				nav.prevPos(i);
 				
 				System.out.println("got: " + (char)nav.get());

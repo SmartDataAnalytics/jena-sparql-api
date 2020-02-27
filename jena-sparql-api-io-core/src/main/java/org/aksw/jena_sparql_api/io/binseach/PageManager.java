@@ -2,7 +2,7 @@ package org.aksw.jena_sparql_api.io.binseach;
 
 import java.nio.ByteBuffer;
 
-public interface PageManager {
+public interface PageManager{
 	ByteBuffer requestBufferForPage(long page);
 	
 	/**
