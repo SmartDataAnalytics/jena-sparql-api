@@ -47,6 +47,33 @@ public class PageNavigator
 		this(pageManager, 0, pageManager.getEndPos());
 	}
 
+
+	/**
+	 * Clone the state of the navigator, allowing independent positioning
+	 * 
+	 */
+	public PageNavigator clone() {
+		PageNavigator result = new PageNavigator(pageManager, minPos, maxPos);
+		
+		result.pageBuffer = this.pageBuffer;
+		result.displacement = this.displacement;
+		result.bufferForPage = this.bufferForPage;
+		result.absMaxIndexInPage = this.absMaxIndexInPage;
+		result.absMinIndexInPage = this.absMaxIndexInPage;
+		result.relMinIndexInPage = this.relMinIndexInPage;
+		result.relMaxIndexInPage = this.relMaxIndexInPage;
+		
+		result.minPos = this.minPos;
+		result.minPage = this.minPage;
+		result.minIndex = this.minIndex;
+		
+		result.maxPos = this.maxPos;
+		result.maxPage = this.maxPage;
+		result.maxIndex = this.maxIndex;		
+				
+		return result;
+	}
+	
 	/**
 	 * 
 	 * 
@@ -79,6 +106,8 @@ public class PageNavigator
 		if(pageSize == 0) {
 			throw new RuntimeException("Page size must never be 0");
 		}
+		
+		updateRelCache(page);
 	}
 	
 	public long getPos() {

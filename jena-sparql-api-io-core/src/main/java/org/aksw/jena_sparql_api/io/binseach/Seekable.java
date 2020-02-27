@@ -15,6 +15,8 @@ import java.nio.channels.ReadableByteChannel;
 public interface Seekable
 	extends ReadableByteChannel
 {
+	Seekable clone();
+	
 	/**
 	 * Optional operation.
 	 * Get the position in this seekable

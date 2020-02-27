@@ -17,6 +17,10 @@ public class SeekableFromBufferSource
 		this.bufferSource = bufferSource;
 		this.currentBlock = currentBlock;
 	}
+	
+	public SeekableFromBufferSource clone() {
+		return new SeekableFromBufferSource(index, bufferSource, currentBlock);
+	}
 
 	@Override
 	public int read(ByteBuffer dst) throws IOException {
