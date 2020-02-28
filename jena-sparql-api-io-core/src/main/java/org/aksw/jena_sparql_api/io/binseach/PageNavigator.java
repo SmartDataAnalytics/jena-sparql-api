@@ -636,18 +636,29 @@ public class PageNavigator
 
 	@Override
 	public int read(ByteBuffer dst) throws IOException {
-		ByteBuffer buffer = getBufferForPage(page);
-
+		
+		ByteBuffer buffer;
 		int n = 0;
-		if(buffer != null) {
+		while((buffer = getBufferForPage(page)) != null) {
 			ByteBuffer src = buffer.duplicate();
-			src.position(src.position() + index);
-			n = readRemaining(dst, src);
-			// Adjust limit of the source buffer, because
-			// ByteBuffer.put demands that dst's remaining size is not exceeded
+			src.position(displacement + index);
+			src.limit(displacement + relMaxIndexInPage);
+			int readContrib = readRemaining(dst, src);
+			n += readContrib;
+			
+			if(!nextPos(readContrib)) {
+				posToEnd();
+				break;
+			} else if(readContrib == 0 || dst.remaining() == 0) {
+				break;
+			}
 		}
-		nextPos(n);
-		return n;
+
+		if(n == 0) {
+			n = -1;
+		}
+		
+		return n;		
 	}
 
 	// Copy as much as possible into dst
