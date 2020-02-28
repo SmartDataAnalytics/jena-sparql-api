@@ -392,13 +392,23 @@ public class RDFDataMgrRx {
 			thread[0] = t;
 		};
 
-
 		Flowable<T> result = Flowable.generate(
 				() -> {
 					I in = inSupplier.call();
 					Iterator<T> it = fn.apply(th).apply(eh).apply(in);
 					return new IteratorClosable<>(it, () -> {
 						closeInvoked[0] = true;
+						// The producer thread may be blocked because not enough items were consumed
+//						if(thread[0] != null) {
+//							while(thread[0].isAlive()) {
+//								thread[0].interrupt();
+//							}
+//						}
+
+						// We need to wait if iterator.next is waiting
+//						synchronized(this) {
+//							
+//						}
 						
 						// Try to close the iterator 'it'
 						// Otherwise, forcefully close the stream
@@ -407,32 +417,54 @@ public class RDFDataMgrRx {
 							if(it instanceof Closeable) {
 					            ((Closeable)it).close();
 							} else if (it instanceof org.apache.jena.atlas.lib.Closeable) {
-					            ((org.apache.jena.atlas.lib.Closeable)it).close();								
-							} else {
+					            ((org.apache.jena.atlas.lib.Closeable)it).close();
+							}
+						} finally {
+							try {
+								in.close();
+							} finally {
 								try {
-									in.close();
-								} finally {
 									// Consume any remaining items in the iterator to prevent blocking issues
 									// For example, Jena's producer thread can get blocked
 									// when parsed items are not consumed
+//									System.out.println("Consuming rest");
 									Iterators.size(it);
+								} catch(Exception e) {
+									// Ignore silently
+								} finally {
+									// The generator corresponds to the 2nd argument of Flowable.generate
+									// The producer may be blocked by attempting to put new items on a already full blocking queue
+									// The consumer in it.hasNext() may by waiting for a response from the producer
+									// So we interrupt the producer to death
+									Thread t = thread[0]; 
+									while(t.isAlive()) {
+//										System.out.println("Interrupting");
+										t.interrupt();
+										
+										try {
+											Thread.sleep(100);
+										} catch(InterruptedException e2) {
+										}
+									}									
 								}
 							}
-						} finally {
-							// Close the backing input stream in any case
-							in.close();
 						}
 					});
 				},
 				(reader, emitter) -> {
 					try {
+						//if(!closeInvoked[0])
+//						System.out.println("Generator invoked");
 						if(reader.hasNext()) {
+//							System.out.println("hasNext = true");
 							T item = reader.next();
 							emitter.onNext(item);
 						} else {
+//							System.out.println("Waiting for any pending exceptions from producer thread");
 							if(thread[0] != null) {
 								thread[0].join();
 							}
+//							System.out.println("End");
 							
 							Throwable t = raisedException[0];
 							boolean report = true;
