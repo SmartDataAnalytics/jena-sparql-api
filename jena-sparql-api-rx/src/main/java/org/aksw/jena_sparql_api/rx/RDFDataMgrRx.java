@@ -437,15 +437,17 @@ public class RDFDataMgrRx {
 									// The consumer in it.hasNext() may by waiting for a response from the producer
 									// So we interrupt the producer to death
 									Thread t = thread[0]; 
-									while(t.isAlive()) {
-//										System.out.println("Interrupting");
-										t.interrupt();
-										
-										try {
-											Thread.sleep(100);
-										} catch(InterruptedException e2) {
+									if(t != null) {
+										while(t.isAlive()) {
+	//										System.out.println("Interrupting");
+											t.interrupt();
+											
+											try {
+												Thread.sleep(100);
+											} catch(InterruptedException e2) {
+											}
 										}
-									}									
+									}
 								}
 							}
 						}
