@@ -5,6 +5,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.Thread.UncaughtExceptionHandler;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
@@ -43,9 +44,13 @@ import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.riot.RDFLanguages;
 import org.apache.jena.riot.RDFParser;
+import org.apache.jena.riot.RiotException;
+import org.apache.jena.riot.RiotParseException;
 import org.apache.jena.riot.lang.PipedQuadsStream;
 import org.apache.jena.riot.lang.PipedRDFIterator;
+import org.apache.jena.riot.lang.PipedTriplesStream;
 import org.apache.jena.riot.lang.RiotParsers;
+import org.apache.jena.riot.system.ErrorHandlerFactory;
 import org.apache.jena.riot.system.RiotLib;
 import org.apache.jena.riot.system.StreamRDF;
 import org.apache.jena.sparql.core.Quad;
@@ -64,12 +69,70 @@ import io.reactivex.Flowable;
  *
  */
 public class RDFDataMgrRx {
+    public static Iterator<Quad> createIteratorQuads(
+    		InputStream in,
+    		Lang lang,
+    		String baseIRI,
+    		UncaughtExceptionHandler eh,
+    		Consumer<Thread> th) {
+    	return createIteratorQuads(
+				in,
+				lang,//RDFLanguages.contentTypeToLang(in.getContentType()),
+				baseIRI,
+				PipedRDFIterator.DEFAULT_BUFFER_SIZE,
+				false,
+				PipedRDFIterator.DEFAULT_POLL_TIMEOUT,
+				Integer.MAX_VALUE,
+				eh,
+				th);
+    }
 
+    public static Iterator<Quad> createIteratorQuads(
+    		TypedInputStream in,
+    		UncaughtExceptionHandler eh,
+    		Consumer<Thread> th) {
+    	return createIteratorQuads(
+				in,
+				RDFLanguages.contentTypeToLang(in.getContentType()),
+				in.getBaseURI(),
+				eh,
+				th);
+    }
+    
+    public static Iterator<Triple> createIteratorTriples(
+    		InputStream in,
+    		Lang lang,
+    		String baseIRI,
+    		UncaughtExceptionHandler eh,
+    		Consumer<Thread> threadHandler) {
+    	return createIteratorTriples(
+				in,
+				lang,//RDFLanguages.contentTypeToLang(in.getContentType()),
+				baseIRI,
+				PipedRDFIterator.DEFAULT_BUFFER_SIZE,
+				false,
+				PipedRDFIterator.DEFAULT_POLL_TIMEOUT,
+				Integer.MAX_VALUE,
+				threadHandler,
+				eh);
+    }
+
+    public static Iterator<Triple> createIteratorTriples(
+    		TypedInputStream in,
+    		UncaughtExceptionHandler eh,
+    		Consumer<Thread> th) {
+    	return createIteratorTriples(
+				in,
+				RDFLanguages.contentTypeToLang(in.getContentType()),
+				in.getBaseURI(),
+				eh,
+				th);
+    }
+
+	
     /**
-     * TODO Adapt for createIteratorTriples
-     * 
-     * Adaption from RDFDataMgr.createIteratorQuads that waits for data on the input stream
-     * indefinitely
+     * Adaption from RDFDataMgr.createIteratorQuads that waits for
+     * data on the input stream indefinitely and allows for thread handling
      * 
      * Creates an iterator over parsing of quads
      * @param input Input Stream
@@ -81,7 +144,10 @@ public class RDFDataMgrRx {
     		InputStream input,
     		Lang lang,
     		String baseIRI,
-    		int bufferSize, boolean fair, int pollTimeout, int maxPolls) {
+    		int bufferSize, boolean fair, int pollTimeout, int maxPolls,
+    		UncaughtExceptionHandler eh,
+    		Consumer<Thread> th) {
+    		//Consumer<Thread> threadHandler) {
         // Special case N-Quads, because the RIOT reader has a pull interface
         if ( RDFLanguages.sameLang(RDFLanguages.NQUADS, lang) ) {
             return new IteratorResourceClosing<>(
@@ -92,12 +158,62 @@ public class RDFDataMgrRx {
         final PipedRDFIterator<Quad> it = new PipedRDFIterator<>(bufferSize, fair, pollTimeout, maxPolls);
         final PipedQuadsStream out = new PipedQuadsStream(it);
 
-        Thread t = new Thread(()-> parseFromInputStream(out, input, baseIRI, lang, null)) ;
+        Thread t = new Thread(()-> {
+        	try {
+        		parseFromInputStream(out, input, baseIRI, lang, null);
+        	} catch(Exception e) {
+        		// Ensure the exception handler is run before any 
+        		// thread.join() waiting for this thread 
+        		eh.uncaughtException(Thread.currentThread(), e);
+        	}
+        });
+        th.accept(t);
         t.start();
         return it;
     }
 	
     
+    /**
+     * Adaption from RDFDataMgr.createIteratorQuads that waits for
+     * data on the input stream indefinitely and allows for thread handling
+     * 
+     * Creates an iterator over parsing of quads
+     * @param input Input Stream
+     * @param lang Language
+     * @param baseIRI Base IRI
+     * @return Iterator over the quads
+     */
+    public static Iterator<Triple> createIteratorTriples(
+    		InputStream input,
+    		Lang lang,
+    		String baseIRI,
+    		int bufferSize, boolean fair, int pollTimeout, int maxPolls,
+    		Consumer<Thread> th,
+    		UncaughtExceptionHandler eh) {
+        // Special case N-Quads, because the RIOT reader has a pull interface
+        if ( RDFLanguages.sameLang(RDFLanguages.NTRIPLES, lang) ) {
+            return new IteratorResourceClosing<>(
+                RiotParsers.createIteratorNTriples(input, null, RiotLib.dftProfile()),
+                input);
+        }
+        // Otherwise, we have to spin up a thread to deal with it
+        final PipedRDFIterator<Triple> it = new PipedRDFIterator<>(bufferSize, fair, pollTimeout, maxPolls);
+        final PipedTriplesStream out = new PipedTriplesStream(it);
+
+        Thread t = new Thread(()-> {
+        	try {
+        		parseFromInputStream(out, input, baseIRI, lang, null);
+        	} catch(Exception e) {
+        		// Ensure the exception handler is run before any 
+        		// thread.join() waiting for this thread 
+        		eh.uncaughtException(Thread.currentThread(), e);
+        	}
+        });
+        th.accept(t);
+        t.start();
+        return it;
+    }
+	
     public static void parseFromInputStream(StreamRDF destination, InputStream in, String baseUri, Lang lang, Context context) {
         RDFParser.create()
             .source(in)
@@ -107,16 +223,17 @@ public class RDFDataMgrRx {
             .base(baseUri)
             .lang(lang)
             .context(context)
+            .errorHandler(ErrorHandlerFactory.errorHandlerDetailed())
             //.errorHandler(handler)
             .parse(destination);
     }
 
 	public static Flowable<Quad> createFlowableQuads(Callable<InputStream> inSupplier, Lang lang, String baseIRI) {
-		return createFlowableFromInputStream(inSupplier, in -> RDFDataMgr.createIteratorQuads(in, lang, baseIRI));
+		return createFlowableFromInputStream(inSupplier, th -> eh -> in -> createIteratorQuads(in, lang, baseIRI, eh, th));
 	}
 
 	public static Flowable<Triple> createFlowableTriples(Callable<InputStream> inSupplier, Lang lang, String baseIRI) {
-		return createFlowableFromInputStream(inSupplier, in -> RDFDataMgr.createIteratorTriples(in, lang, baseIRI));
+		return createFlowableFromInputStream(inSupplier, th -> eh -> in -> createIteratorTriples(in, lang, baseIRI, eh, th));
 	}
 
 	
@@ -212,16 +329,14 @@ public class RDFDataMgrRx {
 	
 	public static Flowable<Dataset> createFlowableDatasets(Callable<TypedInputStream> inSupplier) {
 		
-		Flowable<Dataset> result = createFlowableFromInputStream(inSupplier,
-				in -> createIteratorQuads(
+		Flowable<Dataset> result = createFlowableFromInputStream(
+				inSupplier,
+				th -> eh -> in -> createIteratorQuads(
 						in,
 						RDFLanguages.contentTypeToLang(in.getContentType()),
 						in.getBaseURI(),
-						PipedRDFIterator.DEFAULT_BUFFER_SIZE,
-						false,
-						PipedRDFIterator.DEFAULT_POLL_TIMEOUT,
-						Integer.MAX_VALUE
-						))
+						eh,
+						th))
 		.compose(Transformers.<Quad>toListWhile(
 	            (list, t) -> list.isEmpty() 
 	                         || list.get(0).getGraph().equals(t.getGraph())))
@@ -231,12 +346,60 @@ public class RDFDataMgrRx {
 		return result;
 	}
 	
-	public static <T, I extends InputStream> Flowable<T> createFlowableFromInputStream(Callable<I> inSupplier, Function<? super I, ? extends Iterator<T>> fn) {
+	public static <T, I extends InputStream> Flowable<T> createFlowableFromInputStream(
+			Callable<I> inSupplier,
+			Function<Consumer<Thread>, Function<UncaughtExceptionHandler, Function<? super I, ? extends Iterator<T>>>> fn) {
+
+		// In case the creation of the iterator from an inputstream involves a thread
+		// perform setup of the exception handler
+		
+		// If there is a thread, we join on it before completing the flowable in order to
+		// capture any possible error
+		Thread[] thread = {null};
+		Throwable[] raisedException = {null};
+
+	
+		// We do not expect errors on the input stream as long close was not invoked
+		boolean closeInvoked[] = {false};
+		
+		UncaughtExceptionHandler eh = (t, e) -> {
+			boolean report = true;
+			
+			// If close was invoked, skip exceptions related to the underlying
+			// input stream having been prematurely closed
+			if(closeInvoked[0]) {
+				if(e instanceof RiotException) {
+					String msg = e.getMessage();
+					if(msg.equalsIgnoreCase("Pipe closed") || msg.equals("Consumer Dead")) {
+						report = false;
+					}
+				}
+			}
+			
+			if(report) {
+				if(raisedException[0] == null) {
+					raisedException[0] = e;
+				}
+				// If we receive any reportable exception after the flowable
+				// was closed, raise them so they don't get unnoticed!
+				if(closeInvoked[0]) {
+					throw new RuntimeException(e);
+				}
+			}
+		};
+		
+		Consumer<Thread> th = t -> {
+			thread[0] = t;
+		};
+
+
 		Flowable<T> result = Flowable.generate(
 				() -> {
 					I in = inSupplier.call();
-					Iterator<T> it = fn.apply(in);
+					Iterator<T> it = fn.apply(th).apply(eh).apply(in);
 					return new IteratorClosable<>(it, () -> {
+						closeInvoked[0] = true;
+						
 						// Try to close the iterator 'it'
 						// Otherwise, forcefully close the stream
 						// (may cause a (usually/hopefully) harmless exception)
@@ -262,11 +425,36 @@ public class RDFDataMgrRx {
 					});
 				},
 				(reader, emitter) -> {
-					if(reader.hasNext()) {
-						T item = reader.next();
-						emitter.onNext(item);
-					} else {
-						emitter.onComplete();
+					try {
+						if(reader.hasNext()) {
+							T item = reader.next();
+							emitter.onNext(item);
+						} else {
+							if(thread[0] != null) {
+								thread[0].join();
+							}
+							
+							Throwable t = raisedException[0];
+							boolean report = true;
+							if(t != null) {
+								boolean isParseError = t instanceof RiotParseException;
+
+								// Parse errors after a invocation of close are ignored
+								// I.e. if we asked for 5 items, and there is parse error at the 6th one,
+								// we still completed the original request without errors
+								if(isParseError && closeInvoked[0]) {
+									report = false;
+								}
+							}
+							
+							if(t != null && report) {
+								emitter.onError(raisedException[0]);
+							} else {
+								emitter.onComplete();
+							}
+						}
+					} catch(Exception e) {
+						emitter.onError(e);
 					}
 				},
 				ClosableIterator::close);
