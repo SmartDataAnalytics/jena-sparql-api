@@ -113,6 +113,44 @@ public class PageNavigator
 		updateRelCache(page);
 	}
 	
+	/**
+	 * Limit the 
+	 * @param length
+	 * @return
+	 */
+	public PageNavigator limitNext(long length) {
+		long pos = getPos();
+		long targetPos = pos + length;
+		this.maxPos = Math.min(this.maxPos, targetPos);
+		this.maxPage = getPageForPos(maxPos);
+		this.maxIndex = getIndexForPos(maxPos);
+		
+		if(pos > targetPos) {
+			posToEnd();
+		}
+
+		return this;
+	}
+
+	/**
+	 * Limit the 
+	 * @param length
+	 * @return
+	 */
+	public PageNavigator limitPrev(long length) {
+		long pos = getPos();
+		long targetPos = pos - length;
+		this.minPos = Math.max(this.minPos, targetPos);
+		this.minPage = getPageForPos(minPos);
+		this.minIndex = getIndexForPos(minPos);
+		
+		if(pos < targetPos) {
+			posToStart();
+		}
+
+		return this;
+	}
+
 	public long getPos() {
 		long result = page * pageSize + index;
 		return result;
