@@ -229,7 +229,12 @@ public class RDFDataMgrRx {
     }
 
 	public static Flowable<Quad> createFlowableQuads(Callable<InputStream> inSupplier, Lang lang, String baseIRI) {
-		return createFlowableFromInputStream(inSupplier, th -> eh -> in -> createIteratorQuads(in, lang, baseIRI, eh, th));
+		return createFlowableFromInputStream(inSupplier, th -> eh -> in -> createIteratorQuads(in, lang, baseIRI, eh, th))
+				// Ensure that the graph node is always non-null
+				// Trig parser in Jena 3.14.0 creates quads with null graph
+				.map(q -> q.getGraph() != null
+					? q
+					: Quad.create(Quad.defaultGraphNodeGenerated, q.asTriple()));
 	}
 
 	public static Flowable<Triple> createFlowableTriples(Callable<InputStream> inSupplier, Lang lang, String baseIRI) {
