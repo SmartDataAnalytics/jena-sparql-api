@@ -19,9 +19,16 @@ public class PageManagerForFileChannel
 	 * OutOfMemory error.
 	 * 
 	 */
-	protected Cache<Long, ByteBuffer> pageCache = CacheBuilder.newBuilder()
+	protected Cache<Long, Reference<Page>> pageCache = CacheBuilder.newBuilder()
 			.expireAfterAccess(10, TimeUnit.SECONDS)
 			.maximumSize(64)
+			.<Long, Reference<Page>>removalListener(notification -> {
+				try {
+					notification.getValue().close();
+				} catch (Exception e) {
+					throw new RuntimeException(e);
+				}
+			})
 			.build();
 	
 	protected FileChannel channel;
@@ -59,10 +66,10 @@ public class PageManagerForFileChannel
 	}
 
 	@Override
-	public ByteBuffer requestBufferForPage(long page) {
-		ByteBuffer result;
+	public Reference<Page> requestBufferForPage(long page) {
+		Reference<Page> result;
 		try {
-			result = getBufferForPage(page);
+			result = getRefForPage(page);
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
@@ -74,17 +81,26 @@ public class PageManagerForFileChannel
 		return channelSize;
 	}
 	
-	public synchronized ByteBuffer getBufferForPage(long page) throws IOException {
+	public synchronized Reference<Page> getRefForPage(long page) throws IOException {
         long start = page * pageSize;
         long end = Math.min(channelSize, start + pageSize);
         long length = end - start;
         
-        ByteBuffer result;
+        Reference<Page> parentRef;
 		try {
-			result = page < 0 || length <= 0
+			parentRef = page < 0 || length <= 0
 					? null
 					: pageCache.get(page, () -> {
-						ByteBuffer r = channel.map(MapMode.READ_ONLY, start, length);
+						ByteBuffer b = channel.map(MapMode.READ_ONLY, start, length);
+						
+//						System.err.println("Allocated page " + page);
+						Page p = new PageBase(this, page, b);
+						
+						Reference<Page> r = ReferenceImpl.create(p, () -> {
+							// System.err.println("Released primary ref to page " + page);
+						}, "Primary ref to page " + page);
+						//Page r = new PageBase(this, page, b);
+
 // 						Copying the data to an array is slower by a factor of 3 for a 5GB file
 //						if(true) {
 //							byte[] cp = new byte[r.remaining()];
@@ -96,6 +112,10 @@ public class PageManagerForFileChannel
 		} catch (ExecutionException e) {
 			throw new IOException(e);
 		}
+		
+		Reference<Page> result = parentRef == null
+				? null
+				: parentRef.aquire("Secondary ref to page " + page);
 
         return result;
 	}

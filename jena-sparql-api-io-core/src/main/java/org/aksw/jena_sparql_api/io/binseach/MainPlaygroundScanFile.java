@@ -47,7 +47,7 @@ public class MainPlaygroundScanFile {
 		
 		for(;;) {
 			pageNavigator.posToNext(delim);
-			boolean posChanged = pageNavigator.nextPos();
+			boolean posChanged = pageNavigator.nextPos(1);
 			if(!posChanged) {
 				// we may be on the last byte or one beyond
 				endsOnDelim = !pageNavigator.isPosAfterEnd();				
@@ -102,7 +102,7 @@ public class MainPlaygroundScanFile {
 	}
 	
 	
-	public static void main(String[] args) throws IOException {
+	public static void mainBz2Decode(String[] args) throws IOException {
 //		if(true) {
 //			mainBoyerMooreTest(args);
 //			return;
@@ -118,7 +118,8 @@ public class MainPlaygroundScanFile {
 			BufferSource bufferSource = BufferSourceBzip2.create(pagedSource);
 			
 			SeekableSource decodedViewSource = new SeekableSourceFromBufferSource(bufferSource);
-			Seekable decodedView = decodedViewSource.get(511604800);
+//			Seekable decodedView = decodedViewSource.get(511604800);
+			Seekable decodedView = decodedViewSource.get(11604800);
 			
 //			decodedView.posToPrev(delimiter)
 			decodedView.posToNext((byte)'\n');
@@ -212,7 +213,7 @@ public class MainPlaygroundScanFile {
 			for(int i = 0; i < str.length(); ++i) {
 				System.out.println(i);
 				nav.posToStart();
-				nav.nextPos();
+				nav.nextPos(1);
 				nav.nextPos(i);
 				
 				System.out.println("got: " + (char)nav.get());
@@ -231,7 +232,7 @@ public class MainPlaygroundScanFile {
 	}
 	
 	
-	public static void mainWc(String[] args) throws IOException {
+	public static void main(String[] args) throws IOException {
 		Path path = Paths.get("/home/raven/Projects/Eclipse/sparql-integrate-parent/ngs/test2.nq");
 //		Path path = Paths.get("/tmp/test.txt");
 
@@ -263,12 +264,13 @@ public class MainPlaygroundScanFile {
 //				   ;
 
 		try(FileChannel fileChannel = FileChannel.open(path, StandardOpenOption.READ)) {
-			PageManager pageManager = PageManagerForFileChannel.create(fileChannel,  128 * 1024 * 1024);
+			PageManager pageManager = PageManagerForFileChannel.create(fileChannel);
+//			PageManager pageManager = PageManagerForFileChannel.create(fileChannel,  128 * 1024 * 1024);
 //			PageManager pageManager = new PageManagerForByteBuffer(ByteBuffer.wrap(str.getBytes()));
 			
 			long size = pageManager.getEndPos();
 			//long size = fileChannel.size();			
-			int numChunks = 4; //32;
+			int numChunks = 1; //32;
 			boolean fwd = true;
 			int numRuns = 10;
 

@@ -26,6 +26,9 @@ public class PageNavigator
 	 * buffer at the last valid position
 	 * Initialization happens in getBufferForPage()
 	 */
+	
+	protected Reference<Page> pageObj = null;
+
 	protected ByteBuffer pageBuffer = null;
 	protected int displacement;
 	protected long bufferForPage = -1;
@@ -58,7 +61,9 @@ public class PageNavigator
 		result.page = this.page;
 		result.index = this.index;
 		
-		result.pageBuffer = this.pageBuffer;
+		result.pageObj = this.pageObj.aquire("clone");
+		result.pageBuffer = result.pageObj.getValue().newBuffer();
+
 		result.displacement = this.displacement;
 		result.bufferForPage = this.bufferForPage;
 		result.absMaxIndexInPage = this.absMaxIndexInPage;
@@ -180,7 +185,17 @@ public class PageNavigator
 				return null;
 			}
 
-			ByteBuffer buf = pageManager.requestBufferForPage(page);
+			// If there is a prior page, release it
+			if(pageObj != null) {
+				try {
+					pageObj.close();
+				} catch(Exception e) {
+					throw new IOException(e);
+				}
+			}
+			
+			pageObj = pageManager.requestBufferForPage(page);
+			ByteBuffer buf = pageObj.getValue().newBuffer();
 			if(buf != null) {
 				pageBuffer = buf;
 				bufferForPage = page;
@@ -348,9 +363,9 @@ public class PageNavigator
 		}
 	}
 
-	public boolean nextPos() throws IOException {
-		return nextPos(1);
-	}
+//	public boolean nextPos() throws IOException {
+//		return nextPos(1);
+//	}
 	
 	/**
 	 * Attempts to advance the position by 1 byte
@@ -709,16 +724,21 @@ public class PageNavigator
 	
 	@Override
 	public boolean isOpen() {
-		// TODO Auto-generated method stub
 		return true;
+		//return isOpen;
 	}
 
 	@Override
 	public void close() throws IOException {
-		// TODO Auto-generated method stub
+		if(pageObj != null) {
+			try {
+				pageObj.close();
+			} catch(Exception e) {
+				throw new IOException(e);
+			}
+			pageObj = null;
+		}
 		
+		//isOpen = false;
 	}
-	
-	
-	
 }

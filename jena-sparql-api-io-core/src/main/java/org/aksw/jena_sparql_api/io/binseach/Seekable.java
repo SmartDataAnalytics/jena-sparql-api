@@ -150,9 +150,6 @@ public interface Seekable
 	}
 
 	
-//	boolean nextPos() throws IOException;
-//	boolean prevPos() throws IOException;
-	
 	@Override
 	default int read(ByteBuffer dst) throws IOException {
 		int n = 0;

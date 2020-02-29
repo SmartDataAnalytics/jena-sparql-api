@@ -11,27 +11,29 @@ import java.nio.ByteBuffer;
 public class PageManagerForByteBuffer
 	implements PageManager
 {
-	protected ByteBuffer buf;
+//	protected ByteBuffer staticBuffer;
 	protected long pageForBuf;
+	protected ByteBuffer staticBuffer;
 	
-	public PageManagerForByteBuffer(ByteBuffer buf) {
-		this.buf = buf;
+	public PageManagerForByteBuffer(ByteBuffer staticBuffer) {
+		this.staticBuffer = staticBuffer;
+		//this.staticBuffer = staticBuffer;
 		this.pageForBuf = 0;
 	}
 
 	@Override
-	public ByteBuffer requestBufferForPage(long page) {
-		ByteBuffer result = page == pageForBuf ? buf : null;
-		return result;
+	public Reference<Page> requestBufferForPage(long page) {
+		Page staticPage = new PageBase(this, 0, staticBuffer);
+		return ReferenceImpl.create(staticPage, null, "Reference to static page");
 	}
 
 	@Override
 	public int getPageSize() {
-		return buf.remaining();
+		return staticBuffer.remaining();
 	}
 
 	@Override
 	public long getEndPos() {
-		return buf.remaining();
-	}
+		return staticBuffer.remaining();
+	}	
 }

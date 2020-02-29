@@ -32,7 +32,7 @@ public class PageManagerWrapper
 	}
 
 	@Override
-	public ByteBuffer requestBufferForPage(long page) {
+	public Reference<Page> requestBufferForPage(long page) {
 		int physPageSize = delegate.getPageSize();
 
 		//page *  pageSize;
@@ -44,16 +44,19 @@ public class PageManagerWrapper
 		long effEndPage = effEndPos / physPageSize;
 		int effEndIndex = (int)effEndPos % physPageSize;
 		
-		ByteBuffer result;
+		
+		ByteBuffer resultBuffer;
+		Reference<Page> delegatePage;
 		if(effPage == effEndPage) {
-			ByteBuffer buf = delegate.requestBufferForPage(effPage);
+			delegatePage = delegate.requestBufferForPage(effPage);
+			ByteBuffer buf = delegatePage.getValue().newBuffer();
 			if(buf == null) {
-				result = null;
+				resultBuffer = null;
 			} else {
 				int o = buf.position();
 			//if(buf.remaining() > virtPageSize) {
 				// We expect the page to have sufficient size
-				result = buf.duplicate();
+				resultBuffer = buf.duplicate();
 				
 //				int start = o + effIndex;
 //				if(start < 0) {
@@ -61,40 +64,61 @@ public class PageManagerWrapper
 //					
 //				}
 				
-				result.position(o + effIndex);
-				result.limit(o + effEndIndex);
+				resultBuffer.position(o + effIndex);
+				resultBuffer.limit(o + effEndIndex);
 			}
 			//}			
 		} else {
 			byte[] cpy = new byte[virtPageSize];
-			result = ByteBuffer.wrap(cpy);
+			resultBuffer = ByteBuffer.wrap(cpy);
 
 			for(long i = effPage;; ++i) {
-				ByteBuffer buf = delegate.requestBufferForPage(i);
-				if(buf != null) {
-					int o = buf.position();
-					
-					buf = buf.duplicate();
-					int index = i == effPage ? effIndex : 0;
-					buf.position(o + index);
-					
-					//int x = buf.remaining();
-					int take = Math.min(buf.remaining(), result.remaining());
-					buf.limit(buf.position() + take);
-					result.put(buf);
-					
-					if(result.remaining() == 0) {
-						result.position(0);
+				delegatePage = delegate.requestBufferForPage(i);
+				try {
+					ByteBuffer buf = delegatePage.getValue().newBuffer();
+					if(buf != null) {
+						int o = buf.position();
+						
+						buf = buf.duplicate();
+						int index = i == effPage ? effIndex : 0;
+						buf.position(o + index);
+						
+						//int x = buf.remaining();
+						int take = Math.min(buf.remaining(), resultBuffer.remaining());
+						buf.limit(buf.position() + take);
+						resultBuffer.put(buf);
+						
+						if(resultBuffer.remaining() == 0) {
+							resultBuffer.position(0);
+							break;
+						}
+					} else {
 						break;
 					}
-				} else {
-					break;
+				} finally {
+					try {
+						delegatePage.close();
+					} catch(Exception e) {
+						throw new RuntimeException(e);
+					}
 				}
 			}
 			
 			
 		}
 
+		// This is pretty hacky:
+		// We pass a dummy reference to the buffer, but the actual release happens on the
+		// local delPage attribute
+		
+		Reference<Page> delPage = delegatePage;
+		Page tmp = new PageBase(this, page, resultBuffer);
+		Reference<Page> result = ReferenceImpl.create(tmp, () -> {
+			if(delPage != null) {
+				delPage.close();
+			}
+		}, null);
+		
 		return result;
 	}
 
