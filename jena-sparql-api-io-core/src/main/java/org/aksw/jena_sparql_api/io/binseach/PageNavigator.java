@@ -3,6 +3,14 @@ package org.aksw.jena_sparql_api.io.binseach;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
+/**
+ * An object for (predominantly relative) positioning over a
+ * sequence of fixed size pages
+ * 
+ * 
+ * @author raven
+ *
+ */
 public class PageNavigator
 	implements Seekable
 {
@@ -61,8 +69,8 @@ public class PageNavigator
 		result.page = this.page;
 		result.index = this.index;
 		
-		result.pageObj = this.pageObj.aquire("clone");
-		result.pageBuffer = result.pageObj.getValue().newBuffer();
+		result.pageObj = this.pageObj == null ? null : this.pageObj.aquire("clone"); 
+		result.pageBuffer = result.pageObj == null ? null : result.pageObj.getValue().newBuffer();
 
 		result.displacement = this.displacement;
 		result.bufferForPage = this.bufferForPage;
@@ -732,7 +740,9 @@ public class PageNavigator
 	public void close() throws IOException {
 		if(pageObj != null) {
 			try {
-				pageObj.close();
+				if(!pageObj.isReleased()) {
+					pageObj.close();
+				}
 			} catch(Exception e) {
 				throw new IOException(e);
 			}

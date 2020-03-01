@@ -5,9 +5,9 @@ import java.io.IOException;
 public class SeekableSourceFromBufferSource
 	implements SeekableSource
 {
-	protected BufferSource bufferSource;
+	protected BlockSource bufferSource;
 	
-	public SeekableSourceFromBufferSource(BufferSource bufferSource) {
+	public SeekableSourceFromBufferSource(BlockSource bufferSource) {
 		super();
 		this.bufferSource = bufferSource;
 	}
@@ -22,7 +22,7 @@ public class SeekableSourceFromBufferSource
 		DecodedDataBlock block = bufferSource.contentBefore(pos);
 		Seekable result = null;
 		if(block != null) {
-			result = new SeekableFromBufferSource(0, bufferSource, block);
+			result = new SeekableFromBlockSource(0, bufferSource, block);
 		}
 		
 		return result;

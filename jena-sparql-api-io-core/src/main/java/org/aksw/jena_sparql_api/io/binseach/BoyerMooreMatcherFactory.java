@@ -57,12 +57,12 @@ public class BoyerMooreMatcherFactory
 	@Override
 	public SeekableMatcher newMatcher() {
 		SeekableMatcher result = isFwd
-				? lowerCaseMode
+				? !lowerCaseMode
 					? new BoyerMooreMatcher(isFwd, pat, badCharacterTable, goodSuffixTable)
 					: new BoyerMooreMatcher(isFwd, pat, badCharacterTable, goodSuffixTable) {
 						protected byte getByte(Seekable seekable) throws IOException { return (byte)Character.toLowerCase(seekable.get()); } 
 					  }
-				: lowerCaseMode
+				: !lowerCaseMode
 					? new BoyerMooreMatcher(isFwd, pat, badCharacterTable, goodSuffixTable) {
 						protected boolean nextPos(Seekable seekable, int delta) throws IOException { return seekable.prevPos(delta); }
 						protected boolean prevPos(Seekable seekable, int delta) throws IOException { return seekable.nextPos(delta); }

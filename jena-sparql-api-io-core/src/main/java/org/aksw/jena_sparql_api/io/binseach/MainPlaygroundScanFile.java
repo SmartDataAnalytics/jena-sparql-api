@@ -101,13 +101,12 @@ public class MainPlaygroundScanFile {
 		return Maps.immutableEntry(count, endsOnDelim);
 	}
 	
+	public static void main(String[] args) throws IOException {
+		mainBz2Decode(args);
+//		mainBoyerMooreTest(args);
+	}
 	
-	public static void mainBz2Decode(String[] args) throws IOException {
-//		if(true) {
-//			mainBoyerMooreTest(args);
-//			return;
-//		}
-		
+	public static void mainBz2Decode(String[] args) throws IOException {		
 		
 		Path path = Paths.get("/home/raven/Downloads/2015-11-02-Amenity.node.sorted.nt.bz2");
 
@@ -115,9 +114,9 @@ public class MainPlaygroundScanFile {
 			PageManager pageManager = PageManagerForFileChannel.create(fileChannel);
 			
 			SeekableSource pagedSource = new SeekableSourceFromPageManager(pageManager);
-			BufferSource bufferSource = BufferSourceBzip2.create(pagedSource);
+			BlockSource blockSource = BlockSourceBzip2.create(pagedSource);
 			
-			SeekableSource decodedViewSource = new SeekableSourceFromBufferSource(bufferSource);
+			SeekableSource decodedViewSource = new SeekableSourceFromBufferSource(blockSource);
 //			Seekable decodedView = decodedViewSource.get(511604800);
 			Seekable decodedView = decodedViewSource.get(11604800);
 			
@@ -125,20 +124,20 @@ public class MainPlaygroundScanFile {
 			decodedView.posToNext((byte)'\n');
 			InputStream in = Channels.newInputStream(decodedView);
 			
-			Iterator<Triple> it = RDFDataMgr.createIteratorTriples(in, Lang.NTRIPLES, null);
-			while(it.hasNext()) {
-				Triple t = it.next();
-				System.out.println(t);
-			}
-//			BufferedReader br = new BufferedReader(new InputStreamReader(in));
+//			Iterator<Triple> it = RDFDataMgr.createIteratorTriples(in, Lang.NTRIPLES, null);
+//			while(it.hasNext()) {
+//				Triple t = it.next();
+//				System.out.println(t);
+//			}
+			BufferedReader br = new BufferedReader(new InputStreamReader(in));
 //			
 //			// We may be in the middle of a line, go to the next one
-//			br.readLine();
+			br.readLine();
 			
-//			String line;
-//			while((line = br.readLine()) != null) {
-//				System.out.println(line);
-//			}
+			String line;
+			while((line = br.readLine()) != null) {
+				System.out.println(line);
+			}
 			
 			//bufferSource.contentBefore(10000000);
 			
@@ -167,7 +166,7 @@ public class MainPlaygroundScanFile {
 			
 			byte[] text = "ABAAAABAACDABA".getBytes();
 //			byte[] text = "BAACDABA".getBytes(); 
-//			pageManager = new PageManagerForByteBuffer(ByteBuffer.wrap(text));
+			pageManager = new PageManagerForByteBuffer(ByteBuffer.wrap(text));
 //			pageManager = new PageManagerWrapper(pageManager, 0, pageManager.getPageSize() / 4);
 //			pageManager = new PageManagerWrapper(pageManager, 0, pageManager.getPageSize());
 			
@@ -176,10 +175,10 @@ public class MainPlaygroundScanFile {
 			//nav.nextPos();
 			
 //			String pattern = "t%2FP625%3E++%3Fvar4+.%0";
-			String pattern = "SELECT";
+//			String pattern = "SELECT";
 //			String pattern = "AACD";
 //			String pattern = "BAA";
-//			String pattern = "ABA";
+			String pattern = "ABA";
 			//String pattern = "cddd".getBytes();
 			
 			byte[] patternBytes = pattern.getBytes();
@@ -232,7 +231,7 @@ public class MainPlaygroundScanFile {
 	}
 	
 	
-	public static void main(String[] args) throws IOException {
+	public static void mainWc(String[] args) throws IOException {
 		Path path = Paths.get("/home/raven/Projects/Eclipse/sparql-integrate-parent/ngs/test2.nq");
 //		Path path = Paths.get("/tmp/test.txt");
 
@@ -270,7 +269,7 @@ public class MainPlaygroundScanFile {
 			
 			long size = pageManager.getEndPos();
 			//long size = fileChannel.size();			
-			int numChunks = 1; //32;
+			int numChunks = 4; //32;
 			boolean fwd = true;
 			int numRuns = 10;
 

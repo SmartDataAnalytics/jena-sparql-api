@@ -1,19 +1,22 @@
 package org.aksw.jena_sparql_api.io.binseach;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 
-public class DecodedDataBlock {
+public class DecodedDataBlock
+	implements Block
+{
+	protected BlockSource blockSource;
+
 	protected long blockStart;
 	protected long blockEnd;
-	
-	protected BufferSource bufferSource;
-	
-	public DecodedDataBlock nextBlock() throws IOException {
-		return bufferSource.contentAfter(blockEnd);
+		
+	public Block nextBlock() throws IOException {
+		return blockSource.contentAfter(blockEnd);
 	}
 
-	public DecodedDataBlock prevBlock() throws IOException {
-		return bufferSource.contentBefore(blockStart);
+	public Block prevBlock() throws IOException {
+		return blockSource.contentBefore(blockStart);
 	}
 	
 	public long blockSize() {
@@ -23,19 +26,19 @@ public class DecodedDataBlock {
 	protected byte[] data;
 	
 	public DecodedDataBlock(
-			BufferSource bufferSource,
+			BlockSource bufferSource,
 			long blockStart,
 			long blockEnd,
 			byte[] data) {
 		super();
-		this.bufferSource = bufferSource;
+		this.blockSource = bufferSource;
 		this.blockStart = blockStart;
 		this.blockEnd = blockEnd;
 		this.data = data;
 	}
 
-	public BufferSource getBufferSource() {
-		return bufferSource;
+	public BlockSource getBufferSource() {
+		return blockSource;
 	}
 	
 	public long getBlockStart() {
@@ -48,5 +51,10 @@ public class DecodedDataBlock {
 
 	public byte[] getData() {
 		return data;
+	}
+	
+	@Override
+	public ByteBuffer newBuffer() {
+		return ByteBuffer.wrap(data);
 	}
 }

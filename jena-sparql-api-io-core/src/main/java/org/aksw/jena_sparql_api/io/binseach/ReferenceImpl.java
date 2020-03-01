@@ -91,7 +91,7 @@ public class ReferenceImpl<T>
 	@Override
 	public void close() {
 		if(isReleased) {
-			throw new RuntimeException("Reference was already release");
+			throw new RuntimeException("Reference was already released");
 		}
 		
 		// logger.debug("Released reference " + comment + " to " + parent);
@@ -102,11 +102,13 @@ public class ReferenceImpl<T>
 	}
 	
 	protected void checkRelease() {
-		if(childRefs.isEmpty() && isReleased) {
-			try {
-				releaseAction.close();
-			} catch (Exception e) {
-				throw new RuntimeException(e);
+		if(isReleased && childRefs.isEmpty()) {
+			if(releaseAction != null) {
+				try {
+					releaseAction.close();
+				} catch (Exception e) {
+					throw new RuntimeException(e);
+				}
 			}
 //			if(parent != null) {
 //				parent.release(this);

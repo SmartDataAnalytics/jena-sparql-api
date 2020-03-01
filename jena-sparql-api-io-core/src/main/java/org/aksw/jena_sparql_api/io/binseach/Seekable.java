@@ -152,6 +152,9 @@ public interface Seekable
 	
 	@Override
 	default int read(ByteBuffer dst) throws IOException {
+		if(true) {
+			throw new RuntimeException("This code is bugged because it does not return -1 on end");
+		}
 		int n = 0;
 		if(!isPosAfterEnd()) {
 			while(dst.remaining() > 0) {

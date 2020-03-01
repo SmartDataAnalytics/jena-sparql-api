@@ -11,8 +11,8 @@ import com.google.common.collect.RangeMap;
 import com.google.common.io.ByteStreams;
 
 
-public class BufferSourceBzip2
-	implements BufferSource
+public class BlockSourceBzip2
+	implements BlockSource
 {	
 //	public static final byte[] magic = new BigInteger("425a6839", 16).toByteArray();
 	// The magic number in characters is: BZh91AY&SY
@@ -25,7 +25,7 @@ public class BufferSourceBzip2
 	protected RangeMap<Long, Object> posToChannel;
 	
 	
-	public BufferSourceBzip2(
+	public BlockSourceBzip2(
 			SeekableSource seekableSource,
 			MatcherFactory fwdBlockStartMatcherFactory,
 			MatcherFactory bwdBlockStartMatcherFactory) {
@@ -36,7 +36,7 @@ public class BufferSourceBzip2
 	}
 
 
-	public static BufferSource create(SeekableSource seekableSource) {
+	public static BlockSource create(SeekableSource seekableSource) {
 		String str = new String(magic);
 		System.out.println("Str: " + str);
 		if(!seekableSource.supportsAbsolutePosition()) {
@@ -49,7 +49,7 @@ public class BufferSourceBzip2
 		MatcherFactory bwdMatcher = BoyerMooreMatcherFactory.createBwd(magic);
 		
 		
-		return new BufferSourceBzip2(seekableSource, fwdMatcher, bwdMatcher);
+		return new BlockSourceBzip2(seekableSource, fwdMatcher, bwdMatcher);
 	}
 	
 	
