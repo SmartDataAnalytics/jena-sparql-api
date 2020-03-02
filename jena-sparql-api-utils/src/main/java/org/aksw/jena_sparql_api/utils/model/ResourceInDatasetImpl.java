@@ -13,10 +13,14 @@ import org.apache.jena.rdf.model.impl.ResourceImpl;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.sparql.core.Quad;
+import org.apache.jena.util.ResourceUtils;
 import org.apache.jena.vocabulary.RDFS;
 
 /**
  * A specific resource in the default graph or one of the named graphs of a dataset. 
+ * 
+ * Note, that resources obtained via .as(viewClass) will retain the reference to the dataset's
+ * model, but the one to the dataset itself will be lost
  * 
  * @author raven
  *
@@ -66,6 +70,15 @@ public class ResourceInDatasetImpl
 
 	}
 	
+	public static ResourceInDataset renameResource(ResourceInDataset old, String uri) {
+		Dataset dataset = old.getDataset();
+		String graphName = old.getGraphName();
+		Resource n = ResourceUtils.renameResource(old, uri);
+		Node newNode = n.asNode();
+		ResourceInDataset result = new ResourceInDatasetImpl(dataset, graphName, newNode);
+		return result;
+	}
+	
 	public static ResourceInDataset createAnonInDefaultGraph() {
 		Dataset ds = DatasetFactory.create();
 		Node root = NodeFactory.createBlankNode();
@@ -86,6 +99,12 @@ public class ResourceInDatasetImpl
 				Quad.defaultGraphIRI.getURI(),
 				r);
 		
+		return result;	
+	}
+
+	public static ResourceInDataset createInDefaultGraph(Node node) {
+		Dataset dataset = DatasetFactory.create();
+		ResourceInDataset result = new ResourceInDatasetImpl(dataset, Quad.defaultGraphIRI.getURI(), node);
 		return result;	
 	}
 
@@ -125,4 +144,4 @@ public class ResourceInDatasetImpl
 	public Dataset getDataset() {
 		return dataset;
 	}
-}
+	}

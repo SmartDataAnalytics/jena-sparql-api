@@ -1,5 +1,7 @@
 package org.aksw.jena_sparql_api.utils.model;
 
+import java.util.function.Consumer;
+
 import org.apache.jena.query.Dataset;
 import org.apache.jena.rdf.model.Resource;
 
@@ -22,4 +24,18 @@ public interface ResourceInDataset
 	 */
 	String getGraphName();
 	Dataset getDataset();
+
+	/**
+	 * Pass itself to a consumer and return this.
+	 * Useful for retaining the type when adding properties to a ResourceInDataset: 
+	 * 
+	 * flowOrStream.map(ResourceInDatasetImpl.createX().acceptResource(r -> r.addProperty(foo, bar));
+	 * 
+	 * 
+	 * @return
+	 */
+	default ResourceInDataset applyOnResource(Consumer<? super Resource> consumer) {
+		consumer.accept(this);
+		return this;
+	}
 }

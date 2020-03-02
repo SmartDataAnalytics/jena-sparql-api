@@ -978,8 +978,16 @@ public class MapperProxyUtils {
 			
 			result = (P_Path0)PathParser.parse(pathStr, pm);
 
-			logger.debug("Parsed bean property RDF annotation " + pathStr + " into " + result);
-			
+			//logger.debug("Parsed bean property RDF annotation " + pathStr + " into " + result + " on " + method);
+			if(logger.isDebugEnabled()) {
+				logger.debug("Found @Iri annotation on " + method + ":");
+				if(Objects.equals(rdfPropertyStr, expanded)) {
+					logger.debug("  " + rdfPropertyStr);
+				} else {
+					logger.debug("  " + rdfPropertyStr + " expanded to " + result);
+				}
+			}
+
 			//Node p = NodeFactory.createURI(rdfPropertyStr);
 			
 			//result = new P_Link(p);

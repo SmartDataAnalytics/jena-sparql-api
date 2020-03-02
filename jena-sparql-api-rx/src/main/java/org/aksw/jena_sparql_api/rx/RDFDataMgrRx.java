@@ -478,7 +478,7 @@ public class RDFDataMgrRx {
 							if(t != null) {
 								boolean isParseError = t instanceof RiotParseException;
 
-								// Parse errors after a invocation of close are ignored
+								// Parse errors after an invocation of close are ignored
 								// I.e. if we asked for 5 items, and there is parse error at the 6th one,
 								// we still completed the original request without errors
 								if(isParseError && closeInvoked[0]) {
