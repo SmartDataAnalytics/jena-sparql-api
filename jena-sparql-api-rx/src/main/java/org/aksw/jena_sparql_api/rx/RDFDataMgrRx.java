@@ -324,7 +324,7 @@ public class RDFDataMgrRx {
 	public static Flowable<Dataset> createFlowableDatasets(Callable<InputStream> inSupplier, Lang lang, String baseIRI) {
 		Flowable<Dataset> result = createFlowableQuads(inSupplier, lang, baseIRI)		
 			.compose(Transformers.<Quad>toListWhile(
-		            (list, t) -> list.isEmpty() 
+		            (list, t) -> list.isEmpty()
 		                         || list.get(0).getGraph().equals(t.getGraph())))
 			.map(DatasetGraphQuadsImpl::create)
 			.map(DatasetFactory::wrap);

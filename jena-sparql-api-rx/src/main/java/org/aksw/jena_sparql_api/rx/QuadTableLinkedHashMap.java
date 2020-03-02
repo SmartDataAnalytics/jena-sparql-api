@@ -91,7 +91,8 @@ public class QuadTableLinkedHashMap
 	
 	@Override
 	public Stream<Node> listGraphNodes() {
-		return store.keySet().stream();
+		return store.keySet().stream()
+				.filter(node -> !Quad.isDefaultGraph(node));
 	}
 }
 

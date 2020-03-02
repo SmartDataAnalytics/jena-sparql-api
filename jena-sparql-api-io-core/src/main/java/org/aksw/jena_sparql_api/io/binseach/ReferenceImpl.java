@@ -64,7 +64,7 @@ public class ReferenceImpl<T>
 	}
 
 	@Override
-	public Reference<T> aquire(Object comment) {
+	public synchronized Reference<T> aquire(Object comment) {
 		// A bit of ugliness to allow the reference to release itself
 		@SuppressWarnings("rawtypes")
 		Reference[] tmp = new Reference[1];		
@@ -77,7 +77,7 @@ public class ReferenceImpl<T>
 	}
 	
 //	void release(Reference<T> childRef) {
-	void release(Object childRef) {
+	protected void release(Object childRef) {
 		boolean isContained = childRefs.containsKey(childRef);
 		if(!isContained) {
 			throw new RuntimeException("An unknown reference requested to release itself. Should not happen");
@@ -89,7 +89,7 @@ public class ReferenceImpl<T>
 	}
 
 	@Override
-	public void close() {
+	public synchronized void close() {
 		if(isReleased) {
 			throw new RuntimeException("Reference was already released");
 		}
