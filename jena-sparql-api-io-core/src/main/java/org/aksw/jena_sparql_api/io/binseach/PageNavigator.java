@@ -137,6 +137,7 @@ public class PageNavigator
 		this.maxPos = Math.min(this.maxPos, targetPos);
 		this.maxPage = getPageForPos(maxPos);
 		this.maxIndex = getIndexForPos(maxPos);
+		updateRelCache(page);
 		
 		if(pos > targetPos) {
 			posToEnd();
@@ -156,6 +157,7 @@ public class PageNavigator
 		this.minPos = Math.max(this.minPos, targetPos);
 		this.minPage = getPageForPos(minPos);
 		this.minIndex = getIndexForPos(minPos);
+		updateRelCache(page);
 		
 		if(pos < targetPos) {
 			posToStart();
