@@ -17,6 +17,16 @@ public interface Seekable
 {
 	Seekable clone();
 	
+	/** 
+	 * Default method to work around scala bug
+	 * https://github.com/scala/bug/issues/10501
+	 * 
+	 * @return
+	 */
+	default Seekable cloneObject() {
+		return clone();
+	}
+	
 	/**
 	 * Optional operation.
 	 * Get the position in this seekable

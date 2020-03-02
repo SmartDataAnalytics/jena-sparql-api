@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<artifactId>jena-sparql-api-playground</artifactId>
+	<packaging>jar</packaging>
+
+	<name>Jena SPARQL API - Playground</name>
+
+	<parent>
+		<groupId>org.aksw.jena-sparql-api</groupId>
+		<artifactId>jena-sparql-api-parent</artifactId>
+		<version>3.14.0-1-SNAPSHOT</version>
+	</parent>
+
+	<dependencies>
+
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<scope>compile</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>com.google.guava</groupId>
+			<artifactId>guava</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.apache.jena</groupId>
+			<artifactId>jena-fuseki-server</artifactId>
+			<version>${jena.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.aksw.jena-sparql-api</groupId>
+			<artifactId>jena-sparql-api-io-hdt</artifactId>
+		</dependency>
+
+		<!-- <dependency> -->
+		<!-- <groupId>org.aksw.commons</groupId> -->
+		<!-- <artifactId>commons-set-trie-core</artifactId> -->
+		<!-- <version>1.0.0-SNAPSHOT</version> -->
+		<!-- </dependency> -->
+
+
+		<!-- Self Dependencies -->
+		<dependency>
+			<groupId>org.aksw.jena-sparql-api</groupId>
+			<artifactId>jena-sparql-api-query-containment</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.aksw.jena-sparql-api</groupId>
+			<artifactId>jena-sparql-api-core</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.aksw.jena-sparql-api</groupId>
+			<artifactId>jena-sparql-api-resources-test-config</artifactId>
+			<scope>compile</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>org.aksw.jena-sparql-api</groupId>
+			<artifactId>jena-sparql-api-concepts</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.aksw.jena-sparql-api</groupId>
+			<artifactId>jena-sparql-api-cache</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.aksw.jena-sparql-api</groupId>
+			<artifactId>jena-sparql-api-mapper-proxy</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.aksw.commons</groupId>
+			<artifactId>jena-jgrapht-bindings</artifactId>
+		</dependency>
+
+<!-- 		<dependency> -->
+<!-- 			<groupId>org.aksw.jena-sparql-api</groupId> -->
+<!-- 			<artifactId>jena-sparql-api-server-standalone</artifactId> -->
+<!-- 		</dependency> -->
+
+<!-- 		<dependency> -->
+<!-- 			<groupId>org.jgrapht</groupId> -->
+<!-- 			<artifactId>jgrapht-ext</artifactId> -->
+<!-- 		</dependency> -->
+
+
+		<dependency>
+			<groupId>log4j</groupId>
+			<artifactId>log4j</artifactId>
+			<scope>compile</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-log4j12</artifactId>
+			<scope>compile</scope>
+		</dependency>
+
+<!-- 		<dependency> -->
+<!-- 			<groupId>io.reactivex</groupId> -->
+<!-- 			<artifactId>rxjava</artifactId> -->
+<!-- 		</dependency> -->
+
+
+<!-- 		<dependency> -->
+<!-- 			<groupId>org.apache.spark</groupId> -->
+<!-- 			<artifactId>spark-core_2.10</artifactId> -->
+<!-- 			<version>2.2.0</version> -->
+<!-- 			<exclusions> -->
+
+<!-- 				<exclusion> -->
+<!-- 					<groupId>org.apache.httpcomponents</groupId> -->
+<!-- 					<artifactId>httpcore</artifactId> -->
+<!-- 				</exclusion> -->
+<!-- 				<exclusion> -->
+<!-- 					<groupId>commons-httpclient</groupId> -->
+<!-- 					<artifactId>commons-httpclient</artifactId> -->
+<!-- 				</exclusion> -->
+<!-- 			</exclusions> -->
+<!-- 		</dependency> -->
+
+		<!-- <dependency> <groupId>net.sf.opencsv</groupId> <artifactId>opencsv</artifactId> 
+			</dependency> -->
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-deploy-plugin</artifactId>
+				<configuration>
+					<skip>true</skip>
+				</configuration>
+			</plugin>
+			<!-- <plugin> <groupId>org.apache.maven.plugins</groupId> <artifactId>maven-shade-plugin</artifactId> 
+				</plugin> -->
+		</plugins>
+	</build>
+
+</project>

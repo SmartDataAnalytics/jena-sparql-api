@@ -71,7 +71,7 @@
 		<module>jena-sparql-api-example-proxy</module>
 
 		<module>jena-sparql-api-example-views</module>
-		<!-- <module>jena-sparql-api-playground</module> -->
+		<module>jena-sparql-api-playground</module>
 
 		<module>jena-sparql-api-virtuoso</module>
 	</modules>
