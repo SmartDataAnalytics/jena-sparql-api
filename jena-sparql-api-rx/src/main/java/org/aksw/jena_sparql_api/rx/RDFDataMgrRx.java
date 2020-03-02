@@ -29,7 +29,6 @@ import org.aksw.jena_sparql_api.utils.QuadPatternUtils;
 import org.aksw.jena_sparql_api.utils.QuadUtils;
 import org.apache.jena.atlas.iterator.IteratorResourceClosing;
 import org.apache.jena.atlas.web.TypedInputStream;
-import org.apache.jena.ext.com.google.common.collect.Iterators;
 import org.apache.jena.ext.com.google.common.collect.Sets;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.GraphUtil;
@@ -55,7 +54,6 @@ import org.apache.jena.riot.system.RiotLib;
 import org.apache.jena.riot.system.StreamRDF;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.util.Context;
-import org.apache.jena.util.iterator.ClosableIterator;
 
 import com.github.davidmoten.rx2.flowable.Transformers;
 import com.google.common.collect.Lists;
@@ -351,28 +349,20 @@ public class RDFDataMgrRx {
 		return result;
 	}
 	
-	public static <T, I extends InputStream> Flowable<T> createFlowableFromInputStream(
-			Callable<I> inSupplier,
-			Function<Consumer<Thread>, Function<UncaughtExceptionHandler, Function<? super I, ? extends Iterator<T>>>> fn) {
-
-		// In case the creation of the iterator from an inputstream involves a thread
-		// perform setup of the exception handler
-		
-		// If there is a thread, we join on it before completing the flowable in order to
-		// capture any possible error
-		Thread[] thread = {null};
-		Throwable[] raisedException = {null};
-
 	
-		// We do not expect errors on the input stream as long close was not invoked
-		boolean closeInvoked[] = {false};
+	// TODO This needs some massive cleanup...
+	static class FlowState<I, T> {
+		I in;
+		Thread thread;
+		Throwable raisedException;
+		boolean closeInvoked;
 		
 		UncaughtExceptionHandler eh = (t, e) -> {
 			boolean report = true;
 			
 			// If close was invoked, skip exceptions related to the underlying
 			// input stream having been prematurely closed
-			if(closeInvoked[0]) {
+			if(closeInvoked) {
 				if(e instanceof RiotException) {
 					String msg = e.getMessage();
 					if(msg.equalsIgnoreCase("Pipe closed") || msg.equals("Consumer Dead")) {
@@ -382,27 +372,41 @@ public class RDFDataMgrRx {
 			}
 			
 			if(report) {
-				if(raisedException[0] == null) {
-					raisedException[0] = e;
+				if(raisedException == null) {
+					raisedException = e;
 				}
 				// If we receive any reportable exception after the flowable
 				// was closed, raise them so they don't get unnoticed!
-				if(closeInvoked[0]) {
+				if(closeInvoked) {
 					throw new RuntimeException(e);
 				}
 			}
 		};
 		
 		Consumer<Thread> th = t -> {
-			thread[0] = t;
+			thread = t;
 		};
 
+		IteratorClosable<T> reader;
+	}
+	
+	public static <T, I extends InputStream> Flowable<T> createFlowableFromInputStream(
+			Callable<I> inSupplier,
+			Function<Consumer<Thread>, Function<UncaughtExceptionHandler, Function<? super I, ? extends Iterator<T>>>> fn) {
+
+		// In case the creation of the iterator from an inputstream involves a thread
+		// perform setup of the exception handler
+		
+		// If there is a thread, we join on it before completing the flowable in order to
+		// capture any possible error
+		
 		Flowable<T> result = Flowable.generate(
 				() -> {
-					I in = inSupplier.call();
-					Iterator<T> it = fn.apply(th).apply(eh).apply(in);
-					return new IteratorClosable<>(it, () -> {
-						closeInvoked[0] = true;
+					FlowState<I, T> state = new FlowState<I, T>();
+					state.in = inSupplier.call();
+					Iterator<T> it = fn.apply(state.th).apply(state.eh).apply(state.in);
+					state.reader = new IteratorClosable<>(it, () -> {
+						state.closeInvoked = true;
 						// The producer thread may be blocked because not enough items were consumed
 //						if(thread[0] != null) {
 //							while(thread[0].isAlive()) {
@@ -426,14 +430,17 @@ public class RDFDataMgrRx {
 							}
 						} finally {
 							try {
-								in.close();
+								state.in.close();
 							} finally {
 								try {
 									// Consume any remaining items in the iterator to prevent blocking issues
 									// For example, Jena's producer thread can get blocked
 									// when parsed items are not consumed
 //									System.out.println("Consuming rest");
-									Iterators.size(it);
+									// FIXME Do we still need to consume the iterator if we
+									// interrupt the producer thread - or might that lead to triples / quads
+									// getting lost?
+//									Iterators.size(it);
 								} catch(Exception e) {
 									// Ignore silently
 								} finally {
@@ -441,7 +448,7 @@ public class RDFDataMgrRx {
 									// The producer may be blocked by attempting to put new items on a already full blocking queue
 									// The consumer in it.hasNext() may by waiting for a response from the producer
 									// So we interrupt the producer to death
-									Thread t = thread[0]; 
+									Thread t = state.thread; 
 									if(t != null) {
 										while(t.isAlive()) {
 	//										System.out.println("Interrupting");
@@ -457,23 +464,24 @@ public class RDFDataMgrRx {
 							}
 						}
 					});
+					return state;
 				},
-				(reader, emitter) -> {
+				(state, emitter) -> {
 					try {
 						//if(!closeInvoked[0])
 //						System.out.println("Generator invoked");
-						if(reader.hasNext()) {
+						if(state.reader.hasNext()) {
 //							System.out.println("hasNext = true");
-							T item = reader.next();
+							T item = state.reader.next();
 							emitter.onNext(item);
 						} else {
-//							System.out.println("Waiting for any pending exceptions from producer thread");
-							if(thread[0] != null) {
-								thread[0].join();
+//							System.out.println("hasNext = false; Waiting for any pending exceptions from producer thread");
+							if(state.thread != null) {
+								state.thread.join();
 							}
 //							System.out.println("End");
 							
-							Throwable t = raisedException[0];
+							Throwable t = state.raisedException;
 							boolean report = true;
 							if(t != null) {
 								boolean isParseError = t instanceof RiotParseException;
@@ -481,13 +489,13 @@ public class RDFDataMgrRx {
 								// Parse errors after an invocation of close are ignored
 								// I.e. if we asked for 5 items, and there is parse error at the 6th one,
 								// we still completed the original request without errors
-								if(isParseError && closeInvoked[0]) {
+								if(isParseError && state.closeInvoked) {
 									report = false;
 								}
 							}
 							
 							if(t != null && report) {
-								emitter.onError(raisedException[0]);
+								emitter.onError(state.raisedException);
 							} else {
 								emitter.onComplete();
 							}
@@ -496,7 +504,7 @@ public class RDFDataMgrRx {
 						emitter.onError(e);
 					}
 				},
-				ClosableIterator::close);
+				state -> state.reader.close());
 		return result;
 	}
 
