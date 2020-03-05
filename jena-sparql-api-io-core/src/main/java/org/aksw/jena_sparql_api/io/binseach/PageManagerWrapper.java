@@ -2,6 +2,9 @@ package org.aksw.jena_sparql_api.io.binseach;
 
 import java.nio.ByteBuffer;
 
+import org.aksw.jena_sparql_api.io.common.Reference;
+import org.aksw.jena_sparql_api.io.common.ReferenceImpl;
+
 
 /**
  * A wrapper that virtually puts a displaced page view over a delegate
@@ -49,7 +52,7 @@ public class PageManagerWrapper
 		Reference<Page> delegatePage;
 		if(effPage == effEndPage) {
 			delegatePage = delegate.requestBufferForPage(effPage);
-			ByteBuffer buf = delegatePage.getValue().newBuffer();
+			ByteBuffer buf = delegatePage.get().newBuffer();
 			if(buf == null) {
 				resultBuffer = null;
 			} else {
@@ -75,7 +78,7 @@ public class PageManagerWrapper
 			for(long i = effPage;; ++i) {
 				delegatePage = delegate.requestBufferForPage(i);
 				try {
-					ByteBuffer buf = delegatePage.getValue().newBuffer();
+					ByteBuffer buf = delegatePage.get().newBuffer();
 					if(buf != null) {
 						int o = buf.position();
 						

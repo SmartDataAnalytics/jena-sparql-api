@@ -7,6 +7,9 @@ import java.nio.channels.FileChannel.MapMode;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
+import org.aksw.jena_sparql_api.io.common.Reference;
+import org.aksw.jena_sparql_api.io.common.ReferenceImpl;
+
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 

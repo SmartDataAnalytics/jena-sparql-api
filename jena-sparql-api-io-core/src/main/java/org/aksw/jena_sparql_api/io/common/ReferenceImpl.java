@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.io.binseach;
+package org.aksw.jena_sparql_api.io.common;
 
 import java.util.Arrays;
 import java.util.IdentityHashMap;
@@ -55,7 +55,7 @@ public class ReferenceImpl<T>
 	}
 	
 	@Override
-	public T getValue() {
+	public T get() {
 		if(isReleased) {
 			throw new RuntimeException("Cannot get value of a released reference");
 		}
@@ -121,7 +121,7 @@ public class ReferenceImpl<T>
 	}
 
 	@Override
-	public boolean isReleased() {
+	public boolean isClosed() {
 		return isReleased;
 	}
 	

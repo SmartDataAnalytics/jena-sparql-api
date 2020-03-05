@@ -15,17 +15,18 @@
 		<version>3.14.0-1-SNAPSHOT</version>
 	</parent>
 
-	<properties>
-		<jena.version>3.13.0</jena.version>
-	</properties>
+<!-- 	<properties> -->
+<!-- 		<jena.version>3.13.0</jena.version> -->
+<!-- 	</properties> -->
 
 	<dependencies>
 	
-<!-- 		<dependency> -->
-<!-- 			<groupId>org.apache.jena</groupId> -->
-<!-- 			<artifactId>jena-fuseki-server</artifactId> -->
-<!-- 			<version>${jena.version}</version> -->
-<!-- 		</dependency> -->
+		<dependency>
+			<groupId>org.apache.jena</groupId>
+			<artifactId>jena-fuseki-war</artifactId>
+			<version>${jena.version}</version>
+			<type>war</type>
+		</dependency>
 
 		<dependency>
 			<groupId>org.apache.jena</groupId>

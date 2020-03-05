@@ -3,6 +3,8 @@ package org.aksw.jena_sparql_api.io.binseach;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
+import org.aksw.jena_sparql_api.io.common.Reference;
+
 /**
  * An object for (predominantly relative) positioning over a
  * sequence of fixed size pages
@@ -70,7 +72,7 @@ public class PageNavigator
 		result.index = this.index;
 		
 		result.pageObj = this.pageObj == null ? null : this.pageObj.aquire("clone"); 
-		result.pageBuffer = result.pageObj == null ? null : result.pageObj.getValue().newBuffer();
+		result.pageBuffer = result.pageObj == null ? null : result.pageObj.get().newBuffer();
 
 		result.displacement = this.displacement;
 		result.bufferForPage = this.bufferForPage;
@@ -205,7 +207,7 @@ public class PageNavigator
 			}
 			
 			pageObj = pageManager.requestBufferForPage(page);
-			ByteBuffer buf = pageObj.getValue().newBuffer();
+			ByteBuffer buf = pageObj.get().newBuffer();
 			if(buf != null) {
 				pageBuffer = buf;
 				bufferForPage = page;
@@ -742,7 +744,7 @@ public class PageNavigator
 	public void close() throws IOException {
 		if(pageObj != null) {
 			try {
-				if(!pageObj.isReleased()) {
+				if(!pageObj.isClosed()) {
 					pageObj.close();
 				}
 			} catch(Exception e) {

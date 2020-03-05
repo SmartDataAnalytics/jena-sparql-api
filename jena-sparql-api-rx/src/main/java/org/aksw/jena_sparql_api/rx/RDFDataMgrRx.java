@@ -158,6 +158,10 @@ public class RDFDataMgrRx {
 
         Thread t = new Thread(()-> {
         	try {
+        		// Invoke start on the sink so that the consumer knows the producer thread
+        		// It appears otherwise the producer thread can get interrupted before
+        		// the consumer gets to know the producer (which happens on start)
+        		out.start();
         		parseFromInputStream(out, input, baseIRI, lang, null);
         	} catch(Exception e) {
         		// Ensure the exception handler is run before any 
@@ -200,6 +204,10 @@ public class RDFDataMgrRx {
 
         Thread t = new Thread(()-> {
         	try {
+        		// Invoke start on the sink so that the consumer knows the producer thread
+        		// It appears otherwise the producer thread can get interrupted before
+        		// the consumer gets to know the producer (which happens on start)
+        		out.start();
         		parseFromInputStream(out, input, baseIRI, lang, null);
         	} catch(Exception e) {
         		// Ensure the exception handler is run before any 
@@ -351,13 +359,19 @@ public class RDFDataMgrRx {
 	
 	
 	// TODO This needs some massive cleanup...
-	static class FlowState<I, T> {
+	static class FlowState<I extends InputStream, T> {
 		I in;
 		Thread thread;
 		Throwable raisedException;
-		boolean closeInvoked;
-		
-		UncaughtExceptionHandler eh = (t, e) -> {
+		Iterator<T> reader;
+		boolean closeInvoked;		
+
+//		public FlowState(I in) {
+//			super();
+//			this.in = in;
+//		}
+
+		void handleException(Thread t, Throwable e) {
 			boolean report = true;
 			
 			// If close was invoked, skip exceptions related to the underlying
@@ -380,14 +394,72 @@ public class RDFDataMgrRx {
 				if(closeInvoked) {
 					throw new RuntimeException(e);
 				}
-			}
-		};
+			}			
+		}
 		
-		Consumer<Thread> th = t -> {
+		void setThread(Thread t) {
 			thread = t;
-		};
+		}
 
-		IteratorClosable<T> reader;
+		void close() throws IOException {
+			closeInvoked = true;
+			// The producer thread may be blocked because not enough items were consumed
+//				if(thread[0] != null) {
+//					while(thread[0].isAlive()) {
+//						thread[0].interrupt();
+//					}
+//				}
+
+			// We need to wait if iterator.next is waiting
+//				synchronized(this) {
+//					
+//				}
+			
+			// Try to close the iterator 'it'
+			// Otherwise, forcefully close the stream
+			// (may cause a (usually/hopefully) harmless exception)
+			try {
+				if(reader instanceof Closeable) {
+		            ((Closeable)reader).close();
+				} else if (reader instanceof org.apache.jena.atlas.lib.Closeable) {
+		            ((org.apache.jena.atlas.lib.Closeable)reader).close();
+				}
+			} finally {
+				try {
+					in.close();
+				} finally {
+					try {
+						// Consume any remaining items in the iterator to prevent blocking issues
+						// For example, Jena's producer thread can get blocked
+						// when parsed items are not consumed
+//							System.out.println("Consuming rest");
+						// FIXME Do we still need to consume the iterator if we
+						// interrupt the producer thread - or might that lead to triples / quads
+						// getting lost?
+//							Iterators.size(it);
+					} catch(Exception e) {
+						// Ignore silently
+					} finally {
+						// The generator corresponds to the 2nd argument of Flowable.generate
+						// The producer may be blocked by attempting to put new items on a already full blocking queue
+						// The consumer in it.hasNext() may by waiting for a response from the producer
+						// So we interrupt the producer to death
+						Thread t = thread; 
+						if(t != null) {
+							while(t.isAlive()) {
+//										System.out.println("Interrupting");
+								t.interrupt();
+								
+								try {
+									Thread.sleep(100);
+								} catch(InterruptedException e2) {
+								}
+							}
+						}
+					}
+				}
+			}
+		}
 	}
 	
 	public static <T, I extends InputStream> Flowable<T> createFlowableFromInputStream(
@@ -402,68 +474,9 @@ public class RDFDataMgrRx {
 		
 		Flowable<T> result = Flowable.generate(
 				() -> {
-					FlowState<I, T> state = new FlowState<I, T>();
+					FlowState<I, T> state = new FlowState<>();
 					state.in = inSupplier.call();
-					Iterator<T> it = fn.apply(state.th).apply(state.eh).apply(state.in);
-					state.reader = new IteratorClosable<>(it, () -> {
-						state.closeInvoked = true;
-						// The producer thread may be blocked because not enough items were consumed
-//						if(thread[0] != null) {
-//							while(thread[0].isAlive()) {
-//								thread[0].interrupt();
-//							}
-//						}
-
-						// We need to wait if iterator.next is waiting
-//						synchronized(this) {
-//							
-//						}
-						
-						// Try to close the iterator 'it'
-						// Otherwise, forcefully close the stream
-						// (may cause a (usually/hopefully) harmless exception)
-						try {
-							if(it instanceof Closeable) {
-					            ((Closeable)it).close();
-							} else if (it instanceof org.apache.jena.atlas.lib.Closeable) {
-					            ((org.apache.jena.atlas.lib.Closeable)it).close();
-							}
-						} finally {
-							try {
-								state.in.close();
-							} finally {
-								try {
-									// Consume any remaining items in the iterator to prevent blocking issues
-									// For example, Jena's producer thread can get blocked
-									// when parsed items are not consumed
-//									System.out.println("Consuming rest");
-									// FIXME Do we still need to consume the iterator if we
-									// interrupt the producer thread - or might that lead to triples / quads
-									// getting lost?
-//									Iterators.size(it);
-								} catch(Exception e) {
-									// Ignore silently
-								} finally {
-									// The generator corresponds to the 2nd argument of Flowable.generate
-									// The producer may be blocked by attempting to put new items on a already full blocking queue
-									// The consumer in it.hasNext() may by waiting for a response from the producer
-									// So we interrupt the producer to death
-									Thread t = state.thread; 
-									if(t != null) {
-										while(t.isAlive()) {
-	//										System.out.println("Interrupting");
-											t.interrupt();
-											
-											try {
-												Thread.sleep(100);
-											} catch(InterruptedException e2) {
-											}
-										}
-									}
-								}
-							}
-						}
-					});
+					state.reader = fn.apply(state::setThread).apply(state::handleException).apply(state.in);
 					return state;
 				},
 				(state, emitter) -> {
@@ -504,7 +517,7 @@ public class RDFDataMgrRx {
 						emitter.onError(e);
 					}
 				},
-				state -> state.reader.close());
+				state -> state.close());
 		return result;
 	}
 

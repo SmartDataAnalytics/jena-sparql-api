@@ -144,4 +144,9 @@ public class ResourceInDatasetImpl
 	public Dataset getDataset() {
 		return dataset;
 	}
+
+	@Override
+	public ResourceInDataset inDataset(Dataset other) {
+		return new ResourceInDatasetImpl(other, graphName, graphNameNode);
 	}
+}

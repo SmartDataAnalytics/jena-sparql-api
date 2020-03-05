@@ -25,6 +25,8 @@ public interface ResourceInDataset
 	String getGraphName();
 	Dataset getDataset();
 
+	ResourceInDataset inDataset(Dataset other);
+	
 	/**
 	 * Pass itself to a consumer and return this.
 	 * Useful for retaining the type when adding properties to a ResourceInDataset: 

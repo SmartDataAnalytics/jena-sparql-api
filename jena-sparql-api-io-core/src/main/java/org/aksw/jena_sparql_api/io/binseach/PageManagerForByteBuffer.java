@@ -2,6 +2,9 @@ package org.aksw.jena_sparql_api.io.binseach;
 
 import java.nio.ByteBuffer;
 
+import org.aksw.jena_sparql_api.io.common.Reference;
+import org.aksw.jena_sparql_api.io.common.ReferenceImpl;
+
 /**
  * PageManager wrapper for a static buffer
  * 

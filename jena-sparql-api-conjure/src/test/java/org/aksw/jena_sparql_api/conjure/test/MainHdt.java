@@ -7,9 +7,10 @@ import java.io.InputStream;
 import java.util.concurrent.TimeUnit;
 
 import org.aksw.jena_sparql_api.conjure.datapod.impl.RdfDataPodHdtImpl;
-import org.aksw.jena_sparql_api.conjure.datapod.impl.ReferenceImpl;
+import org.aksw.jena_sparql_api.io.common.ReferenceImpl;
 import org.aksw.jena_sparql_api.io.hdt.JenaPluginHdt;
 import org.aksw.jena_sparql_api.utils.GraphUtils;
+import org.apache.jena.ext.com.google.common.base.Stopwatch;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QueryExecutionFactory;
@@ -25,7 +26,6 @@ import org.rdfhdt.hdt.hdt.HDT;
 import org.rdfhdt.hdt.hdt.HDTManager;
 import org.rdfhdt.hdtjena.HDTGraph;
 
-import com.github.jsonldjava.shaded.com.google.common.base.Stopwatch;
 
 
 public class MainHdt {

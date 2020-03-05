@@ -1,5 +1,7 @@
 package org.aksw.jena_sparql_api.io.binseach;
 
+import org.aksw.jena_sparql_api.io.common.Reference;
+
 public interface PageManager{
 	Reference<Page> requestBufferForPage(long page);
 	

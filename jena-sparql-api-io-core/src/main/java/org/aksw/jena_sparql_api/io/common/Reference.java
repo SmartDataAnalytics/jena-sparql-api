@@ -1,12 +1,12 @@
-package org.aksw.jena_sparql_api.io.binseach;
+package org.aksw.jena_sparql_api.io.common;
 
 public interface Reference<T>
 	extends AutoCloseable
 {
-	T getValue();
+	T get();
 	
 	/**
-	 * Aquire a new reference using
+	 * Aquire a new reference with a given comment object
 	 * 
 	 * @return
 	 */
@@ -18,7 +18,7 @@ public interface Reference<T>
 	 */
 //	void release();
 //	
-	boolean isReleased();
+	boolean isClosed();
 	
 	/**
 	 * Optional operation.
