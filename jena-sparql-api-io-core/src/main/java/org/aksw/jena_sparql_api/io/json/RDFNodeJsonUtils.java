@@ -7,6 +7,8 @@ import java.util.List;
 import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
+import org.apache.jena.query.Dataset;
+import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.RDFNode;
@@ -72,6 +74,18 @@ public class RDFNodeJsonUtils {
         JsonObject result = gson.fromJson(str, JsonObject.class);
         return result;
 	}
+	
+	
+	
+	public static JsonObject toJsonObject(Dataset model, Gson gson) {
+        OutputStream baos = new ByteArrayOutputStream();
+        RDFDataMgr.write(baos, model, RDFFormat.JSONLD);
+        String str = baos.toString();
+        
+        JsonObject result = gson.fromJson(str, JsonObject.class);
+        return result;
+	}
+
 
 	public static String toJsonNodeString(RDFNode n, Gson gson) {
 		JsonObject jsonNodeLdOject = toJsonNodeObject(n, gson);
@@ -122,6 +136,16 @@ public class RDFNodeJsonUtils {
     	return result;
     }
     
+    public static Dataset toDataset(String jsonString) {
+    	Dataset result = DatasetFactory.create();
+    	RDFParserBuilder.create()
+    		.fromString(jsonString)
+    		.labelToNode(SyntaxLabels.createLabelToNodeAsGiven())
+    		.lang(Lang.JSONLD)
+    		.parse(result);
+    	
+    	return result;
+    }
     
 //	public static final  profile = new ParserProfileStd(RiotLib.factoryRDF(SyntaxLabels.createLabelToNodeRT()), 
 //  ErrorHandlerFactory.errorHandlerStd,
