@@ -24,7 +24,6 @@ import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.utils.DatasetGraphUtils;
 import org.aksw.jena_sparql_api.utils.DatasetUtils;
-import org.aksw.jena_sparql_api.utils.IteratorClosable;
 import org.aksw.jena_sparql_api.utils.QuadPatternUtils;
 import org.aksw.jena_sparql_api.utils.QuadUtils;
 import org.apache.jena.atlas.iterator.IteratorResourceClosing;
@@ -67,6 +66,19 @@ import io.reactivex.Flowable;
  *
  */
 public class RDFDataMgrRx {
+	public static Flowable<Triple> createFlowableTriples(Callable<InputStream> inSupplier, Lang lang, String baseIRI) {
+		return createFlowableFromInputStream(inSupplier, th -> eh -> in -> createIteratorTriples(in, lang, baseIRI, eh, th));
+	}
+	
+	public static Flowable<Resource> createFlowableResources(String filenameOrURI, Lang lang, String baseIRI) {
+		return createFlowableResources(() -> RDFDataMgr.open(filenameOrURI), lang, baseIRI);
+	}
+
+	public static Flowable<Dataset> createFlowableDatasets(String filenameOrURI, Lang lang, String baseIRI) {
+		return createFlowableDatasets(() -> RDFDataMgr.open(filenameOrURI), lang, baseIRI);
+	}
+	
+	
     public static Iterator<Quad> createIteratorQuads(
     		InputStream in,
     		Lang lang,
@@ -234,6 +246,11 @@ public class RDFDataMgrRx {
             .parse(destination);
     }
 
+	public static Flowable<Quad> createFlowableQuads(String filenameOrURI, Lang lang, String baseIRI) {
+		return createFlowableQuads(() -> RDFDataMgr.open(filenameOrURI), lang, baseIRI);
+	}
+
+	
 	public static Flowable<Quad> createFlowableQuads(Callable<InputStream> inSupplier, Lang lang, String baseIRI) {
 		return createFlowableFromInputStream(inSupplier, th -> eh -> in -> createIteratorQuads(in, lang, baseIRI, eh, th))
 				// Ensure that the graph node is always non-null
@@ -241,10 +258,6 @@ public class RDFDataMgrRx {
 				.map(q -> q.getGraph() != null
 					? q
 					: Quad.create(Quad.defaultGraphNodeGenerated, q.asTriple()));
-	}
-
-	public static Flowable<Triple> createFlowableTriples(Callable<InputStream> inSupplier, Lang lang, String baseIRI) {
-		return createFlowableFromInputStream(inSupplier, th -> eh -> in -> createIteratorTriples(in, lang, baseIRI, eh, th));
 	}
 
 	
@@ -357,8 +370,14 @@ public class RDFDataMgrRx {
 		return result;
 	}
 	
-	
-	// TODO This needs some massive cleanup...
+
+	/**
+	 * 
+	 * @author raven
+	 *
+	 * @param <I> InputStream type
+	 * @param <T> Item type of the resulting flow, typically Triples or Quads
+	 */
 	static class FlowState<I extends InputStream, T> {
 		I in;
 		Thread thread;

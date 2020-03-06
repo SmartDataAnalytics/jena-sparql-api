@@ -227,6 +227,8 @@ public class SparqlStmtUtils {
 		return result;
 	}
 	
+	
+	// FIXME Can we remove this in favor of RDFDataMgr.open()?
 	public static TypedInputStream openInputStream(String filenameOrURI) {
 		Context context = null;
 
