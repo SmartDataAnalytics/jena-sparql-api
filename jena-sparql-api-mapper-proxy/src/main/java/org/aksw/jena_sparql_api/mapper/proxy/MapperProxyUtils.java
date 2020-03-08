@@ -1090,6 +1090,10 @@ public class MapperProxyUtils {
 		// Find all methods with a @Iri annotation
 		Map<String, P_Path0> paths = indexPathsByBeanPropertyName(clazz, pm);
 
+		// FIXME - We can have multiple methods for a bean property
+		// E.g. both a simple and a dynamic collection getter
+		// https://github.com/SmartDataAnalytics/jena-sparql-api/issues/33
+		
 		Map<String, Method> readMethods = new LinkedHashMap<>();
 		Map<String, Method> writeMethods = new LinkedHashMap<>();
 		//Map<String, String> propertyName = new LinkedHashMap<>();
