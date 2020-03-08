@@ -1,5 +1,8 @@
 package org.aksw.jena_sparql_api.utils.model;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Objects;
 
 import org.aksw.jena_sparql_api.utils.DatasetUtils;
@@ -11,6 +14,7 @@ import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.impl.ResourceImpl;
 import org.apache.jena.riot.RDFDataMgr;
@@ -71,6 +75,20 @@ public class ResourceInDatasetImpl
 		ResourceInDataset x2 = ResourceInDatasetImpl.createFromCopyIntoResourceGraph(r2);
 		RDFDataMgr.write(System.out, x2.getDataset(), RDFFormat.TRIG_PRETTY);
 
+	}
+	
+	public static List<ResourceInDataset> selectByProperty(Dataset dataset, Property p) {
+		Iterator<Quad> it = dataset.asDatasetGraph().find(Node.ANY, Node.ANY, p.asNode(), Node.ANY);
+		List<ResourceInDataset> result = new ArrayList<>();
+		while(it.hasNext()) {
+			Quad q = it.next();
+			
+			String graphName = q.getGraph().getURI();
+			ResourceInDataset tmp = new ResourceInDatasetImpl(dataset, graphName, q.getSubject());
+			result.add(tmp);
+		}
+		
+		return result;
 	}
 	
 	public static ResourceInDataset renameResource(ResourceInDataset old, String uri) {
