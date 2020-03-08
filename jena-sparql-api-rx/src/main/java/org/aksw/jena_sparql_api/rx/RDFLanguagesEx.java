@@ -5,6 +5,7 @@ import java.util.Set;
 
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFFormat;
+import org.apache.jena.riot.RDFLanguages;
 import org.apache.jena.riot.RDFWriterRegistry;
 
 public class RDFLanguagesEx {
@@ -49,5 +50,16 @@ public class RDFLanguagesEx {
 				
 		return outFormat;
 	}
+
+	
+	
+//	public static RDFFormat findLang(String label) {
+//		RDFFormat outFormat = RDFLanguages.fi.registered().stream()
+//				.filter(fmt -> fmt.toString().equalsIgnoreCase(label) || matchesLang(fmt.getLang(), label))
+//				.findFirst()
+//				.orElseThrow(() -> new RuntimeException("No RDF format found for label " + label));
+//				
+//		return outFormat;
+//	}
 
 }
