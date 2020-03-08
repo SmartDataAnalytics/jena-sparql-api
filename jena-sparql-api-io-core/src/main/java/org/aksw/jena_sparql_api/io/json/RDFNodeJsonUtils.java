@@ -2,6 +2,7 @@ package org.aksw.jena_sparql_api.io.json;
 
 import java.io.OutputStream;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 
 import org.apache.commons.io.output.ByteArrayOutputStream;
@@ -24,6 +25,8 @@ import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 /**
@@ -77,12 +80,36 @@ public class RDFNodeJsonUtils {
 	
 	
 	
-	public static JsonObject toJsonObject(Dataset model, Gson gson) {
-        OutputStream baos = new ByteArrayOutputStream();
-        RDFDataMgr.write(baos, model, RDFFormat.JSONLD);
-        String str = baos.toString();
+	public static JsonObject addJsonSerialization(Gson gson, JsonArray out, String name, Model model) {
+        JsonObject result = null;
+		if(!model.isEmpty()) {
+			JsonObject data = toJsonObject(model, gson);
+			
+			result = new JsonObject();
+			result.addProperty("name", name);
+			result.add("data", data);
+	        out.add(result);
+        }
+        return result;
+	}
+	
+	public static JsonObject toJsonObject(Dataset dataset, Gson gson) {
+        JsonObject result = new JsonObject();
+        JsonObject dgJson = toJsonObject(dataset.getDefaultModel(), gson);
+        result.add("defaultGraph", dgJson);
+
+        JsonArray arr = new JsonArray();
+        Iterator<String> it = dataset.listNames();
+        while(it.hasNext()) {
+        	String name = it.next();
+        	Model m = dataset.getNamedModel(name);
+        	addJsonSerialization(gson, arr, name, m);
+        }
         
-        JsonObject result = gson.fromJson(str, JsonObject.class);
+        if(arr.size() != 0) {
+        	result.add("namedGraphs", arr);
+        }
+        //JsonObject result = gson.fromJson(str, JsonObject.class);
         return result;
 	}
 
@@ -138,13 +165,41 @@ public class RDFNodeJsonUtils {
     
     public static Dataset toDataset(String jsonString) {
     	Dataset result = DatasetFactory.create();
-    	RDFParserBuilder.create()
-    		.fromString(jsonString)
-    		.labelToNode(SyntaxLabels.createLabelToNodeAsGiven())
-    		.lang(Lang.JSONLD)
-    		.parse(result);
+
+    	Gson gson = new Gson();
+    	JsonObject root = gson.fromJson(jsonString, JsonObject.class);
+    	JsonElement dge = root.get("defaultGraph");
+    	if(dge != null) {
+    		Model m = toModel(dge.toString());
+    		result.setDefaultModel(m);
+    	}
+    	
+    	JsonElement nge = root.get("namedGraphs");
+    	if(nge != null) {
+    		JsonArray arr = nge.getAsJsonArray();
+    		Iterator<JsonElement> it = arr.iterator();
+    		while(it.hasNext()) {
+    			JsonElement e = it.next();
+    			JsonObject obj = e.getAsJsonObject();
+    			
+    			String name = obj.get("name").getAsString();
+    			JsonObject data = obj.get("data").getAsJsonObject();
+    			
+    			
+        		Model m = toModel(data.toString());
+        		result.addNamedModel(name, m);
+    		}
+    	}
     	
     	return result;
+
+//    	Dataset result = DatasetFactory.create();
+//    	RDFParserBuilder.create()
+//    		.fromString(jsonString)
+//    		.labelToNode(SyntaxLabels.createLabelToNodeAsGiven())
+//    		.lang(Lang.JSONLD)
+//    		.parse(result);
+    	
     }
     
 //	public static final  profile = new ParserProfileStd(RiotLib.factoryRDF(SyntaxLabels.createLabelToNodeRT()), 

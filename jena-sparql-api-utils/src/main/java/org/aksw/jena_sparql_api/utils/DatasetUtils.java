@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.utils.model.ResourceInDataset;
@@ -87,7 +88,7 @@ public class DatasetUtils {
 
 		return result;
 	}
-
+	
 	public static Model getDefaultOrNamedModel(Dataset dataset, String graphName) {
 		Node g = NodeFactory.createURI(graphName);
 		boolean isDefaultGraph = Quad.isDefaultGraph(g);
@@ -99,4 +100,19 @@ public class DatasetUtils {
 		return result;
 	}
 
+	public static boolean containsDefaultOrNamedModel(Dataset dataset, Node graphNameNode) {
+		boolean result = Optional.ofNullable(getDefaultOrNamedModel(dataset, graphNameNode))
+				.map(model -> !model.isEmpty())
+				.orElse(false);
+
+		return result;
+	}
+
+	public static boolean containsDefaultOrNamedModel(Dataset dataset, String graphName) {
+		boolean result = Optional.ofNullable(getDefaultOrNamedModel(dataset, graphName))
+				.map(model -> !model.isEmpty())
+				.orElse(false);
+
+		return result;
+	}
 }

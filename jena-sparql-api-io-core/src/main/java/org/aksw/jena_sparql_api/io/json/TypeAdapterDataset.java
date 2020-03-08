@@ -17,11 +17,14 @@ public class TypeAdapterDataset
 	public void write(JsonWriter out, Dataset value) throws IOException {
 		JsonObject obj = RDFNodeJsonUtils.toJsonObject(value, new Gson());
 
+		// We write out the whole JSON in a string because otherwise the parsing becomes a pain
+		// The resulting json is ugly though
 		out.value("" + obj);
 	}
 	
 	@Override
-	public Dataset read(JsonReader in) throws IOException {		
+	public Dataset read(JsonReader in) throws IOException {
+		//RDFNodeJsonUtils.toDataset(str);
 		String str = in.nextString();
 		Dataset result = RDFNodeJsonUtils.toDataset(str);
 		return result;

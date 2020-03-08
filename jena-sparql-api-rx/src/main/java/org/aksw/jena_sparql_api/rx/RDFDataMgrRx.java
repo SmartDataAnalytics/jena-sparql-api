@@ -26,6 +26,7 @@ import org.aksw.jena_sparql_api.utils.DatasetGraphUtils;
 import org.aksw.jena_sparql_api.utils.DatasetUtils;
 import org.aksw.jena_sparql_api.utils.QuadPatternUtils;
 import org.aksw.jena_sparql_api.utils.QuadUtils;
+import org.aksw.jena_sparql_api.utils.model.ResourceInDataset;
 import org.apache.jena.atlas.iterator.IteratorResourceClosing;
 import org.apache.jena.atlas.web.TypedInputStream;
 import org.apache.jena.ext.com.google.common.collect.Sets;
@@ -51,10 +52,12 @@ import org.apache.jena.riot.lang.RiotParsers;
 import org.apache.jena.riot.system.ErrorHandlerFactory;
 import org.apache.jena.riot.system.RiotLib;
 import org.apache.jena.riot.system.StreamRDF;
+import org.apache.jena.riot.system.SyntaxLabels;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.util.Context;
 
 import com.github.davidmoten.rx2.flowable.Transformers;
+import com.github.jsonldjava.shaded.com.google.common.collect.ListMultimap;
 import com.google.common.collect.Lists;
 
 import io.reactivex.Flowable;
@@ -242,6 +245,7 @@ public class RDFDataMgrRx {
             .lang(lang)
             .context(context)
             .errorHandler(ErrorHandlerFactory.errorHandlerDetailed())
+    		.labelToNode(SyntaxLabels.createLabelToNodeAsGiven())
             //.errorHandler(handler)
             .parse(destination);
     }
@@ -608,10 +612,27 @@ public class RDFDataMgrRx {
 		}
 	}
 
-	public static class QuadEncoderMerge {
+	/**
+	 * Stateful collector that merges any consecutive graphs of name
+	 * contained in the datasets passed to the accept method.
+	 * 
+	 * 
+	 * @author raven
+	 *
+	 */
+	public static class ConsecutiveNamedGraphMerger
+		extends ConsecutiveNamedGraphMergerCore<Dataset>
+	{
+		@Override
+		protected Dataset mapResult(Set<Node> readyGraphs, Dataset dataset) {
+			return dataset;
+		}
+	}
+
+	public static abstract class ConsecutiveNamedGraphMergerCore<T> {
 		protected Map<Node, Set<Quad>> pending = new LinkedHashMap<>();
 
-		public synchronized Dataset accept(Dataset dataset) {
+		public synchronized T accept(Dataset dataset) {
 			Supplier<Set<Quad>> setSupplier = LinkedHashSet::new; 
 			
 			Iterator<Quad> it = dataset.asDatasetGraph().find();
@@ -651,20 +672,29 @@ public class RDFDataMgrRx {
 				pending.remove(ready);
 			}
 			
+			T xx = mapResult(readyGraphs, dataset);
+			
 			//System.err.println("Pending size " + pending..size());
 			
-			return result;
+			return xx;
 		}
 		
-		public Dataset getPendingDataset() {
+		protected abstract T mapResult(Set<Node> readyGraphs, Dataset dataset);
+		
+		public T getPendingDataset() {
 			Dataset result = DatasetFactory.create();
 			for(Collection<Quad> quads : pending.values()) {
 				DatasetGraphUtils.addAll(result.asDatasetGraph(), quads);
 			}
 
-			return result;
+			T xx = mapResult(pending.keySet(), result);
+			return xx;
 		}
-	}	
+	}
+	
+	
+
+
 	public static class QuadEncoderMergeOld {
 		protected Dataset pending = DatasetFactory.create();
 

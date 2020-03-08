@@ -3,6 +3,7 @@ package org.aksw.jena_sparql_api.io.json;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.jena.ext.com.google.common.collect.Streams;
 import org.apache.jena.query.Dataset;
 
 public class GroupedResourceInDataset {
@@ -29,6 +30,6 @@ public class GroupedResourceInDataset {
 
 	@Override
 	public String toString() {
-		return "graphNameAndNodes=" + graphNameAndNodes + ", datasetSize=" + dataset.asDatasetGraph().size();
+		return "graphNameAndNodes=" + graphNameAndNodes + ", datasetSize=" + Streams.stream(dataset.asDatasetGraph().find()).count();
 	}
 }
