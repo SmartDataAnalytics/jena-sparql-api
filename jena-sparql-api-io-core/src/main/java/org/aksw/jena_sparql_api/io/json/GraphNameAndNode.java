@@ -1,5 +1,7 @@
 package org.aksw.jena_sparql_api.io.json;
 
+import java.util.Objects;
+
 import org.apache.jena.graph.Node;
 
 public class GraphNameAndNode {
@@ -8,8 +10,8 @@ public class GraphNameAndNode {
 
 	public GraphNameAndNode(String graphName, Node node) {
 		super();
-		this.graphName = graphName;
-		this.node = node;
+		this.graphName = Objects.requireNonNull(graphName);
+		this.node = Objects.requireNonNull(node);
 	}
 
 	public String getGraphName() {

@@ -1,5 +1,7 @@
 package org.aksw.jena_sparql_api.utils.model;
 
+import java.util.Objects;
+
 import org.aksw.jena_sparql_api.utils.DatasetUtils;
 import org.apache.jena.enhanced.EnhGraph;
 import org.apache.jena.graph.GraphUtil;
@@ -8,6 +10,7 @@ import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.impl.ResourceImpl;
 import org.apache.jena.riot.RDFDataMgr;
@@ -31,7 +34,7 @@ public class ResourceInDatasetImpl
 {
 	protected Dataset dataset;
 	protected String graphName;
-	protected Node graphNameNode;
+	// protected Node graphNameNode;
 	
 	public static void main(String[] args) {
 		// Experiments for analyzing equals behavior on datasets and models
@@ -76,6 +79,31 @@ public class ResourceInDatasetImpl
 		Resource n = ResourceUtils.renameResource(old, uri);
 		Node newNode = n.asNode();
 		ResourceInDataset result = new ResourceInDatasetImpl(dataset, graphName, newNode);
+		return result;
+	}
+	
+	public static ResourceInDataset renameGraph(ResourceInDataset r, String tgtGraphName) {
+		ResourceInDataset result;
+
+		Dataset ds = r.getDataset();
+		String srcGraphName = r.getGraphName();
+		if(!Objects.equals(srcGraphName, tgtGraphName)) {
+			Model srcModel = DatasetUtils.getDefaultOrNamedModel(ds, srcGraphName);
+
+			// TODO Avoid copying if possible
+			Model srcCopy = ModelFactory.createDefaultModel();
+			srcCopy.add(srcModel);
+			
+			srcModel.removeAll();
+			Model tgtModel = DatasetUtils.getDefaultOrNamedModel(ds, tgtGraphName);
+			tgtModel.add(srcCopy);
+			
+			Node node = r.asNode();
+			result = new ResourceInDatasetImpl(ds, tgtGraphName, node);
+		} else {
+			result = r;
+		}
+		
 		return result;
 	}
 	
@@ -147,6 +175,6 @@ public class ResourceInDatasetImpl
 
 	@Override
 	public ResourceInDataset inDataset(Dataset other) {
-		return new ResourceInDatasetImpl(other, graphName, graphNameNode);
+		return new ResourceInDatasetImpl(other, graphName, node); // graphNameNode);
 	}
 }

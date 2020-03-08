@@ -25,5 +25,4 @@ public class ResultSetUtils {
         ResultSetCloseable result = new ResultSetCloseable(baseRs, closeable);
         return result;
     }
-
 }
