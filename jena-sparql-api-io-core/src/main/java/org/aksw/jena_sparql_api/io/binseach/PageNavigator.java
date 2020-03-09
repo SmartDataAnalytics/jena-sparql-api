@@ -121,9 +121,9 @@ public class PageNavigator
 		this.maxPage = getPageForPos(maxPos);
 		this.maxIndex = getIndexForPos(maxPos);
 		
-		if(pageSize == 0) {
-			throw new RuntimeException("Page size must never be 0");
-		}
+//		if(pageSize == 0) {
+//			throw new RuntimeException("Page size must never be 0");
+//		}
 		
 		updateRelCache(page);
 	}
@@ -269,12 +269,12 @@ public class PageNavigator
 	}
 
 	public long getPageForPos(long pos) {
-        long result = pos / pageSize;
+        long result = pageSize == 0 ? 0 : pos / pageSize;
         return result;
 	}
 
 	public int getIndexForPos(long pos) {
-        int result = (int)(pos % pageSize);
+        int result = pageSize == 0 ? 0 : (int)(pos % pageSize);
         return result;
 	}
 	
