@@ -278,6 +278,36 @@ public class QueryUtils {
 		return result;
 	}
 	
+	public static Set<Var> mentionedVars(Query query) {
+		Set<Node> nodes = mentionedNodes(query);
+		Set<Var> result = NodeUtils.getVarsMentioned(nodes);
+		return result;
+	}
+
+	public static Set<Node> mentionedNodes(Query query) {
+		NodeTransformCollectNodes xform = new NodeTransformCollectNodes();
+		QueryUtils.applyNodeTransform(query, xform);
+		Set<Node> result = xform.getNodes();
+		return result;
+	}
+	
+    public static Var freshVar(Query query) {
+        Var result = freshVar(query, null);
+        return result;
+    }
+
+    public static Var freshVar(Query query, String baseVarName) {
+        baseVarName = baseVarName == null ? "c" : baseVarName;
+
+        Set<Var> varsMentioned = mentionedVars(query);
+
+        Generator<Var> varGen = VarUtils.createVarGen(baseVarName, varsMentioned);
+        Var result = varGen.next();
+
+        return result;
+    }
+
+	
 
 	/**
 	 * Transform json mapping obtained via Query.getJsonMapping

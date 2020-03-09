@@ -682,19 +682,19 @@ public class RDFDataMgrRx {
 		
 		protected abstract T mapResult(Set<Node> readyGraphs, Dataset dataset);
 		
-		public T getPendingDataset() {
-			T result;
+		public Optional<T> getPendingDataset() {
+			T resultData;
 			if(pending.isEmpty()) {
-				result = null;
+				resultData = null;
 			} else {
 				Dataset dataset = DatasetFactory.create();
 				for(Collection<Quad> quads : pending.values()) {
 					DatasetGraphUtils.addAll(dataset.asDatasetGraph(), quads);
 				}
 	
-				result = mapResult(pending.keySet(), dataset);
+				resultData = mapResult(pending.keySet(), dataset);
 			}
-			return result;
+			return Optional.ofNullable(resultData);
 		}
 	}
 	

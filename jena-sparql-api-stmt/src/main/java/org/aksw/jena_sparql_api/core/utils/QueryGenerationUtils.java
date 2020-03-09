@@ -11,6 +11,7 @@ import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.utils.GeneratorBlacklist;
 import org.aksw.jena_sparql_api.utils.QuadPatternUtils;
+import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.aksw.jena_sparql_api.utils.VarUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.ext.com.google.common.collect.Maps;
@@ -178,9 +179,11 @@ public class QueryGenerationUtils {
 
     
     public static Entry<Var, Query> createQueryCountCore(Query query, Long itemLimit, Long rowLimit) {
-        Var resultVar = Vars.c;
+        // Allocate a variable not mentioned in the query
+    	Var resultVar = QueryUtils.freshVar(query); // Vars.c;
     	
     	boolean needsWrapping = !query.getGroupBy().isEmpty() || !query.getAggregators().isEmpty();
+    	// || query.isDistinct() || query.isReduced();
 	
 	      if(rowLimit != null) {
 		      query.setDistinct(false);
