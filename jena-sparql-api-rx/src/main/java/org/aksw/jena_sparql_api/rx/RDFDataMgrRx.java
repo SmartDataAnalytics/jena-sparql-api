@@ -15,6 +15,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.function.Consumer;
@@ -26,7 +27,6 @@ import org.aksw.jena_sparql_api.utils.DatasetGraphUtils;
 import org.aksw.jena_sparql_api.utils.DatasetUtils;
 import org.aksw.jena_sparql_api.utils.QuadPatternUtils;
 import org.aksw.jena_sparql_api.utils.QuadUtils;
-import org.aksw.jena_sparql_api.utils.model.ResourceInDataset;
 import org.apache.jena.atlas.iterator.IteratorResourceClosing;
 import org.apache.jena.atlas.web.TypedInputStream;
 import org.apache.jena.ext.com.google.common.collect.Sets;
@@ -57,7 +57,6 @@ import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.util.Context;
 
 import com.github.davidmoten.rx2.flowable.Transformers;
-import com.github.jsonldjava.shaded.com.google.common.collect.ListMultimap;
 import com.google.common.collect.Lists;
 
 import io.reactivex.Flowable;
@@ -632,7 +631,7 @@ public class RDFDataMgrRx {
 	public static abstract class ConsecutiveNamedGraphMergerCore<T> {
 		protected Map<Node, Set<Quad>> pending = new LinkedHashMap<>();
 
-		public synchronized T accept(Dataset dataset) {
+		public synchronized Optional<T> accept(Dataset dataset) {
 			Supplier<Set<Quad>> setSupplier = LinkedHashSet::new; 
 			
 			Iterator<Quad> it = dataset.asDatasetGraph().find();
@@ -661,34 +660,41 @@ public class RDFDataMgrRx {
 			}
 
 			// Emit the ready graphs
-			Dataset result = DatasetFactory.create();
+			Dataset resultDataset = DatasetFactory.create();
 			Set<Node> readyGraphs = new HashSet<>(Sets.difference(before, now));
 
 			for(Node ready : readyGraphs) {
 				Set<Quad> quads = pending.get(ready);
 				
-				DatasetGraphUtils.addAll(result.asDatasetGraph(), quads);
+				DatasetGraphUtils.addAll(resultDataset.asDatasetGraph(), quads);
 				
 				pending.remove(ready);
 			}
 			
-			T xx = mapResult(readyGraphs, dataset);
+			T result = readyGraphs.isEmpty()
+					? null
+					: mapResult(readyGraphs, resultDataset);
 			
 			//System.err.println("Pending size " + pending..size());
 			
-			return xx;
+			return Optional.ofNullable(result);
 		}
 		
 		protected abstract T mapResult(Set<Node> readyGraphs, Dataset dataset);
 		
 		public T getPendingDataset() {
-			Dataset result = DatasetFactory.create();
-			for(Collection<Quad> quads : pending.values()) {
-				DatasetGraphUtils.addAll(result.asDatasetGraph(), quads);
+			T result;
+			if(pending.isEmpty()) {
+				result = null;
+			} else {
+				Dataset dataset = DatasetFactory.create();
+				for(Collection<Quad> quads : pending.values()) {
+					DatasetGraphUtils.addAll(dataset.asDatasetGraph(), quads);
+				}
+	
+				result = mapResult(pending.keySet(), dataset);
 			}
-
-			T xx = mapResult(pending.keySet(), result);
-			return xx;
+			return result;
 		}
 	}
 	

@@ -1,20 +1,20 @@
 package org.aksw.jena_sparql_api.io.json;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 import org.apache.jena.ext.com.google.common.collect.Streams;
 import org.apache.jena.query.Dataset;
 
 public class GroupedResourceInDataset {
 	protected Dataset dataset;
-	protected List<GraphNameAndNode> graphNameAndNodes;
+	protected Set<GraphNameAndNode> graphNameAndNodes;
 	
 	public GroupedResourceInDataset(Dataset dataset) {
-		this(dataset, new ArrayList<>());
+		this(dataset, new LinkedHashSet<>());
 	}
 
-	public GroupedResourceInDataset(Dataset dataset, List<GraphNameAndNode> node) {
+	public GroupedResourceInDataset(Dataset dataset, Set<GraphNameAndNode> node) {
 		super();
 		this.dataset = dataset;
 		this.graphNameAndNodes = node;
@@ -24,7 +24,7 @@ public class GroupedResourceInDataset {
 		return dataset;
 	}
 
-	public List<GraphNameAndNode> getGraphNameAndNodes() {
+	public Set<GraphNameAndNode> getGraphNameAndNodes() {
 		return graphNameAndNodes;
 	}
 
