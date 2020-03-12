@@ -12,6 +12,7 @@ import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QueryFactory;
+import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
@@ -31,12 +32,48 @@ public class ProjectionRenamingTests {
 	public static Binding eval(Op op) {
 		Query q = OpAsQuery.asQuery(op);
 		QueryExecutionFactory qef = FluentQueryExecutionFactory.from(ModelFactory.createDefaultModel()).create();
-		QueryExecution qe = qef.createQueryExecution(q);
-		Binding result = qe.execSelect().nextBinding();
-		qe.close();
+		Binding result;
+		try(QueryExecution qe = qef.createQueryExecution(q)) {
+			result = qe.execSelect().nextBinding();
+		}
 		return result;
 	}
 
+//	@Test
+//	public void testVarRenamingJena3_15_0_a() {
+//		Query q = OpAsQuery.asQuery(Algebra.compile(QueryFactory.create(
+//				"SELECT (?s as ?x) { BIND(?y AS ?s) }")));
+//		
+//		try(QueryExecution qe = org.apache.jena.query.QueryExecutionFactory.create(q, ModelFactory.createDefaultModel())) {
+//			System.out.println("" + ResultSetFormatter.asText(qe.execSelect()));
+//		}
+//		System.out.println(q);
+//	}
+
+	
+	/*
+(project (?x ?o ?z)
+  (extend ((?x ?s) ?o (?z ?p)) <-- The o is suspicios
+    (table (vars ?s ?p ?o)
+      (row [?p <http://ex.org/p>] [?o <http://ex.org/o>] [?s <http://ex.org/s>])
+    )))
+
+	 */
+//	@Test
+//	public void testVarRenamingJena3_15_0_b() {
+//		String str = "SELECT ?x ?o ?z { VALUES (?s ?p ?o) { (<urn:s> <urn:p> <urn:o>) } BIND(?s AS ?x) BIND(?p AS ?z) BIND(?o AS ?o) }";
+//		Query qa = QueryFactory.create(str);
+//		Op op = Algebra.compile(qa);
+//		System.out.println(op);
+//		Query qb = OpAsQuery.asQuery(op);
+//		
+//		try(QueryExecution qe = org.apache.jena.query.QueryExecutionFactory.create(qb, ModelFactory.createDefaultModel())) {
+//			System.out.println("" + ResultSetFormatter.asText(qe.execSelect()));
+//		}
+//		System.out.println(qb);
+//	}
+
+	
 	@Test
 	public void testVarRenamingSimple() {
 		Op op = Algebra.compile(QueryFactory.create(
