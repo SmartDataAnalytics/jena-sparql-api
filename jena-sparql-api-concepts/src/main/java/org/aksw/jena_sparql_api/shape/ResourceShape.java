@@ -28,7 +28,7 @@ import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.ExprUtils;
 import org.aksw.jena_sparql_api.utils.TripleUtils;
 import org.aksw.jena_sparql_api.utils.Triples;
-import org.aksw.jena_sparql_api.utils.VarGeneratorImpl;
+import org.aksw.jena_sparql_api.utils.VarGeneratorImpl2;
 import org.aksw.jena_sparql_api.utils.VarUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.graph.Graph;
@@ -175,7 +175,7 @@ public class ResourceShape {
     }
 
     public static void collectConcepts(Collection<Concept> result, ResourceShape source, boolean includeGraph) {
-        Generator<Var> vargen = VarGeneratorImpl.create("v");
+        Generator<Var> vargen = VarGeneratorImpl2.create("v");
 
         collectConcepts(result, source, vargen, includeGraph);
     }

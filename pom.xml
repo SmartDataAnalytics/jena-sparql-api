@@ -667,6 +667,7 @@
 				<!-- </exclusions> -->
 			</dependency>
 
+<!--
 			<dependency>
 				<groupId>org.apache.jena</groupId>
 				<artifactId>jena-sdb</artifactId>
@@ -701,7 +702,7 @@
 
 				</exclusions>
 			</dependency>
-
+-->
 			<dependency>
 				<groupId>net.postgis</groupId>
 				<artifactId>postgis-jdbc</artifactId>

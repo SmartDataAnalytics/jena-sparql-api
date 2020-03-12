@@ -9,6 +9,7 @@ public interface PlainDataRefVisitor<T> {
 	T visit(PlainDataRefOp dataRef);
 
 	T visit(PlainDataRefDcat dataRef);
+	T visit(PlainDataRefGit dataRef);
 
 	T visit(PlainDataRefExt dataRef);	
 }

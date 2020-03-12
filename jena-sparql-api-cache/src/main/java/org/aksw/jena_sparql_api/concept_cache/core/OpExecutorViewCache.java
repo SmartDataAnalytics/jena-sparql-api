@@ -4,10 +4,10 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.stream.Stream;
 
+import org.aksw.jena_sparql_api.algebra.transform.TransformReplaceConstants;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.NodeTransformRenameMap;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
-import org.aksw.jena_sparql_api.utils.ReplaceConstants;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
@@ -124,7 +124,7 @@ public class OpExecutorViewCache
 
         Op patternOp = unionOp.getLeft();
         patternOp = Algebra.toQuadForm(patternOp);
-        patternOp = ReplaceConstants.replace(patternOp);
+        patternOp = TransformReplaceConstants.transform(patternOp); //ReplaceConstants.replace(patternOp);
 
         Op executionOp = unionOp.getRight();
 

@@ -32,6 +32,11 @@
 			<artifactId>jena-sparql-api-utils</artifactId>
 		</dependency>
 
+		<dependency>
+			<groupId>org.apache.jena</groupId>
+			<artifactId>jena-rdfconnection</artifactId>
+		</dependency>
+
 <!-- 		<dependency> -->
 <!-- 			<groupId>io.reactivex.rxjava2</groupId> -->
 <!-- 			<artifactId>rxjava</artifactId> -->
