@@ -56,7 +56,7 @@ public class SparqlQueryParserWrapperSelectShortForm
         					int line2 = lineAndCol2[0];
         					int col2 = lineAndCol2[1];
         				
-        					int effectiveCol = line == line2 && col2 > col + inject.length()
+        					int effectiveCol = line == line2 && col2 >= col + inject.length()
 								? col2 - inject.length()
 								: col2;
 

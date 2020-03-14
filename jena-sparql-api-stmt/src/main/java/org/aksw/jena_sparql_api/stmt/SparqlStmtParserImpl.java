@@ -4,6 +4,7 @@ import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryParseException;
 import org.apache.jena.query.Syntax;
 import org.apache.jena.shared.PrefixMapping;
+import org.apache.jena.sparql.ARQException;
 import org.apache.jena.sparql.core.Prologue;
 import org.apache.jena.update.UpdateRequest;
 
@@ -74,13 +75,13 @@ public class SparqlStmtParserImpl
                     if(actAsClassifier) {
                         result = new SparqlStmtQuery(stmtStr, queryException);
                     } else {
-                        throw new RuntimeException("Failed to parse " + stmtStr, queryException);
+                        throw new ARQException("Failed to parse " + stmtStr, queryException);
                     }
                 } else {
                     if(actAsClassifier) {
                         result = new SparqlStmtUpdate(stmtStr, updateException);
                     } else {
-                        throw new RuntimeException("Failed to parse " + stmtStr, updateException);
+                        throw new ARQException("Failed to parse " + stmtStr, updateException);
                     }
                 }
             }
