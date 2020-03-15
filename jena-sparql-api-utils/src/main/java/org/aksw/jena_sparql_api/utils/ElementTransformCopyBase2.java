@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
+import org.apache.jena.sparql.core.PathBlock;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.syntax.Element;
@@ -33,7 +34,7 @@ import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransformer;
 public class ElementTransformCopyBase2 implements ElementTransform {
     // Note the use of == as object pointer equality.
 
-    private boolean alwaysCopy = false ;
+    protected boolean alwaysCopy = false ;
 
     public ElementTransformCopyBase2() {
     	this(false);
@@ -46,11 +47,18 @@ public class ElementTransformCopyBase2 implements ElementTransform {
 
 	@Override
     public Element transform(ElementTriplesBlock el) {
+		
+		
         return el ;
     }
 
     @Override
     public Element transform(ElementPathBlock el) {
+//    	if ( alwaysCopy ) {
+// TODO Add PathBlock ctor
+//    		el = new ElementPathBlock(new PathBlock(el.getPattern()));    		
+//    	}
+    	
         return el ;
     }
 
