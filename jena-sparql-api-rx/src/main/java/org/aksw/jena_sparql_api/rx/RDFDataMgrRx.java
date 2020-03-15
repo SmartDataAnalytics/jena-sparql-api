@@ -781,8 +781,8 @@ public class RDFDataMgrRx {
 	public static void writeDatasets(Flowable<? extends Dataset> flowable, OutputStream out, RDFFormat format) throws Exception {
 		QuadEncoderDistinguish encoder = new QuadEncoderDistinguish();
 		flowable
-		// Flush every 1000 graphs
-		.buffer(1000)
+		// Flush every n datasets
+		.buffer(1)
 		.forEach(items -> {
 			for(Dataset item : items) {
 				Dataset encoded = encoder.encode(item);

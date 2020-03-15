@@ -8,8 +8,6 @@ import java.util.Objects;
 import java.util.TreeMap;
 import java.util.function.Function;
 
-import org.reactivestreams.Subscriber;
-import org.reactivestreams.Subscription;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,11 +45,12 @@ import io.reactivex.FlowableTransformer;
  * @param <S>
  */
 public class FlowableTransformerLocalOrdering<T, S extends Comparable<S>>
-	implements Subscriber<T>
+	//implements Subscriber<T>
+	implements Emitter<T>
 {
 	private static final Logger logger = LoggerFactory.getLogger(FlowableTransformerLocalOrdering.class);
 	
-	protected Emitter<? super T> delegate; //Consumer<? super T> delegate;
+	protected FlowableEmitter<? super T> delegate; //Consumer<? super T> delegate;
 	
 	protected Function<? super T, ? extends S> extractSeqId;
 	protected Function<? super S, ? extends S> incrementSeqId;
@@ -62,13 +61,13 @@ public class FlowableTransformerLocalOrdering<T, S extends Comparable<S>>
 	protected boolean isComplete = false;
 	
 	protected NavigableMap<S, T> seqIdToValue = new TreeMap<>();
-
+	
 	
 	public FlowableTransformerLocalOrdering(
 			S expectedSeqId,
 			Function<? super S, ? extends S> incrementSeqId,
 			Function<? super T, ? extends S> extractSeqId,
-			Emitter<? super T> delegate) {
+			FlowableEmitter<? super T> delegate) {
 		super();
 		this.extractSeqId = extractSeqId;
 		this.incrementSeqId = incrementSeqId;
@@ -82,6 +81,7 @@ public class FlowableTransformerLocalOrdering<T, S extends Comparable<S>>
 		//throw new RuntimeException(throwable);
 	}
 		
+
 	public synchronized void onComplete() {
 		isComplete = true;
 		
@@ -94,6 +94,10 @@ public class FlowableTransformerLocalOrdering<T, S extends Comparable<S>>
 	}
 
 	public synchronized void onNext(T value) {
+		if(delegate.isCancelled()) {
+			throw new RuntimeException("Downstream cancelled");
+		}
+
 		S seqId = extractSeqId.apply(value);
 
 		// If complete, the seqId must not be higher than the latest seen one
@@ -144,24 +148,19 @@ public class FlowableTransformerLocalOrdering<T, S extends Comparable<S>>
 				break;
 			}			
 		}
-		
+
 		// If the completion mark was set and all items have been emitted, we are done
 		if(isComplete && seqIdToValue.isEmpty()) {
 			delegate.onComplete();
-		}
+		}	
 	}	
 
-	@Override
-	public synchronized void onSubscribe(Subscription s) {
-		// TODO Auto-generated method stub		
-	}
 
-
-	public static <T> Subscriber<T> forLong(long initiallyExpectedId, Function<? super T, ? extends Long> extractSeqId, Emitter<? super T> delegate) {
+	public static <T> Emitter<T> forLong(long initiallyExpectedId, Function<? super T, ? extends Long> extractSeqId, FlowableEmitter<? super T> delegate) {
 		return new FlowableTransformerLocalOrdering<T, Long>(initiallyExpectedId, id -> Long.valueOf(id.longValue() + 1l), extractSeqId, delegate);
 	}
 	
-	public static <T, S extends Comparable<S>> Subscriber<T> wrap(S initiallyExpectedId, Function<? super S, ? extends S> incrementSeqId, Function<? super T, ? extends S> extractSeqId, Emitter<? super T> delegate) {
+	public static <T, S extends Comparable<S>> FlowableTransformerLocalOrdering<T, S> wrap(S initiallyExpectedId, Function<? super S, ? extends S> incrementSeqId, Function<? super T, ? extends S> extractSeqId, FlowableEmitter<? super T> delegate) {
 		return new FlowableTransformerLocalOrdering<T, S>(initiallyExpectedId, incrementSeqId, extractSeqId, delegate);
 	}
 	
@@ -170,14 +169,19 @@ public class FlowableTransformerLocalOrdering<T, S extends Comparable<S>>
 			Flowable<T> result = Flowable.create(new FlowableOnSubscribe<T>() {				
 				@Override
 				public void subscribe(FlowableEmitter<T> e) throws Exception {
-					Subscriber<T> tmp = wrap(initiallyExpectedId, incrementSeqId, extractSeqId, e);
+					FlowableTransformerLocalOrdering<T, S> tmp = wrap(
+							initiallyExpectedId,
+							incrementSeqId,
+							extractSeqId,
+							e);
 
-					//upstream.buffer(count))
-					//e.setCancellable(upstream.uns);
-					upstream.subscribe(tmp::onNext, tmp::onError, tmp::onComplete);
-					// FIXME Something is broken in the design, as the
+					upstream.subscribe(
+							tmp::onNext,
+							tmp::onError,
+							tmp::onComplete);
+
+					// FIXME Something might be broken in the design, as
 					// upstream.subscribe(tmp) does NOT work
-					// upstream.subscribe(tmp);
 				}
 			}, BackpressureStrategy.BUFFER);
 			
