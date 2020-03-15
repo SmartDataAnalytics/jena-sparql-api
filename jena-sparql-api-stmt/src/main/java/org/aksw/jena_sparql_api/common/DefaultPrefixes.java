@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.shared.impl.PrefixMappingImpl;
 import org.slf4j.Logger;
@@ -31,7 +32,7 @@ public class DefaultPrefixes {
 	private static final Logger logger = LoggerFactory.getLogger(DefaultPrefixes.class);
 
 	public static final PrefixMapping prefixes = new PrefixMappingImpl();
-
+	
 	static {
 		prefixes
 			.setNsPrefixes(RDFDataMgr.loadModel("rdf-prefixes/jena-extended.jsonld"))
@@ -72,6 +73,11 @@ public class DefaultPrefixes {
 			prefixes.setNsPrefixes(model);				
 		}
 	}
+
+//	public static void main(String[] args) {
+//		Model m = RDFDataMgr.loadModel("rdf-prefixes/prefix.cc.2019-12-17.ttl");
+//		RDFDataMgr.write(System.out, m, RDFFormat.TURTLE_PRETTY);
+//	}
 
 
 //	public static void main(String[] args) throws Exception {

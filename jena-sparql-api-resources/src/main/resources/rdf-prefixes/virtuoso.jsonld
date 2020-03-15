@@ -1,5 +1,6 @@
 {
   "@context": {
-    "bif": "http://www.openlinksw.com/schemas/bif#"
+    "bif": "bif:",
+    "bif2": "http://www.openlinksw.com/schemas/bif#"
   }
 }
