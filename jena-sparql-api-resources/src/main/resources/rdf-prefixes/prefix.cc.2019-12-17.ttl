@@ -1,6 +1,6 @@
 # TURTLE VERSION BECAUSE JSON-LD DOES NOT SUPPORT MAPPING bif: TO <bif:>
 # SEE https://github.com/w3c/json-ld-syntax/issues/338
-@prefix bif: <bif> .
+@prefix bif: <bif:> .
 @prefix wikim: <http://spi-fm.uca.es/spdef/models/genericTools/wikim/1.0#> .
 @prefix cci:   <http://cookingbigdata.com/linkeddata/ccinstances#> .
 @prefix ramon: <http://rdfdata.eionet.europa.eu/ramon/ontology/> .
