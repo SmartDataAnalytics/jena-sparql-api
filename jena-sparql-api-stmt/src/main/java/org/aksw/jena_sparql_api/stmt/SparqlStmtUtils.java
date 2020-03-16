@@ -263,7 +263,9 @@ public class SparqlStmtUtils {
 			throws FileNotFoundException, IOException, ParseException {
 		
 		InputStream in = openInputStream(filenameOrURI);
-		Objects.requireNonNull(in, "Could not open input stream from " + filenameOrURI);
+		if(in == null) {
+			throw new IOException("Could not open input stream from " + filenameOrURI);
+		}
 
         if(baseIri == null) {
         	URI tmp = extractBaseIri(filenameOrURI);

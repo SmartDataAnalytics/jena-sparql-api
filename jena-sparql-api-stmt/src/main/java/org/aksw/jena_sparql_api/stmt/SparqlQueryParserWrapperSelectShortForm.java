@@ -60,9 +60,9 @@ public class SparqlQueryParserWrapperSelectShortForm
 								? col2 - inject.length()
 								: col2;
 
-        					throw new QueryParseException(e, line, effectiveCol);
+        					throw new QueryParseException(e.getMessage(), e, line, effectiveCol);
         				} else {
-        					throw new QueryParseException(f, f.getLine(), f.getColumn());
+        					throw new QueryParseException(f.getMessage(), f, f.getLine(), f.getColumn());
         				}
         			}
         		}
