@@ -314,18 +314,21 @@ public class RDFDataMgrEx {
 
 	/**
 	 * Attempts to open the given src and probe for the content type
-	 * Src may be 'null' in order to refer to STDIN.
+	 * Src may be '-' but not NULL in order to refer to STDIN.
 	 * 
 	 * @param src
 	 * @param probeLangs
 	 * @return
 	 */
 	public static TypedInputStream open(String src, Collection<Lang> probeLangs) {
-		boolean useStdIn = src == null;
+		Objects.requireNonNull(src);
+		
+		boolean useStdIn = "-".equals(src);
 		
 		TypedInputStream result;
 		if(useStdIn) {
 			// Use the close shield to prevent closing stdin on .close()
+			// TODO Investigate if this is redundant; RDFDataMgr might already do it
 			result = probeLang(new CloseShieldInputStream(System.in), probeLangs);
 		} else {
 			result = Objects.requireNonNull(RDFDataMgr.open(src), "Could not create input stream from " + src);
