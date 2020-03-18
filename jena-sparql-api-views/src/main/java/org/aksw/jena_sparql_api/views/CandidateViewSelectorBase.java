@@ -18,6 +18,7 @@ import org.aksw.commons.collections.CartesianProduct;
 import org.aksw.commons.collections.stacks.NestedStack;
 import org.aksw.commons.util.Pair;
 import org.aksw.commons.util.strings.StringUtils;
+import org.aksw.jena_sparql_api.algebra.transform.TransformReplaceConstants;
 import org.aksw.jena_sparql_api.exprs_ext.E_StrConcatPermissive;
 import org.aksw.jena_sparql_api.normal_form.Clause;
 import org.aksw.jena_sparql_api.normal_form.NestedNormalForm;
@@ -25,7 +26,6 @@ import org.aksw.jena_sparql_api.restriction.RestrictionImpl;
 import org.aksw.jena_sparql_api.restriction.RestrictionManagerImpl;
 import org.aksw.jena_sparql_api.restriction.UnsatisfiabilityException;
 import org.aksw.jena_sparql_api.utils.QuadUtils;
-import org.aksw.jena_sparql_api.utils.ReplaceConstants;
 import org.aksw.jena_sparql_api.utils.expr.NodeValueUtils;
 import org.aksw.sparqlify.database.Constraint;
 import org.aksw.sparqlify.database.EqualsConstraint;
@@ -475,7 +475,7 @@ public abstract class CandidateViewSelectorBase<T extends IViewDef, C>
 
 
 
-        op = ReplaceConstants.replace(op);
+        op = TransformReplaceConstants.transform(op); //ReplaceConstants.replace(op);
         op = org.apache.jena.sparql.algebra.Transformer.transform(new TransformOpQuadBlock(), op);
 
 

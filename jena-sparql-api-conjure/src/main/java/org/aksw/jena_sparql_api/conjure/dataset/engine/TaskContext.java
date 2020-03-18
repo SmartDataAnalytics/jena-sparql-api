@@ -1,10 +1,12 @@
 package org.aksw.jena_sparql_api.conjure.dataset.engine;
 
 import java.io.Serializable;
+import java.util.HashMap;
 import java.util.Map;
 
-import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.DataRef;
+import org.aksw.jena_sparql_api.conjure.dataset.algebra.Op;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
 
 /**
@@ -26,7 +28,8 @@ public class TaskContext
 	protected Resource inputRecord;
 	
 	// TODO Consider using a resource to back the map
-	protected Map<String, DataRef> dataRefMapping;
+	//protected Map<String, DataRef> dataRefMapping;
+	protected Map<String, Op> dataRefMapping;
 	
 	/**
 	 * Context models; right now this is only the input record, but
@@ -37,7 +40,7 @@ public class TaskContext
 	
 	public TaskContext(
 			Resource inputRecord,
-			Map<String, DataRef> dataRefMapping,
+			Map<String, Op> dataRefMapping,
 			Map<String, Model> ctxModels) {
 		super();
 		this.inputRecord = inputRecord;
@@ -49,11 +52,18 @@ public class TaskContext
 		return inputRecord;
 	}
 
-	public Map<String, DataRef> getDataRefMapping() {
+	public Map<String, Op> getDataRefMapping() {
 		return dataRefMapping;
 	}
 
 	public Map<String, Model> getCtxModels() {
 		return ctxModels;
+	}
+	
+	public static TaskContext empty() {
+		return new TaskContext(
+				ModelFactory.createDefaultModel().createResource(),
+				new HashMap<>(),
+				new HashMap<>());
 	}
 }

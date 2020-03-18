@@ -2,23 +2,36 @@ package org.aksw.jena_sparql_api.rx;
 
 import java.io.Closeable;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.Thread.UncaughtExceptionHandler;
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import org.aksw.jena_sparql_api.utils.DatasetGraphUtils;
 import org.aksw.jena_sparql_api.utils.DatasetUtils;
-import org.aksw.jena_sparql_api.utils.IteratorClosable;
 import org.aksw.jena_sparql_api.utils.QuadPatternUtils;
+import org.aksw.jena_sparql_api.utils.QuadUtils;
+import org.apache.jena.atlas.iterator.IteratorResourceClosing;
 import org.apache.jena.atlas.web.TypedInputStream;
-import org.apache.jena.ext.com.google.common.collect.Iterators;
 import org.apache.jena.ext.com.google.common.collect.Sets;
+import org.apache.jena.graph.Graph;
+import org.apache.jena.graph.GraphUtil;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
@@ -29,8 +42,19 @@ import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.riot.RDFLanguages;
+import org.apache.jena.riot.RDFParser;
+import org.apache.jena.riot.RiotException;
+import org.apache.jena.riot.RiotParseException;
+import org.apache.jena.riot.lang.PipedQuadsStream;
+import org.apache.jena.riot.lang.PipedRDFIterator;
+import org.apache.jena.riot.lang.PipedTriplesStream;
+import org.apache.jena.riot.lang.RiotParsers;
+import org.apache.jena.riot.system.ErrorHandlerFactory;
+import org.apache.jena.riot.system.RiotLib;
+import org.apache.jena.riot.system.StreamRDF;
+import org.apache.jena.riot.system.SyntaxLabels;
 import org.apache.jena.sparql.core.Quad;
-import org.apache.jena.util.iterator.ClosableIterator;
+import org.apache.jena.sparql.util.Context;
 
 import com.github.davidmoten.rx2.flowable.Transformers;
 import com.google.common.collect.Lists;
@@ -44,13 +68,199 @@ import io.reactivex.Flowable;
  *
  */
 public class RDFDataMgrRx {
-
-	public static Flowable<Quad> createFlowableQuads(Callable<InputStream> inSupplier, Lang lang, String baseIRI) {
-		return createFlowableFromInputStream(inSupplier, in -> RDFDataMgr.createIteratorQuads(in, lang, baseIRI));
+	public static Flowable<Triple> createFlowableTriples(Callable<InputStream> inSupplier, Lang lang, String baseIRI) {
+		return createFlowableFromInputStream(inSupplier, th -> eh -> in -> createIteratorTriples(in, lang, baseIRI, eh, th));
+	}
+	
+	public static Flowable<Resource> createFlowableResources(String filenameOrURI, Lang lang, String baseIRI) {
+		return createFlowableResources(() -> RDFDataMgr.open(filenameOrURI), lang, baseIRI);
 	}
 
-	public static Flowable<Triple> createFlowableTriples(Callable<InputStream> inSupplier, Lang lang, String baseIRI) {
-		return createFlowableFromInputStream(inSupplier, in -> RDFDataMgr.createIteratorTriples(in, lang, baseIRI));
+	public static Flowable<Dataset> createFlowableDatasets(String filenameOrURI, Lang lang, String baseIRI) {
+		return createFlowableDatasets(() -> RDFDataMgr.open(filenameOrURI), lang, baseIRI);
+	}
+	
+	
+    public static Iterator<Quad> createIteratorQuads(
+    		InputStream in,
+    		Lang lang,
+    		String baseIRI,
+    		UncaughtExceptionHandler eh,
+    		Consumer<Thread> th) {
+    	return createIteratorQuads(
+				in,
+				lang,//RDFLanguages.contentTypeToLang(in.getContentType()),
+				baseIRI,
+				PipedRDFIterator.DEFAULT_BUFFER_SIZE,
+				false,
+				PipedRDFIterator.DEFAULT_POLL_TIMEOUT,
+				Integer.MAX_VALUE,
+				eh,
+				th);
+    }
+
+    public static Iterator<Quad> createIteratorQuads(
+    		TypedInputStream in,
+    		UncaughtExceptionHandler eh,
+    		Consumer<Thread> th) {
+    	return createIteratorQuads(
+				in,
+				RDFLanguages.contentTypeToLang(in.getContentType()),
+				in.getBaseURI(),
+				eh,
+				th);
+    }
+    
+    public static Iterator<Triple> createIteratorTriples(
+    		InputStream in,
+    		Lang lang,
+    		String baseIRI,
+    		UncaughtExceptionHandler eh,
+    		Consumer<Thread> threadHandler) {
+    	return createIteratorTriples(
+				in,
+				lang,//RDFLanguages.contentTypeToLang(in.getContentType()),
+				baseIRI,
+				PipedRDFIterator.DEFAULT_BUFFER_SIZE,
+				false,
+				PipedRDFIterator.DEFAULT_POLL_TIMEOUT,
+				Integer.MAX_VALUE,
+				threadHandler,
+				eh);
+    }
+
+    public static Iterator<Triple> createIteratorTriples(
+    		TypedInputStream in,
+    		UncaughtExceptionHandler eh,
+    		Consumer<Thread> th) {
+    	return createIteratorTriples(
+				in,
+				RDFLanguages.contentTypeToLang(in.getContentType()),
+				in.getBaseURI(),
+				eh,
+				th);
+    }
+
+	
+    /**
+     * Adaption from RDFDataMgr.createIteratorQuads that waits for
+     * data on the input stream indefinitely and allows for thread handling
+     * 
+     * Creates an iterator over parsing of quads
+     * @param input Input Stream
+     * @param lang Language
+     * @param baseIRI Base IRI
+     * @return Iterator over the quads
+     */
+    public static Iterator<Quad> createIteratorQuads(
+    		InputStream input,
+    		Lang lang,
+    		String baseIRI,
+    		int bufferSize, boolean fair, int pollTimeout, int maxPolls,
+    		UncaughtExceptionHandler eh,
+    		Consumer<Thread> th) {
+    		//Consumer<Thread> threadHandler) {
+        // Special case N-Quads, because the RIOT reader has a pull interface
+        if ( RDFLanguages.sameLang(RDFLanguages.NQUADS, lang) ) {
+            return new IteratorResourceClosing<>(
+                RiotParsers.createIteratorNQuads(input, null, RiotLib.dftProfile()),
+                input);
+        }
+        // Otherwise, we have to spin up a thread to deal with it
+        final PipedRDFIterator<Quad> it = new PipedRDFIterator<>(bufferSize, fair, pollTimeout, maxPolls);
+        final PipedQuadsStream out = new PipedQuadsStream(it);
+
+        Thread t = new Thread(()-> {
+        	try {
+        		// Invoke start on the sink so that the consumer knows the producer thread
+        		// It appears otherwise the producer thread can get interrupted before
+        		// the consumer gets to know the producer (which happens on start)
+        		out.start();
+        		parseFromInputStream(out, input, baseIRI, lang, null);
+        	} catch(Exception e) {
+        		// Ensure the exception handler is run before any 
+        		// thread.join() waiting for this thread 
+        		eh.uncaughtException(Thread.currentThread(), e);
+        	}
+        });
+        th.accept(t);
+        t.start();
+        return it;
+    }
+	
+    
+    /**
+     * Adaption from RDFDataMgr.createIteratorQuads that waits for
+     * data on the input stream indefinitely and allows for thread handling
+     * 
+     * Creates an iterator over parsing of quads
+     * @param input Input Stream
+     * @param lang Language
+     * @param baseIRI Base IRI
+     * @return Iterator over the quads
+     */
+    public static Iterator<Triple> createIteratorTriples(
+    		InputStream input,
+    		Lang lang,
+    		String baseIRI,
+    		int bufferSize, boolean fair, int pollTimeout, int maxPolls,
+    		Consumer<Thread> th,
+    		UncaughtExceptionHandler eh) {
+        // Special case N-Quads, because the RIOT reader has a pull interface
+        if ( RDFLanguages.sameLang(RDFLanguages.NTRIPLES, lang) ) {
+            return new IteratorResourceClosing<>(
+                RiotParsers.createIteratorNTriples(input, null, RiotLib.dftProfile()),
+                input);
+        }
+        // Otherwise, we have to spin up a thread to deal with it
+        final PipedRDFIterator<Triple> it = new PipedRDFIterator<>(bufferSize, fair, pollTimeout, maxPolls);
+        final PipedTriplesStream out = new PipedTriplesStream(it);
+
+        Thread t = new Thread(()-> {
+        	try {
+        		// Invoke start on the sink so that the consumer knows the producer thread
+        		// It appears otherwise the producer thread can get interrupted before
+        		// the consumer gets to know the producer (which happens on start)
+        		out.start();
+        		parseFromInputStream(out, input, baseIRI, lang, null);
+        	} catch(Exception e) {
+        		// Ensure the exception handler is run before any 
+        		// thread.join() waiting for this thread 
+        		eh.uncaughtException(Thread.currentThread(), e);
+        	}
+        });
+        th.accept(t);
+        t.start();
+        return it;
+    }
+	
+    public static void parseFromInputStream(StreamRDF destination, InputStream in, String baseUri, Lang lang, Context context) {
+        RDFParser.create()
+            .source(in)
+            // Disabling checking does not seem to give a significant performance gain
+            // For a 3GB Trig file parsing took ~1:45 min +- 5 seconds either way 
+            //.checking(false)
+            .base(baseUri)
+            .lang(lang)
+            .context(context)
+            .errorHandler(ErrorHandlerFactory.errorHandlerDetailed())
+    		.labelToNode(SyntaxLabels.createLabelToNodeAsGiven())
+            //.errorHandler(handler)
+            .parse(destination);
+    }
+
+	public static Flowable<Quad> createFlowableQuads(String filenameOrURI, Lang lang, String baseIRI) {
+		return createFlowableQuads(() -> RDFDataMgr.open(filenameOrURI), lang, baseIRI);
+	}
+
+	
+	public static Flowable<Quad> createFlowableQuads(Callable<InputStream> inSupplier, Lang lang, String baseIRI) {
+		return createFlowableFromInputStream(inSupplier, th -> eh -> in -> createIteratorQuads(in, lang, baseIRI, eh, th))
+				// Ensure that the graph node is always non-null
+				// Trig parser in Jena 3.14.0 creates quads with null graph
+				.map(q -> q.getGraph() != null
+					? q
+					: Quad.create(Quad.defaultGraphNodeGenerated, q.asTriple()));
 	}
 
 	
@@ -82,7 +292,7 @@ public class RDFDataMgrRx {
 		return result;
 	}
 	
-	public static final String DISTINGUISHED_PREFIX = "distinguished://";
+	public static final String DISTINGUISHED_PREFIX = "x-distinguished:";
 	public static final int DISTINGUISHED_PREFIX_LENGTH = DISTINGUISHED_PREFIX.length();
 	
 	public static Node encodeDistinguished(Node g) {
@@ -136,7 +346,7 @@ public class RDFDataMgrRx {
 	public static Flowable<Dataset> createFlowableDatasets(Callable<InputStream> inSupplier, Lang lang, String baseIRI) {
 		Flowable<Dataset> result = createFlowableQuads(inSupplier, lang, baseIRI)		
 			.compose(Transformers.<Quad>toListWhile(
-		            (list, t) -> list.isEmpty() 
+		            (list, t) -> list.isEmpty()
 		                         || list.get(0).getGraph().equals(t.getGraph())))
 			.map(DatasetGraphQuadsImpl::create)
 			.map(DatasetFactory::wrap);
@@ -146,11 +356,14 @@ public class RDFDataMgrRx {
 	
 	public static Flowable<Dataset> createFlowableDatasets(Callable<TypedInputStream> inSupplier) {
 		
-		Flowable<Dataset> result = createFlowableFromInputStream(inSupplier,
-				in -> RDFDataMgr.createIteratorQuads(
+		Flowable<Dataset> result = createFlowableFromInputStream(
+				inSupplier,
+				th -> eh -> in -> createIteratorQuads(
 						in,
 						RDFLanguages.contentTypeToLang(in.getContentType()),
-						in.getBaseURI()))
+						in.getBaseURI(),
+						eh,
+						th))
 		.compose(Transformers.<Quad>toListWhile(
 	            (list, t) -> list.isEmpty() 
 	                         || list.get(0).getGraph().equals(t.getGraph())))
@@ -160,45 +373,173 @@ public class RDFDataMgrRx {
 		return result;
 	}
 	
-	public static <T, I extends InputStream> Flowable<T> createFlowableFromInputStream(Callable<I> inSupplier, Function<? super I, ? extends Iterator<T>> fn) {
-		Flowable<T> result = Flowable.generate(
-				() -> {
-					I in = inSupplier.call();
-					Iterator<T> it = fn.apply(in);
-					return new IteratorClosable<>(it, () -> {
-						// Try to close the iterator 'it'
-						// Otherwise, forcefully close the stream
-						// (may cause a (usually/hopefully) harmless exception)
-						try {
-							if(it instanceof Closeable) {
-					            ((Closeable)it).close();
-							} else if (it instanceof org.apache.jena.atlas.lib.Closeable) {
-					            ((org.apache.jena.atlas.lib.Closeable)it).close();								
-							} else {
+
+	/**
+	 * 
+	 * @author raven
+	 *
+	 * @param <I> InputStream type
+	 * @param <T> Item type of the resulting flow, typically Triples or Quads
+	 */
+	static class FlowState<I extends InputStream, T> {
+		I in;
+		Thread thread;
+		Throwable raisedException;
+		Iterator<T> reader;
+		boolean closeInvoked;		
+
+//		public FlowState(I in) {
+//			super();
+//			this.in = in;
+//		}
+
+		void handleException(Thread t, Throwable e) {
+			boolean report = true;
+			
+			// If close was invoked, skip exceptions related to the underlying
+			// input stream having been prematurely closed
+			if(closeInvoked) {
+				if(e instanceof RiotException) {
+					String msg = e.getMessage();
+					if(msg.equalsIgnoreCase("Pipe closed") || msg.equals("Consumer Dead")) {
+						report = false;
+					}
+				}
+			}
+			
+			if(report) {
+				if(raisedException == null) {
+					raisedException = e;
+				}
+				// If we receive any reportable exception after the flowable
+				// was closed, raise them so they don't get unnoticed!
+				if(closeInvoked) {
+					throw new RuntimeException(e);
+				}
+			}			
+		}
+		
+		void setThread(Thread t) {
+			thread = t;
+		}
+
+		void close() throws IOException {
+			closeInvoked = true;
+			// The producer thread may be blocked because not enough items were consumed
+//				if(thread[0] != null) {
+//					while(thread[0].isAlive()) {
+//						thread[0].interrupt();
+//					}
+//				}
+
+			// We need to wait if iterator.next is waiting
+//				synchronized(this) {
+//					
+//				}
+			
+			// Try to close the iterator 'it'
+			// Otherwise, forcefully close the stream
+			// (may cause a (usually/hopefully) harmless exception)
+			try {
+				if(reader instanceof Closeable) {
+		            ((Closeable)reader).close();
+				} else if (reader instanceof org.apache.jena.atlas.lib.Closeable) {
+		            ((org.apache.jena.atlas.lib.Closeable)reader).close();
+				}
+			} finally {
+				try {
+					in.close();
+				} finally {
+					try {
+						// Consume any remaining items in the iterator to prevent blocking issues
+						// For example, Jena's producer thread can get blocked
+						// when parsed items are not consumed
+//							System.out.println("Consuming rest");
+						// FIXME Do we still need to consume the iterator if we
+						// interrupt the producer thread - or might that lead to triples / quads
+						// getting lost?
+//							Iterators.size(it);
+					} catch(Exception e) {
+						// Ignore silently
+					} finally {
+						// The generator corresponds to the 2nd argument of Flowable.generate
+						// The producer may be blocked by attempting to put new items on a already full blocking queue
+						// The consumer in it.hasNext() may by waiting for a response from the producer
+						// So we interrupt the producer to death
+						Thread t = thread; 
+						if(t != null) {
+							while(t.isAlive()) {
+//										System.out.println("Interrupting");
+								t.interrupt();
+								
 								try {
-									in.close();
-								} finally {
-									// Consume any remaining items in the iterator to prevent blocking issues
-									// For example, Jena's producer thread can get blocked
-									// when parsed items are not consumed
-									Iterators.size(it);
+									Thread.sleep(100);
+								} catch(InterruptedException e2) {
 								}
 							}
-						} finally {
-							// Close the backing input stream in any case
-							in.close();
 						}
-					});
+					}
+				}
+			}
+		}
+	}
+	
+	public static <T, I extends InputStream> Flowable<T> createFlowableFromInputStream(
+			Callable<I> inSupplier,
+			Function<Consumer<Thread>, Function<UncaughtExceptionHandler, Function<? super I, ? extends Iterator<T>>>> fn) {
+
+		// In case the creation of the iterator from an inputstream involves a thread
+		// perform setup of the exception handler
+		
+		// If there is a thread, we join on it before completing the flowable in order to
+		// capture any possible error
+		
+		Flowable<T> result = Flowable.generate(
+				() -> {
+					FlowState<I, T> state = new FlowState<>();
+					state.in = inSupplier.call();
+					state.reader = fn.apply(state::setThread).apply(state::handleException).apply(state.in);
+					return state;
 				},
-				(reader, emitter) -> {
-					if(reader.hasNext()) {
-						T item = reader.next();
-						emitter.onNext(item);
-					} else {
-						emitter.onComplete();
+				(state, emitter) -> {
+					try {
+						//if(!closeInvoked[0])
+//						System.out.println("Generator invoked");
+						if(state.reader.hasNext()) {
+//							System.out.println("hasNext = true");
+							T item = state.reader.next();
+							emitter.onNext(item);
+						} else {
+//							System.out.println("hasNext = false; Waiting for any pending exceptions from producer thread");
+							if(state.thread != null) {
+								state.thread.join();
+							}
+//							System.out.println("End");
+							
+							Throwable t = state.raisedException;
+							boolean report = true;
+							if(t != null) {
+								boolean isParseError = t instanceof RiotParseException;
+
+								// Parse errors after an invocation of close are ignored
+								// I.e. if we asked for 5 items, and there is parse error at the 6th one,
+								// we still completed the original request without errors
+								if(isParseError && state.closeInvoked) {
+									report = false;
+								}
+							}
+							
+							if(t != null && report) {
+								emitter.onError(state.raisedException);
+							} else {
+								emitter.onComplete();
+							}
+						}
+					} catch(Exception e) {
+						emitter.onError(e);
 					}
 				},
-				ClosableIterator::close);
+				state -> state.close());
 		return result;
 	}
 
@@ -270,6 +611,133 @@ public class RDFDataMgrRx {
 		}
 	}
 
+	/**
+	 * Stateful collector that merges any consecutive graphs of name
+	 * contained in the datasets passed to the accept method.
+	 * 
+	 * 
+	 * @author raven
+	 *
+	 */
+	public static class ConsecutiveNamedGraphMerger
+		extends ConsecutiveNamedGraphMergerCore<Dataset>
+	{
+		@Override
+		protected Dataset mapResult(Set<Node> readyGraphs, Dataset dataset) {
+			return dataset;
+		}
+	}
+
+	public static abstract class ConsecutiveNamedGraphMergerCore<T> {
+		protected Map<Node, Set<Quad>> pending = new LinkedHashMap<>();
+
+		public synchronized Optional<T> accept(Dataset dataset) {
+			Supplier<Set<Quad>> setSupplier = LinkedHashSet::new; 
+			
+			Iterator<Quad> it = dataset.asDatasetGraph().find();
+			Map<Node, Set<Quad>> index = QuadUtils.partitionByGraph(
+					it,
+					new LinkedHashMap<Node, Set<Quad>>(),
+					setSupplier);
+			
+			Set<Node> before = pending.keySet();
+			Set<Node> now = index.keySet();
+			
+			Set<Node> overlap = Sets.intersection(now, before);
+			Set<Node> newGraphs = Sets.difference(now, before);
+//					readyGraphs,
+//					Sets.difference(now, before));
+
+			for(Node appending : overlap) {
+				Set<Quad> tgt = pending.get(appending);
+				Set<Quad> src = index.get(appending);
+				tgt.addAll(src);
+			}
+			
+			for(Node newGraph : newGraphs) {
+				Set<Quad> src = index.get(newGraph);
+				pending.put(newGraph, src);
+			}
+
+			// Emit the ready graphs
+			Dataset resultDataset = DatasetFactory.create();
+			Set<Node> readyGraphs = new HashSet<>(Sets.difference(before, now));
+
+			for(Node ready : readyGraphs) {
+				Set<Quad> quads = pending.get(ready);
+				
+				DatasetGraphUtils.addAll(resultDataset.asDatasetGraph(), quads);
+				
+				pending.remove(ready);
+			}
+			
+			T result = readyGraphs.isEmpty()
+					? null
+					: mapResult(readyGraphs, resultDataset);
+			
+			//System.err.println("Pending size " + pending..size());
+			
+			return Optional.ofNullable(result);
+		}
+		
+		protected abstract T mapResult(Set<Node> readyGraphs, Dataset dataset);
+		
+		public Optional<T> getPendingDataset() {
+			T resultData;
+			if(pending.isEmpty()) {
+				resultData = null;
+			} else {
+				Dataset dataset = DatasetFactory.create();
+				for(Collection<Quad> quads : pending.values()) {
+					DatasetGraphUtils.addAll(dataset.asDatasetGraph(), quads);
+				}
+	
+				resultData = mapResult(pending.keySet(), dataset);
+			}
+			return Optional.ofNullable(resultData);
+		}
+	}
+	
+	
+
+
+	public static class QuadEncoderMergeOld {
+		protected Dataset pending = DatasetFactory.create();
+
+		public synchronized Dataset accept(Dataset dataset) {
+			Set<Node> before = Sets.newHashSet(pending.asDatasetGraph().listGraphNodes());
+			Set<Node> now = Sets.newHashSet(dataset.asDatasetGraph().listGraphNodes());
+			
+			Set<Node> readyGraphs = Sets.difference(before, now);
+			Set<Node> appendings = Sets.union(
+					Sets.intersection(before, now),
+					Sets.difference(now, before));
+
+			for(Node appending : appendings) {
+				Graph tgt = pending.asDatasetGraph().getGraph(appending);
+				Graph src = dataset.asDatasetGraph().getGraph(appending);
+				
+				GraphUtil.addInto(tgt, src);
+			}
+
+			// Emit the ready graphs
+			Dataset result = DatasetFactory.create();
+			for(Node ready : readyGraphs) {
+				Graph src = pending.asDatasetGraph().getGraph(ready);
+				DatasetGraphUtils.addAll(result.asDatasetGraph(), ready, src);
+				
+				pending.asDatasetGraph().removeGraph(ready);
+			}
+			
+			System.err.println("Pending size " + pending.asDatasetGraph().size());
+			
+			return result;
+		}
+		
+		public Dataset getPendingDataset() {
+			return pending;
+		}
+	}
 	// A better approach would be to transform a flowable to write to a file as a side effect
 	// Upon flowable completion, copy the file to its final location
 	public static void writeDatasets(Flowable<? extends Dataset> flowable, Path file, RDFFormat format) throws Exception {
@@ -278,17 +746,50 @@ public class RDFDataMgrRx {
 		}
 	}
 
-	// Does not close the stream
+//	public Consumer<? extends Dataset> createWriter(OutputStream out, RDFFormat format, int flushSize) {
+//		
+//	}
+	
+	public static Consumer<Dataset> createDatasetWriter(OutputStream out, RDFFormat format) {
+		return ds -> RDFDataMgr.write(out, ds, format);
+	}
+
+	public static <D extends Dataset, C extends Collection<D>> Consumer<C> createDatasetBatchWriter(OutputStream out, RDFFormat format) {
+		QuadEncoderDistinguish encoder = new QuadEncoderDistinguish();
+		return batch -> {
+			for(Dataset item : batch) {
+				Dataset encoded = encoder.encode(item);
+				RDFDataMgr.write(out, encoded, format);
+			}
+			try {
+				out.flush();
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+		};
+	}
+
+	/**
+	 *  Does not close the stream
+	 *  
+	 *  Deprecated use .createDatasetBatchWriter()
+	 *  ....blockingForEach(createDatasetBatchWriter())
+	 *  
+	 *  This does not break the chain and gives freedom over the choice of forEach type (non-/blocking)
+	 */
+	@Deprecated
 	public static void writeDatasets(Flowable<? extends Dataset> flowable, OutputStream out, RDFFormat format) throws Exception {
-		try {
-			QuadEncoderDistinguish encoder = new QuadEncoderDistinguish();
-			flowable.forEach(d -> {
-				RDFDataMgr.write(out, encoder.encode(d), format);
-//				out.flush();
-			});
-		} finally {
+		QuadEncoderDistinguish encoder = new QuadEncoderDistinguish();
+		flowable
+		// Flush every n datasets
+		.buffer(1)
+		.forEach(items -> {
+			for(Dataset item : items) {
+				Dataset encoded = encoder.encode(item);
+				RDFDataMgr.write(out, encoded, format);
+			}
 			out.flush();
-		}
+		});
 	}
 
 }

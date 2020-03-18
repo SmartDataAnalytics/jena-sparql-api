@@ -2,8 +2,11 @@ package org.aksw.jena_sparql_api.io.utils;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.PrintStream;
 import java.util.Map.Entry;
+import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
 
@@ -16,6 +19,8 @@ import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
 import io.reactivex.FlowableEmitter;
 import io.reactivex.Single;
+import io.reactivex.exceptions.Exceptions;
+import io.reactivex.plugins.RxJavaPlugins;
 
 public class SimpleProcessExecutor {
 	private static final Logger logger = LoggerFactory.getLogger(SimpleProcessExecutor.class);
@@ -103,7 +108,7 @@ public class SimpleProcessExecutor {
 	            }
 	
 	            exitValue = p.waitFor();
-	            sink.accept("Process terminated with exit code " + exitValue);
+	            //sink.accept("Process terminated with exit code " + exitValue);
             }
 //        }
 //        catch(IOException e) {
@@ -136,6 +141,64 @@ public class SimpleProcessExecutor {
     public Process execute() throws IOException, InterruptedException {
     	Process result = executeCore().getValue();
     	return result;
+    }
+    
+    public void executeReadLines(Flowable<String> upstream, FlowableEmitter<String> emitter) throws IOException {
+
+    	logger.debug("Starting process: " + processBuilder.command());
+    	
+    	processBuilder.redirectErrorStream(true);
+        Process p;
+		try {
+			p = processBuilder.start();
+		} catch (IOException e1) {
+			emitter.onError(e1);
+			return;
+		}
+
+		PrintStream out = new PrintStream(p.getOutputStream());
+		InputStream in = p.getInputStream();
+
+    	Thread t = new Thread(() -> {	
+
+	        //int exitValue;
+	        try(BufferedReader br = new BufferedReader(new InputStreamReader(in))) {
+	            String line;
+
+	            boolean isInterrupted = false;
+	            while((line = br.readLine()) != null && !(isInterrupted = Thread.interrupted())) {
+	                emitter.onNext(line);	                
+	            }
+	
+	            if(!isInterrupted) {
+	            	p.waitFor();
+	            	emitter.onComplete();
+	            }
+	            emitter.onComplete();
+	            //sink.accept("Process terminated with exit code " + exitValue);
+	        } catch(Exception e) {
+	        	throw new RuntimeException(e);
+	        }
+    	});    	
+    	t.start();
+
+    	Callable<Void> closeAction = () -> {
+    		out.flush();
+    		out.close();
+    		return null;
+    	};
+
+    	emitter.setCancellable(() -> {
+    		closeAction.call();
+    	});
+   
+		upstream.subscribe(
+				out::println,
+				e -> {
+					p.destroy();
+					Exceptions.propagate(e);
+				},
+				closeAction::call);
     }
 
     public Single<Integer> executeFuture() throws IOException, InterruptedException {

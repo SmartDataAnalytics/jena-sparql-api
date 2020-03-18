@@ -231,7 +231,6 @@
         "rec": "http://purl.org/ontology/rec/core#",
         "georss": "http://www.georss.org/georss/",
         "acl": "http://www.w3.org/ns/auth/acl#",
-        "bif": "http://www.openlinksw.com/schemas/bif#",
         "sp": "http://spinrdf.org/sp#",
         "dbprop": "http://dbpedia.org/property/",
         "organism": "http://eulersharp.sourceforge.net/2003/03swap/organism#",

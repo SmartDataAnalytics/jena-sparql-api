@@ -1,10 +1,6 @@
 package org.aksw.jena_sparql_api.sparql.ext.fs;
 
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import org.apache.jena.sparql.expr.ExprTypeException;
 import org.apache.jena.sparql.expr.NodeValue;
@@ -33,23 +29,32 @@ public class E_UnaryPathFunction
 	
 	@Override
 	public NodeValue exec(NodeValue nv) {
+		Path path = NodeValuePathUtils.toPath(nv);
 		NodeValue result;
-		if(nv.asNode().isURI()) {
-			String str = nv.asNode().getURI();
-			try {
-				Path path = Paths.get(new URI(str));
-				try {
-					result = fn.apply(path);
-				} catch (IOException e) {
-					throw new ExprTypeException("IO Error", e);
-				}
-			} catch (URISyntaxException e) {
-				throw new ExprTypeException("Invalid IRI", e);
-			}
-		} else {
-			throw new ExprTypeException("File URL expected");
+		try {
+			result = fn.apply(path);
+		} catch (Exception e) {
+			throw new ExprTypeException("Error: ", e);
 		}
-	
+
 		return result;
+		
+//		NodeValue result;
+//		if(nv.asNode().isURI()) {
+//			String str = nv.asNode().getURI();
+//			try {
+//				Path path = Paths.get(new URI(str));
+//				try {
+//					result = fn.apply(path);
+//				} catch (IOException e) {
+//					throw new ExprTypeException("IO Error", e);
+//				}
+//			} catch (URISyntaxException e) {
+//				throw new ExprTypeException("Invalid IRI", e);
+//			}
+//		} else {
+//			throw new ExprTypeException("File URL expected");
+//		}	
+//		return result;
 	}
 }

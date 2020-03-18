@@ -62,7 +62,6 @@ public interface RdfDataPod
 	 * However, DataPods backed by a Model may directly expose the underlying Model, which
 	 * allows for fast model access.
 	 * 
-	 * 
 	 * @return
 	 */
 	default Model getModel() {

@@ -43,7 +43,7 @@ public interface SPARQLResultVisitor {
 			Iterator<Triple> it = sr.getTriples();
 			while (it.hasNext()) {
 				Triple t = it.next();
-				Quad quad = new Quad(null, t);
+				Quad quad = new Quad(Quad.defaultGraphIRI, t);
 				handler.onQuad(quad);
 			}
 		} else if(sr.isResultSet()) {

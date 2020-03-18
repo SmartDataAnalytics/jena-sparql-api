@@ -1,9 +1,12 @@
 package org.aksw.jena_sparql_api.conjure.dataset.engine;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -12,12 +15,15 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.aksw.jena_sparql_api.algebra.utils.VirtualPartitionedQuery;
+import org.aksw.jena_sparql_api.common.DefaultPrefixes;
+import org.aksw.jena_sparql_api.concepts.TernaryRelation;
 import org.aksw.jena_sparql_api.conjure.algebra.common.ResourceTreeUtils;
 import org.aksw.jena_sparql_api.conjure.datapod.api.RdfDataPod;
 import org.aksw.jena_sparql_api.conjure.datapod.impl.DataPods;
+import org.aksw.jena_sparql_api.conjure.datapod.impl.RdfDataPodBase;
 import org.aksw.jena_sparql_api.conjure.datapod.impl.RdfDataPodHdt;
 import org.aksw.jena_sparql_api.conjure.dataref.core.api.PlainDataRef;
-import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.DataRef;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.Op;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpCoalesce;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpConstruct;
@@ -25,32 +31,49 @@ import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpData;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpDataRefResource;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpError;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpHdtHeader;
+import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpJobInstance;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpMacroCall;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpPersist;
+import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpQueryOverViews;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpSequence;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpSet;
+import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpStmtList;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpUnion;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpUpdateRequest;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpUtils;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpVar;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpVisitor;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpWhen;
+import org.aksw.jena_sparql_api.conjure.job.api.Job;
+import org.aksw.jena_sparql_api.conjure.job.api.JobInstance;
 import org.aksw.jena_sparql_api.conjure.traversal.engine.FunctionAssembler;
+import org.aksw.jena_sparql_api.core.connection.RDFConnectionBuilder;
 import org.aksw.jena_sparql_api.http.repository.api.HttpResourceRepositoryFromFileSystem;
 import org.aksw.jena_sparql_api.http.repository.api.RdfHttpEntityFile;
 import org.aksw.jena_sparql_api.http.repository.api.ResourceStore;
 import org.aksw.jena_sparql_api.http.repository.impl.HttpResourceRepositoryFromFileSystemImpl;
 import org.aksw.jena_sparql_api.http.repository.impl.ResourceStoreImpl;
+import org.aksw.jena_sparql_api.rx.RDFDataMgrEx;
 import org.aksw.jena_sparql_api.rx.SparqlRx;
+import org.aksw.jena_sparql_api.stmt.SPARQLResultSinkQuads;
+import org.aksw.jena_sparql_api.stmt.SPARQLResultVisitor;
+import org.aksw.jena_sparql_api.stmt.SparqlStmt;
+import org.aksw.jena_sparql_api.stmt.SparqlStmtParser;
+import org.aksw.jena_sparql_api.stmt.SparqlStmtParserImpl;
+import org.aksw.jena_sparql_api.stmt.SparqlStmtUtils;
+import org.aksw.jena_sparql_api.utils.NodeUtils;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpRequest;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.methods.RequestBuilder;
+import org.apache.jena.atlas.lib.Sink;
 import org.apache.jena.ext.com.google.common.hash.HashCode;
 import org.apache.jena.ext.com.google.common.hash.HashFunction;
 import org.apache.jena.ext.com.google.common.hash.Hashing;
 import org.apache.jena.graph.Node;
+import org.apache.jena.query.Dataset;
+import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryFactory;
 import org.apache.jena.rdf.model.Model;
@@ -58,11 +81,14 @@ import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.riot.RDFFormat;
+import org.apache.jena.riot.lang.SinkQuadsToDataset;
 import org.apache.jena.shared.PrefixMapping;
+import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.binding.BindingHashMap;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.NodeValue;
+import org.apache.jena.sparql.lang.arq.ParseException;
 import org.apache.jena.sparql.path.Path;
 import org.apache.jena.sparql.path.PathParser;
 import org.apache.jena.sparql.util.ExprUtils;
@@ -97,6 +123,7 @@ public class OpExecutorDefault
 	
 	// Execution context
 	// TODO Maybe rename this to 'substitution context' as it is mainly used for this purpose
+	// TODO Decide whether execCtx be made an attribute of taskContext?
 	protected Map<String, Node> execCtx;
 	// protected BindingMap execCtx;
 	
@@ -109,7 +136,7 @@ public class OpExecutorDefault
 		super();
 		// TODO HACK Avoid the down cast
 		this.repo = (HttpResourceRepositoryFromFileSystemImpl)repo;
-		this.taskContext = taskContext;
+		this.taskContext = Objects.requireNonNull(taskContext);
 		
 		this.execCtx = execCtx; 
 		this.persistRdfFormat = persistRdfFormat;
@@ -148,6 +175,12 @@ public class OpExecutorDefault
 		return result;
 	}
 
+	
+	public Node substNode(Node node) {
+		Node r = NodeUtils.substWithLookup2(node, execCtx::get);
+		r = r.isVariable() ? execCtx.getOrDefault(r.getName(), r) : r;
+		return r;
+	}
 
 	@Override
 	public RdfDataPod visit(OpConstruct op) {
@@ -166,8 +199,9 @@ public class OpExecutorDefault
 
 					// Apply substitution of variables in the query pattern
 					// with values of variables in the context
-					Query effQuery = QueryUtils.applyNodeTransform(query,
-							x -> x.isVariable() ? execCtx.getOrDefault(x.getName(), x) : x);
+					Query effQuery = QueryUtils.applyNodeTransform(query, this::substNode);
+//					Query effQuery = QueryUtils.applyNodeTransform(query,
+//							x -> x.isVariable() ? execCtx.getOrDefault(x.getName(), x) : x);
 					
 					// TODO Check whether substitution is needed
 //					logger.info("Query before substitution: " + queryStr);
@@ -346,9 +380,12 @@ public class OpExecutorDefault
 	@Override
 	public RdfDataPod visit(OpVar op) {
 		String varName = op.getName();
-		Map<String, DataRef> map = taskContext.getDataRefMapping();
-		DataRef dataRef = map.get(varName);
-		RdfDataPod result = DataPods.fromDataRef(dataRef, repo, this);
+		Map<String, Op> map = taskContext.getDataRefMapping();
+		Op dataRef = map.get(varName);
+		
+		RdfDataPod result = dataRef.accept(this);
+		
+		//RdfDataPod result = DataPods.fromDataRef(dataRef, repo, this);
 
 		//RdfDataPod result = dataRef.visit(this);
 		return result;
@@ -522,4 +559,133 @@ public class OpExecutorDefault
 		throw new RuntimeException("not implemented");
 	}
 
+	
+	@Override
+	public RdfDataPod visit(OpQueryOverViews op) {
+		Op subOp = op.getSubOp();
+		RdfDataPod subPod = subOp.accept(this);
+		
+		// This is not a good place to resolve resources
+		// Ideally, resource resolution is done when preprocessing the initial model
+		
+//		ResourceSpecProcessor rsp = new ResourceSpecProcessor();
+//		List<ResourceSpec> views = op.getViews();
+//		// Turns all views into sequences of queries
+//		for(ResourceSpec view : views) {
+//			
+//		}
+
+		List<TernaryRelation> views = new ArrayList<>();
+		List<String> viewDefs = op.getViewDefs();
+		for(String viewDef : viewDefs) {
+			try(ByteArrayInputStream in = new ByteArrayInputStream(viewDef.getBytes())) {
+				// TODO Actually preprocessing should have already taken care of the prefixes
+				List<Query> queries;
+				try {
+					queries = RDFDataMgrEx.loadQueries(in, DefaultPrefixes.prefixes);
+				} catch (IOException | ParseException e) {
+					throw new RuntimeException(e);
+				}
+				for(Query query : queries) {
+					Collection<TernaryRelation> viewContribs = VirtualPartitionedQuery.toViews(query);
+					views.addAll(viewContribs);
+				}
+			} catch (IOException e1) {
+				throw new RuntimeException(e1);
+			}
+		}
+
+		// Wrap the underlying pod's connection factory
+		RdfDataPod result = new RdfDataPodBase() {
+			@Override
+			protected RDFConnection newConnection() {
+				RDFConnection raw = subPod.openConnection();
+				RDFConnection result = RDFConnectionBuilder.from(raw)
+					.addQueryTransform(q -> VirtualPartitionedQuery.rewrite(views, q))
+					.getConnection();
+				return result;
+			}
+			@Override
+			public boolean isMutable() {
+				return false;
+			}
+			
+			@Override
+			public void close() throws Exception {
+				subPod.close();
+			}
+		};
+		
+		return result;
+	}
+
+	@Override
+	public RdfDataPod visit(OpStmtList op) {
+		Dataset resultDataset = DatasetFactory.create();
+		RdfDataPod result = DataPods.fromDataset(resultDataset);
+
+		// HACK Copy the prior model into the result dataset
+		// TODO Can we do better than copying the data?
+		Op subOp = op.getSubOp();
+		try(RdfDataPod subPod = subOp.accept(this)) {
+			Model model = subPod.getModel();
+			resultDataset.setDefaultModel(model);
+//			try(RDFConnection conn = subPod.openConnection()) {
+//			}
+			
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+
+		Sink<Quad> tmp = new SinkQuadsToDataset(true, resultDataset.asDatasetGraph());
+		SPARQLResultVisitor sink = new SPARQLResultSinkQuads(tmp);		
+		SparqlStmtParser parser = SparqlStmtParser.wrapWithOptimizePrefixes(
+				SparqlStmtParserImpl.create(DefaultPrefixes.prefixes));
+
+		try(RDFConnection conn = result.openConnection()) {
+			List<String> stmts = op.getStmts();
+			for(String stmt : stmts) {
+				SparqlStmt before = parser.apply(stmt);
+				SparqlStmt after = SparqlStmtUtils.applyNodeTransform(before, this::substNode);
+
+				
+				SparqlStmtUtils.process(conn, after, sink);
+			}
+		} finally {
+			tmp.close();
+		}
+
+
+//		DataPods.from(resultDataset);
+		
+
+		return result;
+	}
+	
+	@Override
+	public RdfDataPod visit(OpJobInstance op) {
+		OpExecutorDefault subExecutor = new OpExecutorDefault(repo, taskContext,
+				new LinkedHashMap<>(), persistRdfFormat);
+		
+		JobInstance ji = op.getJobInstance();
+		Map<String, Node> envMap = ji.getEnvMap();
+		Map<String, Op> opMap = ji.getOpVarMap();
+		
+		subExecutor.getExecCtx().putAll(envMap);
+		subExecutor.getTaskContext().getDataRefMapping().putAll(opMap);
+		
+
+		Job job = ji.getJob();
+		Op subOp = job.getOp();
+		
+		RdfDataPod result = subOp.accept(subExecutor);
+		return result;
+//		
+//		throw new RuntimeException("not implemented yet");
+		//TaskContext ctx = new TaskContext(inputRecord, dataRefMapping, ctxModels);
+	}
+	
+	public Map<String, Node> getExecCtx() {
+		return execCtx;
+	}
 }

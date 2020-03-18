@@ -17,12 +17,12 @@ import org.aksw.commons.collections.CartesianProduct;
 import org.aksw.commons.collections.stacks.NestedStack;
 import org.aksw.commons.util.Pair;
 import org.aksw.commons.util.reflect.MultiMethod;
+import org.aksw.jena_sparql_api.algebra.transform.TransformReplaceConstants;
 import org.aksw.jena_sparql_api.exprs_ext.E_StrConcatPermissive;
 import org.aksw.jena_sparql_api.normal_form.Clause;
 import org.aksw.jena_sparql_api.restriction.RestrictionImpl;
 import org.aksw.jena_sparql_api.restriction.RestrictionManagerImpl;
 import org.aksw.jena_sparql_api.utils.QuadUtils;
-import org.aksw.jena_sparql_api.utils.ReplaceConstants;
 import org.aksw.jena_sparql_api.utils.expr.NodeValueUtils;
 import org.aksw.jena_sparql_api.views.Dialect;
 import org.aksw.jena_sparql_api.views.MyOpAsQuery;
@@ -532,7 +532,7 @@ public class SparqlViewSystem
         op = Algebra.toQuadForm(op);
 
 
-        op = ReplaceConstants.replace(op);
+        op = TransformReplaceConstants.transform(op); // ReplaceConstants.replace(op);
         //op = FilterPlacementOptimizer.optimize(op);
 
         // Add a projection if the query contains a result star

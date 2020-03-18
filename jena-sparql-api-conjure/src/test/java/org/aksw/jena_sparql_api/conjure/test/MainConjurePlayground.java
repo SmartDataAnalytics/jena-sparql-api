@@ -4,6 +4,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -35,9 +36,11 @@ import org.aksw.jena_sparql_api.conjure.fluent.ConjureBuilder;
 import org.aksw.jena_sparql_api.conjure.fluent.ConjureBuilderImpl;
 import org.aksw.jena_sparql_api.conjure.fluent.ConjureContext;
 import org.aksw.jena_sparql_api.conjure.fluent.ConjureFluent;
+import org.aksw.jena_sparql_api.conjure.fluent.JobUtils;
 import org.aksw.jena_sparql_api.conjure.fluent.QLib;
 import org.aksw.jena_sparql_api.conjure.job.api.Job;
 import org.aksw.jena_sparql_api.conjure.job.api.JobBinding;
+import org.aksw.jena_sparql_api.conjure.job.api.JobInstance;
 import org.aksw.jena_sparql_api.conjure.traversal.api.OpTraversalSelf;
 import org.aksw.jena_sparql_api.http.repository.api.ResourceStore;
 import org.aksw.jena_sparql_api.http.repository.impl.HttpResourceRepositoryFromFileSystemImpl;
@@ -47,6 +50,9 @@ import org.aksw.jena_sparql_api.rx.SparqlRx;
 import org.aksw.jena_sparql_api.stmt.SparqlStmt;
 import org.aksw.jena_sparql_api.stmt.SparqlStmtParserImpl;
 import org.aksw.jena_sparql_api.utils.Vars;
+import org.apache.jena.ext.com.google.common.collect.ImmutableMap;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.query.Syntax;
@@ -68,38 +74,87 @@ import com.google.gson.GsonBuilder;
 public class MainConjurePlayground {
 	private static final Logger logger = LoggerFactory.getLogger(MainConjurePlayground.class);
 	
+	
+
+	public static Object execute(JobInstance jobInstance) {
+		
+		
+		
+		return null;
+	}
+	
+	
+	
+
+	
 	public static void main2(String[] args) {
-		
-		
+				
 		String url = "http://localhost/~raven/test.hdt";
 
 
-		ConjureContext ctx = new ConjureContext();
-		Model model = ctx.getModel();
-
-		ConjureBuilder cj = new ConjureBuilderImpl(ctx);
+//		ConjureContext ctx = new ConjureContext();
+//		Model model = ctx.getModel();
+//
+		ConjureBuilder cj = new ConjureBuilderImpl();
 
 		
 		Op op = cj.coalesce(
 				cj.fromUrl(url).hdtHeader().construct("CONSTRUCT WHERE { ?s <urn:tripleCount> ?o }"),
 				cj.fromUrl(url).tripleCount().cache()).getOp();
 
+		Model model = cj.getContext().getModel();
 		Job job = Job.create(model);
 		job.setOp(op);
 		job.getJobBindings().add(JobBinding.create(model, "datasetId", OpTraversalSelf.create(model)));
 
-		
-
 		// Goal: spark-submit-cj.sh catalog macrolib macroname	
 //		cj.call("myMacro", cj.fromUrl(url));
-
 		
 		RDFDataMgr.write(System.out, job.getModel(), RDFFormat.TURTLE_PRETTY);
 	}
-
-
+	
 	public static void main(String[] args) throws Exception {
+		JenaSystem.init();
+//		fromSparqlFile("/home/raven/Projects/limbo/git/poi-rostock/dcat.sparql");
+		Job job = JobUtils.fromSparqlFile("replacens.sparql");
 
+		Map<String, Node> env = ImmutableMap.<String, Node>builder()
+				.put("SOURCE_NS", NodeFactory.createLiteral("https://portal.limbo-project.org"))
+				.put("TARGET_NS", NodeFactory.createLiteral("https://data.limbo-project.org"))
+				.build();
+
+		Op op = ConjureBuilderImpl.start().fromUrl("file:///home/raven/Projects/limbo/git/train_2-dataset/train_2-dataset.ttl").getOp();
+		//DataRef dataRef = DataRefUrl.create(ModelFactory.createDefaultModel(), "http://foo.bar/baz");
+		
+		Map<String, Op> map = Collections.singletonMap("ARG", op);
+		
+		System.out.println("Op Vars: " + job.getOpVars());
+		System.out.println("Literal Vars: " + job.getDeclaredVars());
+		
+		JobInstance ji = JobUtils.createJobInstance(job, env, map);
+
+		System.out.println("EnvMap: " + ji.getEnvMap());
+		System.out.println("OpMap: " + ji.getOpVarMap());
+		
+		
+//		RDFDataMgr.write(System.out, ji.getModel(), RDFFormat.TURTLE_PRETTY);
+		Op inst = JobUtils.materializeJobInstance(ji);
+		RDFDataMgr.write(System.out, inst.getModel(), RDFFormat.TURTLE_PRETTY);
+		
+		
+		try(RdfDataPod pod = ExecutionUtils.executeJob(inst)) {
+			Model m = pod.getModel();
+			System.out.println("Transformed Model:");
+			RDFDataMgr.write(System.out, m, RDFFormat.TURTLE_PRETTY);
+		}
+		
+		// TODO Parse out all <env:> Nodes from the environment...
+		//Job job = Job.create(cj.getContext().getModel(), "todoJobName");
+		//JobInstance inst = createJobInstance(job, env, map);
+
+		if(true) {
+			return;
+		}
 		/*
 		HashCode a = Hashing.sha256().hashString("a", StandardCharsets.UTF_8);
 		HashCode b = Hashing.sha256().hashString("b", StandardCharsets.UTF_8);
@@ -250,15 +305,15 @@ public class MainConjurePlayground {
 					.getOp();
 		
 
-		Job job = Job.create(xmodel);
-		job.setOp(conjureWorkflow);
-		job.setJobBindings(Arrays.asList(JobBinding.create(xmodel, "datasetId", OpTraversalSelf.create(xmodel))));
+		Job testJob = Job.create(xmodel, "unnamedJob");
+		testJob.setOp(conjureWorkflow);
+		testJob.setJobBindings(Arrays.asList(JobBinding.create(xmodel, "datasetId", OpTraversalSelf.create(xmodel))));
 
 
 		
 		
 		// Print out the deserialized workflow for inspection
-		RDFDataMgr.write(System.err, job.getModel(), RDFFormat.TURTLE_PRETTY);
+		RDFDataMgr.write(System.err, testJob.getModel(), RDFFormat.TURTLE_PRETTY);
 
 //		if(true) {
 //			return;
@@ -300,10 +355,10 @@ public class MainConjurePlayground {
 //						parser.apply("INSERT DATA { [] dataid:group eg:mygrp ; dcat:distribution [ dcat:downloadURL <file:///home/raven/tmp/test.hdt> ] }").toString()));
 							parser.apply("INSERT DATA { <http://mydata> dataid:group eg:mygrp ; dcat:distribution [ dcat:downloadURL <http://localhost/~raven/009e80050fa7f4279596956477157ec2.hdt> ] }").toString()));
 
-		DataRef dataRef = dataRef4;
+		DataRef dataRefX = dataRef4;
 		
 		// Set up the workflow that makes a digital copy of a dataset available
-		Op basicWorkflow = OpDataRefResource.from(model, dataRef);
+		Op basicWorkflow = OpDataRefResource.from(model, dataRefX);
 		
 		// So far so good - all we need now, is some data and we can start execution
 
@@ -342,7 +397,7 @@ public class MainConjurePlayground {
 
 	    		// For every input record is a dcat entry, assign an anonymous dataref
 	    		for(Resource inputRecord : inputRecords) {
-	    			Map<String, DataRef> nameToDataRef = new HashMap<>();
+	    			Map<String, Op> nameToDataRef = new HashMap<>();
 
 	    			Query q = parser.apply("SELECT DISTINCT ?x { ?x dcat:distribution [] }").getQuery();
 	    			Model m = inputRecord.getModel();
@@ -362,10 +417,11 @@ public class MainConjurePlayground {
 	    				r = r.inModel(xxmodel);
 
 	    				DataRefDcat dr = DataRefDcat.create(xxmodel, r);
+	    				Op odr = OpDataRefResource.from(dr.getModel(), dr);
 	    				
 	    				RDFDataMgr.write(System.err, dr.getModel(), RDFFormat.TURTLE_PRETTY);
 	    				
-	    				nameToDataRef.put("unnamedDataRef" + (i++), dr);
+	    				nameToDataRef.put("unnamedDataRef" + (i++), odr);
 	    			}
 	    			
 		    		logger.info("Registered data refs for input " + inputRecord + " are: " + nameToDataRef);
@@ -406,7 +462,7 @@ public class MainConjurePlayground {
 
 //		logger.info("Retrieved " + inputRecords.size() + " contexts for processing " + inputRecords);
 		for(TaskContext taskContext : taskContexts) {
-			ExecutionUtils.executeJob(job, taskContext, repo, cacheStore, new ConjureFormatConfig());
+			ExecutionUtils.executeJob(testJob, taskContext, repo, cacheStore, new ConjureFormatConfig());
 		}
 
 	}

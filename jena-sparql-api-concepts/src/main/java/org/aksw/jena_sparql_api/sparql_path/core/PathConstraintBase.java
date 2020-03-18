@@ -2,7 +2,6 @@ package org.aksw.jena_sparql_api.sparql_path.core;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -13,13 +12,12 @@ import java.util.function.Function;
 
 import org.aksw.commons.collections.generator.Generator;
 import org.aksw.commons.jena.graph.GraphVarImpl;
+import org.aksw.jena_sparql_api.algebra.transform.TransformReplaceConstants;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.utils.CnfUtils;
 import org.aksw.jena_sparql_api.utils.ElementTreeAnalyser;
-import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.ExprUtils;
-import org.aksw.jena_sparql_api.utils.ReplaceConstants;
 import org.aksw.jena_sparql_api.utils.VarGeneratorBlacklist;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.graph.Graph;
@@ -59,7 +57,7 @@ public abstract class PathConstraintBase {
         Op op = Algebra.compile(query);
         op = Algebra.toQuadForm(op);
 
-        op = ReplaceConstants.replace(op);
+        op = TransformReplaceConstants.transform(op); // ReplaceConstants.replace(op);
 
         /*
         ExprList exprs = FilterUtils.collectExprs(op, new ExprList());

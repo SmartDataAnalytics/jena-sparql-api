@@ -15,7 +15,6 @@ import org.aksw.jena_sparql_api.utils.model.Directed;
 import org.aksw.jena_sparql_api.utils.model.TripletPath;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
-import org.apache.jena.sdb.store.Feature.Name;
 import org.apache.jena.sparql.core.Prologue;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.ExecutionContext;
@@ -61,8 +60,8 @@ public class PropertyFunctionKShortestPaths
 
     public static final String DEFAULT_IRI = "http://jsa.aksw.org/fn/kShortestPaths";
 
-    public static final Symbol PROLOGUE = Name.create("prologue");
-    public static final Symbol SPARQL_SERVICE = Name.create("sparqlService");
+    public static final Symbol PROLOGUE = Symbol.create("prologue");
+    public static final Symbol SPARQL_SERVICE = Symbol.create("sparqlService");
 
     protected Function<SparqlService, SparqlKShortestPathFinder> serviceToPathFinder;
     //protected Gson gson;

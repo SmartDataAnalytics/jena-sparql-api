@@ -4,6 +4,7 @@ import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryParseException;
 import org.apache.jena.query.Syntax;
 import org.apache.jena.shared.PrefixMapping;
+import org.apache.jena.sparql.ARQException;
 import org.apache.jena.sparql.core.Prologue;
 import org.apache.jena.update.UpdateRequest;
 
@@ -53,6 +54,7 @@ public class SparqlStmtParserImpl
         return actAsClassifier;
     }
 
+    
     @Override
     public SparqlStmt apply(String stmtStr) {
         SparqlStmt result;
@@ -60,26 +62,26 @@ public class SparqlStmtParserImpl
             Query query = queryParser.apply(stmtStr);
             result = new SparqlStmtQuery(query);
         } catch(QueryParseException queryException) {
-
+        	
             try {
                 UpdateRequest updateRequest = updateParser.apply(stmtStr);
                 result = new SparqlStmtUpdate(updateRequest);
 
             } catch(QueryParseException updateException) {
-                int delta = QueryParseExceptionComparator.doCompare(queryException, updateException);
+                int delta = QueryParseExceptionUtils.doCompare(queryException, updateException);
 
                 boolean isQueryException = delta <= 0;
                 if(isQueryException) {
                     if(actAsClassifier) {
                         result = new SparqlStmtQuery(stmtStr, queryException);
                     } else {
-                        throw new RuntimeException("Failed to parse " + stmtStr, queryException);
+                        throw new ARQException("Failed to parse " + stmtStr, queryException);
                     }
                 } else {
                     if(actAsClassifier) {
                         result = new SparqlStmtUpdate(stmtStr, updateException);
                     } else {
-                        throw new RuntimeException("Failed to parse " + stmtStr, updateException);
+                        throw new ARQException("Failed to parse " + stmtStr, updateException);
                     }
                 }
             }

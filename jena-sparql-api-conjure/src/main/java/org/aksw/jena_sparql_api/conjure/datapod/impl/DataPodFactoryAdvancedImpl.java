@@ -3,6 +3,7 @@ package org.aksw.jena_sparql_api.conjure.datapod.impl;
 import org.aksw.dcat.ap.utils.DcatUtils;
 import org.aksw.jena_sparql_api.conjure.datapod.api.RdfDataPod;
 import org.aksw.jena_sparql_api.conjure.dataref.core.api.PlainDataRefDcat;
+import org.aksw.jena_sparql_api.conjure.dataref.core.api.PlainDataRefGit;
 import org.aksw.jena_sparql_api.conjure.dataref.core.api.PlainDataRefUrl;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.OpVisitor;
 import org.aksw.jena_sparql_api.conjure.dataset.engine.OpExecutorDefault;
@@ -40,7 +41,7 @@ public class DataPodFactoryAdvancedImpl
 		String url = dataRef.getDataRefUrl();
 
 		TaskContext context = ((OpExecutorDefault)opExecutor).getTaskContext();
-		Model m = context.getCtxModels().get(url);
+		Model m = context == null ? null : context.getCtxModels().get(url);
 		RdfDataPod result;
 		if(m != null) {
 			logger.info("Accessed input model for url " + url);
@@ -69,5 +70,11 @@ public class DataPodFactoryAdvancedImpl
 		
 		RdfDataPod result = DataPods.create(url, repo);
 		return result;
+	}
+	
+	
+	@Override
+	public RdfDataPod visit(PlainDataRefGit dataRef) {
+		return super.visit(dataRef);
 	}
 };

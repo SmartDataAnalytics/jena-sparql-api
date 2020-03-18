@@ -6,6 +6,7 @@ import org.aksw.jena_sparql_api.conjure.datapod.api.RdfDataPod;
 import org.aksw.jena_sparql_api.conjure.dataref.core.api.PlainDataRefCatalog;
 import org.aksw.jena_sparql_api.conjure.dataref.core.api.PlainDataRefDcat;
 import org.aksw.jena_sparql_api.conjure.dataref.core.api.PlainDataRefExt;
+import org.aksw.jena_sparql_api.conjure.dataref.core.api.PlainDataRefGit;
 import org.aksw.jena_sparql_api.conjure.dataref.core.api.PlainDataRefOp;
 import org.aksw.jena_sparql_api.conjure.dataref.core.api.PlainDataRefSparqlEndpoint;
 import org.aksw.jena_sparql_api.conjure.dataref.core.api.PlainDataRefUrl;
@@ -75,6 +76,11 @@ public class DataPodFactoryImpl
 
 	@Override
 	public RdfDataPod visit(PlainDataRefDcat dataRef) {
+		throw new RuntimeException("No override with custom handler");
+	}
+
+	@Override
+	public RdfDataPod visit(PlainDataRefGit dataRef) {
 		throw new RuntimeException("No override with custom handler");
 	}
 

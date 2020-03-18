@@ -1,14 +1,17 @@
 package org.aksw.jena_sparql_api.utils;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.core.VarExprList;
 import org.apache.jena.sparql.expr.Expr;
@@ -20,6 +23,28 @@ import org.apache.jena.sparql.expr.ExprVars;
 import org.apache.jena.sparql.graph.NodeTransform;
 
 public class VarExprListUtils {
+
+	/**
+	 * Create a map of the variables that are defined in terms of a constant
+	 * 
+	 * Can be combined with applyExprTransform to e.g. fold constants first.
+	 * 
+	 * @param vel
+	 * @return
+	 */
+	public static Map<Var, Node> extractConstants(VarExprList vel) {
+		Map<Var, Node> result = new LinkedHashMap<>();
+		for(Var var : vel.getVars()) {
+			Expr expr = vel.getExpr(var);
+			
+			if(expr.isConstant()) {
+				Node node = expr.getConstant().asNode();
+				result.put(var, node);
+			}
+		}
+
+		return result;
+	}
 
 	public static boolean hasExprs(VarExprList vel) {
 		VarExprList copy = VarExprListUtils.createFromMap(vel.getExprs());
@@ -107,12 +132,43 @@ public class VarExprListUtils {
     }
 
 
-    /**
-     * Get the referenced variables
-     *
-     * @param vel
-     * @return
-     */
+    public static Set<Var> getDefinedVars(VarExprList vel) {
+    	Set<Var> result = definedVars(new LinkedHashSet<>(), vel);
+        return result;
+    }
+
+    public static <T extends Collection<Var>> T definedVars(T acc, VarExprList vel) {
+    	acc.addAll(vel.getVars());
+    	return acc;
+    }
+
+    public static Set<Var> getVarsMentionedInBody(VarExprList vel) {
+    	Set<Var> result = varsMentionedInBody(new LinkedHashSet<>(), vel);
+    	return result;
+    }
+
+    public static <T extends Collection<Var>> T varsMentionedInBody(T acc, VarExprList vel) {
+        for(Entry<Var, Expr> entry : vel.getExprs().entrySet()) {
+        	Expr e = entry.getValue();
+            if(e != null) {
+                ExprVars.varsMentioned(acc, e);
+            }
+        }
+        return acc;
+    }
+
+    public static Set<Var> getVarsMentioned(VarExprList vel) {
+    	Set<Var> result = varsMentioned(new LinkedHashSet<>(), vel);
+    	return result;
+    }
+
+    public static <T extends Collection<Var>> T varsMentioned(T acc, VarExprList vel) {
+    	definedVars(acc, vel);
+    	varsMentionedInBody(acc, vel);
+    	return acc;
+    }
+
+    @Deprecated // This method has unclear semantics ; use the getVarsMentioned variants instead
     public static Set<Var> getRefVars(VarExprList vel) {
         Set<Var> result = new HashSet<Var>();
 
@@ -201,7 +257,7 @@ public class VarExprListUtils {
         }
     }
 
-    public static void copy(VarExprList dst, VarExprList src) {
+    public static VarExprList copy(VarExprList dst, VarExprList src) {
         for(Var v : src.getVars()) {
             Expr e = src.getExpr(v);
             if(e == null) {
@@ -210,5 +266,7 @@ public class VarExprListUtils {
                 dst.add(v, e);
             }
         }
+        
+        return dst;
     }
 }

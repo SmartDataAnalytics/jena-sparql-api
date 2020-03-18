@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api.stmt;
 
+import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryParseException;
 
@@ -29,6 +30,15 @@ public class SparqlStmtQuery
         this.query = query;
     }
 
+    @Override
+    public SparqlStmtQuery clone() {
+    	Query clone = query != null
+    			? QueryUtils.fastClone(query)//query.cloneQuery()
+    			: null;
+
+    	return new SparqlStmtQuery(clone, originalString, parseException);
+    }
+    
     public Query getQuery() {
         return query;
     }

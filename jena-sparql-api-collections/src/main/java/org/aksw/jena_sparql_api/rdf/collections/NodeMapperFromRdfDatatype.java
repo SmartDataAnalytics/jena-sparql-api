@@ -3,10 +3,13 @@ package org.aksw.jena_sparql_api.rdf.collections;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.Calendar;
 import java.util.Objects;
+import java.util.function.Function;
 
 import org.apache.jena.datatypes.RDFDatatype;
 import org.apache.jena.datatypes.TypeMapper;
+import org.apache.jena.datatypes.xsd.XSDDateTime;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 
@@ -36,6 +39,15 @@ public class NodeMapperFromRdfDatatype<T>
 		return result;
 	}
 
+	/**
+	 * Can the given node be converted to the given java class?
+	 * 
+	 * FIXME We need to integrate the coercion system from the mapper module:
+	 * 
+	 * @param node
+	 * @param clazz
+	 * @return
+	 */
 	public static boolean canMapCore(Node node, Class<?> clazz) {
 		boolean result;
 		
@@ -53,13 +65,40 @@ public class NodeMapperFromRdfDatatype<T>
 			TypeMapper tm = TypeMapper.getInstance();
 			RDFDatatype dtype = tm.getTypeByClass(clazz);
 
-			result = canMapCore(node, dtype);
+			if(dtype == null){ 
+				result = false;
+				if(node.isLiteral()) {
+					dtype = node.getLiteralDatatype();
+					Function<Node, Object> c = getCoercion(dtype, clazz);
+					result = c != null;
+				}
+			} else {
+				result = canMapCore(node, dtype);
+			}
+			
 		}
 		
 		return result;
 	}
-	
+
+	// FIXME We need to integrate the coercion system from the mapper module:
+	public static Function<Node, Object> getCoercion(RDFDatatype dtype, Class<?> tgtClazz) {
+		Function<Node, Object> result = null;
 		
+		Class<?> srcClass = dtype.getJavaClass();
+		if(srcClass != null) {
+			if(XSDDateTime.class.isAssignableFrom(srcClass) && Calendar.class.isAssignableFrom(tgtClazz)) {
+				result = node -> {
+					Object obj = node.getLiteralValue();
+					Calendar r = ((XSDDateTime)obj).asCalendar();
+					return r;
+				};
+			}
+		}
+		
+		return result;
+	}
+
 	public static boolean canMapCore(Node node, RDFDatatype dtype) {
 		// TODO we could make use of spring's conversion service to allow implicit conversions (e.g. int -> long)
 		boolean result;
@@ -89,16 +128,28 @@ public class NodeMapperFromRdfDatatype<T>
 		Object obj = node.isLiteral() ? node.getLiteralValue() : null;
 		Class<?> objClass = obj == null ? null : obj.getClass();
 		
-		T result;
+		T result = null;
 		if(objClass != null && clazz.isAssignableFrom(objClass)) {
 			result = (T)obj;
 		} else {
 			TypeMapper tm = TypeMapper.getInstance();
 			RDFDatatype dtype = tm.getTypeByClass(clazz);
 
-			Objects.requireNonNull(dtype, "Expected an RDFDatatype for java class '" + clazz + "'");
-			
-			result = toJavaCore(node, dtype);
+			if(dtype == null) {
+				if(node.isLiteral()) {
+					if(dtype == null && node.isLiteral()) {
+						dtype = node.getLiteralDatatype();
+						Function<Node, Object> c = getCoercion(dtype, clazz);
+						Object o = c.apply(node);
+						result = (T)o;
+					}
+				}
+				
+				Objects.requireNonNull(dtype, "Expected an RDFDatatype for java class '" + clazz + "'");
+
+			} else {
+				result = toJavaCore(node, dtype);				
+			}			
 		}
 
 		return result;

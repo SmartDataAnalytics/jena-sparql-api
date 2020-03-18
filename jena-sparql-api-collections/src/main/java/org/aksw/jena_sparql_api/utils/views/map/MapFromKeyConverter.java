@@ -90,8 +90,14 @@ public class MapFromKeyConverter<K, J, V>
 	
 	@Override
 	public boolean containsKey(Object key) {
-		J j = converter.reverse().convert((K)key);
-		boolean result = map.containsKey(j);
+		boolean result;
+		// If we fail to convert the key, we implicitly assume it is not contained
+		try {
+			J j = converter.reverse().convert((K)key);
+			result = map.containsKey(j);
+		} catch(Exception e) {
+			result = false;
+		}
 		return result;
 	}
 	

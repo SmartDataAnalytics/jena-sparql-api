@@ -1,0 +1,6 @@
+{
+  "@context": {
+    "bif": "bif:",
+    "bif2": "http://www.openlinksw.com/schemas/bif#"
+  }
+}

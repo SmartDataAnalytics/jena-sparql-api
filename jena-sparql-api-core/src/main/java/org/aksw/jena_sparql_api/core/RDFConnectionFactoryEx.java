@@ -1,6 +1,7 @@
 package org.aksw.jena_sparql_api.core;
 
 import java.lang.reflect.Field;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import org.aksw.jena_sparql_api.core.connection.QueryExecutionFactorySparqlQueryConnection;
@@ -16,6 +17,7 @@ import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.rdfconnection.RDFConnectionLocal;
 import org.apache.jena.rdfconnection.RDFConnectionModular;
+import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.apache.jena.rdfconnection.SparqlUpdateConnection;
 import org.apache.jena.riot.WebContent;
 import org.apache.jena.sparql.core.DatasetDescription;
@@ -147,7 +149,21 @@ public class RDFConnectionFactoryEx {
 		return result;
 	}
 	
-	public static SparqlUpdateConnection  getUpdateConnection(RDFConnectionModular conn) {
+	
+	public static SparqlQueryConnection getQueryConnection(RDFConnectionModular conn) {
+		SparqlQueryConnection result;
+		try {
+			Field f = RDFConnectionModular.class.getDeclaredField("queryConnection");
+			f.setAccessible(true);
+			result = (SparqlQueryConnection)f.get(conn);
+		} catch(Exception e) {
+			throw new RuntimeException(e);
+		}
+
+		return result;
+	}
+
+	public static SparqlUpdateConnection getUpdateConnection(RDFConnectionModular conn) {
 		SparqlUpdateConnection result;
 		try {
 			Field f = RDFConnectionModular.class.getDeclaredField("updateConnection");
@@ -172,6 +188,19 @@ public class RDFConnectionFactoryEx {
 		return result;
 	}
 	
+	
+	public static SparqlQueryConnection unwrapQueryConnection(SparqlQueryConnection conn) {
+		SparqlQueryConnection result;
+		if(conn instanceof RDFConnectionModular) {
+			SparqlQueryConnection tmp = getQueryConnection((RDFConnectionModular)conn);
+			result = unwrapQueryConnection(tmp);
+		} else {
+			result = conn;
+		}
+		
+		return result;
+	}
+
 	public static SparqlUpdateConnection unwrapUpdateConnection(SparqlUpdateConnection conn) {
 		SparqlUpdateConnection result;
 		if(conn instanceof RDFConnectionModular) {
@@ -185,6 +214,22 @@ public class RDFConnectionFactoryEx {
 	}
 	
 	public static RDFConnection wrapWithContext(RDFConnection rawConn) {
+		return wrapWithContext(rawConn, cxt -> {});
+	}
+	
+	
+	/**
+	 * Places the connection object as a symbol into to context,
+	 * so that custom functions - notably E_Benchmark can
+	 * pose further queries to it.
+	 * 
+	 * FIXME Connections are usually not intended for concurrent use;
+	 * we should put a connection supplier into the context instead!
+	 * 
+	 * @param rawConn
+	 * @return
+	 */
+	public static RDFConnection wrapWithContext(RDFConnection rawConn, Consumer<Context> contextHandler) {
 		RDFConnection[] result = {null}; 
 
 		SparqlUpdateConnection tmp = unwrapUpdateConnection(rawConn);
@@ -219,6 +264,7 @@ public class RDFConnectionFactoryEx {
 					Context cxt = qe.getContext();
 					if(cxt != null) {
 						cxt.set(Symbols.symConnection, result[0]);
+						contextHandler.accept(cxt);
 					}
 					
 					return qe;
@@ -228,6 +274,7 @@ public class RDFConnectionFactoryEx {
 					Context cxt = qe.getContext();
 					if(cxt != null) {
 						cxt.set(Symbols.symConnection, result[0]);
+						contextHandler.accept(cxt);
 					}
 					
 					return qe;

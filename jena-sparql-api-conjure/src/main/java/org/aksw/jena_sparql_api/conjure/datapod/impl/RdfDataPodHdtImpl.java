@@ -1,8 +1,9 @@
 package org.aksw.jena_sparql_api.conjure.datapod.impl;
 
 import org.aksw.jena_sparql_api.conjure.datapod.api.RdfDataPod;
+import org.aksw.jena_sparql_api.io.common.Reference;
+import org.aksw.jena_sparql_api.io.hdt.HDTHeaderGraph;
 import org.aksw.jena_sparql_api.utils.GraphUtils;
-import org.aksw.jena_sparql_api.utils.hdt.HDTHeaderGraph;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.rdf.model.Model;
@@ -39,12 +40,12 @@ public class RdfDataPodHdtImpl
 
 	@Override
 	public void close() throws Exception {
-		hdtRef.release();
+		hdtRef.close();
 	}
 
 	@Override
 	public RDFConnection openConnection() {
-		HDT hdt = hdtRef.getValue();
+		HDT hdt = hdtRef.get();
 
 		Graph graph;
 		if(isHeaderPod) {

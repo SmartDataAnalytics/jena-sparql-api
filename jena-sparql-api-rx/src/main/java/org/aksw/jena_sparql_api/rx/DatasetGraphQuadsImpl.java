@@ -28,7 +28,8 @@ public class DatasetGraphQuadsImpl
 	
 	@Override
 	public boolean supportsTransactions() {
-		return false;
+		// FIXME We fake a true value, because otherwise any update causes an exception
+		return true;
 	}
 
 	@Override
@@ -148,6 +149,10 @@ public class DatasetGraphQuadsImpl
     
     @Override
     public long size() {
+    	// Comparing with DatasetFactory.create() it seems the count is just
+    	// the number of named graphs (excluding the default graph)
+    	
+    	//return table.listGraphNodes().count(); //
     	return table.find(Node.ANY, Node.ANY, Node.ANY, Node.ANY).count();
     }
 }

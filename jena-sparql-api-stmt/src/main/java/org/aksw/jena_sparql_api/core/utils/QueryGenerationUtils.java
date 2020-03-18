@@ -7,17 +7,19 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import org.aksw.commons.collections.generator.Generator;
+import org.aksw.commons.collections.generator.GeneratorBlacklist;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
-import org.aksw.jena_sparql_api.utils.GeneratorBlacklist;
 import org.aksw.jena_sparql_api.utils.QuadPatternUtils;
+import org.aksw.jena_sparql_api.utils.QueryUtils;
+import org.aksw.jena_sparql_api.utils.VarGeneratorImpl2;
 import org.aksw.jena_sparql_api.utils.VarUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.ext.com.google.common.collect.Maps;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query;
-import org.apache.jena.sdb.core.Generator;
 import org.apache.jena.shared.impl.PrefixMappingImpl;
 import org.apache.jena.sparql.core.BasicPattern;
 import org.apache.jena.sparql.core.Quad;
@@ -178,9 +180,11 @@ public class QueryGenerationUtils {
 
     
     public static Entry<Var, Query> createQueryCountCore(Query query, Long itemLimit, Long rowLimit) {
-        Var resultVar = Vars.c;
+        // Allocate a variable not mentioned in the query
+    	Var resultVar = QueryUtils.freshVar(query); // Vars.c;
     	
     	boolean needsWrapping = !query.getGroupBy().isEmpty() || !query.getAggregators().isEmpty();
+    	// || query.isDistinct() || query.isReduced();
 	
 	      if(rowLimit != null) {
 		      query.setDistinct(false);
@@ -286,7 +290,7 @@ public class QueryGenerationUtils {
 
         Var s = concept.getVar();
 
-        Generator gen = GeneratorBlacklist.create("v", varNames);
+        Generator<Var> gen = GeneratorBlacklist.create(VarGeneratorImpl2.create("v"), varNames);
         Var p = Var.alloc(gen.next());
         Var o = Var.alloc(gen.next());
 

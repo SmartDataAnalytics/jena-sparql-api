@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 
 import org.aksw.commons.collections.generator.Generator;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
+import org.aksw.jena_sparql_api.utils.QuadPatternUtils;
 import org.aksw.jena_sparql_api.utils.VarGeneratorBlacklist;
 import org.aksw.jena_sparql_api.utils.VarUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
@@ -40,12 +41,15 @@ import org.apache.jena.sparql.syntax.ElementGroup;
 import org.apache.jena.sparql.syntax.ElementSubQuery;
 import org.apache.jena.sparql.syntax.ElementUnion;
 import org.apache.jena.sparql.syntax.PatternVars;
+import org.apache.jena.sparql.syntax.Template;
 import org.apache.jena.sparql.syntax.syntaxtransform.NodeTransformSubst;
 
 import com.google.common.collect.Sets;
 
 public class RelationUtils {
-
+	public static final TernaryRelation SPO = new TernaryRelationImpl(
+			ElementUtils.createElementTriple(Vars.s, Vars.p, Vars.o),
+			Vars.s, Vars.p, Vars.o);
 	
 
 	/**
@@ -66,13 +70,33 @@ public class RelationUtils {
 	}
 	
 	
+	/**
+	 * Rename the vars of the relation to the given target variables.
+	 * Thereby take care of conflicts when the target variable also is also mentioned in the relation
+	 * The implementation uses Relation.join() which treats the variables of the left-hand side
+	 * of the join as fixed.
+	 * 
+	 * 
+	 * @param r
+	 * @param targetNodes A list of vars (TODO Change type to var)
+	 * @return
+	 */
 	public static Element renameNodes(Relation r, List<? extends Node> targetNodes) {
-		List<Var> rVars = r.getVars();
-		Element e = r.getElement();
-		Map<Var, Node> map = createRenameVarMap(r.getVarsMentioned(), rVars, targetNodes);
-		
-		Element result = ElementUtils.applyNodeTransform(e, new NodeTransformSubst(map));
+		List<Var> tgtVars = targetNodes.stream().map(v -> (Var)v).collect(Collectors.toList());
 
+		// Create a relation with an empty pattern from the target nodes
+		Relation joined = new RelationImpl(new ElementGroup(), tgtVars)
+			.joinOn(tgtVars)
+			.with(r);
+		Element result = joined.getElement();
+		
+//		if(false) {
+//			List<Var> rVars = r.getVars();
+//			Element e = r.getElement();
+//			Map<Var, Node> map = createRenameVarMap(r.getVarsMentioned(), rVars, targetNodes);
+//			
+//			Element result = ElementUtils.applyNodeTransform(e, new NodeTransformSubst(map));
+//		}
 		return result;
 	}
 
@@ -209,8 +233,14 @@ public class RelationUtils {
 			List<Var> vars = query.getProjectVars();
 			Element element = query.getQueryPattern();
 			result = new RelationImpl(element, vars);
+		} else if(query.isConstructType()) {
+			Template template = query.getConstructTemplate();
+			List<Var> vars = new ArrayList<>(QuadPatternUtils.getVarsMentioned(template.getQuads()));
+			Element element = query.getQueryPattern();
+			result = new RelationImpl(element, vars);
 		} else {
-			throw new RuntimeException("SELECT query form expected, instead got " + query);
+			
+			throw new RuntimeException("SELECT o CONSTRUCT query form expected, instead got " + query);
 		}
 		
 		return result;

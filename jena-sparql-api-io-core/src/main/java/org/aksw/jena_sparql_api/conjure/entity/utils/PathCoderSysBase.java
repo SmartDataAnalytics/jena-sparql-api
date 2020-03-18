@@ -79,7 +79,7 @@ public abstract class PathCoderSysBase
 		
 		String[] cmd = buildCmd.apply(input);
 
-		System.out.println(Arrays.asList(cmd));
+		// System.out.println(Arrays.asList(cmd));
 		
 		ProcessBuilder processBuilder = new ProcessBuilder(cmd);
 		File outFile = output.toFile();

@@ -9,6 +9,13 @@ import org.aksw.jena_sparql_api.mapper.annotation.ResourceView;
 public interface OpConvert
 	extends Op1
 {
+	/**
+	 * TODO It should not be necessary having to specify the source content type.
+	 * The result of coding operations should be entities with appropriate
+	 * content-type and encoding information
+	 * 
+	 * @return
+	 */
 	@IriNs("eg")
 	String getSourceContentType();
 	OpConvert setSourceContentType(String contentType);

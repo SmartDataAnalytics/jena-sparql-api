@@ -5,6 +5,7 @@ public interface OpVisitor<T> {
 	T visit(OpDataRefResource op);
 	T visit(OpConstruct op);
 	T visit(OpUpdateRequest op);
+	T visit(OpStmtList op);
 	T visit(OpUnion op);
 	T visit(OpCoalesce op);
 	T visit(OpPersist op);
@@ -19,5 +20,8 @@ public interface OpVisitor<T> {
 	T visit(OpError op);
 
 
-	T visit(OpVar op);	
+	T visit(OpVar op);
+	T visit(OpJobInstance op);
+	
+	T visit(OpQueryOverViews op);
 }

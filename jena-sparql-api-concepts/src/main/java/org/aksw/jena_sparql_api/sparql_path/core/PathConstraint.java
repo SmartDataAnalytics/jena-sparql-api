@@ -5,12 +5,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.aksw.jena_sparql_api.algebra.transform.TransformReplaceConstants;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.utils.CnfUtils;
 import org.aksw.jena_sparql_api.utils.ElementTreeAnalyser;
 import org.aksw.jena_sparql_api.utils.ExprUtils;
-import org.aksw.jena_sparql_api.utils.ReplaceConstants;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
@@ -51,7 +51,7 @@ public class PathConstraint {
         Op op = Algebra.compile(query);
         op = Algebra.toQuadForm(op);
 
-        op = ReplaceConstants.replace(op);
+        op = TransformReplaceConstants.transform(op); //ReplaceConstants.replace(op);
 
         /*
         ExprList exprs = FilterUtils.collectExprs(op, new ExprList());

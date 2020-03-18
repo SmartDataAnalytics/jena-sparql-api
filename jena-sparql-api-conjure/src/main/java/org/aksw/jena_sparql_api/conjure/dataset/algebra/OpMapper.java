@@ -87,6 +87,24 @@ public class OpMapper
 		return null;
 	}
 
+	@Override
+	public Op visit(OpQueryOverViews op) {
+		System.out.println("Op: " + op);
+		return null;
+	}
+
+	@Override
+	public Op visit(OpStmtList op) {
+		System.out.println("Op: " + op);
+		return null;
+	}
+
+	@Override
+	public Op visit(OpJobInstance op) {
+		System.out.println("Op: " + op);
+		return null;
+	}
+
 //	@Override
 //	public Op visit(OpNothing op) {
 //		System.out.println("Op: " + op);

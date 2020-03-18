@@ -28,6 +28,7 @@ import org.aksw.jena_sparql_api.utils.QuadPatternUtils;
 import org.aksw.jena_sparql_api.utils.VarExprListUtils;
 import org.aksw.jena_sparql_api.utils.VarGeneratorBlacklist;
 import org.aksw.jena_sparql_api.utils.VarGeneratorImpl2;
+import org.apache.jena.ext.com.google.common.base.Objects;
 import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.OpVars;
@@ -65,6 +66,8 @@ public class OpUtils {
     public static OpTable createEmptyTableUnionVars(Op ... subOps) {
     	List<Var> vars = Arrays.asList(subOps).stream()
     			.flatMap(op -> OpVars.visibleVars(op).stream())
+    			// Exclude special purpose vars 
+    			.filter(v -> !Var.isBlankNodeVar(v))
     			.distinct()
     			.collect(Collectors.toList());
     	
@@ -112,9 +115,20 @@ public class OpUtils {
      * @return
      */
     public static Op extendWithVarMap(Op subOp, Map<Var, Var> oldToNew) {
-        VarExprList vel = VarExprListUtils.createFromVarMap(oldToNew);
+    	// Remove identity mappings because they'd result in algebra expressions such as BIND(?x AS ?x)
+    	// which breaks with Jena
+    	Map<Var, Var> oldToNewWithoutIdentity = oldToNew.entrySet().stream()
+    			.filter(e -> !Objects.equal(e.getKey(), e.getValue()))
+    			.collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+
+    	List<Var> projVars = oldToNew.values()
+    			.stream()
+    			.distinct()
+    			.collect(Collectors.toList());
+
+        VarExprList vel = VarExprListUtils.createFromVarMap(oldToNewWithoutIdentity);
         OpExtend opExtend = OpExtend.create(subOp, vel);
-        OpProject result = new OpProject(opExtend, vel.getVars());
+        OpProject result = new OpProject(opExtend, projVars);
         return result;
     }
 

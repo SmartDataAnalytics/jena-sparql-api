@@ -16,7 +16,8 @@ public class RDFNodeMapperImpl<T>
 	protected TypeDecider typeDecider;
 	protected Class<T> viewClass;
 	
-	// Flag to indicate that requested resource views should be applied even if the TypeDecider cannot find a better view class
+	// Flag to indicate that requested resource views should be applied even
+	// if the TypeDecider cannot find a better view class
 	protected boolean isViewAll;
 
 	protected transient NodeMapper<T> nodeMapper;
@@ -29,7 +30,10 @@ public class RDFNodeMapperImpl<T>
 		this.viewClass = viewClass;
 		this.isViewAll = isViewAll;
 
-		this.nodeMapper = new NodeMapperFromTypeMapper<>(viewClass, typeMapper); //NodeMapperFactory.from(viewClass, typeMapper);
+		this.nodeMapper = Node.class.isAssignableFrom(viewClass)
+				? (NodeMapper<T>)new NodeMapperPassthrough()
+				: new NodeMapperFromTypeMapper<>(viewClass, typeMapper) //NodeMapperFactory.from(viewClass, typeMapper);
+				;
 	}
 	
 	public boolean canMap(RDFNode rdfNode) {			

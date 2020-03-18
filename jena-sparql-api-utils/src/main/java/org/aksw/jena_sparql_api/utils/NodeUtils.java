@@ -3,6 +3,7 @@ package org.aksw.jena_sparql_api.utils;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Function;
 
@@ -10,7 +11,7 @@ import org.apache.jena.atlas.io.AWriter;
 import org.apache.jena.atlas.io.StringWriterI;
 import org.apache.jena.datatypes.RDFDatatype;
 import org.apache.jena.datatypes.TypeMapper;
-import org.apache.jena.ext.com.google.common.base.Strings;
+import org.apache.jena.ext.com.google.common.collect.Maps;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.riot.out.NodeFormatterNT;
@@ -23,37 +24,101 @@ public class NodeUtils {
 	public static final String nullUri = "http://null.null/null";
 	public static final Node nullUriNode = NodeFactory.createURI(nullUri);
 
+	// Prefix for URIs referring to environment variables
+	public static final String ENV_PREFIX = "env:";
+
 //	public static final Node N_ABSENT = NodeFactory.createURI("http://special.absent/none");
 
 	// Note to myself because I repeatedly added node/prefix utils here:
 	// Prefix / PrefixMapping related utils are in PrefixUtils ~ Claus
-	
-	public static Node substWithLookup(Node node, Function<String, String> lookup) {
-		String ENV = "env:";
-		
-		Node result = node;
+
+	public static boolean isEnvKey(Node node) {
+		boolean result = getEnvKey(node) != null;
+		return result;
+	}
+
+	// Return key + flag for string/iri
+	public static Entry<String, Boolean> getEnvKey(Node node) {
+		Entry<String, Boolean> result = null;
 		if(node.isURI()) {
 			String str = node.getURI();
-			if(str.startsWith(ENV)) {
-				String key = str.substring(ENV.length());
+			if(str.startsWith(ENV_PREFIX)) {
+				String key = str.substring(ENV_PREFIX.length());
 
-				boolean isUri = false;
+				boolean isIri = false;
 				if(key.startsWith("//")) {
 					key = key.substring(2);
-					isUri = true;
+					isIri = true;
 				}
-
 				
-				String value = lookup.apply(key);
-				if(!Strings.isNullOrEmpty(value)) {
-					result = isUri
-						? NodeFactory.createURI(value)
-						: NodeFactory.createLiteral(value);
-				}
+				result = Maps.immutableEntry(key, isIri);
+			}
+		}
+
+		return result;
+	}
+	
+	
+	public static Node substWithLookup2(Node node, Function<String, Node> lookup) {
+		Entry<String, Boolean> e = getEnvKey(node);
+
+		Node result = node;
+		if(e != null) {
+			String key = e.getKey();
+			boolean isUri = e.getValue();
+			Node value = lookup.apply(key);
+			if(value != null) {
+				result = isUri
+					? NodeFactory.createURI(value.toString())
+					: value; // NodeFactory.createLiteral(value);
 			}
 		}
 		
 		return result;
+	}
+	
+	public static Node substWithLookup(Node node, Function<String, String> lookup) {
+		
+		Entry<String, Boolean> e = getEnvKey(node);
+
+		Node result = node;
+		if(e != null) {
+			String key = e.getKey();
+			boolean isUri = e.getValue();
+			String value = lookup.apply(key);
+			if(value != null) {
+				result = isUri
+					? NodeFactory.createURI(value)
+					: NodeFactory.createLiteral(value);
+			}
+
+		}
+		
+		return result;
+		
+//		Node result = node;
+//		if(node.isURI()) {
+//			String str = node.getURI();
+//			if(str.startsWith(ENV_PREFIX)) {
+//				String key = str.substring(ENV_PREFIX.length());
+//
+//				boolean isUri = false;
+//				if(key.startsWith("//")) {
+//					key = key.substring(2);
+//					isUri = true;
+//				}
+//
+//				
+//				String value = lookup.apply(key);
+//				if(!Strings.isNullOrEmpty(value)) {
+//					result = isUri
+//						? NodeFactory.createURI(value)
+//						: NodeFactory.createLiteral(value);
+//				}
+//			}
+//		}
+//		
+//		return result;
 	}
 	
     public static Node asNullableNode(String uri) {

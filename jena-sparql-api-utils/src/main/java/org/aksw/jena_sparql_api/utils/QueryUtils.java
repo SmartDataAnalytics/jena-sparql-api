@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 
 import org.aksw.commons.collections.generator.Generator;
 import org.aksw.jena_sparql_api.backports.syntaxtransform.ExprTransformNodeElement;
+import org.aksw.jena_sparql_api.backports.syntaxtransform.QueryTransformOps;
 import org.aksw.jena_sparql_api.utils.transform.NodeTransformCollectNodes;
 import org.apache.jena.ext.com.google.common.collect.Sets;
 import org.apache.jena.graph.Node;
@@ -53,6 +54,20 @@ import com.google.common.collect.DiscreteDomain;
 import com.google.common.collect.Range;
 
 public class QueryUtils {
+	
+	/**
+	 * Experimental clone that does not de-/serialize the query to string
+	 * 
+	 * @param query
+	 * @return
+	 */
+	public static Query fastClone(Query query) {
+		ElementTransform eltXform = new ElementTransformCopyBase2(true);
+        ExprTransform exprXform = new ExprTransformApplyElementTransform2(eltXform, true);
+
+		Query result = QueryTransformOps.transform(query, eltXform, exprXform);
+		return result;
+	}
 	
 	public static Query applyOpTransform(Query beforeQuery, Function<? super Op, ? extends Op> transform) {
 		Op beforeOp = Algebra.compile(beforeQuery);
@@ -179,6 +194,7 @@ public class QueryUtils {
 			//proto.result
 		}
 
+		result.setSyntax(proto.getSyntax());
 		result.setPrefixMapping(proto.getPrefixMapping());
 
 		
@@ -261,6 +277,36 @@ public class QueryUtils {
 
 		return result;
 	}
+	
+	public static Set<Var> mentionedVars(Query query) {
+		Set<Node> nodes = mentionedNodes(query);
+		Set<Var> result = NodeUtils.getVarsMentioned(nodes);
+		return result;
+	}
+
+	public static Set<Node> mentionedNodes(Query query) {
+		NodeTransformCollectNodes xform = new NodeTransformCollectNodes();
+		QueryUtils.applyNodeTransform(query, xform);
+		Set<Node> result = xform.getNodes();
+		return result;
+	}
+	
+    public static Var freshVar(Query query) {
+        Var result = freshVar(query, null);
+        return result;
+    }
+
+    public static Var freshVar(Query query, String baseVarName) {
+        baseVarName = baseVarName == null ? "c" : baseVarName;
+
+        Set<Var> varsMentioned = mentionedVars(query);
+
+        Generator<Var> varGen = VarUtils.createVarGen(baseVarName, varsMentioned);
+        Var result = varGen.next();
+
+        return result;
+    }
+
 	
 
 	/**

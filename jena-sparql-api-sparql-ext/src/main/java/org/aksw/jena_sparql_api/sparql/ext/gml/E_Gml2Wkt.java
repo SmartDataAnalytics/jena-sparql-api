@@ -5,6 +5,7 @@ import java.util.regex.Pattern;
 
 import org.apache.jena.datatypes.RDFDatatype;
 import org.apache.jena.datatypes.TypeMapper;
+import org.apache.jena.geosparql.implementation.jts.GeometryTransformation;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.NodeValue;
@@ -18,8 +19,6 @@ import org.locationtech.jts.io.gml2.GMLReader;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.opengis.referencing.operation.CoordinateOperation;
 import org.opengis.referencing.operation.MathTransform;
-
-import io.github.galbiston.geosparql_jena.implementation.jts.GeometryTransformation;
 
 public class E_Gml2Wkt extends FunctionBase1 {
 

@@ -6,8 +6,9 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.aksw.commons.collections.diff.Diff;
-
+import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
+import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.rdf.model.Model;
@@ -16,6 +17,15 @@ import org.apache.jena.sparql.core.DatasetGraphFactory;
 import org.apache.jena.sparql.core.Quad;
 
 public class DatasetGraphUtils {
+    public static void addAll(DatasetGraph target, Node g, Graph source) {
+        Iterator<Triple> it = source.find();
+        while(it.hasNext()) {
+            Triple t = it.next();
+            target.add(new Quad(g, t));
+        }
+    }
+
+	
     public static void addAll(DatasetGraph target, DatasetGraph source) {
             Iterator<Quad> it = source.find();
             addAll(target, it);

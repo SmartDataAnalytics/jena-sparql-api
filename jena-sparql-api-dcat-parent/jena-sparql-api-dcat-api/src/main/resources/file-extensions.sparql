@@ -1,0 +1,29 @@
+# TODO It is quite a pain combining file information with raw sparql:
+# - Group Concat may not aggregate items in order
+# - Mappings may not exist, causing errors
+#   (but we may)
+
+PREFIX eg: <http://www.example.org/>
+
+INSERT {
+  ?s dcatx:fileExtension ?fx
+}
+{
+  ?s
+    eg:contentType ?ct ;
+
+  ?c
+    o:prefContentType|AltContentType ?ct
+    o:prefFileExtension ?ctfx ;
+
+  { SELECT ?s GROUP_CONCAT(?efx, ".") AS ?encExt {
+    ?s eg:encoding ?el ;
+
+    ?e
+      httpFieldValue ?el ;
+      o:prefFileExtension ?efx
+
+  } GROUP BY ?s }
+
+}
+

@@ -27,6 +27,18 @@ import com.google.common.net.MediaType;
 
 public class HttpHeaderUtils {
 	
+	public static Entry<String, String> toEntry(Header header) {
+		Entry<String, String> result = Maps.immutableEntry(
+				header.getName(),
+				header.getValue());
+		return result;
+	}
+
+	public static Stream<Entry<String, String>> toEntries(Header[] headers) {
+		return Arrays.asList(headers).stream().map(HttpHeaderUtils::toEntry);
+	}
+	
+	
 	public static Header[] mergeHeaders(Header[] headers, String name) {
 		List<Header> affectedHeaders = streamHeaders(headers, name)
 				.collect(Collectors.toList());

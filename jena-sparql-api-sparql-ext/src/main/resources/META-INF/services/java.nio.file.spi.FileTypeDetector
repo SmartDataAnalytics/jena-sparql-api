@@ -1,0 +1,2 @@
+org.aksw.jena_sparql_api.sparql.ext.fs.FileTypeDetectorFromRDFLanguages
+org.apache.tika.filetypedetector.TikaFileTypeDetector

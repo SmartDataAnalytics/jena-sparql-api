@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -28,10 +29,11 @@ import org.aksw.jena_sparql_api.conjure.traversal.engine.FunctionAssembler;
 import org.aksw.jena_sparql_api.http.repository.api.HttpResourceRepositoryFromFileSystem;
 import org.aksw.jena_sparql_api.http.repository.api.RdfHttpEntityFile;
 import org.aksw.jena_sparql_api.http.repository.api.ResourceStore;
+import org.aksw.jena_sparql_api.http.repository.impl.HttpResourceRepositoryFromFileSystemImpl;
 import org.aksw.jena_sparql_api.http.repository.impl.ResourceStoreImpl;
+import org.aksw.jena_sparql_api.mapper.proxy.JenaPluginUtils;
 import org.aksw.jena_sparql_api.rdf.collections.ResourceUtils;
 import org.aksw.jena_sparql_api.utils.BindingUtils;
-import org.aksw.jena_sparql_api.utils.NodeUtils;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -81,12 +83,52 @@ public class ExecutionUtils {
 		return result;
 	}
 
-	public static String getJobId(Job job) {
+	/**
+	 * Create a hash for a given job
+	 * Note, that this does not take any variable substitutions into account
+	 * 
+	 * TODO The method should in addition to the hash return a label for the hash method used
+	 * 
+	 * @param job
+	 * @return
+	 */
+	public static String createDefaultJobHash(Job job) {
 		Op jobOp = job.getOp();
 	    Op semanticJobOp = OpUtils.stripCache(jobOp);
 	    String result = ResourceTreeUtils.createGenericHash(semanticJobOp);
 
 	    return result;
+	}
+	
+	/**
+	 * Execute a basic workflow
+	 * 
+	 * @param op
+	 * @return
+	 * @throws IOException
+	 */
+	public static RdfDataPod executeJob(Op op) {
+		Model core = op.getModel();
+		Model copy = ModelFactory.createDefaultModel();
+		copy.add(core);
+		
+		Op x = JenaPluginUtils.polymorphicCast(op.inModel(copy), Op.class);
+		
+		Job job = Job.create(copy);
+		job.setOp(x);
+
+		
+		HttpResourceRepositoryFromFileSystemImpl repo;
+		try {
+			repo = HttpResourceRepositoryFromFileSystemImpl.createDefault();
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}		
+		ResourceStore cacheStore = repo.getCacheStore();
+		OpExecutorDefault catalogExecutor = new OpExecutorDefault(repo, TaskContext.empty(), new LinkedHashMap<>(), RDFFormat.TURTLE_PRETTY);
+
+		RdfDataPod result = op.accept(catalogExecutor);
+		return result;
 	}
 	
 	/**
@@ -114,7 +156,7 @@ public class ExecutionUtils {
 		
 		// Op jobOp = job.getOp();
 	    // Op semanticJobOp = OpUtils.stripCache(jobOp);
-	    String jobId = getJobId(job); //ResourceTreeUtils.createGenericHash(semanticJobOp);
+	    String jobHash = createDefaultJobHash(job); //ResourceTreeUtils.createGenericHash(semanticJobOp);
 
 		
 		//for(TaskContext taskContext : taskContexts) {
@@ -124,10 +166,11 @@ public class ExecutionUtils {
 		// Try to create a hash from the input record
 		String inputRecordId = deriveId(inputRecord);
 
-		String completeId = inputRecordId + "/" + jobId;
+		// The id of the target artifact
+		String targetArtifactId = inputRecordId + "/" + jobHash;
 
 		logger.info("Processing: " + inputRecord);
-		logger.info("  Complete id     : " + completeId);
+		logger.info("  Target artifact id     : " + targetArtifactId);
 		logger.info("  Input model size: " + inputRecord.getModel().size()); 
 		logger.info("  Job model size  : " + job.getModel().size()); 
 		
@@ -145,7 +188,7 @@ public class ExecutionUtils {
 //			}
 		try {
 
-			Entry<RdfHttpEntityFile, Model> dataEntry = ResourceStoreImpl.requestModel(repo, cacheStore, completeId + "/data", dataFormat,		
+			Entry<RdfHttpEntityFile, Model> dataEntry = ResourceStoreImpl.requestModel(repo, cacheStore, targetArtifactId + "/data", dataFormat,		
 					() -> {
 						// TODO taskContext already contains the input record; clarify whether
 						// inputRecord arg may differ from that of the context
@@ -159,7 +202,7 @@ public class ExecutionUtils {
 						return r;
 					});
 
-			Model provModel = ResourceStoreImpl.requestModel(repo, cacheStore, completeId + "/dcat", provenanceFormat,		
+			Model provModel = ResourceStoreImpl.requestModel(repo, cacheStore, targetArtifactId + "/dcat", provenanceFormat,		
 					() -> {
 						Model r = createProvenanceData(job, inputRecord).getModel();
 						//RdfDataPod tmp = executeJob(job, repo, taskContext, inputRecord);							
@@ -213,7 +256,7 @@ public class ExecutionUtils {
 	 * @param inputRecord
 	 * @return
 	 */
-	private static RdfDataPod executeJob(
+	public static RdfDataPod executeJob(
 			Job job,
 			HttpResourceRepositoryFromFileSystem repo,
 			TaskContext taskContext,
@@ -226,7 +269,7 @@ public class ExecutionUtils {
 		Set<String> mentionedVars = OpUtils.mentionedVarNames(job.getOp());
 		logger.debug("Mentioned vars: " + mentionedVars);
 		
-		Map<String, DataRef> dataRefMapping = taskContext.getDataRefMapping();
+		Map<String, Op> dataRefMapping = taskContext.getDataRefMapping();
 		// Get the subset of mentioned vars for which no entry in the task context
 		// exists
 		// If there is just a single dataref and one unbound var
@@ -239,7 +282,7 @@ public class ExecutionUtils {
 		} else if(unmatchedVars.size() == 1) {
 			String unmatchedVarName = unmatchedVars.iterator().next();
 			if(dataRefMapping.size() == 1) {
-				DataRef entry = dataRefMapping.values().iterator().next();
+				Op entry = dataRefMapping.values().iterator().next();
 				dataRefMapping.put(unmatchedVarName, entry);
 				logger.info("Autobind of " + unmatchedVarName + " to " + entry);
 			} else {

@@ -12,7 +12,7 @@
 	<parent>
 		<groupId>org.aksw.jena-sparql-api</groupId>
 		<artifactId>jena-sparql-api-parent</artifactId>
-		<version>3.13.1-1</version>
+		<version>3.14.0-1</version>
 	</parent>
 
 	<dependencies>
@@ -26,10 +26,12 @@
 			<groupId>org.apache.jena</groupId>
 			<artifactId>jena-arq</artifactId>
 		</dependency>
+<!--
 		<dependency>
 			<groupId>org.apache.jena</groupId>
 			<artifactId>jena-sdb</artifactId>
 		</dependency>
+-->
 		<!-- <dependency> -->
 		<!-- <groupId>com.hp.hpl.jena</groupId> -->
 		<!-- <artifactId>sdb</artifactId> -->

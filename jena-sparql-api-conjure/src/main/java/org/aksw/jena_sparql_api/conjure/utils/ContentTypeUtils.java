@@ -213,7 +213,7 @@ public class ContentTypeUtils {
 	}
 
 	
-	public  String toFileExtension(String contentType, List<String> codings) {
+	public static String toFileExtension(String contentType, List<String> codings) {
 		List<String> parts = new ArrayList<>(1 + codings.size());
 		
 		String part = Objects.requireNonNull(ctExtensions.getPrimary().get(contentType));
@@ -237,6 +237,8 @@ public class ContentTypeUtils {
 	 * @return
 	 */
 	public static RdfEntityInfo deriveHeadersFromFileExtension(String fileName) {
+		// TODO This method expects a file name - not the file extension alone - so
+		// an argument of x.ttl works, but just ttl will fail - fix that!S
 		// TODO Should we remove trailing slashes?
 		
 		String contentType = null;

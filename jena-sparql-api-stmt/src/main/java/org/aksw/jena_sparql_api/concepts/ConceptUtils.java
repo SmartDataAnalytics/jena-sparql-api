@@ -14,15 +14,15 @@ import java.util.stream.Collectors;
 import org.aksw.commons.collections.MapUtils;
 import org.aksw.commons.collections.SetUtils;
 import org.aksw.commons.collections.generator.Generator;
+import org.aksw.commons.collections.generator.GeneratorBlacklist;
 import org.aksw.jena_sparql_api.core.utils.QueryGenerationUtils;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.ExprListUtils;
-import org.aksw.jena_sparql_api.utils.GeneratorBlacklist;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.aksw.jena_sparql_api.utils.Triples;
 import org.aksw.jena_sparql_api.utils.VarExprListUtils;
 import org.aksw.jena_sparql_api.utils.VarGeneratorBlacklist;
-import org.aksw.jena_sparql_api.utils.VarGeneratorImpl;
+import org.aksw.jena_sparql_api.utils.VarGeneratorImpl2;
 import org.aksw.jena_sparql_api.utils.VarUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.ext.com.google.common.collect.Iterables;
@@ -31,7 +31,6 @@ import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.SortCondition;
 import org.apache.jena.rdf.model.RDFNode;
-import org.apache.jena.sdb.core.Gensym;
 import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.OpAsQuery;
@@ -121,7 +120,7 @@ public class ConceptUtils {
         Set<String> commonVarNames = Sets.intersection(thisVarNames, thatVarNames);
         Set<String> combinedVarNames = Sets.union(thisVarNames, thatVarNames);
 
-        GeneratorBlacklist generator = new GeneratorBlacklist(Gensym.create("v"), combinedVarNames);
+        Generator<Var> generator = GeneratorBlacklist.create(VarGeneratorImpl2.create("v"), combinedVarNames);
 
         BindingHashMap binding = new BindingHashMap();
         for(String varName : commonVarNames) {
@@ -344,7 +343,7 @@ public class ConceptUtils {
             // We need to rename the concept's var, thereby we need to rename
             // any occurrences of targetVar
             Set<Var> conceptVars = getVarsMentioned(concept);
-            Map<Var, Var> varMap = createDistinctVarMap(conceptVars, Collections.singleton(targetVar), VarGeneratorImpl.create("v"));
+            Map<Var, Var> varMap = createDistinctVarMap(conceptVars, Collections.singleton(targetVar), VarGeneratorImpl2.create("v"));
             varMap.put(concept.getVar(), targetVar);
             Element replElement = ElementUtils.createRenamedElement(concept.getElement(), varMap);
             Var replVar = varMap.get(concept.getVar());
