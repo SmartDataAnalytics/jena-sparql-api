@@ -40,7 +40,6 @@ import org.apache.jena.ext.com.google.common.io.CharStreams;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Dataset;
-import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QueryFactory;
@@ -79,197 +78,197 @@ import org.apache.jena.update.UpdateRequest;
 
 public class SparqlStmtUtils {
 
-	// TODO Duplicate symbol definition; exists in E_Benchmark
-	public static final Symbol symConnection = Symbol.create("http://jsa.aksw.org/connection");
+    // TODO Duplicate symbol definition; exists in E_Benchmark
+    public static final Symbol symConnection = Symbol.create("http://jsa.aksw.org/connection");
 
-	public static Map<String, Boolean> mentionedEnvVars(SparqlStmt stmt) {
-		NodeTransformCollectNodes xform = new NodeTransformCollectNodes();
-		applyNodeTransform(stmt, xform);
-		Set<Node> nodes = xform.getNodes();
-		Map<String, Boolean> result = nodes.stream()
-			.map(NodeUtils::getEnvKey)
-			.filter(Objects::nonNull)
-			.collect(Collectors.toMap(Entry::getKey, Entry::getValue));
-		
-		return result;
-	}
+    public static Map<String, Boolean> mentionedEnvVars(SparqlStmt stmt) {
+        NodeTransformCollectNodes xform = new NodeTransformCollectNodes();
+        applyNodeTransform(stmt, xform);
+        Set<Node> nodes = xform.getNodes();
+        Map<String, Boolean> result = nodes.stream()
+            .map(NodeUtils::getEnvKey)
+            .filter(Objects::nonNull)
+            .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
 
-	/**
-	 * Removes all unused prefixes from a stmt
-	 *  
-	 * @param stmt
-	 * @return
-	 */
+        return result;
+    }
+
+    /**
+     * Removes all unused prefixes from a stmt
+     *
+     * @param stmt
+     * @return
+     */
     public static SparqlStmt optimizePrefixes(SparqlStmt stmt) {
-    	optimizePrefixes(stmt, null);
-    	return stmt;
+        optimizePrefixes(stmt, null);
+        return stmt;
     }
 
     /**
      * In-place optimize an update request's prefixes to only used prefixes
      * The global prefix map may be null.
-     * 
+     *
      * @param query
      * @param pm
      * @return
      */
     public static SparqlStmt optimizePrefixes(SparqlStmt stmt, PrefixMapping globalPm) {
-    	if(stmt.isQuery()) {
-    		QueryUtils.optimizePrefixes(stmt.getQuery(), globalPm);
-    	} else if(stmt.isUpdateRequest()) {
-    		UpdateRequestUtils.optimizePrefixes(stmt.getUpdateRequest(), globalPm);
-    	}
-    	return stmt;
+        if(stmt.isQuery()) {
+            QueryUtils.optimizePrefixes(stmt.getQuery(), globalPm);
+        } else if(stmt.isUpdateRequest()) {
+            UpdateRequestUtils.optimizePrefixes(stmt.getUpdateRequest(), globalPm);
+        }
+        return stmt;
     }
 
-    	
-	public static SparqlStmt applyOpTransform(SparqlStmt stmt, Function<? super Op, ? extends Op> transform) {
-		SparqlStmt result;
-		if(stmt.isQuery()) {
-			Query tmp = stmt.getAsQueryStmt().getQuery();
-			Query query = QueryUtils.applyOpTransform(tmp, transform);
-			result = new SparqlStmtQuery(query);
-		} else if(stmt.isUpdateRequest()) {
-			UpdateRequest tmp = stmt.getAsUpdateStmt().getUpdateRequest();
-			UpdateRequest updateRequest = UpdateRequestUtils.applyOpTransform(tmp, transform);
-			
-			result = new SparqlStmtUpdate(updateRequest);			
-		} else {
-			result = stmt;
-		}
-		
-		return result;
-	}
 
-	public static SparqlStmt applyNodeTransform(SparqlStmt stmt, NodeTransform xform) {
-		SparqlStmt result;
+    public static SparqlStmt applyOpTransform(SparqlStmt stmt, Function<? super Op, ? extends Op> transform) {
+        SparqlStmt result;
+        if(stmt.isQuery()) {
+            Query tmp = stmt.getAsQueryStmt().getQuery();
+            Query query = QueryUtils.applyOpTransform(tmp, transform);
+            result = new SparqlStmtQuery(query);
+        } else if(stmt.isUpdateRequest()) {
+            UpdateRequest tmp = stmt.getAsUpdateStmt().getUpdateRequest();
+            UpdateRequest updateRequest = UpdateRequestUtils.applyOpTransform(tmp, transform);
 
-		ElementTransform elform = new ElementTransformSubst2(xform);
-		ExprTransform exform = new ExprTransformNodeElement(xform, elform);
+            result = new SparqlStmtUpdate(updateRequest);
+        } else {
+            result = stmt;
+        }
 
-		if(stmt.isQuery()) {
-			Query before = stmt.getAsQueryStmt().getQuery();
+        return result;
+    }
+
+    public static SparqlStmt applyNodeTransform(SparqlStmt stmt, NodeTransform xform) {
+        SparqlStmt result;
+
+        ElementTransform elform = new ElementTransformSubst2(xform);
+        ExprTransform exform = new ExprTransformNodeElement(xform, elform);
+
+        if(stmt.isQuery()) {
+            Query before = stmt.getAsQueryStmt().getQuery();
 //			Op beforeOp = Algebra.compile(before);
 //			Op afterOp = NodeTransformLib.transform(xform, beforeOp);
-			
+
 //			NodeTransformLib.transform
 //			Transformer.transform(transform, exprTransform, op)
 //			Query after = OpAsQuery.asQuery(afterOp);
 //			QueryUtils.restoreQueryForm(after, before);
-			
+
 //			Transformer.transform(new TransformCopy(), op)
 //			= OpAsQuery.asQu)
-			
-			//Query after = QueryTransformOps.transform(before, elform, exform);
 
-			
-			//QueryTransformOps.
-//			QueryUtils.applyNodeTransform(query, nodeTransform)			
-			Query after = QueryUtils.applyNodeTransform(before, xform);
-			result = new SparqlStmtQuery(after);
-		} else if(stmt.isUpdateRequest()) {
+            //Query after = QueryTransformOps.transform(before, elform, exform);
 
-			UpdateRequest before = stmt.getAsUpdateStmt().getUpdateRequest();
-			UpdateRequest after = UpdateRequestUtils.copyTransform(before, update -> {
-				// Transform UpdataData ourselves as
-				// up to Jena 3.11.0 (inclusive) transforms do not affect UpdateData objects
-				Update r = update instanceof UpdateData
-					? UpdateUtils.copyWithQuadTransform((UpdateData)update, q -> QuadUtils.applyNodeTransform(q, xform))
-					: UpdateTransformOps.transform(update, elform, exform);					
-			    return r;
-			});
-			
+
+            //QueryTransformOps.
+//			QueryUtils.applyNodeTransform(query, nodeTransform)
+            Query after = QueryUtils.applyNodeTransform(before, xform);
+            result = new SparqlStmtQuery(after);
+        } else if(stmt.isUpdateRequest()) {
+
+            UpdateRequest before = stmt.getAsUpdateStmt().getUpdateRequest();
+            UpdateRequest after = UpdateRequestUtils.copyTransform(before, update -> {
+                // Transform UpdataData ourselves as
+                // up to Jena 3.11.0 (inclusive) transforms do not affect UpdateData objects
+                Update r = update instanceof UpdateData
+                    ? UpdateUtils.copyWithQuadTransform((UpdateData)update, q -> QuadUtils.applyNodeTransform(q, xform))
+                    : UpdateTransformOps.transform(update, elform, exform);
+                return r;
+            });
+
 //			ElementTransform elform = new ElementTransformSubst2(xform);
 //			UpdateRequest after = UpdateTransformOps.transform(before, elform, new ExprTransformNodeElement(xform, elform));
-			result = new SparqlStmtUpdate(after);
-		} else {
-			result = stmt;
-		}
-		
-		return result;
-	}
+            result = new SparqlStmtUpdate(after);
+        } else {
+            result = stmt;
+        }
 
-	
-	public static SparqlStmtIterator processFile(PrefixMapping pm, String filenameOrURI)
-			throws FileNotFoundException, IOException, ParseException {
+        return result;
+    }
 
-		return processFile(pm, filenameOrURI, null);
-	}
 
-	
-	public static URI extractBaseIri(String filenameOrURI) {
-		Context context = null;
-		StreamManager streamManager = StreamManager.get(context);
+    public static SparqlStmtIterator processFile(PrefixMapping pm, String filenameOrURI)
+            throws FileNotFoundException, IOException, ParseException {
 
-		// Code taken from jena's RDFParser
-		String urlStr = streamManager.mapURI(filenameOrURI);
+        return processFile(pm, filenameOrURI, null);
+    }
+
+
+    public static URI extractBaseIri(String filenameOrURI) {
+        Context context = null;
+        StreamManager streamManager = StreamManager.get(context);
+
+        // Code taken from jena's RDFParser
+        String urlStr = streamManager.mapURI(filenameOrURI);
 
         URI uri;
-		try {
-			uri = new URI(urlStr);
-		} catch (URISyntaxException e) {
-			throw new RuntimeException(e);
-		}
+        try {
+            uri = new URI(urlStr);
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
+        }
         URI parent = uri.getPath().endsWith("/") ? uri.resolve("..") : uri.resolve(".");
 //		String result = parent.toString();
 //		return result;
         return parent;
-	}
-	
-	// TODO Move to utils or io - also, internally uses rdf content type for requests, which
-	// is not what we want
-	public static String loadString(String filenameOrURI) throws IOException {
-		String result;
-		try(InputStream in = openInputStream(filenameOrURI)) {
-			result = in != null ? CharStreams.toString(new InputStreamReader(in, Charsets.UTF_8)) : null;
-		}
-		
-		return result;
-	}
-	
-	
-	// FIXME Can we remove this in favor of RDFDataMgr.open()?
-	public static TypedInputStream openInputStream(String filenameOrURI) {
-		Context context = null;
+    }
 
-		StreamManager streamManager = StreamManager.get(context);
+    // TODO Move to utils or io - also, internally uses rdf content type for requests, which
+    // is not what we want
+    public static String loadString(String filenameOrURI) throws IOException {
+        String result;
+        try(InputStream in = openInputStream(filenameOrURI)) {
+            result = in != null ? CharStreams.toString(new InputStreamReader(in, Charsets.UTF_8)) : null;
+        }
 
-		// Code taken from jena's RDFParser
-		String urlStr = streamManager.mapURI(filenameOrURI);
+        return result;
+    }
+
+
+    // FIXME Can we remove this in favor of RDFDataMgr.open()?
+    public static TypedInputStream openInputStream(String filenameOrURI) {
+        Context context = null;
+
+        StreamManager streamManager = StreamManager.get(context);
+
+        // Code taken from jena's RDFParser
+        String urlStr = streamManager.mapURI(filenameOrURI);
         TypedInputStream in;
         urlStr = StreamManager.get(context).mapURI(urlStr);
         if ( urlStr.startsWith("http://") || urlStr.startsWith("https://") ) {
             HttpClient httpClient = null;
-        	String acceptHeader = 
-                ( httpClient == null ) ? WebContent.defaultRDFAcceptHeader : null; 
+            String acceptHeader =
+                ( httpClient == null ) ? WebContent.defaultRDFAcceptHeader : null;
             in = HttpOp.execHttpGet(urlStr, acceptHeader, httpClient, null);
-        } else { 
+        } else {
             in = streamManager.open(urlStr);
         }
 
         return in;
-	}
-	
-	/**
-	 * 
-	 * @param pm A <b>modifiable<b> prefix mapping
-	 * @param filenameOrURI
-	 * @return
-	 * @throws FileNotFoundException
-	 * @throws IOException
-	 * @throws ParseException
-	 */
-	public static SparqlStmtIterator processFile(PrefixMapping pm, String filenameOrURI, String baseIri)
-			throws FileNotFoundException, IOException, ParseException {
-		
-		InputStream in = openInputStream(filenameOrURI);
-		if(in == null) {
-			throw new IOException("Could not open input stream from " + filenameOrURI);
-		}
+    }
+
+    /**
+     *
+     * @param pm A <b>modifiable<b> prefix mapping
+     * @param filenameOrURI
+     * @return
+     * @throws FileNotFoundException
+     * @throws IOException
+     * @throws ParseException
+     */
+    public static SparqlStmtIterator processFile(PrefixMapping pm, String filenameOrURI, String baseIri)
+            throws FileNotFoundException, IOException, ParseException {
+
+        InputStream in = openInputStream(filenameOrURI);
+        if(in == null) {
+            throw new IOException("Could not open input stream from " + filenameOrURI);
+        }
 
         if(baseIri == null) {
-        	URI tmp = extractBaseIri(filenameOrURI);
-	        baseIri = tmp.toString();
+            URI tmp = extractBaseIri(filenameOrURI);
+            baseIri = tmp.toString();
 //	        URI uri;
 //			try {
 //				uri = new URI(urlStr);
@@ -280,33 +279,33 @@ public class SparqlStmtUtils {
 //			baseIri = parent.toString();
         }
 
-		return processInputStream(pm, baseIri, in);
-		//stmts.forEach(stmt -> process(conn, stmt, sink));
-	}
+        return processInputStream(pm, baseIri, in);
+        //stmts.forEach(stmt -> process(conn, stmt, sink));
+    }
 
-	public static SparqlStmtIterator processInputStream(PrefixMapping pm, String baseIri, InputStream in)
-			throws IOException, ParseException {
+    public static SparqlStmtIterator processInputStream(PrefixMapping pm, String baseIri, InputStream in)
+            throws IOException, ParseException {
 
 //		File file = new File(filename).getAbsoluteFile();
 //		if(!file.exists()) {
 //			throw new FileNotFoundException(file.getAbsolutePath() + " does not exist");
 //		}
-//		
+//
 //		String dirName = file.getParentFile().getAbsoluteFile().toURI().toString();
 
-		Prologue prologue = new Prologue();
-		//prologue.getPrefixMapping().setNsPrefixes(pm);
-		prologue.setPrefixMapping(pm);
+        Prologue prologue = new Prologue();
+        //prologue.getPrefixMapping().setNsPrefixes(pm);
+        prologue.setPrefixMapping(pm);
 
-		prologue.setBaseURI(baseIri);
+        prologue.setBaseURI(baseIri);
 
-		Function<String, SparqlStmt> rawSparqlStmtParser = SparqlStmtParserImpl.create(Syntax.syntaxARQ,
-				prologue, true);// .getQueryParser();
+        Function<String, SparqlStmt> rawSparqlStmtParser = SparqlStmtParserImpl.create(Syntax.syntaxARQ,
+                prologue, true);// .getQueryParser();
 
-		
-		// Wrap the parser with tracking the prefixes
-		//SparqlStmtParser sparqlStmtParser = SparqlStmtParser.wrapWithNamespaceTracking(prologue.getPrefixMapping(), rawSparqlStmtParser);
-		SparqlStmtParser sparqlStmtParser = SparqlStmtParser.wrapWithNamespaceTracking(pm, rawSparqlStmtParser);
+
+        // Wrap the parser with tracking the prefixes
+        //SparqlStmtParser sparqlStmtParser = SparqlStmtParser.wrapWithNamespaceTracking(prologue.getPrefixMapping(), rawSparqlStmtParser);
+        SparqlStmtParser sparqlStmtParser = SparqlStmtParser.wrapWithNamespaceTracking(pm, rawSparqlStmtParser);
 //				Function<String, SparqlStmt> sparqlStmtParser = s -> {
 //					SparqlStmt r = rawSparqlStmtParser.apply(s);
 //					if(r.isParsed()) {
@@ -316,185 +315,191 @@ public class SparqlStmtUtils {
 //						} else if(r.isUpdateRequest()) {
 //							pm2 = pm.setNsPrefixes(r.getAsUpdateStmt().getUpdateRequest().getPrefixMapping());
 //						}
-//						
+//
 //						if(pm2 != null) {
 //							pm.setNsPrefixes(pm2);
 //						}
 //					}
 //					return r;
 //				};
-		
-		//InputStream in = new FileInputStream(filename);
-		SparqlStmtIterator stmts = SparqlStmtUtils.parse(in, sparqlStmtParser);
 
-		return stmts;
-	}
+        //InputStream in = new FileInputStream(filename);
+        SparqlStmtIterator stmts = SparqlStmtUtils.parse(in, sparqlStmtParser);
+
+        return stmts;
+    }
 
 
-	public static SparqlStmtIterator parse(InputStream in, Function<String, SparqlStmt> parser)
-			throws IOException, ParseException {
-		// try(QueryExecution qe = qef.createQueryExecution(q)) {
-		// Model result = qe.execConstruct();
-		// RDFDataMgr.write(System.out, result, RDFFormat.TURTLE_PRETTY);
-		// //ResultSet rs = qe.execSelect();
-		// //System.out.println(ResultSetFormatter.asText(rs));
-		// }
-		// File file = new
-		// File("/home/raven/Projects/Eclipse/trento-bike-racks/datasets/test/test.sparql");
-		// String str = Files.asCharSource(, StandardCharsets.UTF_8).read();
+    public static SparqlStmtIterator parse(InputStream in, Function<String, SparqlStmt> parser)
+            throws IOException, ParseException {
+        // try(QueryExecution qe = qef.createQueryExecution(q)) {
+        // Model result = qe.execConstruct();
+        // RDFDataMgr.write(System.out, result, RDFFormat.TURTLE_PRETTY);
+        // //ResultSet rs = qe.execSelect();
+        // //System.out.println(ResultSetFormatter.asText(rs));
+        // }
+        // File file = new
+        // File("/home/raven/Projects/Eclipse/trento-bike-racks/datasets/test/test.sparql");
+        // String str = Files.asCharSource(, StandardCharsets.UTF_8).read();
 
-		String str;
-		try {
-			str = CharStreams.toString(new InputStreamReader(in, StandardCharsets.UTF_8));
-		} finally {
-			in.close();
-		}
-		// ARQParser parser = new ARQParser(new FileInputStream(file));
-		// parser.setQuery(new Query());
-		// parser.
+        String str;
+        try {
+            str = CharStreams.toString(new InputStreamReader(in, StandardCharsets.UTF_8));
+        } finally {
+            in.close();
+        }
+        // ARQParser parser = new ARQParser(new FileInputStream(file));
+        // parser.setQuery(new Query());
+        // parser.
 
-		// SparqlStmtParser parser = SparqlStmtParserImpl.create(Syntax.syntaxARQ,
-		// PrefixMapping.Extended, true);
+        // SparqlStmtParser parser = SparqlStmtParserImpl.create(Syntax.syntaxARQ,
+        // PrefixMapping.Extended, true);
 
-		//Stream<SparqlStmt> result = Streams.stream(new SparqlStmtIterator(parser, str));
-		SparqlStmtIterator result = new SparqlStmtIterator(parser, str);
-		return result;
-	}
-	
+        //Stream<SparqlStmt> result = Streams.stream(new SparqlStmtIterator(parser, str));
+        SparqlStmtIterator result = new SparqlStmtIterator(parser, str);
+        return result;
+    }
 
-	public static SPARQLResultEx execAny(RDFConnection conn, SparqlStmt stmt) {
-		SPARQLResultEx result = null;
 
-		if (stmt.isQuery()) {
-			SparqlStmtQuery qs = stmt.getAsQueryStmt();
-			Query q = qs.getQuery();
-			
-			if(q == null) {
-				String queryStr = qs.getOriginalString();
-				q = QueryFactory.create(queryStr, Syntax.syntaxARQ);
-			}
-			
-			//conn.begin(ReadWrite.READ);
-			// SELECT -> STDERR, CONSTRUCT -> STDOUT
-			QueryExecution qe = conn.query(q);
-			Context cxt = qe.getContext();
-			if(cxt != null) {
-				cxt.set(symConnection, conn);
-			}
-	
-			if (q.isConstructQuad()) {
-				Iterator<Quad> it = qe.execConstructQuads();
-				result = SPARQLResultEx.createQuads(it, qe::close);
-				
-			} else if (q.isConstructType()) {
-				// System.out.println(Algebra.compile(q));
-	
-				Iterator<Triple> it = qe.execConstructTriples();
-				result = SPARQLResultEx.createTriples(it, qe::close);
-			} else if (q.isSelectType()) {
-				ResultSet rs = qe.execSelect();
-				result = new SPARQLResultEx(rs, qe::close);
-			} else if(q.isJsonType()) {
-				Iterator<JsonObject> it = qe.execJsonItems();
-				result = new SPARQLResultEx(it, qe::close);
-			} else {
-				throw new RuntimeException("Unsupported query type");
-			}
-		} else if (stmt.isUpdateRequest()) {
-			UpdateRequest u = stmt.getAsUpdateStmt().getUpdateRequest();
+    public static SPARQLResultEx execAny(RDFConnection conn, SparqlStmt stmt) {
+        SPARQLResultEx result = null;
 
-			conn.update(u);
-			result = SPARQLResultEx.createUpdateType();
-		}
-		
-		return result;
-	}
+        if (stmt.isQuery()) {
+            SparqlStmtQuery qs = stmt.getAsQueryStmt();
+            Query q = qs.getQuery();
 
-	/**
-	 * Create a sink that for line based format
-	 * streams directly to the output stream or collects quads in memory and emits them
-	 * all at once in the given format when flushing the sink. 
-	 * 
-	 * @param r
-	 * @param format
-	 * @param out
-	 * @return
-	 */
-	public static Sink<Quad> createSink(RDFFormat format, OutputStream out, PrefixMapping pm) {
-		boolean useStreaming = format == null ||
-				Arrays.asList(Lang.NTRIPLES, Lang.NQUADS).contains(format.getLang());
+            if(q == null) {
+                String queryStr = qs.getOriginalString();
+                q = QueryFactory.create(queryStr, Syntax.syntaxARQ);
+            }
 
-		Sink<Quad> result;
-		if(useStreaming) {
-			result = new SinkQuadOutput(out, null, null);
-		} else {
-			Dataset ds = DatasetFactory.create();
-			SinkQuadsToDataset core = new SinkQuadsToDataset(false, ds.asDatasetGraph());
+            //conn.begin(ReadWrite.READ);
+            // SELECT -> STDERR, CONSTRUCT -> STDOUT
+            QueryExecution qe = conn.query(q);
+            Context cxt = qe.getContext();
+            if(cxt != null) {
+                cxt.set(symConnection, conn);
+            }
 
-			return new Sink<Quad>() {
-				@Override
-				public void close() {
-					core.close();
-				}
+            if (q.isConstructQuad()) {
+                Iterator<Quad> it = qe.execConstructQuads();
+                result = SPARQLResultEx.createQuads(it, qe::close);
 
-				@Override
-				public void send(Quad item) {
-					core.send(item);
-				}
+            } else if (q.isConstructType()) {
+                // System.out.println(Algebra.compile(q));
 
-				@Override
-				public void flush() {
-					core.flush();
-					
-					// TODO Prefixed graph names may break
-					// (where to define their namespace anyway? - e.g. in the default or the named graph?)
-					Stream.concat(
-							Stream.of(ds.getDefaultModel()),
-							Streams.stream(ds.listNames()).map(ds::getNamedModel))
-					.forEach(m -> {
-						PrefixMapping usedPrefixes = new PrefixMappingImpl();
-						PrefixUtils.usedPrefixes(pm, GraphUtils.streamNodes(m.getGraph()), usedPrefixes);
-						m.clearNsPrefixMap();
-						m.setNsPrefixes(usedPrefixes);
-					});
+                Iterator<Triple> it = qe.execConstructTriples();
+                result = SPARQLResultEx.createTriples(it, qe::close);
+            } else if (q.isSelectType()) {
+                ResultSet rs = qe.execSelect();
+                result = new SPARQLResultEx(rs, qe::close);
+            } else if(q.isJsonType()) {
+                Iterator<JsonObject> it = qe.execJsonItems();
+                result = new SPARQLResultEx(it, qe::close);
+            } else {
+                throw new RuntimeException("Unsupported query type");
+            }
+        } else if (stmt.isUpdateRequest()) {
+            UpdateRequest u = stmt.getAsUpdateStmt().getUpdateRequest();
 
-					RDFDataMgr.write(out, ds, format);
-				}			
-			};
-		}
-		
-		return result;
-	}
+            conn.update(u);
+            result = SPARQLResultEx.createUpdateType();
+        }
 
-	
-	public static void output(
-			SPARQLResultEx rr,
-			SPARQLResultVisitor sink) {		
-		try(SPARQLResultEx r = rr) {
-			SPARQLResultVisitor.forward(r, sink);
-		} catch (Exception e) {
-			throw HttpExceptionUtils.makeHumanFriendly(e);
-		}
-	}
+        return result;
+    }
 
-	public static void output(
-		SPARQLResultEx rr,
-		Consumer<Quad> sink
-	) {
-		SPARQLResultVisitor tmp = new SPARQLResultSinkQuads(sink);		
-		output(rr, tmp);
-	}
+    /**
+     * Create a sink that for line based format
+     * streams directly to the output stream or collects quads in memory and emits them
+     * all at once in the given format when flushing the sink.
+     *
+     * @param r
+     * @param format
+     * @param out
+     * @param dataset The dataset implementation to use for non-streaming data.
+     *                Allows for use of insert-order preserving dataset implementations.
+     * @return
+     */
+    public static Sink<Quad> createSink(RDFFormat format, OutputStream out, PrefixMapping pm, Dataset dataset) {
+        boolean useStreaming = format == null ||
+                Arrays.asList(Lang.NTRIPLES, Lang.NQUADS).contains(format.getLang());
 
-	public static void output(SPARQLResultEx r) {
-		SinkQuadOutput dataSink = new SinkQuadOutput(System.out, null, null);
-		try {
-			output(r, dataSink::send);
-		} finally {
-			dataSink.flush();
-			dataSink.close();
-		}
-	}
-	
+        Sink<Quad> result;
+        if(useStreaming) {
+            result = new SinkQuadOutput(out, null, null);
+        } else {
+            // Dataset ds = DatasetFactory.create();
+            // Dataset ds = DatasetFactory.wrap(new Datasetgraphquadsim
+            SinkQuadsToDataset core = new SinkQuadsToDataset(false, dataset.asDatasetGraph());
+
+            return new Sink<Quad>() {
+                @Override
+                public void close() {
+                    core.close();
+                }
+
+                @Override
+                public void send(Quad item) {
+                    core.send(item);
+                }
+
+                @Override
+                public void flush() {
+                    core.flush();
+
+                    // TODO Prefixed graph names may break
+                    // (where to define their namespace anyway? - e.g. in the default or the named graph?)
+                    PrefixMapping usedPrefixes = new PrefixMappingImpl();
+
+                    Stream.concat(
+                            Stream.of(dataset.getDefaultModel()),
+                            Streams.stream(dataset.listNames()).map(dataset::getNamedModel))
+                    .forEach(m -> {
+                        // PrefixMapping usedPrefixes = new PrefixMappingImpl();
+                        PrefixUtils.usedPrefixes(pm, GraphUtils.streamNodes(m.getGraph()), usedPrefixes);
+                        m.clearNsPrefixMap();
+                        // m.setNsPrefixes(usedPrefixes);
+                    });
+
+                    dataset.getDefaultModel().setNsPrefixes(usedPrefixes);
+                    RDFDataMgr.write(out, dataset, format);
+                }
+            };
+        }
+
+        return result;
+    }
+
+
+    public static void output(
+            SPARQLResultEx rr,
+            SPARQLResultVisitor sink) {
+        try(SPARQLResultEx r = rr) {
+            SPARQLResultVisitor.forward(r, sink);
+        } catch (Exception e) {
+            throw HttpExceptionUtils.makeHumanFriendly(e);
+        }
+    }
+
+    public static void output(
+        SPARQLResultEx rr,
+        Consumer<Quad> sink
+    ) {
+        SPARQLResultVisitor tmp = new SPARQLResultSinkQuads(sink);
+        output(rr, tmp);
+    }
+
+    public static void output(SPARQLResultEx r) {
+        SinkQuadOutput dataSink = new SinkQuadOutput(System.out, null, null);
+        try {
+            output(r, dataSink::send);
+        } finally {
+            dataSink.flush();
+            dataSink.close();
+        }
+    }
+
 //	public static void output(SPARQLResultEx r) {
 //		//logger.info("Processing SPARQL Statement: " + stmt);
 //		if (r.isQuads()) {
@@ -532,81 +537,81 @@ public class SparqlStmtUtils {
 //		}
 //	}
 
-	public static void process(RDFConnection conn, SparqlStmt stmt, SPARQLResultVisitor sink) {
-		SPARQLResultEx sr = execAny(conn, stmt);
-		output(sr, sink);
-	}
-	
-	
-	public static void processOld(RDFConnection conn, SparqlStmt stmt) {
-		//logger.info("Processing SPARQL Statement: " + stmt);
+    public static void process(RDFConnection conn, SparqlStmt stmt, SPARQLResultVisitor sink) {
+        SPARQLResultEx sr = execAny(conn, stmt);
+        output(sr, sink);
+    }
 
-		if (stmt.isQuery()) {
-			SparqlStmtQuery qs = stmt.getAsQueryStmt();
-			Query q = qs.getQuery();
-			q.isConstructType();
-			conn.begin(ReadWrite.READ);
-			// SELECT -> STDERR, CONSTRUCT -> STDOUT
-			QueryExecution qe = conn.query(q);
 
-			if (q.isConstructQuad()) {
-				// ResultSetFormatter.ntrqe.execConstructTriples();
-				//throw new RuntimeException("not supported yet");
-				SinkQuadOutput sink = new SinkQuadOutput(System.out, null, null);
-				Iterator<Quad> it = qe.execConstructQuads();
-				while (it.hasNext()) {
-					Quad t = it.next();
-					sink.send(t);
-				}
-				sink.flush();
-				sink.close();
+    public static void processOld(RDFConnection conn, SparqlStmt stmt) {
+        //logger.info("Processing SPARQL Statement: " + stmt);
 
-			} else if (q.isConstructType()) {
-				// System.out.println(Algebra.compile(q));
+        if (stmt.isQuery()) {
+            SparqlStmtQuery qs = stmt.getAsQueryStmt();
+            Query q = qs.getQuery();
+            q.isConstructType();
+            conn.begin(ReadWrite.READ);
+            // SELECT -> STDERR, CONSTRUCT -> STDOUT
+            QueryExecution qe = conn.query(q);
 
-				SinkTripleOutput sink = new SinkTripleOutput(System.out, null, null);
-				Iterator<Triple> it = qe.execConstructTriples();
-				while (it.hasNext()) {
-					Triple t = it.next();
-					sink.send(t);
-				}
-				sink.flush();
-				sink.close();
-			} else if (q.isSelectType()) {
-				ResultSet rs = qe.execSelect();
-				String str = ResultSetFormatter.asText(rs);
-				System.err.println(str);
-			} else if(q.isJsonType()) {
-				String json = qe.execJson().toString();
-				System.out.println(json);
-			} else {
-				throw new RuntimeException("Unsupported query type");
-			}
+            if (q.isConstructQuad()) {
+                // ResultSetFormatter.ntrqe.execConstructTriples();
+                //throw new RuntimeException("not supported yet");
+                SinkQuadOutput sink = new SinkQuadOutput(System.out, null, null);
+                Iterator<Quad> it = qe.execConstructQuads();
+                while (it.hasNext()) {
+                    Quad t = it.next();
+                    sink.send(t);
+                }
+                sink.flush();
+                sink.close();
 
-			conn.end();
-		} else if (stmt.isUpdateRequest()) {
-			UpdateRequest u = stmt.getAsUpdateStmt().getUpdateRequest();
+            } else if (q.isConstructType()) {
+                // System.out.println(Algebra.compile(q));
 
-			conn.update(u);
-		}
-	}
+                SinkTripleOutput sink = new SinkTripleOutput(System.out, null, null);
+                Iterator<Triple> it = qe.execConstructTriples();
+                while (it.hasNext()) {
+                    Triple t = it.next();
+                    sink.send(t);
+                }
+                sink.flush();
+                sink.close();
+            } else if (q.isSelectType()) {
+                ResultSet rs = qe.execSelect();
+                String str = ResultSetFormatter.asText(rs);
+                System.err.println(str);
+            } else if(q.isJsonType()) {
+                String json = qe.execJson().toString();
+                System.out.println(json);
+            } else {
+                throw new RuntimeException("Unsupported query type");
+            }
 
-	public static Op toAlgebra(SparqlStmt stmt) {
-		Op result = null;
-	
-		if(stmt.isQuery()) {
-			Query q = stmt.getAsQueryStmt().getQuery();
-			result = Algebra.compile(q);
-		} else if(stmt.isUpdateRequest()) {
-			UpdateRequest ur = stmt.getAsUpdateStmt().getUpdateRequest();
-			for(Update u : ur) {
-				if(u instanceof UpdateModify) {
-					Element e = ((UpdateModify)u).getWherePattern();
-					result = Algebra.compile(e);
-				}
-			}
-		}
-	
-		return result;
-	}
+            conn.end();
+        } else if (stmt.isUpdateRequest()) {
+            UpdateRequest u = stmt.getAsUpdateStmt().getUpdateRequest();
+
+            conn.update(u);
+        }
+    }
+
+    public static Op toAlgebra(SparqlStmt stmt) {
+        Op result = null;
+
+        if(stmt.isQuery()) {
+            Query q = stmt.getAsQueryStmt().getQuery();
+            result = Algebra.compile(q);
+        } else if(stmt.isUpdateRequest()) {
+            UpdateRequest ur = stmt.getAsUpdateStmt().getUpdateRequest();
+            for(Update u : ur) {
+                if(u instanceof UpdateModify) {
+                    Element e = ((UpdateModify)u).getWherePattern();
+                    result = Algebra.compile(e);
+                }
+            }
+        }
+
+        return result;
+    }
 }

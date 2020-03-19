@@ -18,20 +18,25 @@ import org.apache.jena.sparql.core.mem.QuadTable;
  * @author Claus Stadler, Oct 30, 2018
  *
  */
-public class QuadTableLinkedHashMap
+public class QuadTableFromNestedMaps
 	implements QuadTable
 {
 	protected Map<Node, Map<Node, Map<Node, Map<Node, Quad>>>> store;
 
-	public QuadTableLinkedHashMap() {
+	public QuadTableFromNestedMaps() {
 		super();
-		store = new LinkedHashMap<>();
+		store = newMap();
 	}
+	
+	protected <K, V> Map<K, V> newMap() {
+		return new LinkedHashMap<>();
+	}
+	
 	@Override
 	public void add(Quad quad) {
-		store.computeIfAbsent(quad.getGraph(), g -> new LinkedHashMap<>())
-			.computeIfAbsent(quad.getSubject(), s -> new LinkedHashMap<>())
-			.computeIfAbsent(quad.getPredicate(), p -> new LinkedHashMap<>())
+		store.computeIfAbsent(quad.getGraph(), g -> newMap())
+			.computeIfAbsent(quad.getSubject(), s -> newMap())
+			.computeIfAbsent(quad.getPredicate(), p -> newMap())
 			.computeIfAbsent(quad.getObject(), o -> quad);		
 	}
 
@@ -81,10 +86,10 @@ public class QuadTableLinkedHashMap
 				match(
 					match(
 						match(
-							match(Stream.of(store), QuadTableLinkedHashMap::isWildcard, g),
-							QuadTableLinkedHashMap::isWildcard, s),
-						QuadTableLinkedHashMap::isWildcard, p),
-					QuadTableLinkedHashMap::isWildcard, o);
+							match(Stream.of(store), QuadTableFromNestedMaps::isWildcard, g),
+							QuadTableFromNestedMaps::isWildcard, s),
+						QuadTableFromNestedMaps::isWildcard, p),
+					QuadTableFromNestedMaps::isWildcard, o);
 		
 		return result;
 	}
