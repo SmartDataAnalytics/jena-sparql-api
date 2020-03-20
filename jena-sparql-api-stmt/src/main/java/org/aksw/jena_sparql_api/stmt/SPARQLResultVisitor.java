@@ -16,7 +16,8 @@ import com.google.gson.JsonPrimitive;
  * TODO We probably need a high level result visitor for
  * result types such as Model, ResultSet, Json, and a low level - or streaming -
  * result processor for quads, bindings, etc
- * 
+ * The streaming part can be based on StreamRDF
+ *
  * @author raven
  *
  * @param <T>
@@ -24,55 +25,55 @@ import com.google.gson.JsonPrimitive;
 public interface SPARQLResultVisitor {
 //	T onModel(Model value);
 //	T onDataset(Dataset value);
-	void onResultSet(ResultSet value);
-	//void onBoolean(Boolean value);
-	void onJson(JsonElement value);
-	void onQuad(Quad value);
+    void onResultSet(ResultSet value); // onBinding?
+    //void onBoolean(Boolean value);
+    void onJson(JsonElement value);
+    void onQuad(Quad value);
 
-	public static <T extends SPARQLResultVisitor> T forward(SPARQLResultEx sr, T handler) {
-		if (sr.isQuads()) {
-			//SinkQuadOutput sink = new SinkQuadOutput(System.out, null, null);
-			Iterator<Quad> it = sr.getQuads();
-			while (it.hasNext()) {
-				Quad t = it.next();
-				handler.onQuad(t);
-			}
-		} else if (sr.isTriples()) {
-			// System.out.println(Algebra.compile(q));
+    public static <T extends SPARQLResultVisitor> T forward(SPARQLResultEx sr, T handler) {
+        if (sr.isQuads()) {
+            //SinkQuadOutput sink = new SinkQuadOutput(System.out, null, null);
+            Iterator<Quad> it = sr.getQuads();
+            while (it.hasNext()) {
+                Quad t = it.next();
+                handler.onQuad(t);
+            }
+        } else if (sr.isTriples()) {
+            // System.out.println(Algebra.compile(q));
 
-			Iterator<Triple> it = sr.getTriples();
-			while (it.hasNext()) {
-				Triple t = it.next();
-				Quad quad = new Quad(Quad.defaultGraphIRI, t);
-				handler.onQuad(quad);
-			}
-		} else if(sr.isResultSet()) {
-			ResultSet value = sr.getResultSet();
-			handler.onResultSet(value);
-		} else if(sr.isBoolean()) {
-			Boolean value = sr.getBooleanResult();
-			handler.onJson(new JsonPrimitive(value));
-			//handler.onBoolean(value);
-		} else if(sr.isJson()) {
-			Gson gson = new Gson();
-			Iterator<org.apache.jena.atlas.json.JsonObject> it = sr.getJsonItems();
-			JsonArray arr = new JsonArray();
-			while(it.hasNext()) {
-				org.apache.jena.atlas.json.JsonObject value = it.next();
-				String json = value.toString();
-				JsonObject item = gson.fromJson(json, com.google.gson.JsonObject.class);
-				arr.add(item);
-			}
-			handler.onJson(arr);
-		} else if(sr.isUpdateType()) {
-			// Nothing todo
-		} else {
-			throw new RuntimeException("Unknown SPARQL result");
-		}
+            Iterator<Triple> it = sr.getTriples();
+            while (it.hasNext()) {
+                Triple t = it.next();
+                Quad quad = new Quad(Quad.defaultGraphIRI, t);
+                handler.onQuad(quad);
+            }
+        } else if(sr.isResultSet()) {
+            ResultSet value = sr.getResultSet();
+            handler.onResultSet(value);
+        } else if(sr.isBoolean()) {
+            Boolean value = sr.getBooleanResult();
+            handler.onJson(new JsonPrimitive(value));
+            //handler.onBoolean(value);
+        } else if(sr.isJson()) {
+            Gson gson = new Gson();
+            Iterator<org.apache.jena.atlas.json.JsonObject> it = sr.getJsonItems();
+            JsonArray arr = new JsonArray();
+            while(it.hasNext()) {
+                org.apache.jena.atlas.json.JsonObject value = it.next();
+                String json = value.toString();
+                JsonObject item = gson.fromJson(json, com.google.gson.JsonObject.class);
+                arr.add(item);
+            }
+            handler.onJson(arr);
+        } else if(sr.isUpdateType()) {
+            // Nothing todo
+        } else {
+            throw new RuntimeException("Unknown SPARQL result");
+        }
 
-		return handler;
-	}
-	
+        return handler;
+    }
+
 //	public static <T> T forward(SPARQLResult sr, SPARQLResultVisitor<T> handler) {
 //		T result;
 //		if(sr.isGraph() || sr.isModel()) {

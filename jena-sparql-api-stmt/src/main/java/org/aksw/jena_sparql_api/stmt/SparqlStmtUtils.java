@@ -457,7 +457,9 @@ public class SparqlStmtUtils {
                             Streams.stream(dataset.listNames()).map(dataset::getNamedModel))
                     .forEach(m -> {
                         // PrefixMapping usedPrefixes = new PrefixMappingImpl();
-                        PrefixUtils.usedPrefixes(pm, GraphUtils.streamNodes(m.getGraph()), usedPrefixes);
+                        try(Stream<Node> nodeStream = GraphUtils.streamNodes(m.getGraph())) {
+                            PrefixUtils.usedPrefixes(pm, nodeStream, usedPrefixes);
+                        }
                         m.clearNsPrefixMap();
                         // m.setNsPrefixes(usedPrefixes);
                     });
