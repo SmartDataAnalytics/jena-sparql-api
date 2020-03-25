@@ -63,91 +63,91 @@ import io.reactivex.processors.PublishProcessor;
 
 /**
  * Utilities for wrapping SPARQL query execution with flows.
- * 
+ *
  * @author raven
  *
  */
 public class SparqlRx {
-	
-	private static final Logger logger = LoggerFactory.getLogger(SparqlRx.class);
-	
-	public static <K, X> Flowable<Entry<K, List<X>>> groupByOrdered(
-			Flowable<X> in, Function<X, K> getGroupKey) {
 
-	      Object[] current = {null};
-	      Object[] prior = {null};
-	      PublishProcessor<K> boundaryIndicator = PublishProcessor.create();
+    private static final Logger logger = LoggerFactory.getLogger(SparqlRx.class);
 
-	      return in
-	    	 .doOnComplete(boundaryIndicator::onComplete)
-	    	 .doOnNext(item -> {
-		    		K groupKey = getGroupKey.apply(item);
-		    		boolean isEqual = Objects.equal(current, groupKey);
+    public static <K, X> Flowable<Entry<K, List<X>>> groupByOrdered(
+            Flowable<X> in, Function<X, K> getGroupKey) {
 
-		    		prior[0] = current[0];
-		    		if(prior[0] == null) {
-		    			prior[0] = groupKey;
-		    		}
+          Object[] current = {null};
+          Object[] prior = {null};
+          PublishProcessor<K> boundaryIndicator = PublishProcessor.create();
 
-		    		current[0] = groupKey;
-		
-		    		
-		    		if(!isEqual) {
-		    			boundaryIndicator.onNext(groupKey);
-		    		}
-		      })
-		      .buffer(boundaryIndicator)
-		      .map(buffer -> {
-		    	  K tmp = (K)prior[0];
-		    	  K groupKey = tmp;
-		    	  
-		    	  return Maps.immutableEntry(groupKey, buffer);
-		      });
-	      
-	}
-	
-	/**
-	 * 
-	 * 
-	 * @param vars
-	 * @return
-	 */
-	public static Function<List<Binding>, Table> createTableBuffer(List<Var> vars) {
-		Function<List<Binding>, Table> result = rows -> new TableData(vars, rows);
+          return in
+             .doOnComplete(boundaryIndicator::onComplete)
+             .doOnNext(item -> {
+                    K groupKey = getGroupKey.apply(item);
+                    boolean isEqual = Objects.equal(current, groupKey);
 
-		return result;
-	}
+                    prior[0] = current[0];
+                    if(prior[0] == null) {
+                        prior[0] = groupKey;
+                    }
 
-	public static <T> void processExecSelect(FlowableEmitter<T> emitter, QueryExecution qex, Function<? super ResultSet, ? extends T> next) {
-		Query q = qex.getQuery();
-		try(QueryExecution qe = qex) {
-			emitter.setCancellable(qe::abort);
-			ResultSet rs = qe.execSelect();
-			while(!emitter.isCancelled() && rs.hasNext()) {
-				T binding = next.apply(rs);
-				emitter.onNext(binding);
-			}
-			emitter.onComplete();
-		} catch (Exception e) {
-			Exception f = HttpExceptionUtils.makeHumanFriendly(e);
-			emitter.onError(new Throwable("Error executing " + q, f));
-		}
-	}
+                    current[0] = groupKey;
 
-	
-	public static void processExecConstructTriples(FlowableEmitter<Triple> emitter, QueryExecution qex) {
-		try(QueryExecution qe = qex) {
-			emitter.setCancellable(qe::abort);
-			Iterator<Triple> it = qe.execConstructTriples();
-			while(!emitter.isCancelled() && it.hasNext()) {
-				Triple item = it.next();
-				emitter.onNext(item);
-			}
-			emitter.onComplete();
-		} catch (Exception e) {
-			emitter.onError(e);
-		}
-	}
+
+                    if(!isEqual) {
+                        boundaryIndicator.onNext(groupKey);
+                    }
+              })
+              .buffer(boundaryIndicator)
+              .map(buffer -> {
+                  K tmp = (K)prior[0];
+                  K groupKey = tmp;
+
+                  return Maps.immutableEntry(groupKey, buffer);
+              });
+
+    }
+
+    /**
+     *
+     *
+     * @param vars
+     * @return
+     */
+    public static Function<List<Binding>, Table> createTableBuffer(List<Var> vars) {
+        Function<List<Binding>, Table> result = rows -> new TableData(vars, rows);
+
+        return result;
+    }
+
+    public static <T> void processExecSelect(FlowableEmitter<T> emitter, QueryExecution qex, Function<? super ResultSet, ? extends T> next) {
+        Query q = qex.getQuery();
+        try(QueryExecution qe = qex) {
+            emitter.setCancellable(qe::abort);
+            ResultSet rs = qe.execSelect();
+            while(!emitter.isCancelled() && rs.hasNext()) {
+                T binding = next.apply(rs);
+                emitter.onNext(binding);
+            }
+            emitter.onComplete();
+        } catch (Exception e) {
+            Exception f = HttpExceptionUtils.makeHumanFriendly(e);
+            emitter.onError(new Throwable("Error executing " + q, f));
+        }
+    }
+
+
+    public static void processExecConstructTriples(FlowableEmitter<Triple> emitter, QueryExecution qex) {
+        try(QueryExecution qe = qex) {
+            emitter.setCancellable(qe::abort);
+            Iterator<Triple> it = qe.execConstructTriples();
+            while(!emitter.isCancelled() && it.hasNext()) {
+                Triple item = it.next();
+                emitter.onNext(item);
+            }
+            emitter.onComplete();
+        } catch (Exception e) {
+            emitter.onError(e);
+        }
+    }
 
 //
 //	public static void processExecConstructTriples(SingleEmitter<ResultSet> emitter, QueryExecution qe) {
@@ -161,58 +161,58 @@ public class SparqlRx {
 //		}
 //	}
 
-	public static <T> Flowable<T> execSelect(Supplier<QueryExecution> qes, Function<? super ResultSet, ? extends T> next) {
-		Flowable<T> result = Flowable.create(emitter -> {
-			QueryExecution qe = qes.get();
-			processExecSelect(emitter, qe, next);
-			//new Thread(() -> process(emitter, qe)).start();
-		}, BackpressureStrategy.BUFFER);
+    public static <T> Flowable<T> execSelect(Supplier<QueryExecution> qes, Function<? super ResultSet, ? extends T> next) {
+        Flowable<T> result = Flowable.create(emitter -> {
+            QueryExecution qe = qes.get();
+            processExecSelect(emitter, qe, next);
+            //new Thread(() -> process(emitter, qe)).start();
+        }, BackpressureStrategy.BUFFER);
 
-		return result;
-	}
+        return result;
+    }
 
-	public static Flowable<Binding> execSelectRaw(Supplier<QueryExecution> qes) {
-		return execSelect(qes, ResultSet::nextBinding);
-	}
+    public static Flowable<Binding> execSelectRaw(Supplier<QueryExecution> qes) {
+        return execSelect(qes, ResultSet::nextBinding);
+    }
 
-	public static Flowable<QuerySolution> execSelect(Supplier<QueryExecution> qes) {
-		return execSelect(qes, ResultSet::next);
-	}
+    public static Flowable<QuerySolution> execSelect(Supplier<QueryExecution> qes) {
+        return execSelect(qes, ResultSet::next);
+    }
 
-	public static Flowable<QuerySolution> execSelect(RDFConnection conn, String queryStr) {
-		return execSelect(() -> conn.query(queryStr), ResultSet::next);
-	}
+    public static Flowable<QuerySolution> execSelect(RDFConnection conn, String queryStr) {
+        return execSelect(() -> conn.query(queryStr), ResultSet::next);
+    }
 
-	public static Flowable<QuerySolution> execSelect(RDFConnection conn, Query query) {
-		return execSelect(() -> conn.query(query), ResultSet::next);
-	}
+    public static Flowable<QuerySolution> execSelect(RDFConnection conn, Query query) {
+        return execSelect(() -> conn.query(query), ResultSet::next);
+    }
 
-	public static Flowable<Triple> execConstructTriples(Supplier<QueryExecution> qes) {
-		Flowable<Triple> result = Flowable.create(emitter -> {
-			QueryExecution qe = qes.get();
-			processExecConstructTriples(emitter, qe);
-			//new Thread(() -> process(emitter, qe)).start();
-		}, BackpressureStrategy.BUFFER);
+    public static Flowable<Triple> execConstructTriples(Supplier<QueryExecution> qes) {
+        Flowable<Triple> result = Flowable.create(emitter -> {
+            QueryExecution qe = qes.get();
+            processExecConstructTriples(emitter, qe);
+            //new Thread(() -> process(emitter, qe)).start();
+        }, BackpressureStrategy.BUFFER);
 
-		return result;
-	}
-	
-	public static Entry<List<Var>, Flowable<Binding>> mapToFlowable(ResultSet rs) {
-		Iterator<Binding> it = new IteratorResultSetBinding(rs);
-		Iterable<Binding> i = () -> it;
-		
-		List<Var> vars = VarUtils.toList(rs.getResultVars());
+        return result;
+    }
 
-		Flowable<Binding> flowable = Flowable.fromIterable(i);
-		Entry<List<Var>, Flowable<Binding>> result = new SimpleEntry<>(vars, flowable);
-		return result;		
-	}
+    public static Entry<List<Var>, Flowable<Binding>> mapToFlowable(ResultSet rs) {
+        Iterator<Binding> it = new IteratorResultSetBinding(rs);
+        Iterable<Binding> i = () -> it;
 
-	public static Flowable<Binding> mapToBinding(ResultSet rs) {
-		Entry<List<Var>, Flowable<Binding>> e = mapToFlowable(rs);
-		Flowable<Binding> result = e.getValue();
-		return result;
-	}
+        List<Var> vars = VarUtils.toList(rs.getResultVars());
+
+        Flowable<Binding> flowable = Flowable.fromIterable(i);
+        Entry<List<Var>, Flowable<Binding>> result = new SimpleEntry<>(vars, flowable);
+        return result;
+    }
+
+    public static Flowable<Binding> mapToBinding(ResultSet rs) {
+        Entry<List<Var>, Flowable<Binding>> e = mapToFlowable(rs);
+        Flowable<Binding> result = e.getValue();
+        return result;
+    }
 
 //	public static Flowable<Binding> mapToBinding(ResultSet rs) {
 //		Iterator<Binding> it = new IteratorResultSetBinding(rs);
@@ -220,46 +220,46 @@ public class SparqlRx {
 //		return Flowable.fromIterable(i);
 //	}
 
-	/**
-	 * Create a grouping function
-	 *
-	 * Usage:
-	 * flowable
-	 * 	.groupBy(createGrouper(Arrays.asList(... yourVars ...)))
-	 * 
-	 * @param vars
-	 * @param retainNulls
-	 * @return
-	 */
-	public static Function<Binding, Binding> createGrouper(Collection<Var> vars, boolean retainNulls) {
-		return b -> {
-			BindingHashMap groupKey = new BindingHashMap();
-			for(Var k : vars) {
-				Node v = b.get(k);
-				if(v != null || retainNulls) {
-					groupKey.add(k, v);
-				}
-			}
-			return groupKey;
-		};
-	}
-	
-	public static Function<Binding, Node> createGrouper(Var var) {
-		return b -> {
-			Node groupKey = b.get(var);
-			return groupKey;
-		};
-	}
+    /**
+     * Create a grouping function
+     *
+     * Usage:
+     * flowable
+     * 	.groupBy(createGrouper(Arrays.asList(... yourVars ...)))
+     *
+     * @param vars
+     * @param retainNulls
+     * @return
+     */
+    public static Function<Binding, Binding> createGrouper(Collection<Var> vars, boolean retainNulls) {
+        return b -> {
+            BindingHashMap groupKey = new BindingHashMap();
+            for(Var k : vars) {
+                Node v = b.get(k);
+                if(v != null || retainNulls) {
+                    groupKey.add(k, v);
+                }
+            }
+            return groupKey;
+        };
+    }
+
+    public static Function<Binding, Node> createGrouper(Var var) {
+        return b -> {
+            Node groupKey = b.get(var);
+            return groupKey;
+        };
+    }
 
 //	public static Flowable<Table> groupBy(Flowable<Binding> )
-	
-	// /**
-	// * Mapping that includes
-	// *
-	// */
-	// public static Flowable<Entry<List<Var>, Binding>>(List<Var> vars, ) {
-	//
-	// }
+
+    // /**
+    // * Mapping that includes
+    // *
+    // */
+    // public static Flowable<Entry<List<Var>, Binding>>(List<Var> vars, ) {
+    //
+    // }
 
 //	public static void main(String[] args) {
 //		// Some tests for whether timeouts actually work - so far it worked...
@@ -272,82 +272,82 @@ public class SparqlRx {
 //			.timeout(300, TimeUnit.MILLISECONDS)
 //			.toList()
 //			.blockingGet();
-//		
+//
 //		System.out.println(rdfNodes);
 //	}
-	
-	public static void main2(String[] args) {
+
+    public static void main2(String[] args) {
 //		List<Entry<Integer, List<Entry<Integer, Integer>>>> list = groupByOrdered(Flowable.range(0, 10).map(i -> Maps.immutableEntry((int)(i / 3), i)),
 //		e -> e.getKey())
 //		.toList().blockingGet();
 
 
-		Integer currentValue[] = {null};
-		boolean isCancelled[] = {false};
-		
-		Flowable<Entry<Integer, List<Integer>>> list = Flowable
-				.range(0, 10)
-				.doOnNext(i -> currentValue[0] = i)
-				.doOnCancel(() -> isCancelled[0] = true)
-				.map(i -> Maps.immutableEntry((int)(i / 3), i))
-				.lift(new OperatorOrderedGroupBy<Entry<Integer, Integer>, Integer, List<Integer>>(Entry::getKey, ArrayList::new, (acc, e) -> acc.add(e.getValue())));
+        Integer currentValue[] = {null};
+        boolean isCancelled[] = {false};
 
-		Predicate<Entry<Integer, List<Integer>>> p = e -> e.getKey().equals(1); 
-		list.takeUntil(p).subscribe(x -> System.out.println("Item: " + x));
-		
-		System.out.println("Value = " + currentValue[0] + ", isCancelled = " + isCancelled[0]);
-		
+        Flowable<Entry<Integer, List<Integer>>> list = Flowable
+                .range(0, 10)
+                .doOnNext(i -> currentValue[0] = i)
+                .doOnCancel(() -> isCancelled[0] = true)
+                .map(i -> Maps.immutableEntry((int)(i / 3), i))
+                .lift(new OperatorOrderedGroupBy<Entry<Integer, Integer>, Integer, List<Integer>>(Entry::getKey, ArrayList::new, (acc, e) -> acc.add(e.getValue())));
+
+        Predicate<Entry<Integer, List<Integer>>> p = e -> e.getKey().equals(1);
+        list.takeUntil(p).subscribe(x -> System.out.println("Item: " + x));
+
+        System.out.println("Value = " + currentValue[0] + ", isCancelled = " + isCancelled[0]);
+
 //		Disposable d = list.defe
-//		
+//
 //		Iterator<Entry<Integer, List<Integer>>> it = list.iterator();
 //		for(int i = 0; i < 2 && it.hasNext(); ++i) {
 //			Entry<Integer, List<Integer>> item = it.next();
 //			System.out.println("Item: " + item);
 //		}
-//		
-//		
+//
+//
 //		System.out.println("List: " + list);
-		
-		
-		PublishProcessor<String> queue = PublishProcessor.create();
-		queue.buffer(3).subscribe(x -> System.out.println("Buffer: " + x));
 
-		for(int i = 0; i < 10; ++i) {
-			String item = "item" + i;
-			System.out.println("Adding " + item);
-			queue.onNext(item);
-		}
-		queue.onComplete();
-		
 
-		if(true) {
-			return;
-		}
-		
-		for(int j = 0; j < 10; ++j) {
-			int i[] = { 0 };
-			System.out.println("HERE");
-			execSelectRaw(() -> org.apache.jena.query.QueryExecutionFactory.sparqlService("http://dbpedia.org/sparql",
-					"SELECT * { ?s a <http://dbpedia.org/ontology/Person> }"))
-							.takeUntil(b -> i[0] == 10).subscribe(x -> {
-								i[0]++;
-								System.out.println("x: " + x);
-	
-							});
-		}
-		// NOTE This way, the main thread will terminate before the queries are processed
-	}
-	
-	public static Single<Number> fetchNumber(SparqlQueryConnection qef, Query query, Var var) {
-    	return SparqlRx.execSelectRaw(() -> qef.query(query))
-            	.map(b -> b.get(var))
-            	.map(countNode -> ((Number)countNode.getLiteralValue()))
-            	.map(Optional::ofNullable)
-            	.single(Optional.empty())
-            	.map(Optional::get); // Should never be null here
-	}
-	
-	
+        PublishProcessor<String> queue = PublishProcessor.create();
+        queue.buffer(3).subscribe(x -> System.out.println("Buffer: " + x));
+
+        for(int i = 0; i < 10; ++i) {
+            String item = "item" + i;
+            System.out.println("Adding " + item);
+            queue.onNext(item);
+        }
+        queue.onComplete();
+
+
+        if(true) {
+            return;
+        }
+
+        for(int j = 0; j < 10; ++j) {
+            int i[] = { 0 };
+            System.out.println("HERE");
+            execSelectRaw(() -> org.apache.jena.query.QueryExecutionFactory.sparqlService("http://dbpedia.org/sparql",
+                    "SELECT * { ?s a <http://dbpedia.org/ontology/Person> }"))
+                            .takeUntil(b -> i[0] == 10).subscribe(x -> {
+                                i[0]++;
+                                System.out.println("x: " + x);
+
+                            });
+        }
+        // NOTE This way, the main thread will terminate before the queries are processed
+    }
+
+    public static Single<Number> fetchNumber(SparqlQueryConnection qef, Query query, Var var) {
+        return SparqlRx.execSelectRaw(() -> qef.query(query))
+                .map(b -> b.get(var))
+                .map(countNode -> ((Number)countNode.getLiteralValue()))
+                .map(Optional::ofNullable)
+                .single(Optional.empty())
+                .map(Optional::get); // Should never be null here
+    }
+
+
     public static Single<Range<Long>> fetchCountConcept(SparqlQueryConnection qef, Concept concept, Long itemLimit, Long rowLimit) {
 
         Var outputVar = ConceptUtils.freshVar(concept);
@@ -358,7 +358,7 @@ public class SparqlRx {
         Query countQuery = ConceptUtils.createQueryCount(concept, outputVar, xitemLimit, xrowLimit);
 
         return SparqlRx.fetchNumber(qef, countQuery, outputVar)
-        		.map(count -> SparqlRx.toRange(count.longValue(), xitemLimit, xrowLimit));
+                .map(count -> SparqlRx.toRange(count.longValue(), xitemLimit, xrowLimit));
     }
 //	return ReactiveSparqlUtils.execSelect(() -> qef.createQueryExecution(countQuery))
 //        	.map(b -> b.get(outputVar))
@@ -368,7 +368,7 @@ public class SparqlRx {
 //        				? true
 //        				: itemLimit != null && count > itemLimit;
 //
-//                Range<Long> r = mayHaveMoreItems ? Range.atLeast(itemLimit) : Range.singleton(count);        		
+//                Range<Long> r = mayHaveMoreItems ? Range.atLeast(itemLimit) : Range.singleton(count);
 //                return r;
 //        	})
 //        	.single(null);
@@ -388,152 +388,154 @@ public class SparqlRx {
         Entry<Var, Query> countQuery = QueryGenerationUtils.createQueryCountPartition(query, partitionVars, xitemLimit, xrowLimit);
         Var v = countQuery.getKey();
         Query q = countQuery.getValue();
-        
+
         return SparqlRx.fetchNumber(qef, q, v)
-        		.map(count -> SparqlRx.toRange(count.longValue(), xitemLimit, xrowLimit));
+                .map(count -> SparqlRx.toRange(count.longValue(), xitemLimit, xrowLimit));
     }
 
     public static Single<Range<Long>> fetchCountQuery(SparqlQueryConnection qef, Query query, Long itemLimit, Long rowLimit) {
-    	Single<Range<Long>> result = fetchCountQueryPartition(qef, query, null, itemLimit, rowLimit);
-    	return result;
+        Single<Range<Long>> result = fetchCountQueryPartition(qef, query, null, itemLimit, rowLimit);
+        return result;
     }
 
-    
+
     public static Range<Long> toRange(Long count, Long itemLimit, Long rowLimit) {
-		boolean mayHaveMoreItems = rowLimit != null
-				? true
-				: itemLimit != null && count > itemLimit;
-	
-	    Range<Long> r = mayHaveMoreItems ? Range.atLeast(count) : Range.singleton(count);        		
-	    return r;
+        boolean mayHaveMoreItems = rowLimit != null
+                ? true
+                : itemLimit != null && count > itemLimit;
+
+        Range<Long> r = mayHaveMoreItems ? Range.atLeast(count) : Range.singleton(count);
+        return r;
     }
 
     public static Flowable<RDFNode> execConstructGrouped(SparqlQueryConnection conn, Entry<? extends Node, Query> e) {
-    	return execConstructGrouped(conn, e, true);
+        return execConstructGrouped(conn, e, true);
     }
 
     public static Flowable<RDFNode> execConstructGrouped(SparqlQueryConnection conn, Entry<? extends Node, Query> e, boolean sortRowsByPartitionVar) {
-    	Node s = e.getKey();
-    	Query q = e.getValue();
-    	
-    	return execConstructGrouped(conn, s, q, sortRowsByPartitionVar);
+        Node s = e.getKey();
+        Query q = e.getValue();
+
+        return execConstructGrouped(conn, s, q, sortRowsByPartitionVar);
     }
 
     public static Flowable<RDFNode> execPartitioned(SparqlQueryConnection conn, Entry<? extends Node, Query> e) {
-    	return execPartitioned(conn, e, true);
+        return execPartitioned(conn, e, true);
     }
 
     public static Flowable<RDFNode> execPartitioned(SparqlQueryConnection conn, Entry<? extends Node, Query> e, boolean sortRowsByPartitionVar) {
-    	Node s = e.getKey();
-    	Query q = e.getValue();
-    	
-    	return execPartitioned(conn, s, q, sortRowsByPartitionVar);
+        Node s = e.getKey();
+        Query q = e.getValue();
+
+        return execPartitioned(conn, s, q, sortRowsByPartitionVar);
     }
-    
+
     //public static Acc
     public static Flowable<RDFNode> execConstructGrouped(SparqlQueryConnection conn, Node s, Query query) {
-    	return execConstructGrouped(q -> conn.query(q), s, query, true);
-    }    
+        return execConstructGrouped(q -> conn.query(q), s, query, true);
+    }
 
     public static Flowable<RDFNode> execConstructGrouped(SparqlQueryConnection conn, Node s, Query query, boolean sortRowsByPartitionVar) {
-    	return execConstructGrouped(q -> conn.query(q), s, query, sortRowsByPartitionVar);
-    }    
+        return execConstructGrouped(q -> conn.query(q), s, query, sortRowsByPartitionVar);
+    }
 
     public static Flowable<RDFNode> execConstructGrouped(Function<Query, QueryExecution> qeSupp, Node s, Query query, boolean sortRowsByPartitionVar) {
-    	Template template = query.getConstructTemplate();
-    	Query clone = preprocessQueryForPartition(s, query, sortRowsByPartitionVar);
-    	
-		Flowable<RDFNode> result = SparqlRx
-			// For future reference: If we get an empty results by using the query object, we probably have wrapped a variable with NodeValue.makeNode. 
-			.execSelectRaw(() -> qeSupp.apply(clone))
-			.groupBy(createGrouper((Var)s)::apply)
-			.map(group -> {
-				Node groupKey = group.getKey();
-				AccGraph acc = new AccGraph(template);
-				group.forEach(acc::accumulate);
-				Graph g = acc.getValue();
-				Model m = ModelFactory.createModelForGraph(g);
-				RDFNode r = m.asRDFNode(groupKey);
-				return r;
-			});
-		return result;
+        Template template = query.getConstructTemplate();
+        Query clone = preprocessQueryForPartition(s, query, sortRowsByPartitionVar);
+
+        Flowable<RDFNode> result = SparqlRx
+            // For future reference: If we get an empty results by using the query object, we probably have wrapped a variable with NodeValue.makeNode.
+            .execSelectRaw(() -> qeSupp.apply(clone))
+            .groupBy(createGrouper((Var)s)::apply)
+            // Filter out null group keys; they can e.g. occur due to https://issues.apache.org/jira/browse/JENA-1487
+            .filter(group -> group.getKey() != null)
+            .map(group -> {
+                Node groupKey = group.getKey();
+                AccGraph acc = new AccGraph(template);
+                group.forEach(acc::accumulate);
+                Graph g = acc.getValue();
+                Model m = ModelFactory.createModelForGraph(g);
+                RDFNode r = m.asRDFNode(groupKey);
+                return r;
+            });
+        return result;
     }
 
-    
+
     public static Query preprocessQueryForPartition(Node s, Query q, boolean sortRowsByPartitionVar) {
 
-    	Template template = q.getConstructTemplate();
+        Template template = q.getConstructTemplate();
         Set<Var> projectVars = new LinkedHashSet<>();
         if(s instanceof Var) {
-        	projectVars.add((Var)s);
+            projectVars.add((Var)s);
         }
         projectVars.addAll(QuadPatternUtils.getVarsMentioned(template.getQuads()));
-        
+
         Query clone = q.cloneQuery();
         clone.setQuerySelectType();
-    	clone.getProject().clear();
-    	
-    	
-    	if(projectVars.isEmpty()) {
-        	// If the template is variable free then project the first variable of the query pattern
-    		// If the query pattern is variable free then just use the result star
-        	Set<Var> patternVars = SetUtils.asSet(PatternVars.vars(q.getQueryPattern()));
-        	if(patternVars.isEmpty()) {
-        		clone.setQueryResultStar(true);
-        	} else {
-        		Var v = patternVars.iterator().next();
-            	clone.setQueryResultStar(false);
-            	clone.getProject().add(v);        		
-        	}
+        clone.getProject().clear();
+
+
+        if(projectVars.isEmpty()) {
+            // If the template is variable free then project the first variable of the query pattern
+            // If the query pattern is variable free then just use the result star
+            Set<Var> patternVars = SetUtils.asSet(PatternVars.vars(q.getQueryPattern()));
+            if(patternVars.isEmpty()) {
+                clone.setQueryResultStar(true);
+            } else {
+                Var v = patternVars.iterator().next();
+                clone.setQueryResultStar(false);
+                clone.getProject().add(v);
+            }
         } else {
-        	clone.setQueryResultStar(false);
-        	clone.addProjectVars(projectVars);
+            clone.setQueryResultStar(false);
+            clone.addProjectVars(projectVars);
         }
 
-    	clone.setDistinct(true);
-    	
+        clone.setDistinct(true);
+
         if(sortRowsByPartitionVar && s instanceof Var) {
-        	// TODO Check that there is no prior sort condition already
-        	clone.addOrderBy(new SortCondition((Var)s, Query.ORDER_ASCENDING));
+            // TODO Check that there is no prior sort condition already
+            clone.addOrderBy(new SortCondition((Var)s, Query.ORDER_ASCENDING));
         }
 
-    	logger.debug("Converted query to: " + clone);
-    	return clone;
+        logger.debug("Converted query to: " + clone);
+        return clone;
     }
-    
+
     public static Flowable<RDFNode> execPartitioned(SparqlQueryConnection conn, Node s, Query q, boolean sortRowsByPartitionVar) {
 
-    	Template template = q.getConstructTemplate();
-    	Query clone = preprocessQueryForPartition(s, q, sortRowsByPartitionVar);
-    	
-		Flowable<RDFNode> result = SparqlRx
-				// For future reference: If we get an empty results by using the query object, we probably have wrapped a variable with NodeValue.makeNode. 
-				.execSelectRaw(() -> conn.query(clone))
-				.map(b -> {
-					Graph graph = GraphFactory.createDefaultGraph();
+        Template template = q.getConstructTemplate();
+        Query clone = preprocessQueryForPartition(s, q, sortRowsByPartitionVar);
 
-					// TODO Re-allocate blank nodes
-					if(template != null) {
-						Iterator<Triple> it = TemplateLib.calcTriples(template.getTriples(), Iterators.singletonIterator(b));
-						while(it.hasNext()) {
-							Triple t = it.next();
-							graph.add(t);
-						}
-					}
+        Flowable<RDFNode> result = SparqlRx
+                // For future reference: If we get an empty results by using the query object, we probably have wrapped a variable with NodeValue.makeNode.
+                .execSelectRaw(() -> conn.query(clone))
+                .map(b -> {
+                    Graph graph = GraphFactory.createDefaultGraph();
 
-					Node rootNode = s.isVariable() ? b.get((Var)s) : s;
-					
-					Model m = ModelFactory.createModelForGraph(graph);
-					RDFNode r = m.asRDFNode(rootNode);
-					//Resource r = n.asResource();
+                    // TODO Re-allocate blank nodes
+                    if(template != null) {
+                        Iterator<Triple> it = TemplateLib.calcTriples(template.getTriples(), Iterators.singletonIterator(b));
+                        while(it.hasNext()) {
+                            Triple t = it.next();
+                            graph.add(t);
+                        }
+                    }
+
+                    Node rootNode = s.isVariable() ? b.get((Var)s) : s;
+
+                    Model m = ModelFactory.createModelForGraph(graph);
+                    RDFNode r = m.asRDFNode(rootNode);
+                    //Resource r = n.asResource();
 //					Resource r = m.createResource()
 //					.addProperty(RDF.predicate, m.asRDFNode(valueNode))
 //					.addProperty(Vocab.facetValueCount, );
 //				//m.wrapAsResource(valueNode);
 //				return r;
 
-					return r;
-				});
-		return result;
+                    return r;
+                });
+        return result;
     }
 }

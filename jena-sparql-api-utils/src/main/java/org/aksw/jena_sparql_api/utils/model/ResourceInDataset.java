@@ -39,8 +39,8 @@ public interface ResourceInDataset
 	 * 
 	 * @return
 	 */
-	default ResourceInDataset applyOnResource(Consumer<? super Resource> consumer) {
-		consumer.accept(this);
+	default ResourceInDataset mutateResource(Consumer<? super Resource> resourceMutator) {
+		resourceMutator.accept(this);
 		return this;
 	}
 	
