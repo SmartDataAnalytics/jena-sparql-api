@@ -324,18 +324,19 @@ public class ExprTransformVirtualBnodeUris
         boolean isRhsBnodeUri = eval(macros, isBnodeIriFnIri, rhs).getBoolean();
         ExprFunction2 result;
         if(isRhsBnodeUri) {
-            NodeValue rhsLabel;
+            NodeValue bnodeLabel;
             try {
-                rhsLabel = eval(macros, decodeBnodeIriFnIri, rhs);
+                bnodeLabel = eval(macros, decodeBnodeIriFnIri, rhs);
             } catch(ExprEvalException e) {
-                rhsLabel = NodeValue.FALSE;
+                // FIXME We should induce a type error here
+                bnodeLabel = NodeValue.FALSE;
             }
 
             Expr x = macros.get(bidOfFnIri).getBaseExpr();
 
 
-            Expr aaLabel = ExprTransformer.transform(new ExprTransformSubstitute(Vars.x, lhs), x);
-            result = copy(func, aaLabel, rhsLabel, swapped);
+            Expr labelCondition = ExprTransformer.transform(new ExprTransformSubstitute(Vars.x, lhs), x);
+            result = copy(func, labelCondition, bnodeLabel, swapped);
         } else {
             result = copy(func, lhs, b, swapped);
         }
