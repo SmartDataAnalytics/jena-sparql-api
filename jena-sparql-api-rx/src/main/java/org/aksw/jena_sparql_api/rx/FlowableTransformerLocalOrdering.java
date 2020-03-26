@@ -3,12 +3,11 @@ package org.aksw.jena_sparql_api.rx;
 import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.NavigableMap;
-import java.util.Objects;
 import java.util.TreeMap;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-import org.apache.jena.sparql.pfunction.library.seq;
+import org.reactivestreams.Subscription;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,10 +16,8 @@ import io.reactivex.Emitter;
 import io.reactivex.Flowable;
 import io.reactivex.FlowableEmitter;
 import io.reactivex.FlowableOnSubscribe;
+import io.reactivex.FlowableSubscriber;
 import io.reactivex.FlowableTransformer;
-import io.reactivex.disposables.Disposable;
-import io.reactivex.parallel.ParallelFlowable;
-import io.reactivex.parallel.ParallelTransformer;
 
 /**
  * A subscriber that performs local ordering of the items by their sequence id.
@@ -164,9 +161,9 @@ public class FlowableTransformerLocalOrdering<T, S>
             // Consume consecutive items from the map
             Iterator<Entry<S, T>> it = seqIdToValue.entrySet().iterator();
             while(it.hasNext()) {
-                if(delegate.isCancelled()) {
-                    throw new RuntimeException("Downstream cancelled");
-                }
+//                if(delegate.isCancelled()) {
+//                    throw new RuntimeException("Downstream cancelled");
+//                }
 
 
                 Entry<S, T> e = it.next();
@@ -209,8 +206,10 @@ public class FlowableTransformerLocalOrdering<T, S>
     }
 
     public static <T, S extends Comparable<S>> FlowableTransformer<T, T> transformer(S initiallyExpectedId, Function<? super S, ? extends S> incrementSeqId, BiFunction<? super S, ? super S, ? extends Number> distanceFn, Function<? super T, ? extends S> extractSeqId) {
+
         return upstream -> {
             Flowable<T> result = Flowable.create(new FlowableOnSubscribe<T>() {
+
                 @Override
                 public void subscribe(FlowableEmitter<T> e) throws Exception {
                     FlowableTransformerLocalOrdering<T, S> tmp = wrap(
@@ -220,15 +219,54 @@ public class FlowableTransformerLocalOrdering<T, S>
                             extractSeqId,
                             e);
 
-                    Disposable d = upstream.subscribe(
-                            tmp::onNext,
-                            tmp::onError,
-                            tmp::onComplete);
+                    upstream.subscribe(new FlowableSubscriber<T>() {
+                        @Override
+                        public void onSubscribe(Subscription s) {
+                            e.setCancellable(s::cancel);
+                            s.request(Long.MAX_VALUE);
+                        }
 
-                    e.setDisposable(d);
-                    // System.out.println("Done");
-                    // FIXME Something might be broken in the design, as
-                    // upstream.subscribe(tmp) does NOT work
+                        @Override
+                        public void onNext(T t) {
+                            tmp.onNext(t);
+                        }
+
+                        @Override
+                        public void onError(Throwable t) {
+                            tmp.onError(t);
+                        }
+
+                        @Override
+                        public void onComplete() {
+                            tmp.onComplete();
+                        }
+
+                    });
+
+//                    Disposable[] d = {null};
+//                    d[0] = upstream.subscribe(
+//                            item -> {
+//                                if(e.isCancelled()) {
+//                                    Disposable x = d[0];
+//                                    if(x != null) {
+//                                        x.dispose();
+//                                    }
+//                                } else {
+//                                    tmp.onNext(item);
+//                                }
+//                            },
+//                            Exceptions::propagate,
+//                            // tmp::onError,
+//                            tmp::onComplete);
+////                    e.setCancellable(() -> {
+////                        System.out.println("CANCELLED");
+////                    });
+//                    e.setDisposable(d[0]);
+//                    // System.out.println("Done");
+//                    // FIXME Something might be broken in the design, as
+//                    // upstream.subscribe(tmp) does NOT work
+
+
                 }
             }, BackpressureStrategy.BUFFER);
 

@@ -60,6 +60,7 @@ import com.github.davidmoten.rx2.flowable.Transformers;
 import com.google.common.collect.Lists;
 
 import io.reactivex.Flowable;
+import io.reactivex.Maybe;
 import io.reactivex.exceptions.Exceptions;
 
 /**
@@ -740,7 +741,7 @@ public class RDFDataMgrRx {
     }
     // A better approach would be to transform a flowable to write to a file as a side effect
     // Upon flowable completion, copy the file to its final location
-    public static void writeDatasets(Flowable<? extends Dataset> flowable, Path file, RDFFormat format) throws Exception {
+    public static void writeDatasets(Flowable<Dataset> flowable, Path file, RDFFormat format) throws Exception {
         try(OutputStream out = new FileOutputStream(file.toFile())) {
             writeDatasets(flowable, out, format);
         }
@@ -779,7 +780,24 @@ public class RDFDataMgrRx {
      *  This does not break the chain and gives freedom over the choice of forEach type (non-/blocking)
      */
     @Deprecated
-    public static void writeDatasets(Flowable<? extends Dataset> flowable, OutputStream out, RDFFormat format) throws Exception {
+    public static void writeDatasets(Flowable<Dataset> flowable, OutputStream out, RDFFormat format) throws Exception {
+
+      Consumer<List<Dataset>> writer = RDFDataMgrRx.createDatasetBatchWriter(out, format);
+
+      Flowable<Throwable> tmp = flowable
+          .buffer(1)
+          .flatMapMaybe(item -> {
+              writer.accept(item);
+              return Maybe.<Throwable>empty();
+          })
+          .onErrorReturn(t -> t);
+
+      Throwable e = tmp.singleElement().blockingGet();
+      if(e != null) {
+          throw new RuntimeException(e);
+      }
+
+if(false) {
         QuadEncoderDistinguish encoder = new QuadEncoderDistinguish();
         flowable
         // Flush every n datasets
@@ -791,6 +809,9 @@ public class RDFDataMgrRx {
             }
             out.flush();
         });
+}
+
+
     }
 
 }
