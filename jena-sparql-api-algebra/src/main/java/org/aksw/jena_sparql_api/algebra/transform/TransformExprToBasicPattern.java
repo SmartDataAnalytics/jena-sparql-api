@@ -81,7 +81,7 @@ public class TransformExprToBasicPattern
         @Override
         public Expr transform(ExprFunctionN func, ExprList args) {
             Expr result = args.size() == 1
-                    ? transform(func, args.get(0))
+                    ? doTransform(func, args.get(0))
                     : null;
 
             if(result == null) {
@@ -93,7 +93,7 @@ public class TransformExprToBasicPattern
 
         @Override
         public Expr transform(ExprFunction1 func, Expr arg) {
-            Expr result = transform(func, arg);
+            Expr result = doTransform(func, arg);
             if(result == null) {
                 result = super.transform(func, arg);
             }
@@ -101,7 +101,7 @@ public class TransformExprToBasicPattern
             return result;
         }
 
-        public Expr transform(ExprFunction func, Expr arg) {
+        public Expr doTransform(ExprFunction func, Expr arg) {
             Node argNode = arg.isVariable()
                     ? arg.asVar()
                     : arg.isConstant()

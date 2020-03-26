@@ -60,6 +60,7 @@ import com.github.davidmoten.rx2.flowable.Transformers;
 import com.google.common.collect.Lists;
 
 import io.reactivex.Flowable;
+import io.reactivex.exceptions.Exceptions;
 
 /**
  * Reactive extensions of RDFDataMgr
@@ -756,14 +757,15 @@ public class RDFDataMgrRx {
     public static <D extends Dataset, C extends Collection<D>> Consumer<C> createDatasetBatchWriter(OutputStream out, RDFFormat format) {
         QuadEncoderDistinguish encoder = new QuadEncoderDistinguish();
         return batch -> {
-            for(Dataset item : batch) {
-                Dataset encoded = encoder.encode(item);
-                RDFDataMgr.write(out, encoded, format);
-            }
             try {
+                for(Dataset item : batch) {
+                    Dataset encoded = encoder.encode(item);
+                    RDFDataMgr.write(out, encoded, format);
+                }
                 out.flush();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+            } catch (Exception e) {
+                Exceptions.propagate(e);
+                // throw new RuntimeException(e);
             }
         };
     }
