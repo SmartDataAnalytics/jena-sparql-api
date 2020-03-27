@@ -10,7 +10,6 @@ import javax.script.ScriptException;
 import org.apache.jena.datatypes.RDFDatatype;
 import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.graph.Node;
-import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.sparql.expr.ExprEvalException;
 import org.apache.jena.sparql.expr.ExprList;
 import org.apache.jena.sparql.expr.NodeValue;
@@ -72,7 +71,8 @@ public class E_JsonNashorn extends FunctionBase {
             JSObject[] as = jsos.toArray(new JSObject[0]);
             Object raw = fn.call(fn, as);
             String jsonStr = jsonStringify.call(null, raw).toString();
-            Node node = NodeFactory.createLiteral(jsonStr, dtype);
+            JsonElement jsonEl = gson.fromJson(jsonStr, JsonElement.class);
+            Node node = E_JsonPath.jsonToNode(jsonEl, gson, dtype);
             result = NodeValue.makeNode(node);
         }
         return result;
