@@ -60,6 +60,7 @@ import com.github.davidmoten.rx2.flowable.Transformers;
 import com.google.common.collect.Lists;
 
 import io.reactivex.Flowable;
+import io.reactivex.FlowableTransformer;
 import io.reactivex.Maybe;
 import io.reactivex.exceptions.Exceptions;
 
@@ -755,20 +756,18 @@ public class RDFDataMgrRx {
         return ds -> RDFDataMgr.write(out, ds, format);
     }
 
-    public static <D extends Dataset, C extends Collection<D>> Consumer<C> createDatasetBatchWriter(OutputStream out, RDFFormat format) {
+    public static <D extends Dataset, C extends Collection<D>> FlowableTransformer<C, Throwable> createDatasetBatchWriter(OutputStream out, RDFFormat format) {
         QuadEncoderDistinguish encoder = new QuadEncoderDistinguish();
-        return batch -> {
-            try {
-                for(Dataset item : batch) {
-                    Dataset encoded = encoder.encode(item);
-                    RDFDataMgr.write(out, encoded, format);
-                }
-                out.flush();
-            } catch (Exception e) {
-                Exceptions.propagate(e);
-                // throw new RuntimeException(e);
-            }
-        };
+        return upstream -> upstream
+                .flatMapMaybe(batch -> {
+                    for(Dataset item : batch) {
+                        Dataset encoded = encoder.encode(item);
+                        RDFDataMgr.write(out, encoded, format);
+                    }
+                    out.flush();
+                    return Maybe.<Throwable>empty();
+                })
+                .onErrorReturn(t -> t);
     }
 
     /**
@@ -782,15 +781,9 @@ public class RDFDataMgrRx {
     @Deprecated
     public static void writeDatasets(Flowable<Dataset> flowable, OutputStream out, RDFFormat format) throws Exception {
 
-      Consumer<List<Dataset>> writer = RDFDataMgrRx.createDatasetBatchWriter(out, format);
-
       Flowable<Throwable> tmp = flowable
           .buffer(1)
-          .flatMapMaybe(item -> {
-              writer.accept(item);
-              return Maybe.<Throwable>empty();
-          })
-          .onErrorReturn(t -> t);
+          .compose(RDFDataMgrRx.createDatasetBatchWriter(out, format));
 
       Throwable e = tmp.singleElement().blockingGet();
       if(e != null) {

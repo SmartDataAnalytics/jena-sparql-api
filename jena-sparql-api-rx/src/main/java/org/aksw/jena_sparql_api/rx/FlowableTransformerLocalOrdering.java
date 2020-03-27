@@ -103,9 +103,9 @@ public class FlowableTransformerLocalOrdering<T, S>
     }
 
     public void onNext(T value) {
-        if(delegate.isCancelled()) {
-            throw new RuntimeException("Downstream cancelled");
-        }
+//        if(delegate.isCancelled()) {
+//            throw new RuntimeException("Downstream cancelled");
+//        }
 
         S seqId = extractSeqId.apply(value);
 
