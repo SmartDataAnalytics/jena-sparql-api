@@ -19,8 +19,9 @@ public class TestSparqlExtJson {
         pm.setNsPrefixes(PrefixMappingImpl.Extended);
         JenaExtensionJson.addPrefixes(pm);
         SparqlQueryParser parser = SparqlQueryParserImpl.create(pm);
+        Query q = parser.apply("SELECT ?s { BIND(json:path(\"{'x':{'y': 'z' }}\"^^xsd:json, '$.x') AS ?s) }");
 //        Query q = parser.apply("SELECT ?s { BIND(json:path(json:entries(\"{'k':'v'}\"^^xsd:json), '$[*].value') AS ?s) }");
-        Query q = parser.apply("SELECT ?s { BIND(json:js('function(x) { return x.v; }', \"{'k':'v'}\"^^xsd:json) AS ?s) }");
+//        Query q = parser.apply("SELECT ?s { BIND(json:js('function(x) { return x.v; }', \"{'k':'v'}\"^^xsd:json) AS ?s) }");
         Model m = ModelFactory.createDefaultModel();
         try(QueryExecution qe = QueryExecutionFactory.create(q, m)) {
             System.out.println(ResultSetFormatter.asText(qe.execSelect()));
