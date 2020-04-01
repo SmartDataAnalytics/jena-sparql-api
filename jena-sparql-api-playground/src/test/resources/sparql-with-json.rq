@@ -1,0 +1,3 @@
+SELECT * {
+  BIND(json:path('{"k": "v"}'^^xsd:json, '$.k') AS ?v)
+}

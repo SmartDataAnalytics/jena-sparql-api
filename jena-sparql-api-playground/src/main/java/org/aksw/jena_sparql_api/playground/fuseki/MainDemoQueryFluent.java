@@ -1,18 +1,16 @@
 package org.aksw.jena_sparql_api.playground.fuseki;
 
 import java.nio.file.Paths;
+import java.util.concurrent.TimeUnit;
 
 import org.aksw.jena_sparql_api.cache.file.CacheBackendFile;
-import org.aksw.jena_sparql_api.core.GraphFromSparqlQueryConnection;
 import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.rx.SparqlRx;
 import org.aksw.jena_sparql_api.update.FluentSparqlService;
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdfconnection.RDFConnection;
 
 
-public class MainFluentDemo {
+public class MainDemoQueryFluent {
     public static void main(String[] args) {
 //		RDFConnection conn = RDFConnectionRemote.create()
 //				.destination("https://databus.dbpedia.org/repo/sparql")
@@ -22,6 +20,7 @@ public class MainFluentDemo {
             .http("https://databus.dbpedia.org/repo/sparql")
             .config()
                 .configQuery()
+                    .withDelay(1, TimeUnit.SECONDS)
                     .withCache(new CacheBackendFile(Paths.get("/tmp/cache"), 600000l, true, false, true))
                     .withPagination(100)
                     .withDefaultLimit(10, true)
