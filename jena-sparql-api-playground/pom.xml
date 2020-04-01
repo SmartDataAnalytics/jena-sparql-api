@@ -15,12 +15,12 @@
 		<version>3.14.0-2-SNAPSHOT</version>
 	</parent>
 
-<!-- 	<properties> -->
-<!-- 		<jena.version>3.13.0</jena.version> -->
-<!-- 	</properties> -->
+	<!-- <properties> -->
+	<!-- <jena.version>3.13.0</jena.version> -->
+	<!-- </properties> -->
 
 	<dependencies>
-	
+
 		<dependency>
 			<groupId>org.apache.jena</groupId>
 			<artifactId>jena-fuseki-war</artifactId>
@@ -38,6 +38,18 @@
 			<groupId>org.aksw.jena-sparql-api</groupId>
 			<artifactId>jena-sparql-api-io-hdt</artifactId>
 		</dependency>
+
+		<dependency>
+			<groupId>org.aksw.jena-sparql-api</groupId>
+			<artifactId>jena-sparql-api-core</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-log4j12</artifactId>
+			<!-- <version>1.7.24</version> -->
+		</dependency>
+
 	</dependencies>
 
 	<build>
