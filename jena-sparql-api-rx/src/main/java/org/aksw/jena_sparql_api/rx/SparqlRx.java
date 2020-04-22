@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
@@ -441,6 +442,10 @@ public class SparqlRx {
     }
 
     public static Flowable<RDFNode> execConstructGrouped(Function<Query, QueryExecution> qeSupp, Query query, List<Var> primaryKeyVars, Node rootNode, boolean sortRowsByPartitionVar) {
+        if(rootNode.isVariable() && !primaryKeyVars.contains(rootNode)) {
+            throw new RuntimeException("If the root node is a variable it must be among the primary key ones");
+        }
+
         Template template = query.getConstructTemplate();
         Query clone = preprocessQueryForPartition(query, primaryKeyVars, sortRowsByPartitionVar);
 
@@ -454,10 +459,22 @@ public class SparqlRx {
                     grouper::apply,
                     groupKey -> new AccGraph(template),
                     AccGraph::accumulate))
-            .map(keyAndAgg -> {
-                Graph g = keyAndAgg.getValue().getValue();
+            .map(keyAndAcc -> {
+                Binding groupKey = keyAndAcc.getKey();
+                AccGraph accGraph = keyAndAcc.getValue();
+                Map<Node, Node> bnodeMap = accGraph.getBnodeMap();
+
+                // TODO The accumulator should manage a blank node label map which we re-use to map the rootNode
+
+                Node effectiveRoot = rootNode.isVariable()
+                        ? groupKey.get((Var)rootNode)
+                        : rootNode.isBlank()
+                            ? bnodeMap.get(rootNode)
+                            : rootNode;
+
+                Graph g = accGraph.getValue();
                 Model m = ModelFactory.createModelForGraph(g);
-                RDFNode r = m.asRDFNode(rootNode);
+                RDFNode r = m.asRDFNode(effectiveRoot);
                 return r;
             });
             // Filter out null group keys; they can e.g. occur due to https://issues.apache.org/jira/browse/JENA-1487
