@@ -3,13 +3,13 @@ package org.aksw.jena_sparql_api.rx;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -21,15 +21,14 @@ import org.aksw.jena_sparql_api.http.HttpExceptionUtils;
 import org.aksw.jena_sparql_api.utils.IteratorResultSetBinding;
 import org.aksw.jena_sparql_api.utils.QuadPatternUtils;
 import org.aksw.jena_sparql_api.utils.VarUtils;
-import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.ext.com.google.common.base.Objects;
+import org.apache.jena.ext.com.google.common.collect.Iterators;
 import org.apache.jena.ext.com.google.common.collect.Maps;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
-import org.apache.jena.query.QueryFactory;
 import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.query.SortCondition;
@@ -37,7 +36,6 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdfconnection.RDFConnection;
-import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.apache.jena.sparql.algebra.Table;
 import org.apache.jena.sparql.algebra.table.TableData;
@@ -51,7 +49,6 @@ import org.apache.jena.sparql.syntax.Template;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.collect.Iterators;
 import com.google.common.collect.Range;
 
 import io.reactivex.BackpressureStrategy;
@@ -290,7 +287,7 @@ public class SparqlRx {
                 .doOnNext(i -> currentValue[0] = i)
                 .doOnCancel(() -> isCancelled[0] = true)
                 .map(i -> Maps.immutableEntry((int)(i / 3), i))
-                .lift(new OperatorOrderedGroupBy<Entry<Integer, Integer>, Integer, List<Integer>>(Entry::getKey, ArrayList::new, (acc, e) -> acc.add(e.getValue())));
+                .lift(new OperatorOrderedGroupBy<Entry<Integer, Integer>, Integer, List<Integer>>(Entry::getKey, groupKey -> new ArrayList<>(), (acc, e) -> acc.add(e.getValue())));
 
         Predicate<Entry<Integer, List<Integer>>> p = e -> e.getKey().equals(1);
         list.takeUntil(p).subscribe(x -> System.out.println("Item: " + x));
@@ -416,7 +413,7 @@ public class SparqlRx {
         Node s = e.getKey();
         Query q = e.getValue();
 
-        return execConstructGrouped(conn, s, q, sortRowsByPartitionVar);
+        return execConstructGrouped(conn, q, s, sortRowsByPartitionVar);
     }
 
     public static Flowable<RDFNode> execPartitioned(SparqlQueryConnection conn, Entry<? extends Node, Query> e) {
@@ -431,44 +428,59 @@ public class SparqlRx {
     }
 
     //public static Acc
-    public static Flowable<RDFNode> execConstructGrouped(SparqlQueryConnection conn, Node s, Query query) {
-        return execConstructGrouped(q -> conn.query(q), s, query, true);
+    public static Flowable<RDFNode> execConstructGrouped(SparqlQueryConnection conn, Query query, Node s) {
+        return execConstructGrouped(conn, query, s, true);
     }
 
-    public static Flowable<RDFNode> execConstructGrouped(SparqlQueryConnection conn, Node s, Query query, boolean sortRowsByPartitionVar) {
-        return execConstructGrouped(q -> conn.query(q), s, query, sortRowsByPartitionVar);
+    public static Flowable<RDFNode> execConstructGrouped(SparqlQueryConnection conn, Query query, Node s, boolean sortRowsByPartitionVar) {
+        return execConstructGrouped(conn, query, Collections.singletonList((Var)s), s, sortRowsByPartitionVar);
     }
 
-    public static Flowable<RDFNode> execConstructGrouped(Function<Query, QueryExecution> qeSupp, Node s, Query query, boolean sortRowsByPartitionVar) {
+    public static Flowable<RDFNode> execConstructGrouped(SparqlQueryConnection conn, Query query, List<Var> primaryKeyVars, Node rootNode, boolean sortRowsByPartitionVar) {
+        return execConstructGrouped(q -> conn.query(q), query, primaryKeyVars, rootNode, sortRowsByPartitionVar);
+    }
+
+    public static Flowable<RDFNode> execConstructGrouped(Function<Query, QueryExecution> qeSupp, Query query, List<Var> primaryKeyVars, Node rootNode, boolean sortRowsByPartitionVar) {
         Template template = query.getConstructTemplate();
-        Query clone = preprocessQueryForPartition(s, query, sortRowsByPartitionVar);
+        Query clone = preprocessQueryForPartition(query, primaryKeyVars, sortRowsByPartitionVar);
+
+        Function<Binding, Binding> grouper = createGrouper(primaryKeyVars, false);
 
         Flowable<RDFNode> result = SparqlRx
             // For future reference: If we get an empty results by using the query object, we probably have wrapped a variable with NodeValue.makeNode.
             .execSelectRaw(() -> qeSupp.apply(clone))
-            .groupBy(createGrouper((Var)s)::apply)
-            // Filter out null group keys; they can e.g. occur due to https://issues.apache.org/jira/browse/JENA-1487
-            .filter(group -> group.getKey() != null)
-            .map(group -> {
-                Node groupKey = group.getKey();
-                AccGraph acc = new AccGraph(template);
-                group.forEach(acc::accumulate);
-                Graph g = acc.getValue();
+            //.groupBy(createGrouper(primaryKeyVars, false)::apply)
+            .lift(new OperatorOrderedGroupBy<Binding, Binding, AccGraph>(
+                    grouper::apply,
+                    groupKey -> new AccGraph(template),
+                    AccGraph::accumulate))
+            .map(keyAndAgg -> {
+                Graph g = keyAndAgg.getValue().getValue();
                 Model m = ModelFactory.createModelForGraph(g);
-                RDFNode r = m.asRDFNode(groupKey);
+                RDFNode r = m.asRDFNode(rootNode);
                 return r;
             });
+            // Filter out null group keys; they can e.g. occur due to https://issues.apache.org/jira/browse/JENA-1487
+            // .filter(group -> group.getKey() != null)
+//            .map(group -> {
+//                // Binding groupKey = group.getKey();
+//                AccGraph acc = new AccGraph(template);
+//                group.forEach(acc::accumulate);
+//                Graph g = acc.getValue();
+//                Model m = ModelFactory.createModelForGraph(g);
+//                RDFNode r = m.asRDFNode(rootNode);
+//                return r;
+//            });
         return result;
     }
 
 
-    public static Query preprocessQueryForPartition(Node s, Query q, boolean sortRowsByPartitionVar) {
+    public static Query preprocessQueryForPartition(Query q, List<Var> primaryKeyVars, boolean sortRowsByPartitionVar) {
 
         Template template = q.getConstructTemplate();
         Set<Var> projectVars = new LinkedHashSet<>();
-        if(s instanceof Var) {
-            projectVars.add((Var)s);
-        }
+        projectVars.addAll(primaryKeyVars);
+
         projectVars.addAll(QuadPatternUtils.getVarsMentioned(template.getQuads()));
 
         Query clone = q.cloneQuery();
@@ -494,19 +506,22 @@ public class SparqlRx {
 
         clone.setDistinct(true);
 
-        if(sortRowsByPartitionVar && s instanceof Var) {
+        if(sortRowsByPartitionVar) {
             // TODO Check that there is no prior sort condition already
-            clone.addOrderBy(new SortCondition((Var)s, Query.ORDER_ASCENDING));
+            for(Var primaryKeyVar : primaryKeyVars) {
+                clone.addOrderBy(new SortCondition(primaryKeyVar, Query.ORDER_ASCENDING));
+            }
         }
 
         logger.debug("Converted query to: " + clone);
         return clone;
     }
 
+
     public static Flowable<RDFNode> execPartitioned(SparqlQueryConnection conn, Node s, Query q, boolean sortRowsByPartitionVar) {
 
         Template template = q.getConstructTemplate();
-        Query clone = preprocessQueryForPartition(s, q, sortRowsByPartitionVar);
+        Query clone = preprocessQueryForPartition(q, Collections.singletonList((Var)s), sortRowsByPartitionVar);
 
         Flowable<RDFNode> result = SparqlRx
                 // For future reference: If we get an empty results by using the query object, we probably have wrapped a variable with NodeValue.makeNode.
@@ -538,4 +553,5 @@ public class SparqlRx {
                 });
         return result;
     }
+
 }

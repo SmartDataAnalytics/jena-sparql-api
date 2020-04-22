@@ -110,13 +110,13 @@ public class MapPaginatorSparqlQuery
       //System.out.println(query);
       //if(true) {throw new RuntimeException(""); }
 
-      
+
 //      Node[] current = {null};
 //      Node[] prior = {null};
 //      PublishProcessor<Node> boundaryIndicator = PublishProcessor.create();
 
       return SparqlRx.execSelectRaw(() -> qef.query(query))
-    		  .lift(new OperatorOrderedGroupBy<Binding, Node, Table>(b -> b.get(attrVar), TableN::new, Table::addBinding));
+              .lift(new OperatorOrderedGroupBy<Binding, Node, Table>(b -> b.get(attrVar), groupKey -> new TableN(), Table::addBinding));
 //      return ReactiveSparqlUtils.groupByOrdered(
 //    		  ReactiveSparqlUtils.execSelect(() -> qef.createQueryExecution(query)),
 //    		  b -> b.get(attrVar))
@@ -124,11 +124,11 @@ public class MapPaginatorSparqlQuery
 //	    	  Node groupKey = e.getKey();
 //	    	  TableN table = new TableN();
 //	    	  e.getValue().forEach(table::addBinding);
-//	    	  
+//
 //	    	  return Maps.immutableEntry(groupKey, table);
 //	      });
-      
-//      
+
+//
 //      QueryExecution qe = qef.createQueryExecution(query);
 //      //ResultSet rs = qe.execSelect();
 //      ResultSet rs = ServiceUtils.forceExecResultSet(qe, query);
