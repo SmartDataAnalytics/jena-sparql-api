@@ -22,9 +22,6 @@ import org.aksw.jena_sparql_api.http.HttpExceptionUtils;
 import org.aksw.jena_sparql_api.utils.IteratorResultSetBinding;
 import org.aksw.jena_sparql_api.utils.QuadPatternUtils;
 import org.aksw.jena_sparql_api.utils.VarUtils;
-import org.apache.jena.ext.com.google.common.base.Objects;
-import org.apache.jena.ext.com.google.common.collect.Iterators;
-import org.apache.jena.ext.com.google.common.collect.Maps;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
@@ -50,6 +47,9 @@ import org.apache.jena.sparql.syntax.Template;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Objects;
+import com.google.common.collect.Iterators;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Range;
 
 import io.reactivex.BackpressureStrategy;
@@ -434,14 +434,15 @@ public class SparqlRx {
     }
 
     public static Flowable<RDFNode> execConstructGrouped(SparqlQueryConnection conn, Query query, Node s, boolean sortRowsByPartitionVar) {
-        return execConstructGrouped(conn, query, Collections.singletonList((Var)s), s, sortRowsByPartitionVar);
+        return execConstructGrouped(conn, query, Collections.singletonList((Var)s), s, sortRowsByPartitionVar)
+                .map(Entry::getValue);
     }
 
-    public static Flowable<RDFNode> execConstructGrouped(SparqlQueryConnection conn, Query query, List<Var> primaryKeyVars, Node rootNode, boolean sortRowsByPartitionVar) {
+    public static Flowable<Entry<Binding, RDFNode>> execConstructGrouped(SparqlQueryConnection conn, Query query, List<Var> primaryKeyVars, Node rootNode, boolean sortRowsByPartitionVar) {
         return execConstructGrouped(q -> conn.query(q), query, primaryKeyVars, rootNode, sortRowsByPartitionVar);
     }
 
-    public static Flowable<RDFNode> execConstructGrouped(Function<Query, QueryExecution> qeSupp, Query query, List<Var> primaryKeyVars, Node rootNode, boolean sortRowsByPartitionVar) {
+    public static Flowable<Entry<Binding, RDFNode>> execConstructGrouped(Function<Query, QueryExecution> qeSupp, Query query, List<Var> primaryKeyVars, Node rootNode, boolean sortRowsByPartitionVar) {
         if(rootNode.isVariable() && !primaryKeyVars.contains(rootNode)) {
             throw new RuntimeException("If the root node is a variable it must be among the primary key ones");
         }
@@ -451,7 +452,7 @@ public class SparqlRx {
 
         Function<Binding, Binding> grouper = createGrouper(primaryKeyVars, false);
 
-        Flowable<RDFNode> result = SparqlRx
+        Flowable<Entry<Binding, RDFNode>> result = SparqlRx
             // For future reference: If we get an empty results by using the query object, we probably have wrapped a variable with NodeValue.makeNode.
             .execSelectRaw(() -> qeSupp.apply(clone))
             //.groupBy(createGrouper(primaryKeyVars, false)::apply)
@@ -475,7 +476,7 @@ public class SparqlRx {
                 Graph g = accGraph.getValue();
                 Model m = ModelFactory.createModelForGraph(g);
                 RDFNode r = m.asRDFNode(effectiveRoot);
-                return r;
+                return Maps.immutableEntry(groupKey, r);
             });
             // Filter out null group keys; they can e.g. occur due to https://issues.apache.org/jira/browse/JENA-1487
             // .filter(group -> group.getKey() != null)
