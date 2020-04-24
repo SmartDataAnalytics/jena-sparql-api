@@ -97,13 +97,13 @@ public class GraphFromPrefixMatcher extends GraphBase {
                 //RDFDataMgrRx.createIteratorTriples(in, Lang.NTRIPLES, "http://www.example.org/"));
                 RiotParsers.createIteratorNTriples(in, null, RDFDataMgrRx.dftProfile()));
 
-        if(prefix.length() > 0) {
-            List<Triple> t = baseStream.collect(Collectors.toList());
-            System.out.println("For prefix " + prefix + " got " + t.size() + " triples");
-            baseStream = t.stream();
-        } else {
-            System.out.println("Got pattern: " + triplePattern);
-        }
+//        if(prefix != null && prefix.length() > 0) {
+//            List<Triple> t = baseStream.collect(Collectors.toList());
+//            System.out.println("For prefix " + prefix + " got " + t.size() + " triples");
+//            baseStream = t.stream();
+//        } else {
+//            System.out.println("Got pattern: " + triplePattern);
+//        }
 
         Iterator<Triple> itTriples = baseStream
             .filter(triplePattern::matches)

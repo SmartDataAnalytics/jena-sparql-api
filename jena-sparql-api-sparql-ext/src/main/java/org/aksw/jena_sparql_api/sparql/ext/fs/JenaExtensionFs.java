@@ -6,13 +6,14 @@ import org.apache.jena.ext.com.google.common.hash.Hashing;
 import org.apache.jena.query.ARQ;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.engine.main.QC;
+import org.apache.jena.sparql.engine.main.StageBuilder;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.function.FunctionRegistry;
 import org.apache.jena.sparql.pfunction.PropertyFunctionRegistry;
 
 public class JenaExtensionFs {
     public static String ns = "http://jsa.aksw.org/fn/fs/";
-    
+
     public static void register() {
         FunctionRegistry.get().put(ns + "rdfLang", E_RdfLang.class);
         FunctionRegistry.get().put(ns + "probeRdf", E_ProbeRdf.class);
@@ -23,32 +24,35 @@ public class JenaExtensionFs {
         //FunctionRegistry.get().put(ns + "lastModifiedTime", E_UnaryPathFunction.newFactory(path -> NodeValue.makeInteger(Files.getLastModifiedTime(path).toInstant())));
 
         FunctionRegistry.get().put(ns + "sha256", E_UnaryPathFunction.newFactory(path ->
-        	NodeValue.makeString(
-    			org.apache.jena.ext.com.google.common.io.Files
-    				.asByteSource(path.toFile())
-    				.hash(Hashing.sha256())
-    				.toString())));
+            NodeValue.makeString(
+                org.apache.jena.ext.com.google.common.io.Files
+                    .asByteSource(path.toFile())
+                    .hash(Hashing.sha256())
+                    .toString())));
 
         FunctionRegistry.get().put(ns + "md5", E_UnaryPathFunction.newFactory(path ->
-    	NodeValue.makeString(
-			org.apache.jena.ext.com.google.common.io.Files
-				.asByteSource(path.toFile())
-				.hash(Hashing.md5())
-				.toString())));
+        NodeValue.makeString(
+            org.apache.jena.ext.com.google.common.io.Files
+                .asByteSource(path.toFile())
+                .hash(Hashing.md5())
+                .toString())));
 
         FunctionRegistry.get().put(ns + "probeContentType", E_UnaryPathFunction.newFactory(path -> NodeValue.makeString(Files.probeContentType(path))));
         FunctionRegistry.get().put(ns + "probeEncoding", E_UnaryPathFunction.newFactory(path -> NodeValue.makeString(probeEncoding.doProbeEncoding(path))));
 
-		PropertyFunctionRegistry.get().put(ns + "find", new PropertyFunctionFactoryFsFind(PropertyFunctionFactoryFsFind::find));
-		PropertyFunctionRegistry.get().put(ns + "parents", new PropertyFunctionFactoryFsFind(PropertyFunctionFactoryFsFind::parents));
+        PropertyFunctionRegistry.get().put(ns + "find", new PropertyFunctionFactoryFsFind(PropertyFunctionFactoryFsFind::find));
+        PropertyFunctionRegistry.get().put(ns + "parents", new PropertyFunctionFactoryFsFind(PropertyFunctionFactoryFsFind::parents));
     }
-    
+
     public static void addPrefixes(PrefixMapping pm) {
-		pm.setNsPrefix("fs", ns);
+        pm.setNsPrefix("fs", ns);
     }
 
     // Better not register the handler automatically; it is a quite intrusive deed
     public static void registerFileServiceHandler() {
-        QC.setFactory(ARQ.getContext(), execCxt -> new OpExecutorServiceOrFile(execCxt));
+        QC.setFactory(ARQ.getContext(), execCxt -> {
+            execCxt.getContext().set(ARQ.stageGenerator, StageBuilder.executeInline);
+            return new OpExecutorServiceOrFile(execCxt);
+        });
     }
 }
