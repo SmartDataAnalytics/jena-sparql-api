@@ -132,15 +132,25 @@ public class QueryIterServiceOrFile extends QueryIterService {
             Op subOp = op.getSubOp();
             Query query = OpAsQuery.asQuery(subOp);
 
-            //QueryIterator right;
-            Iterator<Binding> it = null;
+            Iterator<Binding> itBindings = null;
 
             boolean specialProcessingApplied = false;
 
-            // TODO Try to parse out options from the service string, such as
-            // file?binarySearch=true
-            //String uriQs = uri.getQuery();
-            //List<NameValuePair> nm = URLEncodedUtils.parse(uri, StandardCharsets.UTF_8);
+            String binSearchVal = params.get("binsearch");
+            if("true".equalsIgnoreCase(binSearchVal)) {
+                specialProcessingApplied = true;
+
+                Graph graph = new GraphFromPrefixMatcher(path);
+                Model model = ModelFactory.createModelForGraph(graph);
+                // qe = QueryExecutionFactory.create(query, model);//, input);
+                // right = new QueryIteratorResultSet(qe.execSelect());
+                itBindings = SparqlRx.execSelectRaw(() -> QueryExecutionFactory.create(query, model))
+                        .blockingIterable().iterator();
+            }
+
+            // TODO Allow subject-streams to take advantage of binsearch:
+            // With SERVICE<...?binsearch=true&stream=s> { ?x ?y ?z }
+            // we can optimize execution for bound subject variables
 
             String streamVal = params.get("stream");
             if(!Strings.isNullOrEmpty(streamVal)) {
@@ -159,25 +169,14 @@ public class QueryIterServiceOrFile extends QueryIterService {
                                 SparqlRx.execSelectRaw(() -> QueryExecutionFactory.create(query.cloneQuery(), m)))
                             .sequential();
 
-                    it = flow
+                    itBindings = flow
                             .blockingIterable().iterator();
                 } else {
                     throw new RuntimeException("For streaming in SERVICE, only 's' for subjects is presently supported.");
                 }
             }
 
-            String binSearchVal = params.get("binsearch");
-            QueryExecution qe;
-            if("true".equalsIgnoreCase(binSearchVal)) {
-                specialProcessingApplied = true;
 
-                Graph graph = new GraphFromPrefixMatcher(path);
-                Model model = ModelFactory.createModelForGraph(graph);
-                // qe = QueryExecutionFactory.create(query, model);//, input);
-                // right = new QueryIteratorResultSet(qe.execSelect());
-                it = SparqlRx.execSelectRaw(() -> QueryExecutionFactory.create(query, model))
-                        .blockingIterable().iterator();
-            }
 
             if(!specialProcessingApplied) {
                 String url = path.toUri().toString();
@@ -188,12 +187,12 @@ public class QueryIterServiceOrFile extends QueryIterService {
 
 //                qe = QueryExecutionFactory.create(query, dataset);//, input);
 //                right = new QueryIteratorResultSet(qe.execSelect());
-                it = SparqlRx.execSelectRaw(() -> QueryExecutionFactory.create(query, dataset))
+                itBindings = SparqlRx.execSelectRaw(() -> QueryExecutionFactory.create(query, dataset))
                         .blockingIterable().iterator();
             }
 
-            Iterator<Binding> tmp = it;
-            QueryIterator right = new QueryIteratorBindingIterator(it) {
+            Iterator<Binding> tmp = itBindings;
+            QueryIterator right = new QueryIteratorBindingIterator(itBindings) {
                 @Override
                 protected final void requestCancel() {
                     ((Disposable)tmp).dispose();
