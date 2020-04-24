@@ -125,7 +125,7 @@ public final class OperatorOrderedGroupBy<T, K, V>
 
         @Override
         public void request(long n) {
-            s.request(n);
+            s.request(Long.MAX_VALUE);
         }
     }
 }

@@ -62,7 +62,6 @@ import com.google.common.collect.Lists;
 import io.reactivex.Flowable;
 import io.reactivex.FlowableTransformer;
 import io.reactivex.Maybe;
-import io.reactivex.exceptions.Exceptions;
 
 /**
  * Reactive extensions of RDFDataMgr
@@ -295,6 +294,11 @@ public class RDFDataMgrRx {
         return result;
     }
 
+
+    /**
+     * Prefixes to distinguishes consecutive different events of the same named graph
+     *
+     */
     public static final String DISTINGUISHED_PREFIX = "x-distinguished:";
     public static final int DISTINGUISHED_PREFIX_LENGTH = DISTINGUISHED_PREFIX.length();
 
@@ -370,6 +374,21 @@ public class RDFDataMgrRx {
                 (list, t) -> list.isEmpty()
                              || list.get(0).getGraph().equals(t.getGraph())))
         .map(DatasetFactoryEx::createInsertOrderPreservingDataset);
+
+        return result;
+    }
+
+
+    public static Flowable<Triple> createFlowableTriples(Callable<TypedInputStream> inSupplier) {
+
+        Flowable<Triple> result = createFlowableFromInputStream(
+                inSupplier,
+                th -> eh -> in -> createIteratorTriples(
+                        in,
+                        RDFLanguages.contentTypeToLang(in.getContentType()),
+                        in.getBaseURI(),
+                        eh,
+                        th));
 
         return result;
     }

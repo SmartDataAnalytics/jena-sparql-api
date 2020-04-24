@@ -132,7 +132,6 @@ public class SparqlRx {
         }
     }
 
-
     public static void processExecConstructTriples(FlowableEmitter<Triple> emitter, QueryExecution qex) {
         try(QueryExecution qe = qex) {
             emitter.setCancellable(qe::abort);
@@ -160,11 +159,36 @@ public class SparqlRx {
 //	}
 
     public static <T> Flowable<T> execSelect(Supplier<QueryExecution> qes, Function<? super ResultSet, ? extends T> next) {
-        Flowable<T> result = Flowable.create(emitter -> {
-            QueryExecution qe = qes.get();
-            processExecSelect(emitter, qe, next);
-            //new Thread(() -> process(emitter, qe)).start();
-        }, BackpressureStrategy.BUFFER);
+        Flowable<T> result = Flowable.generate(
+                () -> {
+                    QueryExecution qe = qes.get();
+                    return new SimpleEntry<QueryExecution, ResultSet>(qe, null);
+                },
+                (state, emitter) -> {
+                    ResultSet rs = state.getValue();
+                    if(rs == null) {
+//                        System.out.println("STARTED NEW RESULT SET");
+                        rs = state.getKey().execSelect();
+                        state.setValue(rs);
+                    }
+
+                    if(rs.hasNext()) {
+                        T value = next.apply(rs);
+                        emitter.onNext(value);
+                    } else {
+                        emitter.onComplete();
+                    }
+                },
+                state -> {
+//                    System.out.println("CLOSE");
+                    state.getKey().close();
+                });
+
+//        Flowable<T> result = Flowable.create(emitter -> {
+//            QueryExecution qe = qes.get();
+//            processExecSelect(emitter, qe, next);
+//            //new Thread(() -> process(emitter, qe)).start();
+//        }, BackpressureStrategy.BUFFER);
 
         return result;
     }

@@ -12,6 +12,13 @@ import org.apache.jena.sparql.graph.GraphFactory;
 import org.apache.jena.sparql.modify.TemplateLib;
 import org.apache.jena.sparql.syntax.Template;
 
+/**
+ * Graph accumulation of bindings via a template.
+ * Template blank nodes are remapped and the mapping is kept in the bnodeMap.
+ *
+ * @author raven
+ *
+ */
 public class AccGraph// implements Acc<Graph> {
 {
     protected Graph graph;
