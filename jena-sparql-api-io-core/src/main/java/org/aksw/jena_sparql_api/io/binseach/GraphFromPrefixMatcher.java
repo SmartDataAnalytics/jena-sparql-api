@@ -1,6 +1,5 @@
 package org.aksw.jena_sparql_api.io.binseach;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.channels.FileChannel;
@@ -9,15 +8,19 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.aksw.jena_sparql_api.common.DefaultPrefixes;
+import org.aksw.jena_sparql_api.rx.RDFDataMgrRx;
 import org.aksw.jena_sparql_api.stmt.SparqlStmt;
 import org.aksw.jena_sparql_api.stmt.SparqlStmtParserImpl;
 import org.aksw.jena_sparql_api.utils.ExtendedIteratorClosable;
 import org.apache.jena.graph.Graph;
+import org.apache.jena.graph.GraphStatisticsHandler;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.graph.impl.GraphBase;
@@ -27,15 +30,10 @@ import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.query.Syntax;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
-import org.apache.jena.riot.Lang;
-import org.apache.jena.riot.RDFDataMgr;
-import org.apache.jena.riot.lang.LangNTriples;
-import org.apache.jena.riot.system.ParserProfile;
-import org.apache.jena.riot.system.RiotLib;
-import org.apache.jena.riot.tokens.Tokenizer;
-import org.apache.jena.riot.tokens.TokenizerFactory;
+import org.apache.jena.riot.lang.RiotParsers;
 import org.apache.jena.sys.JenaSystem;
 import org.apache.jena.util.iterator.ExtendedIterator;
+import org.apache.jena.util.iterator.WrappedIterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,6 +51,8 @@ public class GraphFromPrefixMatcher extends GraphBase {
     private static final Logger logger = LoggerFactory.getLogger(GraphFromPrefixMatcher.class);
 
     protected Path path;
+    protected FileChannel channel = null;
+    protected BinarySearchOnSortedFile searcher = null;
 
     public GraphFromPrefixMatcher(Path path) {
         super();
@@ -60,9 +60,18 @@ public class GraphFromPrefixMatcher extends GraphBase {
     }
 
     protected ExtendedIterator<Triple> graphBaseFindCore(Triple triplePattern) throws Exception {
+        // Init channel on first request
+
+        // TODO Improve resource management ; we should close the seekable and the pageManager
+        if(channel == null) {
+            channel = FileChannel.open(path, StandardOpenOption.READ);
+            PageManager pageManager = PageManagerForFileChannel.create(channel);
+            Seekable seekable = new PageNavigator(pageManager);
+            long channelSize = channel.size();
+            searcher = new BinarySearchOnSortedFile(seekable, channelSize, (byte)'\n');
+        }
+
         ExtendedIterator<Triple> result;
-        FileChannel channel = FileChannel.open(path, StandardOpenOption.READ);
-        BinarySearchOnSortedFile searcher = BinarySearchOnSortedFile.create(channel);
 
         // Construct the prefix from the subject
         // Because whitespaces between subject and predicate may differ, do not include
@@ -72,46 +81,37 @@ public class GraphFromPrefixMatcher extends GraphBase {
         if(s.equals(Node.ANY) || s.isVariable()) {
             prefix = "";
         } else if(s.isBlank()) {
-            prefix = "_:";
+            prefix = "_:" + s.getBlankNodeLabel();
         } else if(s.isURI() ){
             prefix = "<" + s.getURI() + ">";
         } else {
             // Literal in subject position - skip
             prefix = null;
         }
-//		System.out.println("Prefix: " + prefix);
-//		System.out.println("Sorted ntriple lookup with prefix: " + prefix);
 
-//		prefix = null;
+//        System.out.println("PREFIX: " + prefix);
+
         InputStream in = searcher.search(prefix);
-//		System.out.println(IOUtils.toString(in));
-
-        //BufferedReader br = new BufferedReader(new InputStreamReader(Files.newInputStream(path)));
-//		BufferedReader br = new BufferedReader(new InputStreamReader(in));
-//		int lines = 0;
-//		while(br.readLine() != null) {
-//			++ lines;
-//		}
-//		System.out.println("Lines: " + lines);
-
-//		System.out.println("Lines: " + Files.lines(path).filter(line -> line.startsWith("<http")).count());
-
-
 
         Stream<Triple> baseStream = Streams.stream(
-                RDFDataMgr.createIteratorTriples(in, Lang.NTRIPLES, "http://www.example.org/"));
+                //RDFDataMgrRx.createIteratorTriples(in, Lang.NTRIPLES, "http://www.example.org/"));
+                RiotParsers.createIteratorNTriples(in, null, RDFDataMgrRx.dftProfile()));
 
-//		int i[] = {0};
+        if(prefix.length() > 0) {
+            List<Triple> t = baseStream.collect(Collectors.toList());
+            System.out.println("For prefix " + prefix + " got " + t.size() + " triples");
+            baseStream = t.stream();
+        } else {
+            System.out.println("Got pattern: " + triplePattern);
+        }
+
         Iterator<Triple> itTriples = baseStream
-            //.peek(System.out::println)
-//			.peek(x -> { int v = i[0]++; if(v % 30000 == 0) { System.out.println(v); }})
-//			.map(x -> new Triple(RDF.Nodes.type, RDF.Nodes.type, RDF.Nodes.type))
             .filter(triplePattern::matches)
             .iterator();
 
+        result = WrappedIterator.create(itTriples);
         result = ExtendedIteratorClosable.create(itTriples, () -> {
-            searcher.close();
-            channel.close();
+            in.close();
         });
 
         return result;
@@ -138,6 +138,33 @@ public class GraphFromPrefixMatcher extends GraphBase {
 //		Graph result = new GraphFromFileSystem(path);
 //		return result;
 //	}
+
+    @Override
+    public void close() {
+        if(channel != null) {
+            try {
+                channel.close();
+            } catch (IOException e) {
+                logger.warn("Exception on close", e);
+            }
+        }
+
+        super.close();
+    }
+
+    @Override
+    protected GraphStatisticsHandler createStatisticsHandler() {
+        return new GraphStatisticsHandler() {
+            @Override
+            public long getStatistic(Node S, Node P, Node O) {
+                if(S.isConcrete()) {
+                    return 1;
+                } else {
+                    return -1;
+                }
+            }
+        };
+    }
 
     public static void main(String[] args) throws IOException {
 

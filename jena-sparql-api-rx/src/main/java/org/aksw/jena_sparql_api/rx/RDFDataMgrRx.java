@@ -50,6 +50,7 @@ import org.apache.jena.riot.lang.PipedRDFIterator;
 import org.apache.jena.riot.lang.PipedTriplesStream;
 import org.apache.jena.riot.lang.RiotParsers;
 import org.apache.jena.riot.system.ErrorHandlerFactory;
+import org.apache.jena.riot.system.ParserProfile;
 import org.apache.jena.riot.system.RiotLib;
 import org.apache.jena.riot.system.StreamRDF;
 import org.apache.jena.riot.system.SyntaxLabels;
@@ -165,7 +166,7 @@ public class RDFDataMgrRx {
         // Special case N-Quads, because the RIOT reader has a pull interface
         if ( RDFLanguages.sameLang(RDFLanguages.NQUADS, lang) ) {
             return new IteratorResourceClosing<>(
-                RiotParsers.createIteratorNQuads(input, null, RiotLib.dftProfile()),
+                RiotParsers.createIteratorNQuads(input, null, RDFDataMgrRx.dftProfile()),
                 input);
         }
         // Otherwise, we have to spin up a thread to deal with it
@@ -191,6 +192,10 @@ public class RDFDataMgrRx {
     }
 
 
+    public static ParserProfile dftProfile() {
+        return RiotLib.createParserProfile(RiotLib.factoryRDF(SyntaxLabels.createLabelToNodeAsGiven()), ErrorHandlerFactory.errorHandlerDetailed(), true);
+    }
+
     /**
      * Adaption from RDFDataMgr.createIteratorQuads that waits for
      * data on the input stream indefinitely and allows for thread handling
@@ -211,7 +216,7 @@ public class RDFDataMgrRx {
         // Special case N-Quads, because the RIOT reader has a pull interface
         if ( RDFLanguages.sameLang(RDFLanguages.NTRIPLES, lang) ) {
             return new IteratorResourceClosing<>(
-                RiotParsers.createIteratorNTriples(input, null, RiotLib.dftProfile()),
+                RiotParsers.createIteratorNTriples(input, null, RDFDataMgrRx.dftProfile()),
                 input);
         }
         // Otherwise, we have to spin up a thread to deal with it

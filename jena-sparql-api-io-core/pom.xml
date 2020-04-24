@@ -16,10 +16,10 @@
 	</parent>
 
 	<dependencies>
-		<dependency>
-			<groupId>io.reactivex.rxjava2</groupId>
-			<artifactId>rxjava</artifactId>
-		</dependency>
+<!-- 		<dependency> -->
+<!-- 			<groupId>io.reactivex.rxjava2</groupId> -->
+<!-- 			<artifactId>rxjava</artifactId> -->
+<!-- 		</dependency> -->
 
 		<!-- <dependency> -->
 		<!-- <groupId>org.apache.jena</groupId> -->
@@ -29,6 +29,11 @@
 		<dependency>
 			<groupId>org.aksw.jena-sparql-api</groupId>
 			<artifactId>jena-sparql-api-stmt</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.aksw.jena-sparql-api</groupId>
+			<artifactId>jena-sparql-api-rx</artifactId>
 		</dependency>
 
 		<dependency>

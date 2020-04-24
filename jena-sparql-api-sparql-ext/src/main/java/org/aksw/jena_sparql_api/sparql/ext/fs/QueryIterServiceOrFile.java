@@ -150,7 +150,7 @@ public class QueryIterServiceOrFile extends QueryIterService {
 
             // TODO Allow subject-streams to take advantage of binsearch:
             // With SERVICE<...?binsearch=true&stream=s> { ?x ?y ?z }
-            // we can optimize execution for bound subject variables
+            // we can optimize joins when subject variables are bound
 
             String streamVal = params.get("stream");
             if(!Strings.isNullOrEmpty(streamVal)) {
