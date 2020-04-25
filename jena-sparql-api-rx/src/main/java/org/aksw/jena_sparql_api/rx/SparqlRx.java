@@ -180,8 +180,9 @@ public class SparqlRx {
                     }
                 },
                 state -> {
-//                    System.out.println("CLOSE");
-                    state.getKey().close();
+                    QueryExecution qe = state.getKey();
+                    // Note consuming the result set may also already close the qe
+                    qe.close();
                 });
 
 //        Flowable<T> result = Flowable.create(emitter -> {

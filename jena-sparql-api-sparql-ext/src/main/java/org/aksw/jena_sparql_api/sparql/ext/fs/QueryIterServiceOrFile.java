@@ -5,12 +5,15 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.AbstractMap.SimpleEntry;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.TimeUnit;
 
 import org.aksw.jena_sparql_api.io.binseach.GraphFromPrefixMatcher;
+import org.aksw.jena_sparql_api.io.binseach.GraphFromSubjectCache;
 import org.aksw.jena_sparql_api.rx.GraphOpsRx;
 import org.aksw.jena_sparql_api.rx.RDFDataMgrEx;
 import org.aksw.jena_sparql_api.rx.RDFDataMgrRx;
@@ -19,6 +22,7 @@ import org.aksw.jena_sparql_api.rx.SparqlRx;
 import org.aksw.jena_sparql_api.utils.UriUtils;
 import org.apache.jena.atlas.logging.Log;
 import org.apache.jena.atlas.web.TypedInputStream;
+import org.apache.jena.ext.com.google.common.base.Stopwatch;
 import org.apache.jena.ext.com.google.common.base.Strings;
 import org.apache.jena.ext.com.google.common.collect.Maps;
 import org.apache.jena.graph.Graph;
@@ -28,6 +32,7 @@ import org.apache.jena.query.Dataset;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QueryExecutionFactory;
+import org.apache.jena.query.ResultSet;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.riot.Lang;
@@ -35,22 +40,19 @@ import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.OpAsQuery;
 import org.apache.jena.sparql.algebra.op.OpService;
-import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.ExecutionContext;
 import org.apache.jena.sparql.engine.QueryIterator;
 import org.apache.jena.sparql.engine.binding.Binding;
-import org.apache.jena.sparql.engine.binding.BindingFactory;
-import org.apache.jena.sparql.engine.iterator.QueryIter;
 import org.apache.jena.sparql.engine.iterator.QueryIterCommonParent;
 import org.apache.jena.sparql.engine.iterator.QueryIterSingleton;
 import org.apache.jena.sparql.engine.main.QC;
 import org.apache.jena.sparql.engine.main.iterator.QueryIterService;
 import org.apache.jena.sparql.graph.GraphFactory;
-import org.apache.jena.vocabulary.RDF;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import io.reactivex.Flowable;
 import io.reactivex.disposables.Disposable;
-import io.reactivex.schedulers.Schedulers;
 
 /**
  * TODO Factory out into a more general class that delegates each bindings to custom processor
@@ -59,6 +61,8 @@ import io.reactivex.schedulers.Schedulers;
  *
  */
 public class QueryIterServiceOrFile extends QueryIterService {
+
+    protected Logger logger = LoggerFactory.getLogger(QueryIterServiceOrFile.class);
 
     protected OpService opService ;
 
@@ -140,12 +144,36 @@ public class QueryIterServiceOrFile extends QueryIterService {
             if("true".equalsIgnoreCase(binSearchVal)) {
                 specialProcessingApplied = true;
 
-                Graph graph = new GraphFromPrefixMatcher(path);
-                Model model = ModelFactory.createModelForGraph(graph);
-                // qe = QueryExecutionFactory.create(query, model);//, input);
-                // right = new QueryIteratorResultSet(qe.execSelect());
-                itBindings = SparqlRx.execSelectRaw(() -> QueryExecutionFactory.create(query, model))
-                        .blockingIterable().iterator();
+                // Model generation wrapped as a flowable for resource management
+                Flowable<Binding> bindingFlow = Flowable.generate(() -> {
+                    Graph graph = new GraphFromPrefixMatcher(path);
+                    GraphFromSubjectCache subjectCacheGraph = new GraphFromSubjectCache(graph);
+                    Model model = ModelFactory.createModelForGraph(subjectCacheGraph);
+                    QueryExecution qe = QueryExecutionFactory.create(query, model);
+                    ResultSet rs = qe.execSelect();
+
+                    Stopwatch sw = Stopwatch.createStarted();
+
+                    return new SimpleEntry<AutoCloseable, ResultSet>(() -> {
+                        logger.info("SERVICE <" + path + "> " +  query);
+                        logger.info(sw.elapsed(TimeUnit.MILLISECONDS) * 0.001 + " seconds - " + subjectCacheGraph.getSubjectCache().stats());
+
+                        qe.close();
+                        model.close();
+                    }, rs);
+                },
+                (e, emitter) -> {
+                    ResultSet rs = e.getValue();
+                    if(rs.hasNext()) {
+                        Binding binding = rs.nextBinding();
+                        emitter.onNext(binding);
+                    } else {
+                        emitter.onComplete();
+                    }
+                },
+                e -> e.getKey().close());
+
+                itBindings = bindingFlow.blockingIterable().iterator();
             }
 
             // TODO Allow subject-streams to take advantage of binsearch:
@@ -162,15 +190,14 @@ public class QueryIterServiceOrFile extends QueryIterService {
                     TypedInputStream tmp = RDFDataMgrEx.open(path.toString(), tripleLangs);
 
                     Flowable<Binding> flow = RDFDataMgrRx.createFlowableTriples(() -> tmp)
-                            .compose(GraphOpsRx.groupConsecutiveTriplesByComponent(Triple::getSubject, GraphFactory::createDefaultGraph))
+                            .compose(GraphOpsRx.graphFromConsecutiveTriples(Triple::getSubject, GraphFactory::createDefaultGraph))
                             .map(ModelFactory::createModelForGraph)
-                            .parallel()
+                            //.parallel()
                             .flatMap(m ->
-                                SparqlRx.execSelectRaw(() -> QueryExecutionFactory.create(query.cloneQuery(), m)))
-                            .sequential();
+                                SparqlRx.execSelectRaw(() -> QueryExecutionFactory.create(query.cloneQuery(), m)));
+                            //.sequential();
 
-                    itBindings = flow
-                            .blockingIterable().iterator();
+                    itBindings = flow.blockingIterable().iterator();
                 } else {
                     throw new RuntimeException("For streaming in SERVICE, only 's' for subjects is presently supported.");
                 }
@@ -197,6 +224,11 @@ public class QueryIterServiceOrFile extends QueryIterService {
                 protected final void requestCancel() {
                     ((Disposable)tmp).dispose();
                 }
+
+                @Override
+                public final void close() {
+                    ((Disposable)tmp).dispose();
+                }
             };
 
 
@@ -204,7 +236,8 @@ public class QueryIterServiceOrFile extends QueryIterService {
             // not servicing the HTTP connection as needed.
             // In extremis, can cause a deadlock when SERVICE loops back to this server.
             // Add tracking.
-            qIter = QueryIter.makeTracked(right, getExecContext()) ;
+            //qIter = QueryIter.makeTracked(right, getExecContext()) ;
+            qIter = right;
         } catch (RuntimeException ex)
         {
             if ( silent )

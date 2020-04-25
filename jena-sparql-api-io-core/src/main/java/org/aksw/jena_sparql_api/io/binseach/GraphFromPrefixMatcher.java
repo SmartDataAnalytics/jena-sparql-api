@@ -64,11 +64,15 @@ public class GraphFromPrefixMatcher extends GraphBase {
 
         // TODO Improve resource management ; we should close the seekable and the pageManager
         if(channel == null) {
-            channel = FileChannel.open(path, StandardOpenOption.READ);
-            PageManager pageManager = PageManagerForFileChannel.create(channel);
-            Seekable seekable = new PageNavigator(pageManager);
-            long channelSize = channel.size();
-            searcher = new BinarySearchOnSortedFile(seekable, channelSize, (byte)'\n');
+            synchronized(this) {
+                if(channel == null) {
+                    channel = FileChannel.open(path, StandardOpenOption.READ);
+                    PageManager pageManager = PageManagerForFileChannel.create(channel);
+                    Seekable seekable = new PageNavigator(pageManager);
+                    long channelSize = channel.size();
+                    searcher = new BinarySearchOnSortedFile(seekable, channelSize, (byte)'\n');
+                }
+            }
         }
 
         ExtendedIterator<Triple> result;
@@ -97,19 +101,20 @@ public class GraphFromPrefixMatcher extends GraphBase {
                 //RDFDataMgrRx.createIteratorTriples(in, Lang.NTRIPLES, "http://www.example.org/"));
                 RiotParsers.createIteratorNTriples(in, null, RDFDataMgrRx.dftProfile()));
 
-//        if(prefix != null && prefix.length() > 0) {
-//            List<Triple> t = baseStream.collect(Collectors.toList());
-//            System.out.println("For prefix " + prefix + " got " + t.size() + " triples");
-//            baseStream = t.stream();
-//        } else {
-//            System.out.println("Got pattern: " + triplePattern);
-//        }
+        if(false) {
+            if(prefix != null && prefix.length() > 0) {
+                List<Triple> t = baseStream.collect(Collectors.toList());
+                System.out.println("For prefix " + prefix + " got " + t.size() + " triples");
+                baseStream = t.stream();
+            } else {
+                System.out.println("Got pattern: " + triplePattern);
+            }
+        }
 
         Iterator<Triple> itTriples = baseStream
             .filter(triplePattern::matches)
             .iterator();
 
-        result = WrappedIterator.create(itTriples);
         result = ExtendedIteratorClosable.create(itTriples, () -> {
             in.close();
         });
@@ -142,28 +147,18 @@ public class GraphFromPrefixMatcher extends GraphBase {
     @Override
     public void close() {
         if(channel != null) {
-            try {
-                channel.close();
-            } catch (IOException e) {
-                logger.warn("Exception on close", e);
-            }
-        }
-
-        super.close();
-    }
-
-    @Override
-    protected GraphStatisticsHandler createStatisticsHandler() {
-        return new GraphStatisticsHandler() {
-            @Override
-            public long getStatistic(Node S, Node P, Node O) {
-                if(S.isConcrete()) {
-                    return 1;
-                } else {
-                    return -1;
+            synchronized(this) {
+                if(channel != null) {
+                    try {
+                        channel.close();
+                        channel = null;
+                        super.close();
+                    } catch (IOException e) {
+                        logger.warn("Exception on close", e);
+                    }
                 }
             }
-        };
+        }
     }
 
     public static void main(String[] args) throws IOException {

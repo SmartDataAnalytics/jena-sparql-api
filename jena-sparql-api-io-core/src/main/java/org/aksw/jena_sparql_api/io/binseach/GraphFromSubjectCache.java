@@ -1,32 +1,118 @@
 package org.aksw.jena_sparql_api.io.binseach;
 
+import java.util.Iterator;
+import java.util.Map.Entry;
+import java.util.concurrent.ExecutionException;
+
+import org.aksw.jena_sparql_api.rx.GraphOpsRx;
+import org.aksw.jena_sparql_api.utils.ExtendedIteratorClosable;
 import org.apache.jena.ext.com.google.common.cache.Cache;
+import org.apache.jena.ext.com.google.common.cache.CacheBuilder;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.graph.impl.GraphBase;
+import org.apache.jena.sparql.graph.GraphFactory;
 import org.apache.jena.util.iterator.ExtendedIterator;
+
+import io.reactivex.Flowable;
+import io.reactivex.disposables.Disposable;
 
 public class GraphFromSubjectCache
     extends GraphBase
 {
-    protected GraphBase delegate;
+    protected Graph delegate;
     protected Cache<Node, Graph> subjectCache;
 
-    public GraphFromSubjectCache(GraphBase delegate, Cache<Node, Graph> subjectCache) {
+    public GraphFromSubjectCache(Graph delegate) {//, CacheBuilder<Node, Graph> subjectCacheBuilder) {
         super();
         this.delegate = delegate;
-        this.subjectCache = subjectCache;
+        this.subjectCache = CacheBuilder.newBuilder().recordStats().maximumSize(10000).build();
+    }
+
+    public Cache<Node, Graph> getSubjectCache() {
+        return subjectCache;
+    }
+
+    protected Graph loadGraph(Node s) {
+        Graph result = createFlowableFromGraph(delegate, Triple.create(s, Node.ANY, Node.ANY))
+                .compose(GraphOpsRx.graphFromConsecutiveTriples(Triple::getSubject, GraphFactory::createDefaultGraph))
+                .blockingFirst(Graph.emptyGraph);
+
+//        System.err.println("Needed to load " + s + " with size " + result.size());
+        return result;
     }
 
     @Override
     protected ExtendedIterator<Triple> graphBaseFind(Triple triplePattern) {
         // For any triple pattern with a concrete subject, load all triples from the underlying graph
-//        if(triplePattern.getSubject().) {
-//
-//        }
+        Node s = triplePattern.getSubject();
 
-        return null;
+        Flowable<Graph> graphFlow;
+        if(s.isConcrete()) {
+            Graph g;
+            try {
+                g = subjectCache.get(s, () -> loadGraph(s));
+            } catch (ExecutionException e1) {
+                throw new RuntimeException(e1);
+            }
+            graphFlow = g == null ? Flowable.empty() : Flowable.just(g);
+        } else {
+            Triple surrogatePattern = Triple.create(triplePattern.getSubject(), Node.ANY, Node.ANY);
+            //delegate.find(surrogatePattern);
+            graphFlow = createFlowableFromGraph(delegate, surrogatePattern)
+                .compose(GraphOpsRx.groupConsecutiveTriplesRaw(Triple::getSubject, GraphFactory::createDefaultGraph))
+                .doOnNext(e -> {
+                    Node key = e.getKey();
+                    Graph g = e.getValue();
+
+//                    if(key.toString().contains("https://d-nb.info/gnd/82890-7/about")) {
+//                        System.out.println("Scanned graph " + key + " with size " + g.size() + " cache size: " + subjectCache.size() + " cache stats: " + subjectCache.stats());
+//                    }
+                    subjectCache.put(key, g);
+                })
+                .map(Entry::getValue);
+        }
+
+        Flowable<Triple> resultFlow = graphFlow
+            .flatMap(g -> createFlowableFromGraph(g, triplePattern)
+                    .filter(triplePattern::matches))
+            ;
+
+        Iterator<Triple> itTriples = resultFlow.blockingIterable().iterator();
+
+        ExtendedIterator<Triple> result = ExtendedIteratorClosable.create(itTriples, () -> {
+            ((Disposable)itTriples).dispose();
+        });
+
+        // System.out.println("Cache stats: " + subjectCache.stats());
+        return result;
     }
 
+
+    public static Flowable<Triple> createFlowableFromGraph(Graph g, Triple pattern) {
+        // System.out.println("  Flow from " + pattern);
+        return Flowable.generate(
+                () -> g.find(pattern),
+                (state, emitter) -> {
+                    if(state.hasNext()) {
+                        Triple t = state.next();
+                        emitter.onNext(t);
+                    } else {
+                        emitter.onComplete();
+                    }
+                },
+                ExtendedIterator::close);
+    }
+
+    @Override
+    public boolean isClosed() {
+        boolean result = delegate.isClosed();
+        return result;
+    }
+
+    @Override
+    public void close() {
+        delegate.close();
+    }
 }

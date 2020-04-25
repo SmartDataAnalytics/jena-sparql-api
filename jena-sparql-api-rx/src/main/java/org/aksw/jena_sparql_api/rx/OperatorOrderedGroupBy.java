@@ -1,6 +1,7 @@
 package org.aksw.jena_sparql_api.rx;
 
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
@@ -8,10 +9,13 @@ import org.apache.jena.ext.com.google.common.collect.Maps;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 
-import com.google.common.base.Objects;
-
+import io.reactivex.BackpressureStrategy;
+import io.reactivex.Flowable;
+import io.reactivex.FlowableEmitter;
+import io.reactivex.FlowableOnSubscribe;
 import io.reactivex.FlowableOperator;
 import io.reactivex.FlowableSubscriber;
+import io.reactivex.FlowableTransformer;
 
 /**
  * Ordered group by; somewhat similar to .toListWhile() but with dedicated support for
@@ -94,7 +98,9 @@ public final class OperatorOrderedGroupBy<T, K, V>
                 // First time init
                 priorKey = currentKey;
                 currentAcc = accCtor.apply(currentKey);
-            } else if(!Objects.equal(priorKey, currentKey)) {
+
+                Objects.requireNonNull(currentAcc, "Got null for an accumulator");
+            } else if(!Objects.equals(priorKey, currentKey)) {
 
                 child.onNext(Maps.immutableEntry(priorKey, currentAcc));
 
@@ -112,7 +118,7 @@ public final class OperatorOrderedGroupBy<T, K, V>
         @Override
         public void onComplete() {
             if(currentAcc != null) {
-                child.onNext(Maps.immutableEntry(priorKey, currentAcc));
+                child.onNext(Maps.immutableEntry(currentKey, currentAcc));
             }
 
             child.onComplete();
@@ -127,5 +133,69 @@ public final class OperatorOrderedGroupBy<T, K, V>
         public void request(long n) {
             s.request(Long.MAX_VALUE);
         }
+    }
+
+
+
+    public FlowableTransformer<T, Entry<K, V>> transformer() {
+
+        return upstream -> {
+            Flowable<Entry<K, V>> result = Flowable.create(new FlowableOnSubscribe<Entry<K, V>>() {
+
+                @Override
+                public void subscribe(FlowableEmitter<Entry<K, V>> child) throws Exception {
+                    upstream.subscribe(new FlowableSubscriber<T>() {
+
+                        protected K priorKey;
+                        protected K currentKey;
+
+                        protected V currentAcc = null;
+
+                        @Override
+                        public void onSubscribe(Subscription s) {
+                            child.setCancellable(s::cancel);
+                            s.request(Long.MAX_VALUE);
+                        }
+
+                        @Override
+                        public void onNext(T item) {
+                            currentKey = getGroupKey.apply(item);
+
+                            if(currentAcc == null) {
+                                // First time init
+                                priorKey = currentKey;
+                                currentAcc = accCtor.apply(currentKey);
+
+                                Objects.requireNonNull(currentAcc, "Got null for an accumulator");
+                            } else if(!Objects.equals(priorKey, currentKey)) {
+
+                                child.onNext(Maps.immutableEntry(priorKey, currentAcc));
+
+                                currentAcc = accCtor.apply(currentKey);
+                            }
+                            accAdd.accept(currentAcc, item);
+                            priorKey = currentKey;                        }
+
+                        @Override
+                        public void onError(Throwable t) {
+                            child.onError(t);
+                        }
+
+                        @Override
+                        public void onComplete() {
+                            if(currentAcc != null) {
+                                child.onNext(Maps.immutableEntry(currentKey, currentAcc));
+                            }
+
+                            child.onComplete();
+                        }
+
+                    });
+
+                }
+            }, BackpressureStrategy.BUFFER);
+
+            return result;
+        };
     }
 }
