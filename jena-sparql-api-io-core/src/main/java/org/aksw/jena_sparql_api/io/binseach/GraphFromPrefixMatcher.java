@@ -62,6 +62,8 @@ public class GraphFromPrefixMatcher extends GraphBase {
     protected ExtendedIterator<Triple> graphBaseFindCore(Triple triplePattern) throws Exception {
         // Init channel on first request
 
+        // System.err.println(triplePattern);
+
         // TODO Improve resource management ; we should close the seekable and the pageManager
         if(channel == null) {
             synchronized(this) {

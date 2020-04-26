@@ -17,6 +17,7 @@ import org.apache.jena.util.iterator.ExtendedIterator;
 
 import io.reactivex.Flowable;
 import io.reactivex.disposables.Disposable;
+import io.reactivex.schedulers.Schedulers;
 
 public class GraphFromSubjectCache
     extends GraphBase
@@ -27,7 +28,7 @@ public class GraphFromSubjectCache
     public GraphFromSubjectCache(Graph delegate) {//, CacheBuilder<Node, Graph> subjectCacheBuilder) {
         super();
         this.delegate = delegate;
-        this.subjectCache = CacheBuilder.newBuilder().recordStats().maximumSize(10000).build();
+        this.subjectCache = CacheBuilder.newBuilder().recordStats().maximumSize(1000).build();
     }
 
     public Cache<Node, Graph> getSubjectCache() {
@@ -61,6 +62,7 @@ public class GraphFromSubjectCache
             Triple surrogatePattern = Triple.create(triplePattern.getSubject(), Node.ANY, Node.ANY);
             //delegate.find(surrogatePattern);
             graphFlow = createFlowableFromGraph(delegate, surrogatePattern)
+                .subscribeOn(Schedulers.io())
                 .compose(GraphOpsRx.groupConsecutiveTriplesRaw(Triple::getSubject, GraphFactory::createDefaultGraph))
                 .doOnNext(e -> {
                     Node key = e.getKey();
@@ -79,20 +81,22 @@ public class GraphFromSubjectCache
                     .filter(triplePattern::matches))
             ;
 
-        Iterator<Triple> itTriples = resultFlow.blockingIterable().iterator();
+        Iterator<Triple> itTriples = resultFlow
+                //.observeOn(Schedulers.computation())
+                .blockingIterable().iterator();
 
         ExtendedIterator<Triple> result = ExtendedIteratorClosable.create(itTriples, () -> {
             ((Disposable)itTriples).dispose();
         });
 
-        // System.out.println("Cache stats: " + subjectCache.stats());
+        // System.err.println("Cache stats: " + subjectCache.stats());
         return result;
     }
 
 
     public static Flowable<Triple> createFlowableFromGraph(Graph g, Triple pattern) {
         // System.out.println("  Flow from " + pattern);
-        return Flowable.generate(
+        return Flowable.<Triple, ExtendedIterator<Triple>>generate(
                 () -> g.find(pattern),
                 (state, emitter) -> {
                     if(state.hasNext()) {
