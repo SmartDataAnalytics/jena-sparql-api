@@ -23,8 +23,8 @@ import io.reactivex.exceptions.Exceptions;
 import io.reactivex.plugins.RxJavaPlugins;
 
 public class SimpleProcessExecutor {
-	private static final Logger logger = LoggerFactory.getLogger(SimpleProcessExecutor.class);
-	
+    private static final Logger logger = LoggerFactory.getLogger(SimpleProcessExecutor.class);
+
     protected ProcessBuilder processBuilder;
     protected Consumer<String> outputSink;
 
@@ -61,20 +61,20 @@ public class SimpleProcessExecutor {
     public boolean isService() {
         return isService;
     }
-    
+
     /**
      * Return the underlying processBuilder
-     * 
+     *
      * @return
      */
     public ProcessBuilder getProcessBuilder() {
-		return processBuilder;
-	}
+        return processBuilder;
+    }
 
     /**
      * If the process is a service, its output will be processed by a separate thread.
      * Otherwise, all output will be consumed by the invoking thread.
-     * 
+     *
      * @return
      */
     public SimpleProcessExecutor setService(boolean isService) {
@@ -83,10 +83,10 @@ public class SimpleProcessExecutor {
     }
 
     /**
-     * Utility function that blocks until the process to end, thereby
+     * Utility function that blocks until the process the ends, thereby
      * forwarding output to the configured sink and applying filtering of
      * consecutive lines that are too similar
-     * 
+     *
      * @param p
      * @return
      * @throws IOException
@@ -101,14 +101,14 @@ public class SimpleProcessExecutor {
 
             int exitValue;
             try(BufferedReader br = new BufferedReader(new InputStreamReader(p.getInputStream()))) {
-	
-	            String line;
-	            while((line = br.readLine()) != null && !Thread.interrupted()) {
-	                sink.accept(line);
-	            }
-	
-	            exitValue = p.waitFor();
-	            //sink.accept("Process terminated with exit code " + exitValue);
+
+                String line;
+                while((line = br.readLine()) != null && !Thread.interrupted()) {
+                    sink.accept(line);
+                }
+
+                exitValue = p.waitFor();
+                //sink.accept("Process terminated with exit code " + exitValue);
             }
 //        }
 //        catch(IOException e) {
@@ -119,120 +119,120 @@ public class SimpleProcessExecutor {
 //        }
             return exitValue;
     }
-    
+
     /**
      * Wraps process execution as a single that will hold the exit code.
      * This which allows for waiting for the process to end as well as
      * canceling it using e.g. timeout
-     * 
+     *
      * @param p
      * @param emitter
      */
     public void run(Process p, FlowableEmitter<Integer> emitter) {
-		try {
-			int r = watchProcessOutput(p);
-			emitter.onNext(r);
-			emitter.onComplete();
-		}catch(Exception e) {
-    		emitter.onError(e);
-    	}    	
+        try {
+            int r = watchProcessOutput(p);
+            emitter.onNext(r);
+            emitter.onComplete();
+        }catch(Exception e) {
+            emitter.onError(e);
+        }
     }
 
     public Process execute() throws IOException, InterruptedException {
-    	Process result = executeCore().getValue();
-    	return result;
+        Process result = executeCore().getValue();
+        return result;
     }
-    
+
     public void executeReadLines(Flowable<String> upstream, FlowableEmitter<String> emitter) throws IOException {
 
-    	logger.debug("Starting process: " + processBuilder.command());
-    	
-    	processBuilder.redirectErrorStream(true);
+        logger.debug("Starting process: " + processBuilder.command());
+
+        processBuilder.redirectErrorStream(true);
         Process p;
-		try {
-			p = processBuilder.start();
-		} catch (IOException e1) {
-			emitter.onError(e1);
-			return;
-		}
+        try {
+            p = processBuilder.start();
+        } catch (IOException e1) {
+            emitter.onError(e1);
+            return;
+        }
 
-		PrintStream out = new PrintStream(p.getOutputStream());
-		InputStream in = p.getInputStream();
+        PrintStream out = new PrintStream(p.getOutputStream());
+        InputStream in = p.getInputStream();
 
-    	Thread t = new Thread(() -> {	
+        Thread t = new Thread(() -> {
 
-	        //int exitValue;
-	        try(BufferedReader br = new BufferedReader(new InputStreamReader(in))) {
-	            String line;
+            //int exitValue;
+            try(BufferedReader br = new BufferedReader(new InputStreamReader(in))) {
+                String line;
 
-	            boolean isInterrupted = false;
-	            while((line = br.readLine()) != null && !(isInterrupted = Thread.interrupted())) {
-	                emitter.onNext(line);	                
-	            }
-	
-	            if(!isInterrupted) {
-	            	p.waitFor();
-	            	emitter.onComplete();
-	            }
-	            emitter.onComplete();
-	            //sink.accept("Process terminated with exit code " + exitValue);
-	        } catch(Exception e) {
-	        	throw new RuntimeException(e);
-	        }
-    	});    	
-    	t.start();
+                boolean isInterrupted = false;
+                while((line = br.readLine()) != null && !(isInterrupted = Thread.interrupted())) {
+                    emitter.onNext(line);
+                }
 
-    	Callable<Void> closeAction = () -> {
-    		out.flush();
-    		out.close();
-    		return null;
-    	};
+                if(!isInterrupted) {
+                    p.waitFor();
+                    emitter.onComplete();
+                }
+                emitter.onComplete();
+                //sink.accept("Process terminated with exit code " + exitValue);
+            } catch(Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
+        t.start();
 
-    	emitter.setCancellable(() -> {
-    		closeAction.call();
-    	});
-   
-		upstream.subscribe(
-				out::println,
-				e -> {
-					p.destroy();
-					Exceptions.propagate(e);
-				},
-				closeAction::call);
+        Callable<Void> closeAction = () -> {
+            out.flush();
+            out.close();
+            return null;
+        };
+
+        emitter.setCancellable(() -> {
+            closeAction.call();
+        });
+
+        upstream.subscribe(
+                out::println,
+                e -> {
+                    p.destroy();
+                    Exceptions.propagate(e);
+                },
+                closeAction::call);
     }
 
     public Single<Integer> executeFuture() throws IOException, InterruptedException {
-    	//setService(true);
-    	Single<Integer> result = executeCore().getKey();
-    	return result;
+        //setService(true);
+        Single<Integer> result = executeCore().getKey();
+        return result;
     }
 
     public Entry<Single<Integer>, Process> executeCore() throws IOException, InterruptedException {
-    	logger.debug("Starting process: " + processBuilder.command());
-    	
+        logger.debug("Starting process: " + processBuilder.command());
 
-    	processBuilder.redirectErrorStream(true);
+
+        processBuilder.redirectErrorStream(true);
         Process p = processBuilder.start();
 
 
         Single<Integer> single = Flowable.<Integer>create(emitter -> {
-    		if(isService) {
-    			if(true) throw new RuntimeException("Do not use; use Single/Flowable.subscribeOn(Schedulers.io)");
-    			
-    			//Thread thread = new Thread(() -> run(p, emitter));
+            if(isService) {
+                if(true) throw new RuntimeException("Do not use; use Single/Flowable.subscribeOn(Schedulers.io)");
+
+                //Thread thread = new Thread(() -> run(p, emitter));
                 emitter.setCancellable(() -> {
-                	System.out.println("Destroying process...");
-                	p.destroy();
-                	//p.destroyForcibly();
-                	p.waitFor();
-                	System.out.println("Done");
-                	//thread.interrupt();
+                    System.out.println("Destroying process...");
+                    p.destroy();
+                    //p.destroyForcibly();
+                    p.waitFor();
+                    System.out.println("Done");
+                    //thread.interrupt();
                 });
-    			//thread.start();
-    		} else {
-    			emitter.setCancellable(p::destroyForcibly);
-    			run(p, emitter);
-    		}
+                //thread.start();
+            } else {
+                emitter.setCancellable(p::destroyForcibly);
+                run(p, emitter);
+            }
         }, BackpressureStrategy.BUFFER).firstOrError();
 
         return Maps.immutableEntry(single, p);
