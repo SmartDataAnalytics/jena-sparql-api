@@ -7,6 +7,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
+import java.io.RandomAccessFile;
 import java.nio.channels.ClosedChannelException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -25,10 +26,14 @@ import org.aksw.jena_sparql_api.io.endpoint.FileCreation;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 
 import com.google.common.io.ByteStreams;
+
+import io.reactivex.Single;
+import io.reactivex.disposables.Disposable;
 
 // TODO Consolidate with AkswExceptionUtils and ExceptionUtils in NGS...
 class ExceptionUtils2 {
@@ -87,13 +92,22 @@ public class ProcessPipeUtils {
      */
     public static void main(String[] args) throws Exception {
 
-        {
+        if (false) {
+            RandomAccessFile f = new RandomAccessFile("/home/raven/tmp/sorttest/dnb-all_lds_20200213.sorted.nt", "r");
+            String line;
+            while((line = f.readLine()) != null) {
+                System.out.println(line);
+            }
+        }
+
+        if (false) {
             PipeTransform pt = null;
             Path src = null;
             Path tgt = null;
 
             // This is an example of how the API is still bad:
             // the future.get() blocks the input stream creation and we have no way to cancel it
+            // We want a way that immediately returns an object from which the input stream can be obtained once it is ready
             // Obviously, a Single<InputStream> would be much better
             InputStream in = pt.mapPathToPath()
                     .andThen(fc -> {
@@ -108,6 +122,42 @@ public class ProcessPipeUtils {
 
         }
 
+        if (true) {
+            // This already looks a lot better.
+
+            // But now: how can we delete intermediate files if we chain
+            // non-streaming operations?
+            // Do we need a close() method on a Pipeline object?
+//            PipelineRx
+//                .newPipeline()
+//                .whatnow();
+
+            //
+
+            Path ntFile = Paths.get("/home/raven/tmp/sorttest/dnb-all_lds_20200213.sorted.nt");
+
+            PipeTransformRx cat = PipeTransformRx.fromSysCallStreamToStream("/bin/cat");
+            PipeTransformRx sort = PipeTransformRx.fromSysCallStreamToStream("/usr/bin/sort");
+            PipeTransformRx filter = PipeTransformRx.fromSysCallStreamToStream("/bin/grep", "size");
+
+            //InputStream tmp =
+            Disposable disposable =
+                    Single.just(ntFile)
+                        .compose(cat.mapPathToStream())
+                        .compose(sort.mapStreamToPath(Paths.get("/tmp/foo.bar")))
+                        .compose(filter.mapPathToStream())
+                        //.timeout(10, TimeUnit.SECONDS)
+                        //.blockingGet();
+                        .subscribe();
+
+            disposable.dispose();
+//            String line = new BufferedReader(new InputStreamReader(tmp)).readLine();
+//            tmp.close();
+//            System.out.println(line);
+
+            //ByteStreams.copy(tmp, System.out);;
+
+        }
 
 
         Path ntFile = Paths.get("/home/raven/Projects/Eclipse/blank-node-survey-parent/output.nt");
@@ -151,7 +201,7 @@ public class ProcessPipeUtils {
             }
         }
 
-        if (true) {
+        if (false) {
             BiFunction<Path, Path, FileCreation> xform = ProcessPipeUtils.mapPathToPath((src, tgt) -> new String[] { "/bin/cp", src.toString(), tgt.toString() });
 
 //            FileCreation fc = xform.apply(Paths.get("/home/raven/tmp/sorttest/dnb-all_lds_20200213.sorted.nt"), Paths.get("/tmp/copy.nt"));
@@ -240,60 +290,11 @@ public class ProcessPipeUtils {
         return result;
     }
 
-    public static class OutputFork {
-        protected ProcessBuilder processBuilder;
-
-        // Post start action, e.g. starting a thread to do copying
-        protected Consumer<? super Process> postStart;
-
-        protected Process process;
-
-        public OutputFork(ProcessBuilder processBuilder, Consumer<? super Process> postStart) {
-            super();
-            this.processBuilder = processBuilder;
-            this.postStart = postStart;
-        }
-
-        protected synchronized Process startProcess() {
-            if(process != null) {
-                throw new RuntimeException("Process already started");
-            }
-
-            process = ProcessPipeUtils.startProcess(processBuilder);
-            return process;
-        }
-
-        public InputStream getInputStream() {
-            startProcess();
-            postStart.accept(process);
-            InputStream result = process.getInputStream();
-            return result;
-        }
-
-        public FileCreation redirectTo(Path path) {
-            processBuilder.redirectOutput(path.toFile());
-            startProcess();
-            postStart.accept(process);
-            FileCreation result = createFileCreation(process, path);
-            return result;
-        }
-    }
-
-
-    public static interface PathToStream {
-        OutputFork apply(Path src);
-
-        default Function<Path, InputStream> asStreamSource() {
-            return path -> apply(path).getInputStream();
-        }
-    }
-
-
     public static PathToStream mapPathToStream(Function<Path, String[]> cmdBuilder) {
         return path -> {
             String[] cmd = cmdBuilder.apply(path);
             ProcessBuilder processBuilder = new ProcessBuilder(cmd);
-            OutputFork r = new OutputFork(processBuilder, p -> {});
+            ProcessSink r = new ProcessSinkImpl(processBuilder, p -> {});
             return r;
         };
     }
@@ -383,14 +384,6 @@ public class ProcessPipeUtils {
         };
     }
 
-    public static interface StreamToStream {
-        OutputFork apply(InputStreamOrPath src);
-
-        default Function<InputStream, InputStream> asStreamTransform() {
-            return in -> apply(InputStreamOrPath.from(in)).getInputStream();
-        }
-    }
-
     public static StreamToStream mapStreamToStream(String[] cmd) {
         return src -> {
             ProcessBuilder processBuilder = new ProcessBuilder(cmd);
@@ -398,7 +391,7 @@ public class ProcessPipeUtils {
                 processBuilder.redirectInput(src.getPath().toFile());
             }
 
-            OutputFork r = new OutputFork(processBuilder, p -> {
+            ProcessSink r = new ProcessSinkImpl(processBuilder, p -> {
                 if(!src.isPath()) {
                     OutputStream out = p.getOutputStream();
                     startThreadedCopy(src.getInputStream(), out, e -> p.destroy());

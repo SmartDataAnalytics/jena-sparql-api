@@ -73,7 +73,7 @@ public class SeekableFromBlockSource
 
     @Override
     public void posToEnd() throws IOException {
-        currentBlock = blockSource.contentBefore(blockSource.size() + 1);
+        currentBlock = blockSource.contentAtOrBefore(blockSource.size() + 1);
         index = (int)currentBlock.blockSize() - 1;
     }
 

@@ -19,7 +19,7 @@ public class SeekableSourceFromBufferSource
 
 	@Override
 	public Seekable get(long pos) throws IOException {
-		DecodedDataBlock block = bufferSource.contentBefore(pos);
+		DecodedDataBlock block = bufferSource.contentAtOrBefore(pos);
 		Seekable result = null;
 		if(block != null) {
 			result = new SeekableFromBlockSource(0, bufferSource, block);

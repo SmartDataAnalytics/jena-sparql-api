@@ -54,7 +54,7 @@ public class BlockSourceBzip2
 	
 	
 	@Override
-	public DecodedDataBlock contentBefore(long requestPos) throws IOException {
+	public DecodedDataBlock contentAtOrBefore(long requestPos) throws IOException {
 		DecodedDataBlock result = null;
 		Seekable seekable = seekableSource.get(requestPos);
 		SeekableMatcher matcher = bwdBlockStartMatcherFactory.newMatcher();

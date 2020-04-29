@@ -11,8 +11,15 @@ import java.util.function.Function;
  *
  */
 public interface SysCallPipeSpec {
-    default String[] cmdBuilderStreamToStream() { return null; }
-    default Function<Path, String[]> cmdBuilderStreamToFile() { return null; }
-    default Function<Path, String[]> cmdBuilderFileToStream() { return null; }
-    default Function<Path, Path> cmdBuilderFileToFile() { return null; }
+    default String[] cmdStreamToStream() { return null; }
+    default Function<Path, String[]> cmdBuilderStreamToPath() { return null; }
+    default Function<Path, String[]> cmdBuilderPathToStream() { return null; }
+    default Function<Path, Path> cmdBuilderPathToPath() { return null; }
+
+    public static SysCallPipeSpec fromCmdStreamToStream(String ... cmd) {
+        return new SysCallPipeSpec() {
+            @Override
+            public String[] cmdStreamToStream() { return cmd; }
+        };
+    }
 }
