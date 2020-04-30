@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.io.binseach;
+package org.aksw.jena_sparql_api.io.deprecated;
 
 import org.apache.jena.ext.com.google.common.primitives.Bytes;
 

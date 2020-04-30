@@ -2,48 +2,61 @@ package org.aksw.jena_sparql_api.io.binseach;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.channels.SeekableByteChannel;
+import java.util.function.Supplier;
+
+import org.aksw.jena_sparql_api.io.api.ChannelFactory;
+
+import com.google.common.primitives.Ints;
+
 
 public class SeekableFromBlockSource
     implements Seekable
 {
-    // Index in the decoded data block
-    protected int index;
-    protected BlockSource blockSource;
+    // TODO Reference to the factory - so the factory gets closed when all views on it are closed?
+    protected ChannelFactory<SeekableByteChannel> channelSupplier;
 
-    protected Block currentBlock;
-    protected ByteBuffer currentBuffer;
-
-    public SeekableFromBlockSource(int index, BlockSource bufferSource, Block currentBlock) {
-        super();
-        this.index = index;
-        this.blockSource = bufferSource;
-        this.currentBlock = currentBlock;
+    public static enum PosState {
+        BEFORE_START,
+        AFTER_END,
+        VALID
     }
 
-    public SeekableFromBlockSource clone() {
-        return new SeekableFromBlockSource(index, blockSource, currentBlock);
+    protected PosState posState = PosState.VALID;
+    protected SeekableByteChannel channel;
+
+    public SeekableFromBlockSource(ChannelFactory<SeekableByteChannel> channelSupplier) {
+        super();
+        this.channelSupplier = channelSupplier;
+        this.channel = channelSupplier.newChannel();
+    }
+
+    public synchronized SeekableFromBlockSource clone() {
+        return new SeekableFromBlockSource(channelSupplier);
     }
 
     @Override
     public int read(ByteBuffer dst) throws IOException {
-        int n = 0;
-        if(currentBlock != null) {
-            ByteBuffer buf = currentBlock.newBuffer();
-            buf.position(buf.position() + index);
-            n = Math.min(dst.remaining(), buf.remaining());
-            buf.limit(buf.position() + n);
-            //dst.put(currentBlock.data, index, n);
-            dst.put(buf);
-            if(!nextPos(n)) {
-                // If we reached the end, force the position to the end
-                // TODO Avoid doing nextPos twice; add a method to force immediately
-                nextPos(n - 1);
-                ++index;
-                n = -1;
-            }
-        }
-        return n;
-        //PageNavigator.readRemaining(dst, src)
+        return channel.read(dst);
+
+//        int n = 0;
+//        if(currentBlock != null) {
+//            ByteBuffer buf = currentBlock.newBuffer();
+//            buf.position(buf.position() + index);
+//            n = Math.min(dst.remaining(), buf.remaining());
+//            buf.limit(buf.position() + n);
+//            //dst.put(currentBlock.data, index, n);
+//            dst.put(buf);
+//            if(!nextPos(n)) {
+//                // If we reached the end, force the position to the end
+//                // TODO Avoid doing nextPos twice; add a method to force immediately
+//                nextPos(n - 1);
+//                ++index;
+//                n = -1;
+//            }
+//        }
+//        return n;
+//        //PageNavigator.readRemaining(dst, src)
     }
 
     @Override
@@ -56,79 +69,110 @@ public class SeekableFromBlockSource
     }
 
     @Override
-    public long getPos() {
-        throw new RuntimeException("Not supported");
+    public long getPos() throws IOException {
+        return channel.position();
     }
 
     @Override
-    public void setPos(long pos) {
-        throw new RuntimeException("Not supported");
+    public void setPos(long pos) throws IOException {
+        channel.position(pos);
     }
 
     @Override
-    public void posToStart() throws IOException {
-        currentBlock = blockSource.contentAfter(-1);
-        index = 0;
+    public void posToStart() {
+        posState = PosState.BEFORE_START;
+        try {
+            channel.position(0);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
-    public void posToEnd() throws IOException {
-        currentBlock = blockSource.contentAtOrBefore(blockSource.size() + 1);
-        index = (int)currentBlock.blockSize() - 1;
-    }
-
-    @Override
-    public byte get() throws IOException {
-        ByteBuffer buf = currentBlock.newBuffer();
-        byte result = buf.get(buf.position() + index);
-        //byte result = currentBuffer.get(currentBuffer.position() + index);
-        return result;
+    public void posToEnd() {
+        long pos;
+        try {
+            pos = channel.size();
+            channel.position(pos);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
     public boolean isPosBeforeStart() throws IOException {
-        boolean result = index < 0;
+        boolean result = posState.equals(PosState.BEFORE_START);
         return result;
     }
 
     @Override
     public boolean isPosAfterEnd() throws IOException {
-        boolean result = index >= currentBlock.blockSize();
+        // HACK Trigger preload of the data up to the current position
+        // We might want to use a dedicated ensurePreloaded() method
+        // get() should throw an exception if used outside of the valid bounds
+        get();
+
+        long pos = channel.position();
+        boolean result = pos >= channel.size();
         return result;
     }
 
     @Override
     public boolean nextPos(int len) throws IOException {
-        int tgtIndex = index + len;
-        Block tmp = currentBlock;
-        while(tgtIndex >= tmp.blockSize()) {
-            tgtIndex -= tmp.blockSize();
-            Block next = tmp.nextBlock();
-            if(next == null) {
-                return false;
-            }
-            tmp = next;
+        if(len < 0) {
+            throw new IllegalArgumentException();
         }
-        index = tgtIndex;
-        currentBlock = tmp;
 
-        return true;
+        if (posState == PosState.BEFORE_START) {
+            len -= 1;
+        }
+
+        boolean result = len > 0;
+        long pos = channel.position();
+        channel.position(Ints.saturatedCast(pos + len));
+//
+//        int tgtIndex = index + len;
+//        Block tmp = currentBlock;
+//        while(tgtIndex >= tmp.blockSize()) {
+//            tgtIndex -= tmp.blockSize();
+//            Block next = tmp.nextBlock();
+//            if(next == null) {
+//                return false;
+//            }
+//            tmp = next;
+//        }
+//        index = tgtIndex;
+//        currentBlock = tmp;
+
+        return result;
     }
 
     @Override
     public boolean prevPos(int len) throws IOException {
-        int tgtIndex = index - len;
-        Block tmp = currentBlock;
-        while(tgtIndex < 0) {
-            Block prev = tmp.nextBlock();
-            tgtIndex += tmp.blockSize();
-            if(prev == null) {
-                return false;
-            }
-            tmp = prev;
+        if(posState == PosState.BEFORE_START) {
+            return false;
         }
-        index = tgtIndex;
-        currentBlock = tmp;
+
+        long pos = channel.position();
+        long newPos = pos - len;
+        if(newPos >= 0) {
+            channel.position(newPos);
+        } else {
+            posState = PosState.BEFORE_START;
+        }
+
+//        int tgtIndex = index - len;
+//        Block tmp = currentBlock;
+//        while(tgtIndex < 0) {
+//            Block prev = tmp.nextBlock();
+//            tgtIndex += tmp.blockSize();
+//            if(prev == null) {
+//                return false;
+//            }
+//            tmp = prev;
+//        }
+//        index = tgtIndex;
+//        currentBlock = tmp;
 
         return true;
     }
@@ -139,13 +183,9 @@ public class SeekableFromBlockSource
     }
 
     @Override
-    public int compareToPrefix(byte[] prefix) throws IOException {
-        throw new RuntimeException("not implemented yet");
+    public long size() throws IOException {
+        return channel.size();
     }
 
-    @Override
-    public long binarySearch(long min, long max, byte delimiter, byte[] prefix) throws IOException {
-        throw new RuntimeException("not implemented yet");
-    }
 
 }

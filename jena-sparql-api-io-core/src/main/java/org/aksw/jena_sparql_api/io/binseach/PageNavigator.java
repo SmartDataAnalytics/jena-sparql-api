@@ -505,7 +505,8 @@ public class PageNavigator
      *
      *
      * Returns true if and only if the position was changed.
-     * Note, true does NOT mean that the byte at the new position matches delim
+     * Note, true does NOT mean that the byte at the new position matches delim.
+     * A match is implied if isPosAfterEnd() is false.
      *
      * @param delimiter
      * @return
@@ -808,54 +809,54 @@ public class PageNavigator
 
 
 
-    public long binarySearch(long min, long max, byte delimiter, byte[] prefix) throws IOException {
-
-        long middlePos = (min + max) / 2;
-        setPos(middlePos);
-
-        if(isPosAfterEnd()) {
-            return Long.MIN_VALUE;
-        }
-
-        posToPrev(delimiter);
-        long delimPos = getPos();
-
-        // If the delimPos has not progressed over min then there is no match
-        if(delimPos < min || min >= max) {
-            return Long.MIN_VALUE;
-        }
-
-        // long lineStart = getPos();
-        //long lineStart = delimPos + 1;
-        nextPos(1);
-        int cmp = compareToPrefix(prefix);
-
-        // System.out.println(min + " - " + max);
-//        String l = readLine();
-//        System.out.println("Comparison of line at range " + min + " - " + max);
-//        System.out.println("    " + l);
-//        System.out.println("  and");
-//        System.out.println("    " + new String(prefix));
-//        System.out.println("  resulted in " + cmp);
-
-
-        // if we have a byte comparison such as
-        // [3].compareToPrefix([5]) which yields -1, then we need to search in
-        // the higher segment
-        long result;
-        if(cmp == 0) {
-            result = delimPos;
-        } else if(cmp < 0) {
-            long nextDelimPos;
-            setPos(delimPos + 1);
-            posToNext(delimiter);
-            nextDelimPos = getPos();
-
-            result = binarySearch(nextDelimPos, max, delimiter, prefix);
-        } else { // if cmp > 0
-            result = binarySearch(min, delimPos - 1, delimiter, prefix);
-        }
-
-        return result;
-    }
+//    public long binarySearch(long min, long max, byte delimiter, byte[] prefix) throws IOException {
+//
+//        long middlePos = (min + max) / 2;
+//        setPos(middlePos);
+//
+//        if(isPosAfterEnd()) {
+//            return Long.MIN_VALUE;
+//        }
+//
+//        posToPrev(delimiter);
+//        long delimPos = getPos();
+//
+//        // If the delimPos has not progressed over min then there is no match
+//        if(delimPos < min || min >= max) {
+//            return Long.MIN_VALUE;
+//        }
+//
+//        // long lineStart = getPos();
+//        //long lineStart = delimPos + 1;
+//        nextPos(1);
+//        int cmp = compareToPrefix(prefix);
+//
+//        // System.out.println(min + " - " + max);
+////        String l = readLine();
+////        System.out.println("Comparison of line at range " + min + " - " + max);
+////        System.out.println("    " + l);
+////        System.out.println("  and");
+////        System.out.println("    " + new String(prefix));
+////        System.out.println("  resulted in " + cmp);
+//
+//
+//        // if we have a byte comparison such as
+//        // [3].compareToPrefix([5]) which yields -1, then we need to search in
+//        // the higher segment
+//        long result;
+//        if(cmp == 0) {
+//            result = delimPos;
+//        } else if(cmp < 0) {
+//            long nextDelimPos;
+//            setPos(delimPos + 1);
+//            posToNext(delimiter);
+//            nextDelimPos = getPos();
+//
+//            result = binarySearch(nextDelimPos, max, delimiter, prefix);
+//        } else { // if cmp > 0
+//            result = binarySearch(min, delimPos - 1, delimiter, prefix);
+//        }
+//
+//        return result;
+//    }
 }

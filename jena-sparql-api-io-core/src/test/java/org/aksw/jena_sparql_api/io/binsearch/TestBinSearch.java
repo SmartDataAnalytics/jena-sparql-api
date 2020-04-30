@@ -50,7 +50,7 @@ public class TestBinSearch {
       System.err.println("EVERYTHING");
 //      InputStream is = searcher.searchCore2("<https://d-nb.info/gnd/10000069-1>");
 //      InputStream is = searcher.searchCore2("");
-      InputStream is = searcher.searchCore2("<https://d-nb.info/gnd/7862131-8/about>");
+      InputStream is = searcher.searchCore("<https://d-nb.info/gnd/7862131-8/about>");
 
       Iterator<Triple> it = RDFDataMgr.createIteratorTriples(is, Lang.TURTLE, "http://foo.bar/baz");
       while(it.hasNext()) {

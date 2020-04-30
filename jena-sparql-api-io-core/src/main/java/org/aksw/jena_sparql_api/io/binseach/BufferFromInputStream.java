@@ -4,7 +4,6 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
-import java.nio.channels.Channel;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.SeekableByteChannel;
@@ -21,6 +20,7 @@ import java.util.stream.IntStream;
 
 import javax.annotation.concurrent.ThreadSafe;
 
+import org.aksw.jena_sparql_api.io.api.ChannelFactory;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.BoundedInputStream;
 import org.junit.Assert;
@@ -28,12 +28,6 @@ import org.junit.Assert;
 import com.github.jsonldjava.shaded.com.google.common.collect.Range;
 import com.google.common.base.Stopwatch;
 import com.google.common.primitives.Ints;
-
-interface ChannelFactory<T extends Channel>
-    extends AutoCloseable
-{
-    T newChannel();
-}
 
 /**
  * Implementation of a byte array that caches data in buckets from
@@ -55,7 +49,7 @@ interface ChannelFactory<T extends Channel>
  */
 @ThreadSafe
 public class BufferFromInputStream
-    implements ChannelFactory<ReadableByteChannel>
+    implements ChannelFactory<SeekableByteChannel>
 {
     /** The buffered data */
     protected byte[][] buckets;
@@ -184,6 +178,32 @@ public class BufferFromInputStream
             return this.pos;
         }
 
+        // @Override
+//        public int compareToPrefix(byte[] prefix) throws IOException {
+//        	loadDataUpTo(this.pos + prefix.length);
+//
+//        	if(pointer == null) {
+//        		pointer = getPointer(buckets, activeEnd, pos);
+//        		if(pointer == null) {
+//        			throw new RuntimeException("Outside of range")
+//        		}
+//        	}
+//
+//        	int i = pointer.idx;
+//        	int p = pointer.pos;
+//
+//        	int n = prefix.length;
+//        	for(int i = 0; i < n; ++i) {
+//        		byte a = prefix[i];
+//
+//
+//
+//
+//        	}
+//
+//        }
+
+
         @Override
         public int readActual(ByteBuffer dst) throws IOException {
             int result = doRead(this, dst);
@@ -199,7 +219,7 @@ public class BufferFromInputStream
 
         @Override
         public long size() throws IOException {
-            throw new UnsupportedOperationException();
+            return knownDataSize;
         }
 
         @Override

@@ -57,17 +57,18 @@ public class BinarySearchOnSortedFile
      */
     public InputStream search(String prefix) {
         try {
-            return prefix == null ? new ByteArrayInputStream(new byte[0]) : searchCore2(prefix);
+            return prefix == null ? new ByteArrayInputStream(new byte[0]) : searchCore(prefix);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    public InputStream searchCore2(String prefix) throws IOException {
-//		long size = channel.size();
-
+    public InputStream searchCore(String prefix) throws IOException {
         byte[] prefixBytes = prefix.getBytes();
+        return searchCore(prefixBytes);
+    }
 
+    public InputStream searchCore(byte[] prefixBytes) throws IOException {
         // -1 is the position of the delimiter before the file start
         // jump to the beginning of the file if the prefix is empty
         Seekable seeker = baseSeekable.clone();
