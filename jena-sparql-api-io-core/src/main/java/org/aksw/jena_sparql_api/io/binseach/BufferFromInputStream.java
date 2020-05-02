@@ -4,15 +4,8 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
-import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.SeekableByteChannel;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
-import java.util.Arrays;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -21,11 +14,8 @@ import java.util.stream.IntStream;
 import javax.annotation.concurrent.ThreadSafe;
 
 import org.aksw.jena_sparql_api.io.api.ChannelFactory;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.io.input.BoundedInputStream;
 import org.junit.Assert;
 
-import com.github.jsonldjava.shaded.com.google.common.collect.Range;
 import com.google.common.base.Stopwatch;
 import com.google.common.primitives.Ints;
 
@@ -49,7 +39,7 @@ import com.google.common.primitives.Ints;
  */
 @ThreadSafe
 public class BufferFromInputStream
-    implements ChannelFactory<SeekableByteChannel>
+    implements ChannelFactory<Seekable>
 {
     /** The buffered data */
     protected byte[][] buckets;
@@ -150,13 +140,18 @@ public class BufferFromInputStream
 
     public class ByteArrayChannel
         extends ReadableByteChannelBase
-        implements SeekableByteChannel
+        implements SeekableByteChannel, Seekable
     {
         protected long pos = 0;
 
         // The pointer remain null as long as the position could not be
         // converted to a valid pointer into the buckets
         protected BucketPointer pointer = null;
+
+        public ByteArrayChannel(long pos, BucketPointer pointer) {
+            this.pos = pos;
+            this.pointer = pointer;
+        }
 
         /**
          * Setting a position outside of the size of the entity
@@ -226,10 +221,97 @@ public class BufferFromInputStream
         public SeekableByteChannel truncate(long size) throws IOException {
             throw new UnsupportedOperationException();
         }
+
+        @Override
+        public Seekable clone() {
+            return new ByteArrayChannel(pos, pointer);
+        }
+
+        @Override
+        public long getPos() throws IOException {
+            return position();
+        }
+
+        @Override
+        public void setPos(long pos) throws IOException {
+            position(pos);
+        }
+
+        @Override
+        public void posToStart() throws IOException {
+            position(0);
+        }
+
+        @Override
+        public void posToEnd() throws IOException {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public boolean isPosBeforeStart() throws IOException {
+            return pos < 0;
+        }
+
+        @Override
+        public boolean isPosAfterEnd() throws IOException {
+            loadDataUpTo(pos + 1);
+
+            boolean result = pos >= knownDataSize;
+            return result;
+        }
+
+//        @Override
+//        public int checkNext(int len) throws IOException {
+//            throw new UnsupportedOperationException();
+//        }
+
+        @Override
+        public boolean prevPos(int len) throws IOException {
+            long newPos = pos - len;
+            boolean result = newPos >= 0;
+            if(result) {
+                pos -= len;
+            }
+            return result;
+        }
+
+//        @Override
+//        public int checkPrev(int len) throws IOException {
+//            throw new UnsupportedOperationException();
+//        }
+
+        @Override
+        public String readString(int len) throws IOException {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public int checkNext(int len, boolean changePos) throws IOException {
+            long delta = knownDataSize - pos;
+            if(delta < len) {
+                loadDataUpTo(pos + len);
+
+                delta = knownDataSize - pos;
+            }
+
+            int r = Math.min(len, Ints.saturatedCast(delta));
+
+            if(changePos) {
+                pos += r;
+            }
+
+            return r;
+        }
+
+        @Override
+        public int checkPrev(int len, boolean changePos) throws IOException {
+            // TODO Auto-generated method stub
+            return 0;
+        }
     }
 
-    public SeekableByteChannel newChannel() {
-        return new ByteArrayChannel();
+    public Seekable newChannel() {
+        return new ByteArrayChannel(0, null);
     }
 
     public BufferFromInputStream(
@@ -458,7 +540,8 @@ public class BufferFromInputStream
                     byte[] actualData = new byte[len];
                     try {
                         ByteBuffer buf = ByteBuffer.wrap(actualData);
-                        try(ReadableByteChannel channel = buffer.newChannel().position(start)) {
+                        try(Seekable channel = buffer.newChannel()) {
+                            channel.setPos(start);
                             while(channel.read(buf) > 0);
                         }
                     } catch (IOException e) {

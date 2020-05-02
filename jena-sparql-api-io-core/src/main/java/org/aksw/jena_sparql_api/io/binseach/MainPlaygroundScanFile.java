@@ -16,10 +16,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.io.binseach.bz2.BlockSourceBzip2;
+import org.aksw.jena_sparql_api.io.common.Reference;
 import org.aksw.jena_sparql_api.io.deprecated.BoyerMooreMatcherFactory;
 import org.aksw.jena_sparql_api.io.deprecated.SeekableMatcher;
 import org.apache.jena.ext.com.google.common.base.Stopwatch;
@@ -99,92 +99,14 @@ public class MainPlaygroundScanFile {
         return Maps.immutableEntry(count, endsOnDelim);
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws Exception {
         mainBz2Decode(args);
 //		mainBoyerMooreTest(args);
     }
 
 
-    /**
-     * Binary search over blocks
-     *
-     * Only examines the first record in the block to decide whether to look into the next or the previous one
-     *
-     * @param blockSource
-     * @param min
-     * @param max (exclusive)
-     * @param delimiter
-     * @param prefix
-     * @return
-     * @throws IOException
-     */
-    public static Block binarySearch(BlockSource blockSource, long min, long max, byte delimiter, byte[] prefix) throws IOException {
-        // System.out.println("[" + min + ", " + max + "]");
-        if(min >= max) {
-            return null;
-        }
 
-        long middlePos = (min + max) >> 1; // fast divide by 2
-
-        // Find the start of the record in the block:
-        // In the first block, this is position 0
-        // otherwise this is the first delimiter
-        Block block = blockSource.contentAtOrBefore(middlePos);
-        if(block == null) {
-            return null; //Long.MIN_VALUE;
-        }
-
-        long pos = block.getOffset();
-        if(pos < min) {
-            return null;
-        }
-        Seekable seekable = new SeekableFromBlockSource(block);
-
-
-        // TODO obtain correct flag
-        boolean isFirstBlock = false;
-        if(!isFirstBlock) {
-            // Move past first delimiter
-            seekable.posToNext(delimiter);
-            seekable.nextPos(1);
-        }
-        int cmp = seekable.compareToPrefix(prefix);
-
-        Block result;
-        if(cmp == 0) {
-            // We found an exact match
-            // The chance for a hit here is proabaly very low, we could return a flag to avoid another round
-            // of binary search - but the gain will be small
-            // TODO Count on a test load how often we reach this case
-            result = block;
-        } else if(cmp < 0) {
-            // prefix is larger than the first key on the block
-            // the search key may still be contained in this block
-            // but check the upper half of the search range if there is another block
-            long lookupPos = pos + 1;
-            Block nextBlock = blockSource.contentAtOrAfter(lookupPos);
-
-            // If there is no further block it implies we are in the last block
-            if(nextBlock == null) {
-                // return it for further examination
-                result = block;
-            } else {
-                long lowerBound = nextBlock.getOffset();
-                result = binarySearch(blockSource, lowerBound, max, delimiter, prefix);
-                if (result == null) {
-                    result = block;
-                }
-            }
-        } else { // if cmp > 0
-            // prefix is smaller than the first key of the block
-            // search in lower half
-            result = binarySearch(blockSource, min, pos, delimiter, prefix);
-        }
-
-        return result;
-    }
-
-    public static void mainBz2Decode(String[] args) throws IOException {
+    public static void mainBz2Decode(String[] args) throws Exception {
 
         Path path = Paths.get("/home/raven/Downloads/2015-11-02-Amenity.node.sorted.fixed.nt.bz2");
 
@@ -197,14 +119,18 @@ public class MainPlaygroundScanFile {
 
             byte[] prefix = "<http://linkedgeodata.org/geometry/node1583470199>".getBytes();
 
-            Block block = binarySearch(blockSource, 0, maxBlockOffset, (byte)'\n', prefix);
-
+            Reference<Block> blockRef = BlockSources.binarySearch(blockSource, 0, maxBlockOffset, (byte)'\n', prefix);
+            Block block = blockRef.get();
             if(block == null) {
                 System.out.println("No match found");
                 return;
             }
 
             System.out.println("Block offset: " + block.getOffset());
+
+            // Load the block full + extra bytes up to the start of the first record in the
+            // next block
+
 
             //SeekableSource decodedViewSource = new SeekableSourceFromBufferSource(blockSource);
 //			Seekable decodedView = decodedViewSource.get(511604800);
@@ -217,7 +143,7 @@ public class MainPlaygroundScanFile {
             // then load twice the known region - but it may well be that loading the first half of the region has the better
             // avg complexity if we assume lookups for keys to be distributed evenly across the block
             // TODO Make this less hacky
-            Seekable decodedView = new SeekableFromBlockSource(block);
+            Seekable decodedView = block.newChannel(); //new SeekableFromChannelFactory(block);
             decodedView.setPos(Long.MAX_VALUE);
             decodedView.get();
             decodedView.setPos(0);
@@ -226,7 +152,22 @@ public class MainPlaygroundScanFile {
 //            byte[] prefix = "<http://linkedgeodata.org/geometry/node1583470200>".getBytes();
 
 
+
+
+
             long findPos = decodedView.binarySearch(0, max, (byte)'\n', prefix);
+
+            System.out.println(findPos);
+
+
+            Seekable continuousView = new SeekableFromSegment(blockRef, (int)findPos, 0);
+
+
+            long start = BinarySearchOnSortedFile.getPosOfFirstMatch(continuousView, (byte)'\n', prefix);
+
+
+
+
 //            System.out.println(findPos);
 
             // TODO We now need to scan backwards to the beginning of a block

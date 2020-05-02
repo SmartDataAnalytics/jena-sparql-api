@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.channels.SeekableByteChannel;
 
 import org.aksw.jena_sparql_api.io.api.ChannelFactory;
+import org.aksw.jena_sparql_api.io.common.Reference;
 
 public class DecodedDataBlock
     implements Block
@@ -14,11 +15,22 @@ public class DecodedDataBlock
 
     // protected long blockEnd;
 
-    public Block nextBlock() throws Exception {
+    @Override
+    public boolean hasNext() throws IOException {
+        return blockSource.hasBlockAfter(blockStart);
+    }
+
+    public boolean hasPrev() throws IOException {
+        return blockSource.hasBlockBefore(blockStart);
+    }
+
+    @Override
+    public Reference<Block> nextBlock() throws IOException {
         return blockSource.contentAtOrAfter(blockStart);
     }
 
-    public Block prevBlock() throws Exception {
+    @Override
+    public Reference<Block> prevBlock() throws IOException {
         return blockSource.contentAtOrBefore(blockStart);
     }
 
@@ -32,12 +44,12 @@ public class DecodedDataBlock
 //    }
 
     // TODO: Replaces 'data'
-    protected ChannelFactory<SeekableByteChannel> channelFactory;
+    protected ChannelFactory<Seekable> channelFactory;
 
     public DecodedDataBlock(
             BlockSource blockSource,
             long blockStart,
-            ChannelFactory<SeekableByteChannel> channelFactory) {
+            ChannelFactory<Seekable> channelFactory) {
         super();
         this.blockSource = blockSource;
         this.blockStart = blockStart;
@@ -56,18 +68,24 @@ public class DecodedDataBlock
 //        return blockEnd;
 //    }
 
-    public ChannelFactory<SeekableByteChannel> getChannelFactory() {
+    public ChannelFactory<Seekable> getChannelFactory() {
         return channelFactory;
     }
 
     @Override
-    public SeekableByteChannel newChannel() {
+    public Seekable newChannel() {
         return channelFactory.newChannel();
     }
 
     @Override
     public void close() throws Exception {
         channelFactory.close();
+    }
+
+    @Override
+    public long length() throws IOException {
+        long result = blockSource.getSizeOfBlock(blockStart);
+        return result;
     }
 
 //    public byte[] getData() {

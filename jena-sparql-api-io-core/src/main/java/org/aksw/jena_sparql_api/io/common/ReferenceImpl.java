@@ -4,9 +4,20 @@ import java.util.Arrays;
 import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.WeakHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+/**
+ * Implementation of a {@link Reference}
+ *
+ * TODO Avoid needless synchronization; a ConcurrentHashMap may help;
+ *   ref.equals could do only reference comparison
+ *
+ * @author raven
+ *
+ * @param <T>
+ */
 public class ReferenceImpl<T>
     implements Reference<T>
 {
@@ -28,20 +39,21 @@ public class ReferenceImpl<T>
     protected boolean isReleased = false;
     protected StackTraceElement[] aquisitionStackTrace;
 
-    protected Map<Reference<T>, Object> childRefs = new IdentityHashMap<Reference<T>, Object>();
+    //protected Map<Reference<T>, Object> childRefs = new IdentityHashMap<Reference<T>, Object>();
+    protected Map<Reference<T>, Object> childRefs = new WeakHashMap<Reference<T>, Object>();
 
     public ReferenceImpl(ReferenceImpl<T> parent, T value, AutoCloseable releaseAction, Object comment) {
         super();
 
-        // logger.debug("Aquired reference " + comment + " from " + parent);
+        // logger.debug("Acquired reference " + comment + " from " + parent);
 
         this.parent = parent;
         this.value = value;
         this.releaseAction = releaseAction;
         this.comment = comment;
 
-        boolean traceAquisitions = false;
-        if(traceAquisitions) {
+        boolean traceAcquisitions = false;
+        if(traceAcquisitions) {
             this.aquisitionStackTrace = Thread.currentThread().getStackTrace();
         }
     }
@@ -73,7 +85,7 @@ public class ReferenceImpl<T>
     }
 
     @Override
-    public synchronized Reference<T> aquire(Object comment) {
+    public synchronized Reference<T> acquire(Object comment) {
         if(!isAlive()) {
             throw new RuntimeException("Cannot aquire from a reference with isAlive=false");
         }

@@ -5,6 +5,8 @@ import java.nio.ByteBuffer;
 
 import org.aksw.jena_sparql_api.io.common.Reference;
 
+import com.google.common.primitives.Ints;
+
 /**
  * An object for (predominantly relative) positioning over a
  * sequence of fixed size pages
@@ -71,7 +73,7 @@ public class PageNavigator
         result.page = this.page;
         result.index = this.index;
 
-        result.pageObj = this.pageObj == null ? null : this.pageObj.aquire("clone");
+        result.pageObj = this.pageObj == null ? null : this.pageObj.acquire("clone");
         result.pageBuffer = result.pageObj == null ? null : result.pageObj.get().newBuffer();
 
         result.displacement = this.displacement;
@@ -325,6 +327,8 @@ public class PageNavigator
 
     /**
      * Get the byte at the current position
+     * Does not change the position
+     *
      * Throws an exception if beyond end of data
      *
      * @return
@@ -392,9 +396,36 @@ public class PageNavigator
 //		return nextPos(1);
 //	}
 
+
+    @Override
+    public int checkNext(int len, boolean changePos) throws IOException {
+        long pos = getPos();
+        int r = Math.min(Ints.saturatedCast(maxPos - pos), len);
+
+        if(changePos) {
+            nextPos(r);
+        }
+
+        return r;
+    }
+
+    @Override
+    public int checkPrev(int len, boolean changePos) throws IOException {
+        long pos = getPos();
+        int r = Math.min(Ints.saturatedCast(pos - minPos), len);
+
+        if(changePos) {
+            prevPos(r);
+        }
+
+        return r;
+    }
+
     /**
-     * Attempts to advance the position by 1 byte
+     * Attempts to advance the position by delta bytes
      * and returns true if this succeeded.
+     * Position is unchanged if insufficient bytes are available
+     *
      * Cannot advance beyond the last byte.
      *
      * @return
@@ -402,13 +433,7 @@ public class PageNavigator
      */
     @Override
     public boolean nextPos(int delta) throws IOException {
-        //getBufferForPage(page);
-//		getBufferForPage(page);
-
         int nextIndex = index + delta;
-//		boolean isNextIndexInRange = page < maxPage
-//				? nextIndex < pageSize
-//				: nextIndex < maxIndex;
 
         if(nextIndex < relMaxIndexInPage) {
             index = nextIndex;
@@ -428,6 +453,8 @@ public class PageNavigator
 
             ByteBuffer buf = getBufferForPage(tgtPage);
             if(buf != null) {
+                // FIXME I think we are missing a check whether for the last page tgtIndex is in the valid range
+                // nextPos(x) where x exceeds endPos would then incorrectly return true
                 page = tgtPage;
                 index = tgtIndex;
                 setPos(page, index);

@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigInteger;
 import java.nio.channels.Channels;
+import java.nio.channels.SeekableByteChannel;
 import java.util.concurrent.ExecutionException;
 
 import org.aksw.jena_sparql_api.io.binseach.Block;
@@ -12,6 +13,8 @@ import org.aksw.jena_sparql_api.io.binseach.BufferFromInputStream;
 import org.aksw.jena_sparql_api.io.binseach.DecodedDataBlock;
 import org.aksw.jena_sparql_api.io.binseach.Seekable;
 import org.aksw.jena_sparql_api.io.binseach.SeekableSource;
+import org.aksw.jena_sparql_api.io.common.Reference;
+import org.aksw.jena_sparql_api.io.common.ReferenceImpl;
 import org.aksw.jena_sparql_api.io.deprecated.BoyerMooreMatcherFactory;
 import org.aksw.jena_sparql_api.io.deprecated.MatcherFactory;
 import org.aksw.jena_sparql_api.io.deprecated.SeekableMatcher;
@@ -19,8 +22,6 @@ import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import com.google.common.collect.RangeMap;
-import com.google.common.io.ByteStreams;
 
 
 public class BlockSourceBzip2
@@ -35,9 +36,8 @@ public class BlockSourceBzip2
     protected MatcherFactory fwdBlockStartMatcherFactory;
     protected MatcherFactory bwdBlockStartMatcherFactory;
 
-    protected Cache<Long, Block> blockCache = CacheBuilder.newBuilder().build();
+    protected Cache<Long, Reference<Block>> blockCache = CacheBuilder.newBuilder().build();
 
-    protected RangeMap<Long, Object> posToChannel;
 
 
     public BlockSourceBzip2(
@@ -68,23 +68,29 @@ public class BlockSourceBzip2
     }
 
 
-    protected Block loadBlock(Seekable seekable) throws IOException {
+    protected Reference<Block> loadBlock(Seekable seekable) throws IOException {
         long blockStart = seekable.getPos();
 
+        // The input stream now owns the seekable - closing it closes the seekable!
         InputStream rawIn = Channels.newInputStream(seekable);
         BZip2CompressorInputStream decodedIn = new BZip2CompressorInputStream(rawIn, false);
 
         BufferFromInputStream blockBuffer = new BufferFromInputStream(8192, decodedIn);
 
-        Block result = new DecodedDataBlock(this, blockStart, blockBuffer);
+        // Closing the block would close the input stream -
+        // In order to allow multiple clients, wrap the block in a reference:
+        // Only if there are no more client for a block then the block itself gets closed
+        Block block = new DecodedDataBlock(this, blockStart, blockBuffer);
+        Reference<Block> result = ReferenceImpl.create(block, block::close, "Root ref to block " + blockStart);
+
         return result;
     }
 
 
     @Override
-    public Block contentAtOrBefore(long requestPos) throws IOException {
+    public Reference<Block> contentAtOrBefore(long requestPos) throws IOException {
         // If the requestPos is already in the cache, serve it from there
-        Block result = blockCache.getIfPresent(requestPos);
+        Reference<Block> result = blockCache.getIfPresent(requestPos);
 
         if(result == null) {
             Seekable seekable = seekableSource.get(requestPos);
@@ -99,11 +105,11 @@ public class BlockSourceBzip2
             }
         }
 
-        return result;
+        return result.acquire(null);
     }
 
-    public Block cache(long blockStart, Seekable seekable) throws IOException {
-        Block result;
+    public Reference<Block> cache(long blockStart, Seekable seekable) throws IOException {
+        Reference<Block> result;
         try {
             result = blockCache.get(blockStart, () -> loadBlock(seekable));
         } catch (ExecutionException e) {
@@ -113,17 +119,60 @@ public class BlockSourceBzip2
     }
 
     @Override
-    public Block contentAtOrAfter(long requestPos) throws IOException {
-        Block result = null;
-        Seekable seekable = seekableSource.get(requestPos);
-        SeekableMatcher matcher = fwdBlockStartMatcherFactory.newMatcher();
-        boolean didFind = matcher.find(seekable);
-        if(didFind) {
-            // We are now at the beginning of the pattern
-            long blockStart = seekable.getPos();
-            result = cache(blockStart, seekable);
+    public Reference<Block> contentAtOrAfter(long requestPos) throws IOException {
+        Reference<Block> result = blockCache.getIfPresent(requestPos);
+
+        if(result == null) {
+            Seekable seekable = seekableSource.get(requestPos);
+            SeekableMatcher matcher = fwdBlockStartMatcherFactory.newMatcher();
+            boolean didFind = matcher.find(seekable);
+            if(didFind) {
+                // We are now at the beginning of the pattern
+                long blockStart = seekable.getPos();
+                result = cache(blockStart, seekable);
+            }
         }
 
+        return result.acquire(null);
+    }
+
+    @Override
+    public long getSizeOfBlock(long pos) throws IOException {
+        // TODO If the pos is not an exact offset, raise an error
+        // TODO The block size may be known - e.g. 900K - in that case we only need to check whether there
+        // is subsequent block - only if there is none we actually have to compute the length
+        long result;
+        try(Reference<Block> ref = contentAtOrAfter(pos)) {
+            try(Seekable channel = ref.get().newChannel()) {
+                result = channel.size();
+            }
+        } catch (Exception e) {
+            throw new IOException(e);
+        }
+
+        return result;
+    }
+
+
+
+    @Override
+    public boolean hasBlockAfter(long pos) throws IOException {
+        boolean result;
+        try(Seekable seekable = seekableSource.get(pos + 1)) {
+            SeekableMatcher matcher = fwdBlockStartMatcherFactory.newMatcher();
+            result = matcher.find(seekable);
+        }
+        return result;
+    }
+
+    @Override
+    public boolean hasBlockBefore(long pos) throws IOException {
+        boolean result;
+        try(Seekable seekable = seekableSource.get(pos - 1)) {
+            SeekableMatcher matcher = bwdBlockStartMatcherFactory.newMatcher();
+            boolean didFind = matcher.find(seekable);
+            result = matcher.find(seekable);
+        }
         return result;
     }
 

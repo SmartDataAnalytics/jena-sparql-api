@@ -3,12 +3,46 @@ package org.aksw.jena_sparql_api.io.binseach;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+
+/*
+ *
+ * checkNext(horizon, changePos); Return the number of available bytes up to the horizon.
+ *   Optionally move as many bytes as possible
+ *
+ *
+ * posToNext(delim, changePos):
+ *
+ * As a rule of thumb: use global position to 'jump' to a location (use case: binary search)
+ *    for example, with fixed size pages, an absolute pos translates to an index in a page using
+ *    (pos / pageSize, pos % pageSize).
+ *
+ * use relative position to 'iterate' to it (positioning is most likely within the same internal buffer)
+ *
+ */
 
 /**
- * Interface for purely relative navigation along data which allows for navigating along
- * data of unknown or infinite size.
+ * Interface that enables relative navigation over data of fixed finite
+ * but possibly initially unknown size.
+ * Start and end positions can be 'discovered' when a relative operation causes.
+ * A Seekable is a ReadableByteChannel but in addition it includes methods for relative
+ * seeks and pattern matching methods.
+ *
+ * The rationale is, that certain operations can be carried out faster if they are pushed
+ * to underlying implementation.
+ * For example, consider comparing a fixed sequence of bytes to a Seekable: Instead of repeatedly
+ * requesting a copies of bytes from the channel, the comparision can be pushed to the seekable which
+ * may find out it can delegate the request to an internal buffer. Or it may detect that the
+ * operation crosses internal buffer boundaries and handle this case accordingly.
+ * The other aspect is, that for relative seeks it is assumed that checking
+ * the resources associated with the most recent position first is most likely to
+ * generate lookup hits.
+ * So with this we can skip a check for whether a global position change should be translated into a relative one.
+ *
+ *
+ * A seekable is backed by a data supplying entity such as a byte array, a ByteBuffer, a FileChannel
+ * or a composite thereof.
+ *
+ *
  *
  * There are two related main features of this interface / trait:
  * One is is that it common matching methods are part of the interface - with emphasis on binary search.
@@ -125,7 +159,33 @@ public interface Seekable
      * @param len
      * @return True if the position was changed by the requested amount of bytes. False means that the position was unchanged.
      */
-    boolean nextPos(int len) throws IOException;
+    default boolean nextPos(int len) throws IOException {
+        int available = checkNext(len, false);
+        boolean result = available == len;
+        if(result) {
+            checkNext(len, true);
+        }
+        return result;
+    }
+
+    int checkNext(int len, boolean changePos) throws IOException;
+
+    /**
+     * Attempt to advance the position by the given number of bytes.
+     * Return the number of bytes by which the position was changed.
+     * Returning less bytes than requested implies that a end position
+     * was reached which cannot be passed.
+     *
+     * @param len
+     * @return
+     * @throws IOException
+     */
+//    default int forceNextPos(int len) throws IOException {
+//        int r = checkNext(len);
+//        nextPos(r);
+//        return r;
+//    }
+
 
     /**
      * Attempt to step back the position by the given number of bytes.
@@ -136,6 +196,23 @@ public interface Seekable
      */
     boolean prevPos(int len) throws IOException;
 
+    int checkPrev(int len, boolean changePos) throws IOException;
+
+    /**
+     * Attempt to advance the position in backward direction by the given number of bytes.
+     * Return the number of bytes by which the position was changed.
+     * Returning less bytes than requested implies that a start position
+     * was reached which cannot be passed.
+     *
+     * @param len
+     * @return
+     * @throws IOException
+     */
+//    default int forcePrevPos(int len) throws IOException {
+//        int r = checkPrev(len);
+//        prevPos(r);
+//        return r;
+//    }
 
     /**
      * Relative positioning. Delegates to nextPos or prevPos based on sign of delta.
@@ -180,6 +257,13 @@ public interface Seekable
 
 
     /**
+     * Move the position to the next delimiter if it exists.
+     * Positive result is the number of bytes the position was advanced by this invocation.
+     * Negative result indicates that the number of bytes until the end of the seekable - i.e.
+     * within that number of bytes no match was found.
+     *
+     *
+     *
      * Move the position to the next delimiter if it exists,
      * or one element past the end of data such that isPosAfterEnd() yields true.
      * Position is unchanged if already at a delimiter
@@ -201,6 +285,23 @@ public interface Seekable
             result = true;
         }
         return result;
+    }
+
+    /**
+     *
+     * 0: match but 0 bytes moved
+     *
+     * negative values indicate no match. add +1 to get the number of bytes moved:
+     * -1: no match and 0 bytes moved
+     * -10: no match and 9 bytes moved
+     *
+     *
+     * @param delimiter
+     * @param changePos If no delimiter is found, move the pos to the end
+     * @return
+     */
+    default int posToNext(byte delimiter, boolean changePos) throws IOException {
+        throw new UnsupportedOperationException();
     }
 
     /**
@@ -417,6 +518,9 @@ public interface Seekable
         return result;
     }
 
+
+    @Override
+    void close() throws IOException;
 
     default long size() throws IOException {
         return -1;

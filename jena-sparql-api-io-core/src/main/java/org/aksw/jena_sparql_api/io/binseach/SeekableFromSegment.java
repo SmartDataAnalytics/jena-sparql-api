@@ -1,0 +1,691 @@
+package org.aksw.jena_sparql_api.io.binseach;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.Iterator;
+import java.util.function.Supplier;
+
+import org.aksw.jena_sparql_api.io.common.Reference;
+
+/**
+ * A helper iterator that automatically closes
+ * the previous item when next() is called.
+ *
+ * Actually, we do not need next to return an object, instead it could
+ * just set properties directly:
+ *
+ * IterState.advance();
+ * IterState.closeCurrent();
+ * IterState.current();
+ *
+ * @author raven
+ *
+ */
+class BlockIterState {
+//    implements Iterator<OpenBlock> {
+
+//    protected OpenBlock current;
+    public Reference<Block> blockRef;
+    public Block block;
+    public Seekable seekable;
+
+
+    protected boolean skipFirstClose;
+    protected boolean isFwd;
+
+    public BlockIterState(Reference<Block> blockRef, Seekable seekable, boolean isFwd) {
+        // this.current = new OpenBlock(blockRef, seekable);
+        this.blockRef = blockRef;
+        this.block = blockRef.get();
+        this.seekable = seekable;
+
+        this.skipFirstClose = true;
+        this.isFwd = isFwd;
+    }
+
+    public static BlockIterState fwd(Reference<Block> blockRef, Seekable seekable) {
+        return new BlockIterState(blockRef, seekable, true);
+    }
+
+    public static BlockIterState bwd(Reference<Block> blockRef, Seekable seekable) {
+        return new BlockIterState(blockRef, seekable, false);
+    }
+
+    //@Override
+    public boolean hasNext() {
+        boolean result;
+        try {
+            result = isFwd
+                    ? block.hasNext()
+                    : block.hasPrev();
+
+        } catch (IOException e) {
+            throw new RuntimeException();
+        }
+        return result;
+    }
+
+
+    public void closeCurrent() {
+        if(skipFirstClose) {
+            try {
+                blockRef.close();
+                seekable.close();
+            } catch(Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
+    public void advance() {
+        OpenBlock result;
+
+        try {
+            Reference<Block> next = isFwd
+                    ? block.nextBlock()
+                    : block.prevBlock();
+
+            if(next == null) {
+                result = null;
+            } else {
+                closeCurrent();
+                skipFirstClose = false;
+
+                blockRef = next;
+                block = next.get();
+                seekable = block.newChannel();
+
+                //current = new OpenBlock(next, next.get().newChannel());
+                //result = current;
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        // return result;
+    }
+
+}
+
+// Combine reference to a block with a channel
+class OpenBlock{
+    public Reference<Block> blockRef;
+    public Block block;
+    public Seekable seekable;
+
+    public OpenBlock(Reference<Block> blockRef, Seekable seekable) {
+        this.blockRef = blockRef;
+        this.block = blockRef.get();
+        this.seekable = seekable;
+    }
+
+    void close() throws IOException {
+        seekable.close();
+        try {
+            blockRef.close();
+        } catch (Exception e) {
+            throw new IOException(e);
+        }
+    }
+
+//
+//    boolean hasNext() {
+//
+//    }
+//
+//    OpenedBlock closeAndNext() {
+//        Reference<Block> next = blockRef.get().nextBlock();
+//        f
+//    }
+}
+
+/**
+ * Segment could have predecessor / successor methods, but
+ * how can we slice segments we request?
+ *
+ * The use case is to scan backward until a condition is no longer satisfied,
+ * maybe we don't need slicing then
+ *
+ *
+ *
+ * @author raven
+ *
+ */
+public class SeekableFromSegment
+    implements Seekable
+{
+    protected Reference<Block> startBlockRef;
+    protected int startPosInStartSegment;
+
+    /**
+     * The start position exposed - may be non-zero or even negative!
+     */
+    protected long exposedStartPos;
+
+
+    /*
+     *
+     */
+
+    protected long maxPos;
+
+    protected Reference<Block> currentBlockRef;
+    protected Block currentBlock; // cache of currentBlockRef.get()
+    protected Seekable currentSeekable; // currentBlock.newChannel()
+    protected long pos;
+
+
+    public SeekableFromSegment(Reference<Block> startBlockRef, int posInStartSegment, long exposedStartPos) {
+        super();
+        this.startBlockRef = startBlockRef;
+        this.startPosInStartSegment = posInStartSegment;
+        this.exposedStartPos  = exposedStartPos;
+
+
+        this.maxPos = Long.MAX_VALUE;
+        init();
+    }
+
+    protected void init() {
+        this.currentBlockRef = startBlockRef.acquire(null);
+        this.currentBlock = currentBlockRef.get();
+        this.currentSeekable = currentBlock.newChannel();
+    }
+
+    @Override
+    public boolean isOpen() {
+        return true;
+    }
+
+
+    @Override
+    public void close() throws IOException {
+    }
+
+
+    @Override
+    public Seekable clone() {
+        return new SeekableFromSegment(startBlockRef, startPosInStartSegment, exposedStartPos);
+    }
+
+
+    @Override
+    public long getPos() throws IOException {
+        return pos;
+    }
+
+
+    @Override
+    public void setPos(long pos) throws IOException {
+        this.pos = pos;
+    }
+
+
+    @Override
+    public void posToStart() throws IOException {
+        try {
+            currentBlockRef.close();
+            currentBlockRef = startBlockRef.acquire(null);
+            pos = exposedStartPos;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        pos = 0;
+    }
+
+
+    // Replace end with the concept of a fwd horizon
+    @Override
+    public void posToEnd() throws IOException {
+        // pos = maxPos;
+        throw new UnsupportedOperationException();
+    }
+
+
+    @Override
+    public boolean isPosBeforeStart() throws IOException {
+        boolean result = pos < exposedStartPos;
+        return result;
+    }
+
+
+    Reference<Block> openNextCloseCurrent(Reference<Block> current, Reference<Block> exclude) throws IOException {
+        Reference<Block> result = current.get().nextBlock();
+        try {
+            if(current != exclude) {
+                current.close();
+            }
+        } catch (Exception e) {
+            throw new IOException(e);
+        }
+        return result;
+    }
+
+    @Override
+    public boolean isPosAfterEnd() throws IOException {
+        // TODO Test for currentSeekable.isPosAfterEnd() and there is no non-zero size next block
+        boolean result = currentSeekable.isPosAfterEnd();
+        if(result) {
+            BlockIterState it = BlockIterState.fwd(currentBlockRef, currentSeekable);
+            while(it.hasNext()) {
+                it.advance();
+                if(!it.seekable.isPosAfterEnd()) {
+                    result = true;
+                    break;
+                }
+            }
+            it.closeCurrent();
+        }
+
+        return result;
+    }
+
+    protected boolean loadNextBlock() throws IOException {
+        Reference<Block> nextBlockRef = currentBlockRef.get().nextBlock();
+        boolean result = nextBlockRef != null;
+
+        if(result) {
+            try {
+                currentBlockRef.close();
+                currentSeekable.close();
+            } catch (Exception e) {
+                throw new IOException(e);
+            }
+
+            currentBlockRef = nextBlockRef;
+            currentBlock = currentBlockRef.get();
+            currentSeekable = currentBlock.newChannel();
+        }
+
+        return result;
+    }
+
+//    protected boolean loadPrevBlock() throws Exception {
+//        Reference<Block> nextBlockRef = currentBlockRef.get().prevBlock();
+//        boolean result = nextBlockRef != null;
+//
+//        if(result) {
+//            currentBlockRef.close();
+//            currentBlockRef = nextBlockRef;
+//
+//            Seekable next = nextBlockRef.get().newChannel();
+//            currentBlockRef.get();
+//            currentBlock = currentBlockRef.get();
+//
+//            // Obtaining the length may already trigger a full load of the block - especially for blocks
+//            // that require decoding (for bz2 this is only necessary for the last block, if there
+//            // is a predecessor, a static block size can be assumed)
+//            // At latest when reading this has to happen
+//            long maxPos = currentBlock.length();
+//            next.setPos(maxPos);
+//
+//            currentSeekable = next;
+//        }
+//
+//        return result;
+//    }
+
+
+    class State {
+        public State(Reference<Block> blockRef, Seekable channel) {
+            super();
+            this.blockRef = blockRef;
+            this.channel = channel;
+        }
+
+        Reference<Block> blockRef;
+        Seekable channel;
+    }
+
+    Supplier<State> nexts() {
+        State current[] = new State[] { new State(currentBlockRef, currentSeekable) };
+        return () -> {
+            return current[0];
+        };
+    }
+
+
+    /**
+     * positive: relative position
+     *
+     * issue: 0 means no position change, but it does not tell whether the current position is a match or not
+     * we could return a pair with
+     * +0 with current position matches
+     * and -0 current position does not match but no further bytes are available
+     *
+     */
+    @Override
+    public int posToNext(byte delimiter, boolean changePos) throws IOException {
+        int result;
+        int contrib = currentSeekable.posToNext(delimiter, changePos);
+
+        int posDelta = 0;
+        if(contrib >= 0) {
+            result = contrib;
+        } else {
+            Reference<Block> tmpBlockRef = currentBlockRef;
+            Block tmpBlock = currentBlock;
+            Seekable tmpSeekable = currentSeekable;
+
+            while(contrib < 0) {
+                // Add the remaining bytes of the current seekable to the posDelta
+                posDelta += -contrib + 1;
+
+                // Check whether there is a successor block
+                Reference<Block> nextBlockRef = contrib > 0 ? null : tmpBlockRef.get().nextBlock();
+
+                if(nextBlockRef == null) {
+                    currentBlockRef = tmpBlockRef;
+                    currentBlock = tmpBlock;
+                    currentSeekable = tmpSeekable;
+                    tmpSeekable.posToEnd();
+                } else {
+                    if(tmpBlockRef != null && tmpBlockRef != currentBlockRef) {
+                        tmpSeekable.close();
+                        try {
+                            tmpBlockRef.close();
+                        } catch (Exception e) {
+                        }
+                    }
+
+                    tmpBlock = nextBlockRef.get();
+                    tmpSeekable = tmpBlock.newChannel();
+
+
+                    contrib = tmpSeekable.posToNext(delimiter, false);
+
+
+                    if(contrib > 0) {
+                        currentSeekable.close();
+                        try {
+                            currentBlockRef.close();
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
+
+                        currentBlockRef = nextBlockRef;
+                        currentBlock = currentBlockRef.get();
+                        currentSeekable = tmpSeekable;
+                        break;
+                    }
+                }
+
+                try {
+                    tmpBlockRef.close();
+                } catch (Exception e) {
+                    throw new  RuntimeException(e);
+                }
+                tmpSeekable.close();
+            }
+            result = -1;
+        }
+
+        return result;
+    }
+
+
+    @Override
+    public int compareToPrefix(byte[] prefix) throws IOException {
+        int result;
+        int l = prefix.length;
+
+        // If the current seekable has sufficient bytes available
+        // delegate the call
+        if(l == currentSeekable.checkNext(l, false)) {
+            result = currentSeekable.compareToPrefix(prefix);
+        } else {
+            // Copy into array
+            byte tmp[] = new byte[l];
+            peekNextBytes(tmp, 0, l);
+
+            result = Seekable.compareArrays(tmp, prefix);
+        }
+
+        return result;
+    }
+
+
+    void setCurrent(BlockIterState state) {
+        currentBlockRef = state.blockRef;
+        currentBlock = state.block;
+        currentSeekable = state.seekable;
+    }
+
+    // void setActiveBlock(Reference<T>)
+
+    // @Override
+    public int checkNext(int len, boolean changePos) throws IOException {
+        int result;
+        int contrib = currentSeekable.checkNext(len, changePos);
+
+        result = contrib;
+
+        if(contrib >= len) {
+            // nothing do do
+        } else {
+            BlockIterState it = BlockIterState.fwd(currentBlockRef, currentSeekable);
+            while(it.hasNext()) {
+                int remaining = len - result;
+
+                it.advance();
+                contrib = it.seekable.checkNext(remaining, changePos);
+                result += contrib;
+
+                if(result >= len) {
+                    break;
+                }
+            }
+
+            if(changePos) {
+                setCurrent(it);
+            }
+        }
+
+        return result;
+    }
+
+//            int remaining = len - contrib;
+//            Reference<Block> tmpBlockRef = currentBlockRef;
+//            Block tmpBlock = currentBlock;
+//            Seekable tmpSeekable = currentSeekable;
+//
+//            while(remaining > 0) {
+//                // Add the remaining bytes of the current seekable to the posDelta
+//                remaining -= contrib;
+//
+//                // Check whether there is a successor block
+//                Reference<Block> nextBlockRef = tmpBlockRef.get().nextBlock();
+//
+//                if(nextBlockRef == null) {
+//                    currentBlockRef = tmpBlockRef;
+//                    currentBlock = tmpBlock;
+//                    currentSeekable = tmpSeekable;
+//                    tmpSeekable.posToEnd();
+//                } else {
+//                    if(tmpBlockRef != null && tmpBlockRef != currentBlockRef) {
+//                        tmpSeekable.close();
+//                        try {
+//                            tmpBlockRef.close();
+//                        } catch (Exception e) {
+//                        }
+//                    }
+//
+//                    tmpBlock = nextBlockRef.get();
+//                    tmpSeekable = tmpBlock.newChannel();
+//
+//
+//                    contrib = tmpSeekable.checkNext(remaining, false);
+//
+//
+//                    if(contrib > 0) {
+//                        currentSeekable.close();
+//                        try {
+//                            currentBlockRef.close();
+//                        } catch (Exception e) {
+//                            throw new RuntimeException(e);
+//                        }
+//
+//                        currentBlockRef = nextBlockRef;
+//                        currentBlock = currentBlockRef.get();
+//                        currentSeekable = tmpSeekable;
+//                        break;
+//                    }
+//                }
+//
+//                try {
+//                    tmpBlockRef.close();
+//                } catch (Exception e) {
+//                    throw new  RuntimeException(e);
+//                }
+//                tmpSeekable.close();
+//            }
+//            result = -1;
+//        }
+//
+//        return result;
+//    }
+
+    @Override
+    public boolean nextPos(int len) throws IOException {
+        int r = checkNext(len, false);
+        boolean result = r == len;
+        if(result) {
+            checkNext(len, true);
+        }
+
+        return result;
+    }
+
+//  @Override
+//  public boolean nextPos(int len) throws IOException {
+//      boolean result = true;
+
+//    @Override
+//    public boolean nextPos(int len) throws IOException {
+//        boolean result = true;
+//
+//        // Backup of the current state in case advancing by len fails
+//        Seekable backup = null;
+//        long backupPos = pos;
+//
+//        // If the segment denies relative positioning by the requested amount
+//        // it implies that the end of the segment has been reached.
+//        int remaining = len;
+//        try {
+//            for(;;) {
+//                if(!currentSeekable.nextPos(remaining)) {
+//                    if(backup != null) {
+//                        backup = currentSeekable.clone();
+//                    }
+//
+//                    // Check how many bytes we are away from the end
+//                    // Try to extend the buffer by a certain amount and obtain how many bytes
+//                    // could actually be made available
+//                    int remainingBytes = Ints.checkedCast(currentSeekable.checkNext(remaining));
+//
+//                    if(remainingBytes > len) {
+//                        throw new RuntimeException("Contract violation: relative positioning rejected despite availability of sufficient number of bytes claimed");
+//                    }
+//
+//                    int delta = len - remainingBytes;
+//                    if(!loadNextBlock()) {
+//                        result = false;
+//                        currentSeekable = backup;
+//                        pos = backupPos;
+//                    }
+//
+//                    remaining -= delta;
+//                    continue;
+//                }
+//                break;
+//            }
+//        } finally {
+//            if(result && (backup != null)) {
+//                backup.close();
+//            }
+//        }
+//
+//        return result;
+//    }
+
+
+//    @Override
+//    public boolean prevPos(int len) throws IOException {
+//        boolean result = true;
+//
+//        // Backup of the current state in case advancing by len fails
+//        Seekable backup = null;
+//        long backupPos = pos;
+//
+//        // If the segment denies relative positioning by the requested amount
+//        // it implies that the end of the segment has been reached.
+//        int remaining = len;
+//        try {
+//            for(;;) {
+//                int stepped = currentSeekable.forcePrevPos(remaining);
+//                if(stepped != remaining) {
+//                    if(backup != null) {
+//                        backup = currentSeekable.clone();
+//                    }
+//
+//                    int delta = len - stepped;
+//                    if(!loadPrevBlock()) {
+//                        result = false;
+//                        currentSeekable = backup;
+//                        pos = backupPos;
+//                    }
+//
+//                    remaining -= delta;
+//                    continue;
+//                }
+//                break;
+//            }
+//        } finally {
+//            if(result && (backup != null)) {
+//                backup.close();
+//            }
+//        }
+//
+//        return result;
+//
+//    }
+
+    @Override
+    public int read(ByteBuffer dst) throws IOException {
+        int n = -1;
+
+        while(currentSeekable != null && dst.remaining() > 0) {
+            n = currentSeekable.read(dst);
+            if(n == 0) {
+                throw new RuntimeException("Read returned 0 bytes - this should never be the case");
+            } else if(n == -1) {
+                loadNextBlock();
+                continue;
+            }
+
+            pos += n;
+        }
+
+        return n;
+    }
+
+
+    @Override
+    public String readString(int len) throws IOException {
+        throw new RuntimeException("not implemented");
+    }
+
+
+    @Override
+    public boolean prevPos(int len) throws IOException {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+
+    @Override
+    public int checkPrev(int len, boolean changePos) throws IOException {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+}
