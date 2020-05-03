@@ -102,11 +102,32 @@ public class MainPlaygroundScanFile {
     }
 
     public static void main(String[] args) throws Exception {
-        mainBz2Decode(args);
+        mainBz2DecodeNice(args);
 //		mainBoyerMooreTest(args);
     }
 
 
+    public static void mainBz2DecodeNice(String[] args) throws Exception {
+        Path path = Paths.get("/home/raven/Downloads/2015-11-02-Amenity.node.sorted.fixed.nt.bz2");
+
+        try(FileChannel fileChannel = FileChannel.open(path, StandardOpenOption.READ)) {
+            BinarySearcher bs = BlockSources.createBinarySearcherBz2(fileChannel);
+
+            try(InputStream in = bs.search("<http://linkedgeodata.org/geometry/node1583470199>")) {
+
+                BufferedReader br = new BufferedReader(new InputStreamReader(in));
+                String line;
+                int i = 0;
+                while((line = br.readLine()) != null) {
+                    ++i;
+                    System.out.println(line);
+                    if(i > 100) { break; }
+                }
+                System.out.println(i + " lines");
+            }
+        }
+
+    }
 
     public static void mainBz2Decode(String[] args) throws Exception {
 

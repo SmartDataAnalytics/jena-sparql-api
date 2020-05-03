@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigInteger;
 import java.nio.channels.Channels;
-import java.nio.channels.SeekableByteChannel;
 import java.util.concurrent.ExecutionException;
 
 import org.aksw.jena_sparql_api.io.binseach.Block;

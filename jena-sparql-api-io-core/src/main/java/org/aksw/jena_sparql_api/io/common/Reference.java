@@ -45,6 +45,12 @@ public interface Reference<T>
      */
     boolean isClosed();
 
+
+    // TODO The throws declaration of Autoclose can be a pain to work with - override it?
+    // @Override
+    // void close();
+
+
     /**
      * Optional operation.
      *

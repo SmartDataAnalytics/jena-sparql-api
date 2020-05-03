@@ -1,8 +1,23 @@
 package org.aksw.jena_sparql_api.io.binseach;
 
+import java.io.IOException;
+import java.nio.channels.FileChannel;
+
+import org.aksw.jena_sparql_api.io.binseach.bz2.BlockSourceBzip2;
 import org.aksw.jena_sparql_api.io.common.Reference;
 
 public class BlockSources {
+
+    public static BinarySearcher createBinarySearcherBz2(FileChannel fileChannel) throws IOException {
+        PageManager pageManager = PageManagerForFileChannel.create(fileChannel);
+        // long maxBlockOffset = pageManager.getEndPos();
+
+        SeekableSource pagedSource = new SeekableSourceFromPageManager(pageManager);
+        BlockSource blockSource = BlockSourceBzip2.create(pagedSource);
+
+        BinarySearcher result = new BinarySearchOnBlockSource(blockSource);
+        return result;
+    }
 
     /**
      * Binary search over blocks
@@ -17,7 +32,7 @@ public class BlockSources {
      * @return A reference to a block that may contain the key or null if no candidate block was found
      * @throws Exception
      */
-    public static Reference<Block> binarySearch(BlockSource blockSource, long min, long max, byte delimiter, byte[] prefix) throws Exception {
+    public static Reference<Block> binarySearch(BlockSource blockSource, long min, long max, byte delimiter, byte[] prefix) throws IOException {
         // System.out.println("[" + min + ", " + max + "[");
         if(min >= max) {
             return null;
@@ -96,12 +111,14 @@ public class BlockSources {
                         if (result == null) {
                             result = blockRef;
                         } else {
-                            blockRef.close();
+                            closeWithIOException(blockRef);
                         }
                     }
+                } catch (Exception e) {
+                    throw new IOException(e);
                 }
             } else { // if cmp > 0
-                blockRef.close();
+                closeWithIOException(blockRef);
                 // prefix is smaller than the first key of the block
                 // search in lower half
                 result = binarySearch(blockSource, min, pos, delimiter, prefix);
@@ -109,5 +126,13 @@ public class BlockSources {
         }
 
         return result;
+    }
+
+    public static void closeWithIOException(AutoCloseable obj) throws IOException {
+        try {
+            obj.close();
+        } catch(Exception e) {
+            throw new IOException(e);
+        }
     }
 }
