@@ -214,6 +214,7 @@ public class BufferFromInputStream
 
         @Override
         public long size() throws IOException {
+            loadDataUpTo(Long.MAX_VALUE);
             return knownDataSize;
         }
 
@@ -275,6 +276,41 @@ public class BufferFromInputStream
             return result;
         }
 
+
+//        @Override
+//        public int posToNext(byte delimiter, boolean changePos) throws IOException {
+//            int result = 0;
+//
+//            long tmpPos = pos;
+//            outer: for(;;) {
+//                loadDataUpTo(tmpPos + 1); // TODO Ensure we preload a good chunk
+//                if(this.pointer == null) {
+//                    this.pointer = getPointer(buckets, activeEnd, pos);
+//                }
+//
+//                byte[] currentBucket = buckets[pointer.idx];
+//
+//                // Copy the end marker to avoid race conditions when reading
+//                // its two attributes
+//                BucketPointer end = activeEnd;
+//
+//                boolean isInLastBucket = pointer.idx == end.idx;
+//                int remainingBucketLen = isInLastBucket
+//                    ? end.pos - pointer.pos
+//                    : currentBucket.length - pointer.pos
+//                    ;
+//
+//                for(int i = 0; i < remainingBucketLen; ++i) {
+//                    if(currentBucket[i] == delimiter) {
+//                        tmpPos += i;
+//                        break outer;
+//                    }
+//                }
+//            }
+//
+//            return result;
+//        }
+
 //        @Override
 //        public int checkPrev(int len) throws IOException {
 //            throw new UnsupportedOperationException();
@@ -297,16 +333,64 @@ public class BufferFromInputStream
             int r = Math.min(len, Ints.saturatedCast(delta));
 
             if(changePos) {
+                if(pointer != null) {
+                    int remaining = r;
+
+                    for(;;) {
+                        int available = buckets[pointer.idx].length - pointer.pos;
+                        if(remaining > available) {
+                            //int d = available - pointer.pos;
+                            remaining -= available;
+                            ++pointer.idx;
+                            pointer.pos = 0;
+                        } else {
+                            pointer.pos += remaining;
+                            break;
+                        }
+                    }
+                }
+
                 pos += r;
             }
 
             return r;
         }
 
+        /**
+         * The method assumes that the current position is in the valid range
+         *
+         */
         @Override
         public int checkPrev(int len, boolean changePos) throws IOException {
-            // TODO Auto-generated method stub
-            return 0;
+            long delta = len > pos ? pos : len;
+            if(changePos) {
+                // Update the pointer (if it was set)
+                if(pointer != null) {
+                    int remaining = Ints.checkedCast(delta);
+
+                    //while(remaining > 0) {
+                    for(;;) {
+                        if(remaining > pointer.pos) {
+                            if(pointer.idx == 0) {
+                                pointer.pos = 0;
+                                break;
+                            } else {
+                                remaining -= pointer.pos;
+                                --pointer.idx;
+                                pointer.pos = buckets[pointer.idx].length;
+                            }
+                        } else {
+                            pointer.pos -= remaining;
+                            break;
+                        }
+                    }
+                }
+
+                // pointer = getPointer(buckets, activeEnd, delta);
+                pos -= delta;
+            }
+
+            return (int)delta;
         }
     }
 
@@ -374,6 +458,9 @@ public class BufferFromInputStream
         for(;;) {
             int remainingDstLen = dst.remaining();
             if(remainingDstLen == 0) {
+                if(result == 0) {
+                    result = -1;
+                }
                 break;
             }
 
@@ -431,6 +518,7 @@ public class BufferFromInputStream
         while(!isDataSupplierConsumed && knownDataSize < requestedPos) {
             synchronized(this) {
                 if(!isDataSupplierConsumed && knownDataSize < requestedPos) {
+                    // System.out.println("load upto " + requestedPos);
                     int needed = Ints.saturatedCast(requestedPos - knownDataSize);
                     loadData(needed);
                 }

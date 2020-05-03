@@ -194,7 +194,15 @@ public interface Seekable
      * @param len
      * @return True if the position was changed by the *requested* amount of bytes. False means that the position was unchanged.
      */
-    boolean prevPos(int len) throws IOException;
+    default boolean prevPos(int len) throws IOException {
+        int r = checkPrev(len, false);
+        boolean result = r == len;
+        if(result) {
+            checkPrev(len, true);
+        }
+
+        return result;
+    }
 
     int checkPrev(int len, boolean changePos) throws IOException;
 
@@ -273,18 +281,41 @@ public interface Seekable
      * @throws IOException
      */
     default boolean posToNext(byte delimiter) throws IOException {
-        // potential HACK: Changing the position is not required to preload any data
-        // hence, isPosAfterEnd may be true without a read attempt
         boolean result = false;
-        while(!isPosAfterEnd() && get() != delimiter) {
-            boolean posChanged = nextPos(1);
-            if(!posChanged) {
-                posToEnd();
+        for(;;) {
+            boolean isPosAfterEnd = isPosAfterEnd();
+            if(!isPosAfterEnd) {
+                byte b = get();
+                //System.out.println(b);
+                if(b == delimiter) {
+                    result = true;
+                    break;
+                }
+
+                boolean posChanged = nextPos(1);
+                if(!posChanged) {
+                    posToEnd();
+                    break;
+                }
+            } else {
                 break;
             }
-            result = true;
         }
+
         return result;
+
+        // potential HACK: Changing the position is not required to preload any data
+        // hence, isPosAfterEnd may be true without a read attempt
+//        boolean result = false;
+//        while(!isPosAfterEnd() && get() != delimiter) {
+//            boolean posChanged = nextPos(1);
+//            if(!posChanged) {
+//                posToEnd();
+//                break;
+//            }
+//            result = true;
+//        }
+//        return result;
     }
 
     /**
@@ -301,7 +332,38 @@ public interface Seekable
      * @return
      */
     default int posToNext(byte delimiter, boolean changePos) throws IOException {
-        throw new UnsupportedOperationException();
+        long startPos = getPos();
+        byte[] buffer = new byte[1024];
+
+        int delta = 0;
+        boolean foundMatch = false;
+        outer: for(;;) {
+            int n = read(ByteBuffer.wrap(buffer));
+            if(n < 0) {
+                break;
+            }
+            for(int i = 0; i < n; ++i) {
+                if(buffer[i] == delimiter) {
+                    delta += i;
+                    foundMatch = true;
+                    break outer;
+                }
+            }
+            delta += n;
+        }
+
+        int result;
+        if(foundMatch) {
+            result = delta;
+            setPos(startPos + delta);
+        } else {
+            if(!changePos) {
+                setPos(startPos);
+            }
+            result = -(delta + 1);
+        }
+
+        return result;
     }
 
     /**
@@ -316,15 +378,36 @@ public interface Seekable
      */
     default boolean posToPrev(byte delimiter) throws IOException {
         boolean result = false;
-        while(!isPosBeforeStart() && get() != delimiter) {
-            boolean posChanged = prevPos(1);
-            if(!posChanged) {
-                posToStart();
+        for(;;) {
+            boolean isBeforeStart = isPosBeforeStart();
+            if(!isBeforeStart) {
+                byte b = get();
+                // System.out.println(b);
+                if(b == delimiter) {
+                    result = true;
+                    break;
+                }
+
+                boolean posChanged = prevPos(1);
+                if(!posChanged) {
+                    posToStart();
+                    break;
+                }
+            } else {
                 break;
             }
-            result = true;
         }
+
         return result;
+//        while(!isPosBeforeStart() && get() != delimiter) {
+//            boolean posChanged = prevPos(1);
+//            if(!posChanged) {
+//                posToStart();
+//                break;
+//            }
+//            result = true;
+//        }
+//        return result;
     }
 
 
@@ -370,7 +453,10 @@ public interface Seekable
         int n = prefix.length;
         byte[] buf = new byte[n];
         long pos = getPos();
-        read(ByteBuffer.wrap(buf));
+
+        // Ready fully
+        ByteBuffer bb = ByteBuffer.wrap(buf);
+        while(read(bb) != -1);
 
         int result = compareArrays(buf, prefix);
 
@@ -468,6 +554,7 @@ public interface Seekable
     //long binarySearch(long min, long max, byte delimiter, byte[] prefix) throws IOException;
 
     default long binarySearch(long min, long max, byte delimiter, byte[] prefix) throws IOException {
+        System.out.println("[" + min + ", " + max + "[");
 
         long middlePos = (min + max) / 2;
         setPos(middlePos);

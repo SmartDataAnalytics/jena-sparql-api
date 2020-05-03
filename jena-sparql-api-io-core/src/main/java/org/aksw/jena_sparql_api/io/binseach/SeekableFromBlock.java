@@ -7,6 +7,8 @@ import java.util.function.Supplier;
 
 import org.aksw.jena_sparql_api.io.common.Reference;
 
+import com.github.jsonldjava.shaded.com.google.common.primitives.Ints;
+
 /**
  * A helper iterator that automatically closes
  * the previous item when next() is called.
@@ -47,6 +49,10 @@ class BlockIterState {
         return new BlockIterState(blockRef, seekable, true);
     }
 
+    public static BlockIterState fwd(Reference<Block> blockRef) {
+        return new BlockIterState(blockRef, blockRef.get().newChannel(), true);
+    }
+
     public static BlockIterState bwd(Reference<Block> blockRef, Seekable seekable) {
         return new BlockIterState(blockRef, seekable, false);
     }
@@ -67,7 +73,7 @@ class BlockIterState {
 
 
     public void closeCurrent() {
-        if(skipFirstClose) {
+        if(!skipFirstClose) {
             try {
                 blockRef.close();
                 seekable.close();
@@ -151,7 +157,7 @@ class OpenBlock{
  * @author raven
  *
  */
-public class SeekableFromSegment
+public class SeekableFromBlock
     implements Seekable
 {
     protected Reference<Block> startBlockRef;
@@ -172,17 +178,19 @@ public class SeekableFromSegment
     protected Reference<Block> currentBlockRef;
     protected Block currentBlock; // cache of currentBlockRef.get()
     protected Seekable currentSeekable; // currentBlock.newChannel()
-    protected long pos;
+    protected long actualPos;
 
 
-    public SeekableFromSegment(Reference<Block> startBlockRef, int posInStartSegment, long exposedStartPos) {
+    public SeekableFromBlock(Reference<Block> startBlockRef, int posInStartSegment, long exposedStartPos) {
+        this(startBlockRef, posInStartSegment, exposedStartPos, Long.MAX_VALUE);
+    }
+
+    public SeekableFromBlock(Reference<Block> startBlockRef, int posInStartSegment, long exposedStartPos, long maxPos) {
         super();
         this.startBlockRef = startBlockRef;
         this.startPosInStartSegment = posInStartSegment;
         this.exposedStartPos  = exposedStartPos;
-
-
-        this.maxPos = Long.MAX_VALUE;
+        this.maxPos = maxPos;
         init();
     }
 
@@ -205,19 +213,26 @@ public class SeekableFromSegment
 
     @Override
     public Seekable clone() {
-        return new SeekableFromSegment(startBlockRef, startPosInStartSegment, exposedStartPos);
+        return new SeekableFromBlock(startBlockRef, startPosInStartSegment, exposedStartPos);
     }
 
 
     @Override
     public long getPos() throws IOException {
-        return pos;
+        return actualPos;
     }
 
 
     @Override
     public void setPos(long pos) throws IOException {
-        this.pos = pos;
+        int delta = Ints.checkedCast(pos - actualPos);
+        if(delta > 0) {
+            checkNext(delta, true);
+        } else if(delta < 0) {
+            checkPrev(-delta, true);
+        }
+
+        //this.actualPos = pos;
     }
 
 
@@ -226,11 +241,11 @@ public class SeekableFromSegment
         try {
             currentBlockRef.close();
             currentBlockRef = startBlockRef.acquire(null);
-            pos = exposedStartPos;
+            actualPos = exposedStartPos;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        pos = 0;
+        actualPos = 0;
     }
 
 
@@ -244,7 +259,10 @@ public class SeekableFromSegment
 
     @Override
     public boolean isPosBeforeStart() throws IOException {
-        boolean result = pos < exposedStartPos;
+        // FIXME The pos can must not be less than a min pos; the exposed start pos
+        // should not be used here
+
+        boolean result = actualPos < exposedStartPos;
         return result;
     }
 
@@ -453,8 +471,10 @@ public class SeekableFromSegment
 
     // void setActiveBlock(Reference<T>)
 
-    // @Override
+    @Override
     public int checkNext(int len, boolean changePos) throws IOException {
+        // if(pos + len > maxPos)
+
         int result;
         int contrib = currentSeekable.checkNext(len, changePos);
 
@@ -478,12 +498,53 @@ public class SeekableFromSegment
 
             if(changePos) {
                 setCurrent(it);
+            } else {
+                it.closeCurrent();
             }
+        }
+        if(changePos) {
+            actualPos += result;
         }
 
         return result;
     }
 
+
+    @Override
+    public int checkPrev(int len, boolean changePos) throws IOException {
+        int result;
+        int contrib = currentSeekable.checkPrev(len, changePos);
+
+        result = contrib;
+
+        if(contrib >= len) {
+            // nothing do do
+        } else {
+            BlockIterState it = BlockIterState.bwd(currentBlockRef, currentSeekable);
+            while(it.hasNext()) {
+                int remaining = len - result;
+
+                it.advance();
+                contrib = it.seekable.checkNext(remaining, changePos);
+                result += contrib;
+
+                if(result >= len) {
+                    break;
+                }
+            }
+
+            if(changePos) {
+                setCurrent(it);
+            } else {
+                it.closeCurrent();
+            }
+        }
+        if(changePos) {
+            actualPos -= result;
+        }
+
+        return result;
+    }
 //            int remaining = len - contrib;
 //            Reference<Block> tmpBlockRef = currentBlockRef;
 //            Block tmpBlock = currentBlock;
@@ -545,16 +606,16 @@ public class SeekableFromSegment
 //        return result;
 //    }
 
-    @Override
-    public boolean nextPos(int len) throws IOException {
-        int r = checkNext(len, false);
-        boolean result = r == len;
-        if(result) {
-            checkNext(len, true);
-        }
-
-        return result;
-    }
+//    @Override
+//    public boolean nextPos(int len) throws IOException {
+//        int r = checkNext(len, false);
+//        boolean result = r == len;
+//        if(result) {
+//            checkNext(len, true);
+//        }
+//
+//        return result;
+//    }
 
 //  @Override
 //  public boolean nextPos(int len) throws IOException {
@@ -654,6 +715,15 @@ public class SeekableFromSegment
     public int read(ByteBuffer dst) throws IOException {
         int n = -1;
 
+        // TODO Ensure we are at the right block for the set position (probably done)
+        // NOTE set position should now make sure that currentSeekable points to the right one
+
+        // TODO Should we distinguish between the set position and the updated one?
+        // probably this just adds extra complexity
+        // But the SeekableByteChannel contract allows setting the position anywhere, but the read operation
+        // would return -1
+        // Under this perspective the extra complexity is needed...e
+
         while(currentSeekable != null && dst.remaining() > 0) {
             n = currentSeekable.read(dst);
             if(n == 0) {
@@ -663,7 +733,7 @@ public class SeekableFromSegment
                 continue;
             }
 
-            pos += n;
+            actualPos += n;
         }
 
         return n;
@@ -676,16 +746,21 @@ public class SeekableFromSegment
     }
 
 
-    @Override
-    public boolean prevPos(int len) throws IOException {
-        // TODO Auto-generated method stub
-        return false;
-    }
+//    @Override
+//    public boolean prevPos(int len) throws IOException {
+//        int r = checkPrev(len, false);
+//        boolean result = r == len;
+//        if(result) {
+//            checkPrev(len, true);
+//        }
+//
+//        return result;
+//    }
 
 
-    @Override
-    public int checkPrev(int len, boolean changePos) throws IOException {
-        // TODO Auto-generated method stub
-        return 0;
-    }
+//    @Override
+//    public int checkPrev(int len, boolean changePos) throws IOException {
+//        // TODO Auto-generated method stub
+//        return 0;
+//    }
 }

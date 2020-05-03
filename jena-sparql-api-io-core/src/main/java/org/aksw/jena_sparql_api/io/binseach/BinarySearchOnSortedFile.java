@@ -40,7 +40,7 @@ public class BinarySearchOnSortedFile
         this.delimiter = delimiter;
     }
 
-    public InputStream newInputStream(Seekable channel, BinSearchScanState state) {
+    public static InputStream newInputStream(Seekable channel, BinSearchScanState state) {
         ReadableByteChannel tmp = new ReadableByteChannelForLinesMatchingPrefix(channel, state);
         InputStream result = Channels.newInputStream(tmp);
 

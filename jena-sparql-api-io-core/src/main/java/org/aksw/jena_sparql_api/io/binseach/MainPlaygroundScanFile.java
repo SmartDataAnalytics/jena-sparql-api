@@ -25,6 +25,8 @@ import org.aksw.jena_sparql_api.io.deprecated.SeekableMatcher;
 import org.apache.jena.ext.com.google.common.base.Stopwatch;
 import org.apache.jena.ext.com.google.common.collect.Maps;
 
+import com.github.jsonldjava.shaded.com.google.common.primitives.Ints;
+
 
 public class MainPlaygroundScanFile {
     /**
@@ -120,16 +122,44 @@ public class MainPlaygroundScanFile {
             byte[] prefix = "<http://linkedgeodata.org/geometry/node1583470199>".getBytes();
 
             Reference<Block> blockRef = BlockSources.binarySearch(blockSource, 0, maxBlockOffset, (byte)'\n', prefix);
-            Block block = blockRef.get();
-            if(block == null) {
+            if(blockRef == null) {
                 System.out.println("No match found");
                 return;
             }
+            Block block = blockRef.get();
 
             System.out.println("Block offset: " + block.getOffset());
 
             // Load the block full + extra bytes up to the start of the first record in the
             // next block
+
+
+            int extraBytes = 0;
+            BlockIterState it = BlockIterState.fwd(blockRef);
+            while(it.hasNext()) {
+                it.advance();
+                SeekableFromBlock seekable = new SeekableFromBlock(it.blockRef, 0, 0);
+                boolean found = seekable.posToNext((byte)'\n');
+                if(found) {
+                    extraBytes = Ints.checkedCast(seekable.getPos());
+                    it.closeCurrent();
+                    break;
+                }
+            }
+
+            // extraBytes = 0;
+            System.out.println("Extra bytes: " + extraBytes);
+
+            long blockSize = block.length();
+            System.out.println("Block size: " + blockSize);
+            long maxPos = blockSize + extraBytes;
+
+            SeekableFromBlock decodedView = new SeekableFromBlock(it.blockRef, 0, 0, maxPos);
+
+
+
+//             Seekable decodedView = block.newChannel();
+
 
 
             //SeekableSource decodedViewSource = new SeekableSourceFromBufferSource(blockSource);
@@ -143,11 +173,11 @@ public class MainPlaygroundScanFile {
             // then load twice the known region - but it may well be that loading the first half of the region has the better
             // avg complexity if we assume lookups for keys to be distributed evenly across the block
             // TODO Make this less hacky
-            Seekable decodedView = block.newChannel(); //new SeekableFromChannelFactory(block);
-            decodedView.setPos(Long.MAX_VALUE);
-            decodedView.get();
-            decodedView.setPos(0);
-            long max = decodedView.size();
+//            Seekable decodedView = block.newChannel(); //new SeekableFromChannelFactory(block);
+//            decodedView.setPos(Long.MAX_VALUE);
+//            decodedView.get();
+//            decodedView.setPos(0);
+//            long max = decodedView.size();
 
 //            byte[] prefix = "<http://linkedgeodata.org/geometry/node1583470200>".getBytes();
 
@@ -155,16 +185,38 @@ public class MainPlaygroundScanFile {
 
 
 
-            long findPos = decodedView.binarySearch(0, max, (byte)'\n', prefix);
+            long findPos = decodedView.binarySearch(0, maxPos, (byte)'\n', prefix);
 
+            if(findPos == Long.MIN_VALUE) {
+                System.out.println("No pos found in block");
+                return;
+            }
             System.out.println(findPos);
 
 
-            Seekable continuousView = new SeekableFromSegment(blockRef, (int)findPos, 0);
+            // Seekable continuousView = new SeekableFromBlock(blockRef, (int)findPos, findPos);
 
 
-            long start = BinarySearchOnSortedFile.getPosOfFirstMatch(continuousView, (byte)'\n', prefix);
+            long start = BinarySearchOnSortedFile.getPosOfFirstMatch(decodedView, (byte)'\n', prefix);
+            decodedView.setPos(start + 1);
 
+            BinSearchScanState state = new BinSearchScanState();
+            state.firstDelimPos = start;
+            state.matchDelimPos = findPos;
+            state.prefixBytes = prefix;
+            state.size = Long.MAX_VALUE;
+
+
+            InputStream in = BinarySearchOnSortedFile.newInputStream(decodedView, state);
+
+
+
+
+            System.out.println("Start: " + start);
+
+//            BinarySearchOnSortedFile searcher = new BinarySearchOnSortedFile(continuousView, Long.MAX_VALUE, (byte)'\n');
+//
+//            searcher.sea
 
 
 
@@ -193,10 +245,10 @@ public class MainPlaygroundScanFile {
             // - skip to first constituent that is certainly a new record (i.e. the first quad with a different graph)
             //
 
-            decodedView.prevPos(1);
-            decodedView.posToPrev((byte)'\n');
-            decodedView.nextPos(1);
-            InputStream in = Channels.newInputStream(decodedView);
+//            decodedView.prevPos(1);
+//            decodedView.posToPrev((byte)'\n');
+//            decodedView.nextPos(1);
+            // InputStream in = Channels.newInputStream(decodedView);
 
 
 //			Iterator<Triple> it = RDFDataMgr.createIteratorTriples(in, Lang.NTRIPLES, null);

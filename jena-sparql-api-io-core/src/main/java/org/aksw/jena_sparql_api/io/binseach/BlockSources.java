@@ -18,7 +18,7 @@ public class BlockSources {
      * @throws Exception
      */
     public static Reference<Block> binarySearch(BlockSource blockSource, long min, long max, byte delimiter, byte[] prefix) throws Exception {
-        // System.out.println("[" + min + ", " + max + "]");
+        // System.out.println("[" + min + ", " + max + "[");
         if(min >= max) {
             return null;
         }
@@ -43,22 +43,32 @@ public class BlockSources {
 
         //try(Seekable seekable = block.newChannel()) { //new SeekableFromChannelFactory(block)) {
 
-        // TODO For records larger than the block we'd need to create a seekable over all blocks starting from the current block
-        //
-        try(Seekable seekable = new SeekableFromSegment(blockRef, 0, 0)) {
+        // For records larger than the block we'd need to create a seekable over
+        // all blocks starting from the current block
+        try(SeekableFromBlock seekable = new SeekableFromBlock(blockRef, 0, 0)) {
 
             // TODO obtain correct flag
             boolean isFirstBlock = false;
             if(!isFirstBlock) {
-//                try (Seekable seekable = new SeekableFromSegment(blockRef, 0, 0)) {
+                    // TODO Issue below has been partly addressed - but we need to adjust the block and check
+                    // whether its in range - so block.offset < max
 
-                    // Move past first delimiter
-                    // TODO Handle the case where there is no delimiter
+                    // Handle the case where there is no delimiter
                     // FIXME This can actually happen with spatial datasets where polygons are
                     // larger than the bz2 block size!
                     // So in that case we'd have to scan the black backwards until we find one
+                if(seekable.getPos() == 900000) {
+                    System.out.println("whaaaaaa???");
+                }
+                System.out.println(seekable.getPos());
                 seekable.posToNext(delimiter);
+                if(seekable.getPos() == 900000) {
+                    System.out.println("whaaaaaa???");
+                }
                 seekable.nextPos(1);
+
+
+                // seekable.getCurrentBlock();
 //                }
             }
             int cmp = seekable.compareToPrefix(prefix);
