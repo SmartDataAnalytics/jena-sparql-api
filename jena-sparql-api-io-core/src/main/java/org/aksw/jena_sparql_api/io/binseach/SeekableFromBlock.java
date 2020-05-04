@@ -32,36 +32,40 @@ class BlockIterState {
     public Seekable seekable;
 
 
+    protected boolean yieldSelf;
     protected boolean skipFirstClose;
     protected boolean isFwd;
 
-    public BlockIterState(Reference<Block> blockRef, Seekable seekable, boolean isFwd) {
+    public BlockIterState(boolean yieldSelf, Reference<Block> blockRef, Seekable seekable, boolean isFwd) {
         // this.current = new OpenBlock(blockRef, seekable);
         this.blockRef = blockRef;
         this.block = blockRef.get();
         this.seekable = seekable;
 
+        this.yieldSelf = yieldSelf;
         this.skipFirstClose = true;
         this.isFwd = isFwd;
     }
 
-    public static BlockIterState fwd(Reference<Block> blockRef, Seekable seekable) {
-        return new BlockIterState(blockRef, seekable, true);
+    public static BlockIterState fwd(boolean yieldSelf, Reference<Block> blockRef, Seekable seekable) {
+        return new BlockIterState(yieldSelf, blockRef, seekable, true);
     }
 
-    public static BlockIterState fwd(Reference<Block> blockRef) {
-        return new BlockIterState(blockRef, blockRef.get().newChannel(), true);
+    public static BlockIterState fwd(boolean yieldSelf, Reference<Block> blockRef) {
+        return new BlockIterState(yieldSelf, blockRef, blockRef.get().newChannel(), true);
     }
 
-    public static BlockIterState bwd(Reference<Block> blockRef, Seekable seekable) {
-        return new BlockIterState(blockRef, seekable, false);
+    public static BlockIterState bwd(boolean yieldSelf, Reference<Block> blockRef, Seekable seekable) {
+        return new BlockIterState(yieldSelf, blockRef, seekable, false);
     }
 
     //@Override
     public boolean hasNext() {
         boolean result;
         try {
-            result = isFwd
+            result = yieldSelf // Return the block initial block first
+                ? true
+                :isFwd
                     ? block.hasNext()
                     : block.hasPrev();
 
@@ -84,25 +88,27 @@ class BlockIterState {
     }
 
     public void advance() {
-        OpenBlock result;
-
         try {
-            Reference<Block> next = isFwd
-                    ? block.nextBlock()
-                    : block.prevBlock();
-
-            if(next == null) {
-                result = null;
+            if(yieldSelf) {
+                yieldSelf = false;
             } else {
-                closeCurrent();
-                skipFirstClose = false;
+                Reference<Block> next = isFwd
+                        ? block.nextBlock()
+                        : block.prevBlock();
 
-                blockRef = next;
-                block = next.get();
-                seekable = block.newChannel();
+                if(next == null) {
+                    // nothing to do
+                } else {
+                    closeCurrent();
+                    skipFirstClose = false;
 
-                //current = new OpenBlock(next, next.get().newChannel());
-                //result = current;
+                    blockRef = next;
+                    block = next.get();
+                    seekable = block.newChannel();
+
+                    //current = new OpenBlock(next, next.get().newChannel());
+                    //result = current;
+                }
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -174,6 +180,7 @@ public class SeekableFromBlock
      */
 
     protected long maxPos;
+    protected long minPos;
 
     protected Reference<Block> currentBlockRef;
     protected Block currentBlock; // cache of currentBlockRef.get()
@@ -182,15 +189,17 @@ public class SeekableFromBlock
 
 
     public SeekableFromBlock(Reference<Block> startBlockRef, int posInStartSegment, long exposedStartPos) {
-        this(startBlockRef, posInStartSegment, exposedStartPos, Long.MAX_VALUE);
+        this(startBlockRef, posInStartSegment, exposedStartPos, Long.MIN_VALUE, Long.MAX_VALUE);
     }
 
-    public SeekableFromBlock(Reference<Block> startBlockRef, int posInStartSegment, long exposedStartPos, long maxPos) {
+    public SeekableFromBlock(Reference<Block> startBlockRef, int posInStartSegment, long exposedStartPos, long minPos, long maxPos) {
         super();
         this.startBlockRef = startBlockRef;
         this.startPosInStartSegment = posInStartSegment;
         this.exposedStartPos  = exposedStartPos;
+        this.minPos = minPos;
         this.maxPos = maxPos;
+        this.actualPos = 0;
         init();
     }
 
@@ -213,7 +222,20 @@ public class SeekableFromBlock
 
     @Override
     public Seekable clone() {
-        return new SeekableFromBlock(startBlockRef, startPosInStartSegment, exposedStartPos);
+        SeekableFromBlock result = new SeekableFromBlock(
+                startBlockRef.acquire(null),
+                startPosInStartSegment,
+                exposedStartPos,
+                minPos,
+                maxPos);
+        result.actualPos = this.actualPos;
+        try {
+            long posInSeekable = currentSeekable.getPos();
+            result.currentSeekable.setPos(posInSeekable);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return result;
     }
 
 
@@ -262,7 +284,7 @@ public class SeekableFromBlock
         // FIXME The pos can must not be less than a min pos; the exposed start pos
         // should not be used here
 
-        boolean result = actualPos < exposedStartPos;
+        boolean result = actualPos < minPos;
         return result;
     }
 
@@ -284,7 +306,7 @@ public class SeekableFromBlock
         // TODO Test for currentSeekable.isPosAfterEnd() and there is no non-zero size next block
         boolean result = currentSeekable.isPosAfterEnd();
         if(result) {
-            BlockIterState it = BlockIterState.fwd(currentBlockRef, currentSeekable);
+            BlockIterState it = BlockIterState.fwd(false, currentBlockRef, currentSeekable);
             while(it.hasNext()) {
                 it.advance();
                 if(!it.seekable.isPosAfterEnd()) {
@@ -483,12 +505,15 @@ public class SeekableFromBlock
         if(contrib >= len) {
             // nothing do do
         } else {
-            BlockIterState it = BlockIterState.fwd(currentBlockRef, currentSeekable);
+            BlockIterState it = BlockIterState.fwd(false, currentBlockRef, currentSeekable);
             while(it.hasNext()) {
                 int remaining = len - result;
 
                 it.advance();
+                // Position before the start - if there are no bytes, the contrib is 0
+                it.seekable.posToStart();
                 contrib = it.seekable.checkNext(remaining, changePos);
+
                 result += contrib;
 
                 if(result >= len) {
@@ -515,17 +540,29 @@ public class SeekableFromBlock
         int result;
         int contrib = currentSeekable.checkPrev(len, changePos);
 
+        // TODO Limit len to minPos
+
         result = contrib;
 
         if(contrib >= len) {
             // nothing do do
         } else {
-            BlockIterState it = BlockIterState.bwd(currentBlockRef, currentSeekable);
+            BlockIterState it = BlockIterState.bwd(false, currentBlockRef, currentSeekable);
             while(it.hasNext()) {
                 int remaining = len - result;
 
                 it.advance();
-                contrib = it.seekable.checkNext(remaining, changePos);
+
+                // The following call will position 1 byte beyond the end of data
+                // this may trigger a complete load of the block's content in order to determin its length
+                it.seekable.posToEnd();
+
+                contrib = it.seekable.checkPrev(remaining, changePos);
+//                if(changePos && contrib > 0) {
+//                    it.seekable.nextPos(1);
+//                    actualPos += 1;
+//                }
+
                 result += contrib;
 
                 if(result >= len) {
@@ -534,6 +571,8 @@ public class SeekableFromBlock
             }
 
             if(changePos) {
+                // FIXME This does not close the current block!
+                // FIXME Consolidate with loadNextBlock
                 setCurrent(it);
             } else {
                 it.closeCurrent();
@@ -730,6 +769,7 @@ public class SeekableFromBlock
         // would return -1
         // Under this perspective the extra complexity is needed...e
 
+        int contrib = 0;
         while(currentSeekable != null && dst.remaining() > 0) {
             n = currentSeekable.read(dst);
             if(n == 0) {
@@ -738,11 +778,12 @@ public class SeekableFromBlock
                 loadNextBlock();
                 continue;
             }
+            contrib += n;
 
             actualPos += n;
         }
 
-        return n;
+        return contrib;
     }
 
 

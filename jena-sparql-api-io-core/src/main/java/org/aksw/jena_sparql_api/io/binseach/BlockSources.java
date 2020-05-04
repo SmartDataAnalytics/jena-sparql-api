@@ -45,7 +45,7 @@ public class BlockSources {
         // Find the start of the record in the block:
         // In the first block, this is position 0
         // otherwise this is the first delimiter
-        Reference<Block> blockRef = blockSource.contentAtOrBefore(middlePos);
+        Reference<Block> blockRef = blockSource.contentAtOrBefore(middlePos, true);
         if(blockRef == null) {
             return null; //Long.MIN_VALUE;
         }
@@ -62,9 +62,11 @@ public class BlockSources {
         // all blocks starting from the current block
         try(SeekableFromBlock seekable = new SeekableFromBlock(blockRef, 0, 0)) {
 
+
+
             // TODO obtain correct flag
-            boolean isFirstBlock = false;
-            if(!isFirstBlock) {
+            boolean isNotFirstBlock = block.hasPrev();
+            if(isNotFirstBlock) {
                     // TODO Issue below has been partly addressed - but we need to adjust the block and check
                     // whether its in range - so block.offset < max
 
@@ -92,8 +94,8 @@ public class BlockSources {
                 // prefix is larger than the first key on the block
                 // the search key may still be contained in this block
                 // but check the upper half of the search range if there is another block
-                long lookupPos = pos + 1;
-                try(Reference<Block> nextBlockRef = blockSource.contentAtOrAfter(lookupPos)) {
+                //long lookupPos = pos + 1;
+                try(Reference<Block> nextBlockRef = blockSource.contentAtOrAfter(pos, false)) {
 
                     // If there is no further block it implies we are in the last block
                     if(nextBlockRef == null) {

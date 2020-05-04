@@ -131,6 +131,7 @@ public class BinarySearchOnSortedFile
 
             int cmp = seekable.compareToPrefix(prefix);
             if(cmp != 0) {
+                seekable.setPos(result);
                 break;
             } else {
                 if(!seekable.prevPos(1)) {

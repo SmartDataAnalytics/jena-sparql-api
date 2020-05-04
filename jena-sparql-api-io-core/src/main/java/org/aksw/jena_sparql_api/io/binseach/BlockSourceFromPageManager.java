@@ -42,13 +42,13 @@ public class BlockSourceFromPageManager
     protected PageManager pageManager;
 
     @Override
-    public Reference<Block> contentAtOrBefore(long pos) throws IOException {
+    public Reference<Block> contentAtOrBefore(long pos, boolean inclusive) throws IOException {
         // pageManager.requestBufferForPage(pos);
         return null;
     }
 
     @Override
-    public Reference<Block> contentAtOrAfter(long pos) throws IOException {
+    public Reference<Block> contentAtOrAfter(long pos, boolean inclusive) throws IOException {
         // TODO Auto-generated method stub
         return null;
     }

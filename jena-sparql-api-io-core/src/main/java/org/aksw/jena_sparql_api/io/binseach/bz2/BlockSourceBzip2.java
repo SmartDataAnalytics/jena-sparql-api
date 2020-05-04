@@ -87,12 +87,18 @@ public class BlockSourceBzip2
 
 
     @Override
-    public Reference<Block> contentAtOrBefore(long requestPos) throws IOException {
+    public Reference<Block> contentAtOrBefore(long requestPos, boolean inclusive) throws IOException {
         // If the requestPos is already in the cache, serve it from there
-        Reference<Block> result = blockCache.getIfPresent(requestPos);
+        // TODO Track consecutive blocks in a cache
+//        if(!inclusive) {
+//            inclusive = true;
+//        }
+
+        long internalRequestPos = requestPos - (inclusive ? 0 : 1);
+        Reference<Block> result = blockCache.getIfPresent(internalRequestPos);
 
         if(result == null) {
-            Seekable seekable = seekableSource.get(requestPos);
+            Seekable seekable = seekableSource.get(internalRequestPos);
             SeekableMatcher matcher = bwdBlockStartMatcherFactory.newMatcher();
             boolean didFind = matcher.find(seekable);
             if(didFind) {
@@ -118,11 +124,16 @@ public class BlockSourceBzip2
     }
 
     @Override
-    public Reference<Block> contentAtOrAfter(long requestPos) throws IOException {
-        Reference<Block> result = blockCache.getIfPresent(requestPos);
+    public Reference<Block> contentAtOrAfter(long requestPos, boolean inclusive) throws IOException {
+        // TODO Track consecutive blocks in a cache
+//        if(!inclusive) {
+//            inclusive = true;
+//        }
+        long internalRequestPos = requestPos + (inclusive ? 0 : 1);
+        Reference<Block> result = blockCache.getIfPresent(internalRequestPos);
 
         if(result == null) {
-            Seekable seekable = seekableSource.get(requestPos);
+            Seekable seekable = seekableSource.get(internalRequestPos);
             SeekableMatcher matcher = fwdBlockStartMatcherFactory.newMatcher();
             boolean didFind = matcher.find(seekable);
             if(didFind) {
@@ -141,7 +152,7 @@ public class BlockSourceBzip2
         // TODO The block size may be known - e.g. 900K - in that case we only need to check whether there
         // is subsequent block - only if there is none we actually have to compute the length
         long result;
-        try(Reference<Block> ref = contentAtOrAfter(pos)) {
+        try(Reference<Block> ref = contentAtOrAfter(pos, true)) {
             try(Seekable channel = ref.get().newChannel()) {
                 result = channel.size();
             }
@@ -169,7 +180,6 @@ public class BlockSourceBzip2
         boolean result;
         try(Seekable seekable = seekableSource.get(pos - 1)) {
             SeekableMatcher matcher = bwdBlockStartMatcherFactory.newMatcher();
-            boolean didFind = matcher.find(seekable);
             result = matcher.find(seekable);
         }
         return result;

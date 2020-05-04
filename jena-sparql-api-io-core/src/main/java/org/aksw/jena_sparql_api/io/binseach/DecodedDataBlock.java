@@ -26,12 +26,12 @@ public class DecodedDataBlock
 
     @Override
     public Reference<Block> nextBlock() throws IOException {
-        return blockSource.contentAtOrAfter(blockStart);
+        return blockSource.contentAtOrAfter(blockStart, false);
     }
 
     @Override
     public Reference<Block> prevBlock() throws IOException {
-        return blockSource.contentAtOrBefore(blockStart);
+        return blockSource.contentAtOrBefore(blockStart, false);
     }
 
     @Override

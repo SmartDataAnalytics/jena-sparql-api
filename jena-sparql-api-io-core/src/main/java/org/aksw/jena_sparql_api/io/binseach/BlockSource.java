@@ -5,8 +5,8 @@ import java.io.IOException;
 import org.aksw.jena_sparql_api.io.common.Reference;
 
 public interface BlockSource {
-    Reference<Block> contentAtOrBefore(long pos) throws IOException;
-    Reference<Block> contentAtOrAfter(long pos) throws IOException;
+    Reference<Block> contentAtOrBefore(long pos, boolean inclusive) throws IOException;
+    Reference<Block> contentAtOrAfter(long pos, boolean inclusive) throws IOException;
 
     boolean hasBlockAfter(long pos) throws IOException;
     boolean hasBlockBefore(long pos) throws IOException;

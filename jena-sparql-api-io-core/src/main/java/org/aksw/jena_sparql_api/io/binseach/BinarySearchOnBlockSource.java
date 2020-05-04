@@ -32,6 +32,7 @@ public class BinarySearchOnBlockSource
 
             Block block = blockRef.get();
 
+            System.out.println("Block match: " + block.getOffset());
             try(InputStream in = Channels.newInputStream(block.newChannel())) {
                 System.out.println("Block start:");
                 MainPlaygroundScanFile.printLines(in, 5);
@@ -44,7 +45,7 @@ public class BinarySearchOnBlockSource
 
 
             int extraBytes = 0;
-            BlockIterState it = BlockIterState.fwd(blockRef);
+            BlockIterState it = BlockIterState.fwd(true, blockRef);
             while(it.hasNext()) {
                 it.advance();
                 try(SeekableFromBlock seekable = new SeekableFromBlock(it.blockRef, 0, 0)) {
@@ -64,7 +65,7 @@ public class BinarySearchOnBlockSource
             System.out.println("Block size: " + blockSize);
             long maxPos = blockSize + extraBytes;
 
-            SeekableFromBlock decodedView = new SeekableFromBlock(it.blockRef, 0, 0, maxPos);
+            SeekableFromBlock decodedView = new SeekableFromBlock(it.blockRef, 0, 0, Long.MIN_VALUE, maxPos);
 
             long findPos = decodedView.binarySearch(0, maxPos, (byte)'\n', prefix);
 
@@ -79,7 +80,8 @@ public class BinarySearchOnBlockSource
 
 
                 long start = BinarySearchOnSortedFile.getPosOfFirstMatch(decodedView, (byte)'\n', prefix);
-                decodedView.setPos(start + 1);
+                // Move past the delimiter
+                decodedView.nextPos(1);
 
                 BinSearchScanState state = new BinSearchScanState();
                 state.firstDelimPos = start;

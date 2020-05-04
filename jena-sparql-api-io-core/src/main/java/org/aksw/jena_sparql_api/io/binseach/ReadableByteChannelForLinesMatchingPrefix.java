@@ -61,13 +61,18 @@ public class ReadableByteChannelForLinesMatchingPrefix
         } else {
             ByteBuffer adjustedDst = dst.duplicate();
             adjustedDst.limit(adjustedDst.position() + n);
-            int contrib = channel.read(adjustedDst);
+
+//            byte[] foobar = new byte[200];
+//            ByteBuffer foo = ByteBuffer.wrap(foobar);
+//            int contrib = channel.read(foo);
+             int contrib = channel.read(adjustedDst);
+
 
 //            if(contrib < wanted) {
 //                System.out.println("here");
 //            }
 
-            result = contrib;
+            result += contrib;
         }
 
         return result;
@@ -88,6 +93,7 @@ public class ReadableByteChannelForLinesMatchingPrefix
             boolean lineMatches;
             if(prefixLength != 0) {
                 channel.setPos(currentDelimPos + 1);
+//                System.out.println("byte: " + channel.get());
                 lineMatches = channel.compareToPrefix(state.prefixBytes) == 0;
             } else {
                 lineMatches = true;

@@ -114,13 +114,16 @@ public class MainPlaygroundScanFile {
 
             System.out.println("Matches:");
             // A record in the middle of a block
-            // String str = "<http://linkedgeodata.org/geometry/node1583470199>";
+//             String str = "<http://linkedgeodata.org/geometry/node1583470199>";
 
             // This one is the first record in a block:
 //            String str = "<http://linkedgeodata.org/geometry/node1583253778>";
 
             // This one is overlapping before node1583253778
-            String str = "<http://linkedgeodata.org/geometry/node1583253655>";
+//            String str = "<http://linkedgeodata.org/geometry/node1583253655>";
+
+            // This key is on the first page and the key itself overlaps with the page boundary
+            String str = "<http://linkedgeodata.org/geometry/node1003603551>";
             try(InputStream in = bs.search(str)) {
                 printLines(in, 5);
             }
@@ -167,7 +170,7 @@ public class MainPlaygroundScanFile {
 
 
             int extraBytes = 0;
-            BlockIterState it = BlockIterState.fwd(blockRef);
+            BlockIterState it = BlockIterState.fwd(true, blockRef);
             while(it.hasNext()) {
                 it.advance();
                 SeekableFromBlock seekable = new SeekableFromBlock(it.blockRef, 0, 0);
@@ -186,7 +189,7 @@ public class MainPlaygroundScanFile {
             System.out.println("Block size: " + blockSize);
             long maxPos = blockSize + extraBytes;
 
-            SeekableFromBlock decodedView = new SeekableFromBlock(it.blockRef, 0, 0, maxPos);
+            SeekableFromBlock decodedView = new SeekableFromBlock(it.blockRef, 0, 0, Long.MIN_VALUE, maxPos);
 
 
 

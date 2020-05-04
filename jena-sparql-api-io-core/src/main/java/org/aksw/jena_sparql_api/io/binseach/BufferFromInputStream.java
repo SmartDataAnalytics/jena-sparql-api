@@ -242,12 +242,14 @@ public class BufferFromInputStream
 
         @Override
         public void posToStart() throws IOException {
-            position(0);
+            position(-1);
         }
 
         @Override
         public void posToEnd() throws IOException {
-            throw new UnsupportedOperationException();
+            loadDataUpTo(Long.MAX_VALUE);
+            pos = knownDataSize;
+            pointer = null;
         }
 
         @Override
@@ -325,16 +327,24 @@ public class BufferFromInputStream
 
         @Override
         public int checkNext(int len, boolean changePos) throws IOException {
-            long delta = knownDataSize - pos;
-            if(delta < len) {
+            // Remaining bytes between pos and knowDataSize
+            long remainingKnownBytes = knownDataSize - 1 - pos;
+            if(remainingKnownBytes < len) {
                 loadDataUpTo(pos + len);
 
-                delta = knownDataSize - pos;
+                remainingKnownBytes = knownDataSize - 1 - pos;
             }
 
-            int r = Math.min(len, Ints.saturatedCast(delta));
+            int r = Math.min(len, Ints.saturatedCast(remainingKnownBytes));
+//            if(r == 0) {
+//                System.out.println("reached end");
+//            }
 
             if(changePos) {
+//                if(r <= 0) {
+//                    pos = knownDataSize;
+//                }
+
                 if(pointer != null) {
                     int remaining = r;
 
