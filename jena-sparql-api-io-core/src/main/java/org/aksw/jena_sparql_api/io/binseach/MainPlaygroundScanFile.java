@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.ByteBuffer;
-import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -113,20 +112,32 @@ public class MainPlaygroundScanFile {
         try(FileChannel fileChannel = FileChannel.open(path, StandardOpenOption.READ)) {
             BinarySearcher bs = BlockSources.createBinarySearcherBz2(fileChannel);
 
-            try(InputStream in = bs.search("<http://linkedgeodata.org/geometry/node1583470199>")) {
+            System.out.println("Matches:");
+            // A record in the middle of a block
+            // String str = "<http://linkedgeodata.org/geometry/node1583470199>";
 
-                BufferedReader br = new BufferedReader(new InputStreamReader(in));
-                String line;
-                int i = 0;
-                while((line = br.readLine()) != null) {
-                    ++i;
-                    System.out.println(line);
-                    if(i > 100) { break; }
-                }
-                System.out.println(i + " lines");
+            // This one is the first record in a block:
+//            String str = "<http://linkedgeodata.org/geometry/node1583253778>";
+
+            // This one is overlapping before node1583253778
+            String str = "<http://linkedgeodata.org/geometry/node1583253655>";
+            try(InputStream in = bs.search(str)) {
+                printLines(in, 5);
             }
         }
 
+    }
+
+    public static void printLines(InputStream in, int count) throws IOException {
+        BufferedReader br = new BufferedReader(new InputStreamReader(in));
+        String line;
+        int i = 0;
+        while((line = br.readLine()) != null) {
+            ++i;
+            System.out.println(line);
+            if(i > count) { break; }
+        }
+        System.out.println(i + " lines");
     }
 
     public static void mainBz2Decode(String[] args) throws Exception {

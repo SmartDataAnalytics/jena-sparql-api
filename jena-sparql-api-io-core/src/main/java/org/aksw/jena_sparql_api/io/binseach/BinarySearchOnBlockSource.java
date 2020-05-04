@@ -3,6 +3,7 @@ package org.aksw.jena_sparql_api.io.binseach;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.channels.Channels;
 
 import org.aksw.jena_sparql_api.io.common.Reference;
 
@@ -31,7 +32,12 @@ public class BinarySearchOnBlockSource
 
             Block block = blockRef.get();
 
-            System.out.println("Block offset: " + block.getOffset());
+            try(InputStream in = Channels.newInputStream(block.newChannel())) {
+                System.out.println("Block start:");
+                MainPlaygroundScanFile.printLines(in, 5);
+            }
+
+            // System.out.println("Block offset: " + block.getOffset());
 
             // Load the block full + extra bytes up to the start of the first record in the
             // next block
@@ -63,10 +69,10 @@ public class BinarySearchOnBlockSource
             long findPos = decodedView.binarySearch(0, maxPos, (byte)'\n', prefix);
 
             if(findPos == Long.MIN_VALUE) {
-                System.out.println("No pos found in block");
+                // System.out.println("No pos found in block");
                 result = new ByteArrayInputStream(new byte[0]);
             } else {
-                System.out.println(findPos);
+                // System.out.println(findPos);
 
 
                 // Seekable continuousView = new SeekableFromBlock(blockRef, (int)findPos, findPos);

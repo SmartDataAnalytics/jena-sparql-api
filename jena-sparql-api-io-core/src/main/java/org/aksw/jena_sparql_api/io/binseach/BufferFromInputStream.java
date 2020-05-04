@@ -62,6 +62,8 @@ public class BufferFromInputStream
     /** Supplier for additional data */
     protected InputStream dataSupplier;
 
+    protected int minReadSize;
+
     /** Maximum number to read from the dataSupplier in one request */
     protected int maxReadSize;
 
@@ -356,6 +358,17 @@ public class BufferFromInputStream
             return r;
         }
 
+        @Override
+        public byte get() throws IOException {
+            if(pointer == null) {
+                loadDataUpTo(pos);
+                pointer = getPointer(buckets, activeEnd, pos);
+            }
+
+            byte result = buckets[pointer.idx][pointer.pos];
+            return result;
+        }
+
         /**
          * The method assumes that the current position is in the valid range
          *
@@ -408,6 +421,7 @@ public class BufferFromInputStream
         this.buckets = new byte[8][];
         buckets[0] = new byte[initialBucketSize];
         this.dataSupplier = dataSupplier;
+        this.minReadSize = 8192;
         this.maxReadSize = 8192;
         this.activeEnd = new BucketPointer(0, 0);
     }
@@ -535,6 +549,8 @@ public class BufferFromInputStream
 
             byte[] activeBucket = buckets[activeEnd.idx];
             int len = Math.min(needed, maxReadSize);
+
+            len = Math.max(len, minReadSize);
             len = Math.min(len, activeBucket.length - activeEnd.pos);
 
             if(len != 0) {

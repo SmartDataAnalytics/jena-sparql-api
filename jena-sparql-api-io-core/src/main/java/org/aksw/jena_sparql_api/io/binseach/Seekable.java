@@ -554,7 +554,7 @@ public interface Seekable
     //long binarySearch(long min, long max, byte delimiter, byte[] prefix) throws IOException;
 
     default long binarySearch(long min, long max, byte delimiter, byte[] prefix) throws IOException {
-        System.out.println("[" + min + ", " + max + "[");
+        // System.out.println("[" + min + ", " + max + "[");
 
         long middlePos = (min + max) / 2;
         setPos(middlePos);

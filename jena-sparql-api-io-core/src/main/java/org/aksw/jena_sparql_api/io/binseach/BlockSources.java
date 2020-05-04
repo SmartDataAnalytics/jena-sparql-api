@@ -72,14 +72,8 @@ public class BlockSources {
                     // FIXME This can actually happen with spatial datasets where polygons are
                     // larger than the bz2 block size!
                     // So in that case we'd have to scan the black backwards until we find one
-                if(seekable.getPos() == 900000) {
-                    System.out.println("whaaaaaa???");
-                }
-                System.out.println(seekable.getPos());
+//                System.out.println(seekable.getPos());
                 seekable.posToNext(delimiter);
-                if(seekable.getPos() == 900000) {
-                    System.out.println("whaaaaaa???");
-                }
                 seekable.nextPos(1);
 
 

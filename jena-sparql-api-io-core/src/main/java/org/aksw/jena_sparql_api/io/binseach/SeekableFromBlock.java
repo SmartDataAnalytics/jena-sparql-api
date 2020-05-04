@@ -712,6 +712,12 @@ public class SeekableFromBlock
 //    }
 
     @Override
+    public byte get() throws IOException {
+        byte r = currentSeekable.get();
+        return r;
+    }
+
+    @Override
     public int read(ByteBuffer dst) throws IOException {
         int n = -1;
 
