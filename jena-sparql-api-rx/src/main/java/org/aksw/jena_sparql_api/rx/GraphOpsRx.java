@@ -7,6 +7,7 @@ import java.util.function.Supplier;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
+import org.apache.jena.sparql.graph.GraphFactory;
 
 import io.reactivex.FlowableTransformer;
 
@@ -25,6 +26,22 @@ public class GraphOpsRx {
 //                        grouper::apply,
 //                        groupKey -> graphSupplier.get(),
 //                        Graph::add));
+    }
+
+    public static FlowableTransformer<Triple, Entry<Node, Graph>> graphsFromConsecutiveSubjectsRaw() {
+        return graphsFromConsecutiveSubjectsRaw(GraphFactory::createDefaultGraph);
+    }
+
+    public static FlowableTransformer<Triple, Entry<Node,Graph>> graphsFromConsecutiveSubjectsRaw(Supplier<Graph> graphSupplier) {
+        return groupConsecutiveTriplesRaw(Triple::getSubject, graphSupplier);
+    }
+
+    public static FlowableTransformer<Triple, Graph> graphsFromConsecutiveSubjects() {
+        return graphsFromConsecutiveSubjects(GraphFactory::createDefaultGraph);
+    }
+
+    public static FlowableTransformer<Triple, Graph> graphsFromConsecutiveSubjects(Supplier<Graph> graphSupplier) {
+        return graphFromConsecutiveTriples(Triple::getSubject, graphSupplier);
     }
 
     public static FlowableTransformer<Triple, Graph> graphFromConsecutiveTriples(

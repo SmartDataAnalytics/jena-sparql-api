@@ -349,12 +349,12 @@ public class BufferFromInputStream
                     int remaining = r;
 
                     for(;;) {
-                        int available = buckets[pointer.idx].length - pointer.pos;
+                        int available = buckets[pointer.idx].length - 1 - pointer.pos;
                         if(remaining > available) {
                             //int d = available - pointer.pos;
                             remaining -= available;
                             ++pointer.idx;
-                            pointer.pos = 0;
+                            pointer.pos = -1;
                         } else {
                             pointer.pos += remaining;
                             break;
