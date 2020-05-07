@@ -32,11 +32,11 @@ public class BinarySearchOnBlockSource
 
             Block block = blockRef.get();
 
-            System.out.println("Block match: " + block.getOffset());
-            try(InputStream in = Channels.newInputStream(block.newChannel())) {
-                System.out.println("Block start:");
-                MainPlaygroundScanFile.printLines(in, 5);
-            }
+//            System.out.println("Block match: " + block.getOffset());
+//            try(InputStream in = Channels.newInputStream(block.newChannel())) {
+//                System.out.println("Block start:");
+//                MainPlaygroundScanFile.printLines(in, 5);
+//            }
 
             // System.out.println("Block offset: " + block.getOffset());
 
@@ -59,10 +59,10 @@ public class BinarySearchOnBlockSource
             }
 
             // extraBytes = 0;
-            System.out.println("Extra bytes: " + extraBytes);
+//            System.out.println("Extra bytes: " + extraBytes);
 
             long blockSize = block.length();
-            System.out.println("Block size: " + blockSize);
+//            System.out.println("Block size: " + blockSize);
             long maxPos = blockSize + extraBytes;
 
             SeekableFromBlock decodedView = new SeekableFromBlock(it.blockRef, 0, 0, Long.MIN_VALUE, maxPos);

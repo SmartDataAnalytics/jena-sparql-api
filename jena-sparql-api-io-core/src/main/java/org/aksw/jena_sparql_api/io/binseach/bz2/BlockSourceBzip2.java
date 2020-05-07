@@ -52,7 +52,7 @@ public class BlockSourceBzip2
 
     public static BlockSource create(SeekableSource seekableSource) {
         String str = new String(magic);
-        System.out.println("Str: " + str);
+//        System.out.println("Str: " + str);
         if(!seekableSource.supportsAbsolutePosition()) {
             throw new RuntimeException("The seekable source must support absolution positions");
         }

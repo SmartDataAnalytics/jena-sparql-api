@@ -34,10 +34,18 @@ public class TestBinSearchBz2 {
         runTest();
     }
 
-    public static void main(String[] args) throws IOException {
-        runTest();
-    }
+//    public static void main(String[] args) throws IOException {
+//        runTest();
+//    }
 
+    /**
+     * For future reference and quantifying improvements:
+     * The first working version of this test took [11.6, 11.3, 11.5] seconds ~ 2020-05-08 Claus Stadler
+     *
+     *
+     *
+     *
+     */
     public static void runTest() throws IOException {
         Path path = Paths.get("src/test/resources/2015-11-02-Amenity.node.5mb-uncompressed.sorted.nt.bz2");
 
@@ -54,20 +62,17 @@ public class TestBinSearchBz2 {
             BinarySearcher bs = BlockSources.createBinarySearcherBz2(fileChannel);
 
             // This key overlaps on the block boundary (byte 2700000)
-            try(InputStream in = bs.search("<http://linkedgeodata.org/geometry/node1012767568>")) {
-                MainPlaygroundScanFile.printLines(in, 10);
-            }
-
-            if(true) {
-                return;
-            }
+//            try(InputStream in = bs.search("<http://linkedgeodata.org/geometry/node1012767568>")) {
+//                MainPlaygroundScanFile.printLines(in, 10);
+//            }
+//
 
             // Generic tests
 
             int i = 0;
             for(Entry<Node, Graph> e : map.entrySet()) {
                 Node s = e.getKey();
-                System.out.println("Test #" + (++i) + ": " + s);
+//                System.out.println("Test #" + (++i) + ": " + s);
                 Graph expected = e.getValue();
 
                 //String str = s.isURI() ? "<" + s.getURI() + ">" : s.getBlankNodeLabel()
@@ -82,8 +87,8 @@ public class TestBinSearchBz2 {
                     if(!isOk) {
                         System.err.println("Expected:");
                         RDFDataMgr.write(System.err, expected, RDFFormat.TURTLE_PRETTY);
-                          System.err.println("Actual:");
-                          RDFDataMgr.write(System.out, actual, RDFFormat.TURTLE_PRETTY);
+                        System.err.println("Actual:");
+                        RDFDataMgr.write(System.out, actual, RDFFormat.TURTLE_PRETTY);
                     }
                     Assert.assertTrue(isOk);
                 }

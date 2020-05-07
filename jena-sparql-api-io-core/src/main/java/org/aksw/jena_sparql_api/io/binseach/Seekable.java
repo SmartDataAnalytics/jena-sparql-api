@@ -564,12 +564,18 @@ public interface Seekable
             return Long.MIN_VALUE;
         }
 
-        posToPrev(delimiter);
+//        posToPrev(delimiter);
+
+        if(middlePos != -1) {
+            posToNext(delimiter);
+        }
+
         long delimPos = getPos();
         nextPos(1);
 
         // If the delimPos has not progressed over min then there is no match
-        if(delimPos < min || min >= max) {
+//        if(delimPos < min || min >= max) {
+        if(min >= max) {
             return Long.MIN_VALUE;
         }
 
