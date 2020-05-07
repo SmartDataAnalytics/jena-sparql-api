@@ -23,6 +23,7 @@ import org.aksw.jena_sparql_api.io.deprecated.BoyerMooreMatcherFactory;
 import org.aksw.jena_sparql_api.io.deprecated.SeekableMatcher;
 import org.apache.jena.ext.com.google.common.base.Stopwatch;
 import org.apache.jena.ext.com.google.common.collect.Maps;
+import org.apache.jena.query.QueryExecutionFactory;
 
 import com.github.jsonldjava.shaded.com.google.common.primitives.Ints;
 
@@ -123,7 +124,20 @@ public class MainPlaygroundScanFile {
 //            String str = "<http://linkedgeodata.org/geometry/node1583253655>";
 
             // This key is on the first page and the key itself overlaps with the page boundary
-            String str = "<http://linkedgeodata.org/geometry/node1003603551>";
+             String str = "<http://linkedgeodata.org/geometry/node1003603551>";
+
+            // First key on first page
+//            String str = "<http://linkedgeodata.org/geometry/node1000005269>";
+
+
+            // Second key on first page
+//            String str = "<http://linkedgeodata.org/geometry/node1000006271>";
+
+            // Mistyped key (missing '<')
+            // String str = "http://linkedgeodata.org/geometry/node1000005269";
+
+            // Empty string should match everything - needs special handling?
+            // String str = "";
             try(InputStream in = bs.search(str)) {
                 printLines(in, 5);
             }

@@ -104,18 +104,18 @@ public class AlgebraUtils {
     private static final Logger logger = LoggerFactory.getLogger(AlgebraUtils.class);
 
 
-	// TODO Move to Query Utils
+    // TODO Move to Query Utils
 //	public static Query rewrite(Query query, Function<? super Op, ? extends Op> rewriter) {
 //		Op op = Algebra.compile(query);
 ////System.out.println(op);
 //		op = rewriter.apply(op);
-//		
+//
 //		Query result = OpAsQuery.asQuery(op);
 //		result.getPrefixMapping().setNsPrefixes(query.getPrefixMapping());
 //		return result;
 //	}
 
-	public static Rewrite createDefaultRewriter() {
+    public static Rewrite createDefaultRewriter() {
 
         Context context = new Context();
         context.put(ARQ.optPromoteTableEmpty, false);
@@ -128,7 +128,7 @@ public class AlgebraUtils {
         // context.put(ARQ.optPathFlatten, false);
 
         //context.put(ARQ.optReorderBGP, true);
-        
+
         context.put(ARQ.optMergeBGPs, false); // We invoke this manually
         context.put(ARQ.optMergeExtends, true);
 
@@ -144,12 +144,12 @@ public class AlgebraUtils {
         // Retain E_OneOf expressions
         context.put(ARQ.optFilterExpandOneOf, false);
 
-//        
+//
 //
 //        // optIndexJoinStrategy mut be off ; it introduces OpConditional nodes which
 //        // cannot be transformed back into syntax
         context.put(ARQ.optIndexJoinStrategy, false);
-//        
+//
         // It is important to keep optFilterEquality turned off!
         // Otherwise it may push constants back into the quads
         context.put(ARQ.optFilterEquality, false);
@@ -157,33 +157,33 @@ public class AlgebraUtils {
         context.put(ARQ.optDistinctToReduced, false);
         context.put(ARQ.optInlineAssignments, false);
         context.put(ARQ.optInlineAssignmentsAggressive, false);
-        
+
         // false; OpAsQuery throws Not implemented: OpDisjunction (jena 3.8.0)
         context.put(ARQ.optFilterDisjunction, false);
         context.put(ARQ.optFilterConjunction, true);
-        
+
         context.put(ARQ.optExprConstantFolding, true);
 
 //        Rewrite rewriter = Optimize.stdOptimizationFactory.create(context);
         RewriteFactory factory = Optimize.getFactory();
         Rewrite core = factory.create(context);
-        
-        
+
+
         // Wrap jena's rewriter with additional transforms
         Rewrite pushDown = op -> {
 
-        		op = core.rewrite(op);
-        		
-        		// Issue with Jena 3.8.0 (possibly other versions too)
-        		// Jena's rewriter returned by Optimize.getFactory() renames variables (due to scoping)
-        		// but does not reverse the renaming - so we need to do it explicitly here
-        		// TODO Is reversing really needed? If our code is correct, then Jena should just cope with it
-        		op = Rename.reverseVarRename(op, true);
+                op = core.rewrite(op);
 
-        		op = FixpointIteration.apply(op, x -> {
-        			x = TransformJoinOverLeftJoin.transform(x);
-        			return x;
-        		});
+                // Issue with Jena 3.8.0 (possibly other versions too)
+                // Jena's rewriter returned by Optimize.getFactory() renames variables (due to scoping)
+                // but does not reverse the renaming - so we need to do it explicitly here
+                // TODO Is reversing really needed? If our code is correct, then Jena should just cope with it
+                op = Rename.reverseVarRename(op, true);
+
+                op = FixpointIteration.apply(op, x -> {
+                    x = TransformJoinOverLeftJoin.transform(x);
+                    return x;
+                });
 
 //        		op = FixpointIteration.apply(op, x -> {
 //            		x = TransformPullFiltersIfCanMergeBGPs.transform(x);
@@ -191,64 +191,64 @@ public class AlgebraUtils {
 //            		return x;
 //        		});
 
-        		op = TransformPushFiltersIntoBGP.transform(op);
-        		op = TransformDeduplicatePatterns.transform(op);        		
-        		op = TransformFilterSimplify.transform(op);
-        		op = TransformRedundantFilterRemoval.transform(op);
+                op = TransformPushFiltersIntoBGP.transform(op);
+                op = TransformDeduplicatePatterns.transform(op);
+                op = TransformFilterSimplify.transform(op);
+                op = TransformRedundantFilterRemoval.transform(op);
 
 
 //        		op = TransformPushFiltersIntoBGP.transform(op);
-//        		op = TransformDeduplicatePatterns.transform(op);        		
+//        		op = TransformDeduplicatePatterns.transform(op);
 //        		op = TransformRedundantFilterRemoval.transform(op);
 //        		op = TransformFilterSimplify.transform(op);
 
-        		op = TransformPruneEmptyLeftJoin.transform(op);
-        		
-        		op = TransformFilterFalseToEmptyTable.transform(op);
-        		op = TransformPromoteTableEmptyVarPreserving.transform(op);
-        		
+                op = TransformPruneEmptyLeftJoin.transform(op);
+
+                op = TransformFilterFalseToEmptyTable.transform(op);
+                op = TransformPromoteTableEmptyVarPreserving.transform(op);
+
 //        		op = FixpointIteration.apply(op, x -> {
 //        			x = TransformDistributeJoinOverUnion.transform(x);
 //        			return x;
 //        		});
 
 
-        		return op;
+                return op;
         };
 
         Rewrite pullUp = op -> {
-			op = TransformPullExtend.transform(op);
-    		op = TransformPullFiltersIfCanMergeBGPs.transform(op);
-    		op = Transformer.transform(new TransformMergeBGPs(), op);
-    		return op;
-		};
-		
+            op = TransformPullExtend.transform(op);
+            op = TransformPullFiltersIfCanMergeBGPs.transform(op);
+            op = Transformer.transform(new TransformMergeBGPs(), op);
+            return op;
+        };
+
 
         Rewrite result = op -> {
-        	
+
 //        	op = FixpointIteration.apply(op, x -> {
 //        		x = TransformPullFilters.transform(x);
 //        		return x;
 //        	});
 
-        	
-        	
-        	// Extract filters only once from extend
-    		op = TransformAddFilterFromExtend.transform(op);
 
-        	op = FixpointIteration.apply(op, x -> {
-	        	x = FixpointIteration.apply(x, pushDown::rewrite);
-	        	x = pullUp.rewrite(x);
-        	//x = FixpointIteration.apply(x, pullUp::rewrite);
-	        	return x;
-        	});
-        	return op;
+
+            // Extract filters only once from extend
+            op = TransformAddFilterFromExtend.transform(op);
+
+            op = FixpointIteration.apply(op, x -> {
+                x = FixpointIteration.apply(x, pushDown::rewrite);
+                x = pullUp.rewrite(x);
+            //x = FixpointIteration.apply(x, pullUp::rewrite);
+                return x;
+            });
+            return op;
         };
         return result;
         //return result;
-	}
+    }
 
-    
+
     /**
      * Wrap a node with a caching operation
      *
@@ -580,7 +580,7 @@ public class AlgebraUtils {
         OpProject opProject = null;
 
         boolean consumeDistinct = false;
-        boolean consumeProject = false;
+        boolean consumeProject = true;
 
         if(consumeDistinct && op instanceof OpDistinct) {
             opDistinct = (OpDistinct)op;
@@ -591,7 +591,7 @@ public class AlgebraUtils {
             opProject = (OpProject)op;
             op = opProject.getSubOp();
         }
-        
+
         QuadFilterPattern qfp = extractQuadFilterPattern(op);
 
         ConjunctiveQuery result = null;

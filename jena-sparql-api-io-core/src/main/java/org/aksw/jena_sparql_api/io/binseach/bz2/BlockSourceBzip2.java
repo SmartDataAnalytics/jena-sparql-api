@@ -110,7 +110,7 @@ public class BlockSourceBzip2
             }
         }
 
-        return result.acquire(null);
+        return result == null ? null : result.acquire(null);
     }
 
     public Reference<Block> cache(long blockStart, Seekable seekable) throws IOException {
@@ -143,7 +143,7 @@ public class BlockSourceBzip2
             }
         }
 
-        return result.acquire(null);
+        return result == null ? null : result.acquire(null);
     }
 
     @Override

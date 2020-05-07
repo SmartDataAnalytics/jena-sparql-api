@@ -153,7 +153,9 @@ public interface Seekable
 
     /**
      * Attempt to advance the position by the given number of bytes.
-     *
+     * If the position is valid before the call it will always be valid when
+     * the call returns - i.e. in that case isPosBeforeStart and isPosAfterEnd will
+     * always be false.
      * Argument must not be negative.
      *
      * @param len
@@ -168,23 +170,20 @@ public interface Seekable
         return result;
     }
 
-    int checkNext(int len, boolean changePos) throws IOException;
-
     /**
      * Attempt to advance the position by the given number of bytes.
      * Return the number of bytes by which the position was changed.
      * Returning less bytes than requested implies that a end position
-     * was reached which cannot be passed.
+     * was reached which cannot be passed. This method cannot pass
+     * beyond the end - i.e. isPosAfterEnd cannot change from false
+     * to true by  calling this method.
+     *
      *
      * @param len
      * @return
      * @throws IOException
      */
-//    default int forceNextPos(int len) throws IOException {
-//        int r = checkNext(len);
-//        nextPos(r);
-//        return r;
-//    }
+    int checkNext(int len, boolean changePos) throws IOException;
 
 
     /**
@@ -458,7 +457,8 @@ public interface Seekable
         ByteBuffer bb = ByteBuffer.wrap(buf);
         while(read(bb) != -1);
 
-        int result = compareArrays(buf, prefix);
+        int totalRead = bb.position();
+        int result = compareArrays(buf, prefix); // , totalRead);
 
         // Reset position
         setPos(pos);
@@ -468,8 +468,9 @@ public interface Seekable
 
 
     // Throw an exception if lengths differ?
-    public static int compareArrays(byte[] a, byte[] b) {
+    public static int compareArrays(byte[] a, byte[] b) { //, int maxLength) {
         int n = Math.min(a.length, b.length);
+        //n = Math.min(n, maxLength);
 
         int result = 0;
         for(int i = 0; i < n && result == 0; ++i) {
@@ -565,6 +566,7 @@ public interface Seekable
 
         posToPrev(delimiter);
         long delimPos = getPos();
+        nextPos(1);
 
         // If the delimPos has not progressed over min then there is no match
         if(delimPos < min || min >= max) {
@@ -573,7 +575,6 @@ public interface Seekable
 
         // long lineStart = getPos();
         //long lineStart = delimPos + 1;
-        nextPos(1);
         int cmp = compareToPrefix(prefix);
 
         // System.out.println(min + " - " + max);
@@ -593,11 +594,18 @@ public interface Seekable
             result = delimPos;
         } else if(cmp < 0) {
             long nextDelimPos;
-            setPos(delimPos + 1);
-            posToNext(delimiter);
+            setPos(delimPos);
+            //setPos(delimPos + 1); // This operation cannot move past the end
+            //posToNext(delimiter);
+            checkNext(1, true);
             nextDelimPos = getPos();
+            boolean failedNext = delimPos == nextDelimPos;
+            if(failedNext) { // The key is greater than anything in the last block
+                result = Long.MIN_VALUE;
+            } else {
 
-            result = binarySearch(nextDelimPos, max, delimiter, prefix);
+                result = binarySearch(nextDelimPos, max, delimiter, prefix);
+            }
         } else { // if cmp > 0
             result = binarySearch(min, delimPos - 1, delimiter, prefix);
         }

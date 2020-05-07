@@ -263,11 +263,14 @@ public class SeekableFromBlock
         try {
             currentBlockRef.close();
             currentBlockRef = startBlockRef.acquire(null);
+            currentBlock = currentBlockRef.get();
+            currentSeekable = currentBlock.newChannel();
+            currentSeekable.posToStart();
             actualPos = exposedStartPos;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        actualPos = 0;
+        actualPos = -1;
     }
 
 
@@ -476,7 +479,7 @@ public class SeekableFromBlock
         } else {
             // Copy into array
             byte tmp[] = new byte[l];
-            peekNextBytes(tmp, 0, l);
+            int available = peekNextBytes(tmp, 0, l);
 
             result = Seekable.compareArrays(tmp, prefix);
         }

@@ -67,7 +67,7 @@ public class BinarySearchOnBlockSource
 
             SeekableFromBlock decodedView = new SeekableFromBlock(it.blockRef, 0, 0, Long.MIN_VALUE, maxPos);
 
-            long findPos = decodedView.binarySearch(0, maxPos, (byte)'\n', prefix);
+            long findPos = decodedView.binarySearch(-1, maxPos, (byte)'\n', prefix);
 
             if(findPos == Long.MIN_VALUE) {
                 // System.out.println("No pos found in block");
