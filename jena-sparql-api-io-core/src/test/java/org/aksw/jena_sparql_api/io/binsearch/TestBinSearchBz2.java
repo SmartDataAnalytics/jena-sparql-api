@@ -9,10 +9,10 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.TimeUnit;
 
 import org.aksw.jena_sparql_api.io.binseach.BinarySearcher;
 import org.aksw.jena_sparql_api.io.binseach.BlockSources;
-import org.aksw.jena_sparql_api.io.binseach.MainPlaygroundScanFile;
 import org.aksw.jena_sparql_api.rx.GraphOpsRx;
 import org.aksw.jena_sparql_api.rx.RDFDataMgrRx;
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream;
@@ -25,9 +25,15 @@ import org.apache.jena.riot.out.NodeFmtLib;
 import org.apache.jena.sparql.graph.GraphFactory;
 import org.junit.Assert;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.common.base.Stopwatch;
 
 
 public class TestBinSearchBz2 {
+
+    private static Logger logger = LoggerFactory.getLogger(TestBinSearchBz2.class);
 
     @Test
     public void testBinarySearchBz2Lookups() throws IOException {
@@ -50,6 +56,7 @@ public class TestBinSearchBz2 {
         Path path = Paths.get("src/test/resources/2015-11-02-Amenity.node.5mb-uncompressed.sorted.nt.bz2");
 
         // Read file and map each key to the number of lines
+        Stopwatch sw = Stopwatch.createStarted();
         Map<Node, Graph> map = RDFDataMgrRx.createFlowableTriples(
                     () -> new BZip2CompressorInputStream(Files.newInputStream(path, StandardOpenOption.READ), true),
                     Lang.NTRIPLES, null)
@@ -58,6 +65,12 @@ public class TestBinSearchBz2 {
                 .blockingGet()
                 ;
 
+        // Note that the logged time is for cold state - repeated loads should
+        // exhibit significant speedups
+        logger.debug("Needed " + (sw.elapsed(TimeUnit.MILLISECONDS) * 0.001) + " seconds to load " + path);
+
+        sw.reset().start();
+        int i = 0;
         try(FileChannel fileChannel = FileChannel.open(path, StandardOpenOption.READ)) {
             BinarySearcher bs = BlockSources.createBinarySearcherBz2(fileChannel);
 
@@ -69,9 +82,9 @@ public class TestBinSearchBz2 {
 
             // Generic tests
 
-            int i = 0;
             for(Entry<Node, Graph> e : map.entrySet()) {
                 Node s = e.getKey();
+                ++i;
 //                System.out.println("Test #" + (++i) + ": " + s);
                 Graph expected = e.getValue();
 
@@ -96,6 +109,9 @@ public class TestBinSearchBz2 {
             }
 
         }
+
+        logger.debug("Needed " + (sw.elapsed(TimeUnit.MILLISECONDS) * 0.001) + " seconds for " + i + " lookups on " + path);
+
     }
 }
 
