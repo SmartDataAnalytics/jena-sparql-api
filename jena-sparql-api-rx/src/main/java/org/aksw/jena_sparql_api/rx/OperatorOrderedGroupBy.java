@@ -3,10 +3,10 @@ package org.aksw.jena_sparql_api.rx;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import org.apache.jena.ext.com.google.common.collect.Maps;
-import org.checkerframework.checker.units.qual.K;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 
@@ -43,6 +43,7 @@ public final class OperatorOrderedGroupBy<T, K, V>
     implements FlowableOperator<Entry<K, V>, T> {
 
     protected Function<? super T, ? extends K> getGroupKey;
+    protected BiFunction<? super K, ? super K, Boolean> groupKeyCompare;
     protected Function<? super K, ? extends V> accCtor;
     protected BiConsumer<? super V, ? super T> accAdd;
 
@@ -50,15 +51,24 @@ public final class OperatorOrderedGroupBy<T, K, V>
             Function<? super T, ? extends K> getGroupKey,
             Function<? super K, ? extends V> accCtor,
             BiConsumer<? super V, ? super T> accAdd) {
+        this(getGroupKey, Objects::equals, accCtor, accAdd);
+    }
+
+    public OperatorOrderedGroupBy(
+            Function<? super T, ? extends K> getGroupKey,
+            BiFunction<? super K, ? super K, Boolean> groupKeyCompare,
+            Function<? super K, ? extends V> accCtor,
+            BiConsumer<? super V, ? super T> accAdd) {
         super();
         this.getGroupKey = getGroupKey;
+        this.groupKeyCompare = groupKeyCompare;
         this.accCtor = accCtor;
         this.accAdd = accAdd;
     }
 
     @Override
     public Subscriber<? super T> apply(Subscriber<? super Entry<K, V>> child) throws Exception {
-        return new Op<>(child, getGroupKey, accCtor, accAdd);
+        return new Op<>(child, getGroupKey, groupKeyCompare, accCtor, accAdd);
     }
 
     static final class Op<T, K, V> implements FlowableSubscriber<T>, Subscription {
@@ -67,6 +77,7 @@ public final class OperatorOrderedGroupBy<T, K, V>
         protected Subscription s;
 
         protected Function<? super T, ? extends K> getGroupKey;
+        protected BiFunction<? super K, ? super K, Boolean> groupKeyCompare;
         protected Function<? super K, ? extends V> accCtor;
         protected BiConsumer<? super V, ? super T> accAdd;
 
@@ -76,11 +87,15 @@ public final class OperatorOrderedGroupBy<T, K, V>
         protected V currentAcc = null;
 
 
-        public Op(Subscriber<? super Entry<K, V>> child, Function<? super T, ? extends K> getGroupKey,
-                Function<? super K, ? extends V> accCtor, BiConsumer<? super V, ? super T> accAdd) {
+        public Op(Subscriber<? super Entry<K, V>> child,
+                Function<? super T, ? extends K> getGroupKey,
+                BiFunction<? super K, ? super K, Boolean> groupKeyCompare,
+                Function<? super K, ? extends V> accCtor,
+                BiConsumer<? super V, ? super T> accAdd) {
             super();
             this.child = child;
             this.getGroupKey = getGroupKey;
+            this.groupKeyCompare = groupKeyCompare;
             this.accCtor = accCtor;
             this.accAdd = accAdd;
         }
@@ -101,7 +116,7 @@ public final class OperatorOrderedGroupBy<T, K, V>
                 currentAcc = accCtor.apply(currentKey);
 
                 Objects.requireNonNull(currentAcc, "Got null for an accumulator");
-            } else if(!Objects.equals(priorKey, currentKey)) {
+            } else if (!groupKeyCompare.apply(priorKey, currentKey)) { //(!Objects.equals(priorKey, currentKey)) {
 
                 child.onNext(Maps.immutableEntry(priorKey, currentAcc));
 
@@ -168,7 +183,7 @@ public final class OperatorOrderedGroupBy<T, K, V>
                                 currentAcc = accCtor.apply(currentKey);
 
                                 Objects.requireNonNull(currentAcc, "Got null for an accumulator");
-                            } else if(!Objects.equals(priorKey, currentKey)) {
+                            } else if(!groupKeyCompare.apply(priorKey, currentKey)) {//if(!Objects.equals(priorKey, currentKey)) {
 
                                 child.onNext(Maps.immutableEntry(priorKey, currentAcc));
 
