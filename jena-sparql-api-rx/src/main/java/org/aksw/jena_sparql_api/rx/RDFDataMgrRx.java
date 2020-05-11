@@ -7,6 +7,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -15,6 +16,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -57,12 +59,12 @@ import org.apache.jena.riot.system.SyntaxLabels;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.util.Context;
 
-import com.github.davidmoten.rx2.flowable.Transformers;
+// import com.github.davidmoten.rx2.flowable.Transformers;
 import com.google.common.collect.Lists;
 
-import io.reactivex.Flowable;
-import io.reactivex.FlowableTransformer;
-import io.reactivex.Maybe;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.FlowableTransformer;
+import io.reactivex.rxjava3.core.Maybe;
 
 /**
  * Reactive extensions of RDFDataMgr
@@ -290,10 +292,13 @@ public class RDFDataMgrRx {
      */
     public static Flowable<Resource> createFlowableResources(Callable<InputStream> inSupplier, Lang lang, String baseIRI) {
         Flowable<Resource> result = createFlowableQuads(inSupplier, lang, baseIRI)
-            .compose(Transformers.<Quad>toListWhile(
-                    (list, t) -> list.isEmpty()
-                                 || list.get(0).getGraph().equals(t.getGraph())))
-            .map(list -> list.stream().map(RDFDataMgrRx::decodeDistinguished).collect(Collectors.toList()))
+//            .compose(Transformers.<Quad>toListWhile(
+//                    (list, t) -> list.isEmpty()
+//                                 || list.get(0).getGraph().equals(t.getGraph())))
+            .compose(DatasetGraphOpsRx.groupToList())
+            .map(Entry::getValue)
+            .map(list -> list.stream().map(RDFDataMgrRx::decodeDistinguished)
+            .collect(Collectors.toList()))
             .map(QuadPatternUtils::createResourceFromQuads);
 
         return result;
@@ -357,9 +362,11 @@ public class RDFDataMgrRx {
      */
     public static Flowable<Dataset> createFlowableDatasets(Callable<InputStream> inSupplier, Lang lang, String baseIRI) {
         Flowable<Dataset> result = createFlowableQuads(inSupplier, lang, baseIRI)
-            .compose(Transformers.<Quad>toListWhile(
-                    (list, t) -> list.isEmpty()
-                                 || list.get(0).getGraph().equals(t.getGraph())))
+//            .compose(Transformers.<Quad>toListWhile(
+//                    (list, t) -> list.isEmpty()
+//                                 || list.get(0).getGraph().equals(t.getGraph())))
+            .compose(DatasetGraphOpsRx.groupToList())
+            .map(Entry::getValue)
             .map(DatasetFactoryEx::createInsertOrderPreservingDataset);
 
         return result;
@@ -375,9 +382,11 @@ public class RDFDataMgrRx {
                         in.getBaseURI(),
                         eh,
                         th))
-        .compose(Transformers.<Quad>toListWhile(
-                (list, t) -> list.isEmpty()
-                             || list.get(0).getGraph().equals(t.getGraph())))
+//        .compose(Transformers.<Quad>toListWhile(
+//                (list, t) -> list.isEmpty()
+//                             || list.get(0).getGraph().equals(t.getGraph())))
+        .compose(DatasetGraphOpsRx.groupToList())
+        .map(Entry::getValue)
         .map(DatasetFactoryEx::createInsertOrderPreservingDataset);
 
         return result;

@@ -9,10 +9,10 @@ import java.util.function.Supplier;
 import org.aksw.jena_sparql_api.io.endpoint.FileCreation;
 import org.aksw.jena_sparql_api.io.filter.sys.ThrowingConsumer;
 
-import io.reactivex.Single;
-import io.reactivex.SingleEmitter;
-import io.reactivex.SingleOnSubscribe;
-import io.reactivex.SingleTransformer;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.core.SingleEmitter;
+import io.reactivex.rxjava3.core.SingleOnSubscribe;
+import io.reactivex.rxjava3.core.SingleTransformer;
 
 
 

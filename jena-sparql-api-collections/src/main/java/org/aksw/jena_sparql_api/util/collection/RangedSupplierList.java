@@ -5,7 +5,7 @@ import java.util.List;
 import com.google.common.collect.DiscreteDomain;
 import com.google.common.collect.Range;
 
-import io.reactivex.Flowable;
+import io.reactivex.rxjava3.core.Flowable;
 
 public class RangedSupplierList<T>
     implements RangedSupplier<Long, T>//Function<Range<Long>, ClosableIterator<T>>

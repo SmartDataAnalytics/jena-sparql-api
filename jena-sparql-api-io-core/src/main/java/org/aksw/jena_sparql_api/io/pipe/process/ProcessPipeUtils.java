@@ -26,14 +26,13 @@ import org.aksw.jena_sparql_api.io.endpoint.FileCreation;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
-import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 
 import com.google.common.io.ByteStreams;
 
-import io.reactivex.Single;
-import io.reactivex.disposables.Disposable;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.disposables.Disposable;
 
 // TODO Consolidate with AkswExceptionUtils and ExceptionUtils in NGS...
 class ExceptionUtils2 {

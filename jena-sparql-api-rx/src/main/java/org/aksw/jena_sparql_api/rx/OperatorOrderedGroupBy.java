@@ -6,16 +6,17 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 import org.apache.jena.ext.com.google.common.collect.Maps;
+import org.checkerframework.checker.units.qual.K;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 
-import io.reactivex.BackpressureStrategy;
-import io.reactivex.Flowable;
-import io.reactivex.FlowableEmitter;
-import io.reactivex.FlowableOnSubscribe;
-import io.reactivex.FlowableOperator;
-import io.reactivex.FlowableSubscriber;
-import io.reactivex.FlowableTransformer;
+import io.reactivex.rxjava3.core.BackpressureStrategy;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.FlowableEmitter;
+import io.reactivex.rxjava3.core.FlowableOnSubscribe;
+import io.reactivex.rxjava3.core.FlowableOperator;
+import io.reactivex.rxjava3.core.FlowableSubscriber;
+import io.reactivex.rxjava3.core.FlowableTransformer;
 
 /**
  * Ordered group by; somewhat similar to .toListWhile() but with dedicated support for

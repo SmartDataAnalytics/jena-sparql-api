@@ -13,8 +13,8 @@ import org.apache.jena.rdfconnection.SparqlQueryConnection;
 
 import com.google.common.collect.Range;
 
-import io.reactivex.Flowable;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Single;
 
 public class MapPaginatorMappedConcept<G>
     extends MapPaginatorSparqlQueryBase<Node, G>
@@ -39,15 +39,15 @@ public class MapPaginatorMappedConcept<G>
 
     @Override
     public Single<Range<Long>> fetchCount(Long itemLimit, Long rowLimit) {
-    	Single<Range<Long>> result = SparqlRx.fetchCountConcept(qef, mappedConcept.getConcept(), itemLimit, rowLimit);
-    	//Range<Long> result = ServiceUtils.fetchCountConcept(qef, mappedConcept.getConcept(), itemLimit, rowLimit);
+        Single<Range<Long>> result = SparqlRx.fetchCountConcept(qef, mappedConcept.getConcept(), itemLimit, rowLimit);
+        //Range<Long> result = ServiceUtils.fetchCountConcept(qef, mappedConcept.getConcept(), itemLimit, rowLimit);
         return result;
     }
 
     @Override
     public Flowable<Entry<Node, G>> apply(Range<Long> range) {
-    	Flowable<Entry<Node, G>> result = MapServiceUtils.createListServiceMappedConcept(qef, mappedConcept, isLeftJoin).createPaginator(null).apply(range);
-    	return result;
+        Flowable<Entry<Node, G>> result = MapServiceUtils.createListServiceMappedConcept(qef, mappedConcept, isLeftJoin).createPaginator(null).apply(range);
+        return result;
 //        return fetchMap(range).entrySet().stream();
     }
 }

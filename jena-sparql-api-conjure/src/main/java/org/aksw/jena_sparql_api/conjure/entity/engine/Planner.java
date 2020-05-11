@@ -1,6 +1,5 @@
 package org.aksw.jena_sparql_api.conjure.entity.engine;
 
-import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -13,8 +12,6 @@ import org.aksw.jena_sparql_api.conjure.entity.algebra.OpConvert;
 import org.aksw.jena_sparql_api.conjure.entity.algebra.OpPath;
 import org.aksw.jena_sparql_api.http.domain.api.RdfEntityInfo;
 import org.aksw.jena_sparql_api.http.repository.api.RdfHttpEntityFile;
-
-import io.reactivex.Single;
 
 
 

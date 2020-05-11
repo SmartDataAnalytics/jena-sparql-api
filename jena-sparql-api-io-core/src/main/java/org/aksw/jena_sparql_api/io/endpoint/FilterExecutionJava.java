@@ -10,7 +10,7 @@ import java.util.function.Supplier;
 
 import org.aksw.jena_sparql_api.io.filter.sys.FilterExecutionFromSysFunction;
 
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Single;
 
 public class FilterExecutionJava
     implements FilterConfig

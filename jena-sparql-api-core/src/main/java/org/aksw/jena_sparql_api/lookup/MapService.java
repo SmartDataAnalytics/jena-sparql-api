@@ -7,7 +7,7 @@ import org.aksw.jena_sparql_api.utils.QueryUtils;
 
 import com.google.common.collect.Range;
 
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Single;
 
 /**
  * A list service is actually quite similar to JPA's TypedQuery,

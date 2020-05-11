@@ -3,7 +3,7 @@ package org.aksw.jena_sparql_api.io.endpoint;
 import java.io.IOException;
 import java.io.InputStream;
 
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Single;
 
 /**
  * An InputStreamSupplier is a source for InputStreams

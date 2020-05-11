@@ -30,7 +30,7 @@ import org.apache.jena.ext.com.google.common.base.StandardSystemProperty;
 
 import com.google.common.io.ByteStreams;
 
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Single;
 
 public class FilterExecutionFromSysFunction
     implements FilterConfig

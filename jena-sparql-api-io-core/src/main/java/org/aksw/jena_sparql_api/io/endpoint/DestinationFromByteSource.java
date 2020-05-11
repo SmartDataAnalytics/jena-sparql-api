@@ -7,7 +7,7 @@ import java.util.function.Supplier;
 
 import com.google.common.io.ByteSource;
 
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Single;
 
 public class DestinationFromByteSource
     implements Destination

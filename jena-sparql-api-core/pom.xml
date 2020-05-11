@@ -18,12 +18,8 @@
 
 	<dependencies>
 		<!-- Self Dependencies -->
-<!--
-		<dependency>
-			<groupId>org.aksw.jena-sparql-api</groupId>
-			<artifactId>jena-sparql-api-mapper-annotations</artifactId>
-		</dependency>
--->
+		<!-- <dependency> <groupId>org.aksw.jena-sparql-api</groupId> <artifactId>jena-sparql-api-mapper-annotations</artifactId> 
+			</dependency> -->
 		<dependency>
 			<groupId>org.aksw.jena-sparql-api</groupId>
 			<artifactId>jena-sparql-api-mapper-proxy</artifactId>
@@ -34,7 +30,7 @@
 			<artifactId>jena-sparql-api-collections</artifactId>
 		</dependency>
 
-<!-- Needed for QueryExecutionCompare -->
+		<!-- Needed for QueryExecutionCompare -->
 		<dependency>
 			<groupId>org.aksw.jena-sparql-api</groupId>
 			<artifactId>jena-sparql-api-utils</artifactId>
@@ -46,22 +42,17 @@
 		</dependency>
 
 		<!-- Needed for representing SPARQL Paths as json objects -->
-<!--
-		<dependency>
-			<groupId>org.aksw.jena-sparql-api</groupId>
-			<artifactId>jena-sparql-api-sparql-ext</artifactId>
-		</dependency>
--->
+		<!-- <dependency> <groupId>org.aksw.jena-sparql-api</groupId> <artifactId>jena-sparql-api-sparql-ext</artifactId> 
+			</dependency> -->
 
+		<!-- Used in the lookup interfaces -->
 		<dependency>
-			<groupId>io.reactivex.rxjava2</groupId>
+			<groupId>io.reactivex.rxjava3</groupId>
 			<artifactId>rxjava</artifactId>
 		</dependency>
 
-		<dependency>
-			<groupId>com.github.davidmoten</groupId>
-			<artifactId>rxjava2-extras</artifactId>
-		</dependency>
+		<!-- <dependency> <groupId>com.github.davidmoten</groupId> <artifactId>rxjava2-extras</artifactId> 
+			</dependency> -->
 
 		<!-- Jena -->
 		<dependency>

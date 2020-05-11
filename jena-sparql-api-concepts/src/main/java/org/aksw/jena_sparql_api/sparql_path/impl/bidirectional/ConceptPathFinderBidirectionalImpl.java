@@ -1,20 +1,10 @@
 package org.aksw.jena_sparql_api.sparql_path.impl.bidirectional;
 
-import org.aksw.jena_sparql_api.concepts.UnaryRelation;
-import org.aksw.jena_sparql_api.sparql_path.api.ConceptPathFinder;
-import org.aksw.jena_sparql_api.sparql_path.api.PathSearch;
-import org.aksw.jena_sparql_api.sparql_path.api.PathSearchBase;
-import org.aksw.jena_sparql_api.util.sparql.syntax.path.SimplePath;
-import org.apache.jena.graph.Graph;
-import org.apache.jena.rdfconnection.SparqlQueryConnection;
-
-import io.reactivex.Flowable;
-
 /**
  * A concept path finder capable of finding paths in both directions.
- * 
- * 
- * 
+ *
+ *
+ *
  * @author Claus Stadler, Nov 11, 2018
  *
  */

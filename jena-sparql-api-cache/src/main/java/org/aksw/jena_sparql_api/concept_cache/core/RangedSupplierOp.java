@@ -1,11 +1,8 @@
 package org.aksw.jena_sparql_api.concept_cache.core;
 
-import java.util.stream.Stream;
-
 import org.aksw.jena_sparql_api.algebra.transform.TransformPushSlice;
 import org.aksw.jena_sparql_api.util.RewriteUtils;
 import org.aksw.jena_sparql_api.util.collection.RangedSupplier;
-import org.aksw.jena_sparql_api.util.collection.StreamUtils;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.Transformer;
@@ -23,7 +20,7 @@ import org.apache.jena.sparql.util.Context;
 
 import com.google.common.collect.Range;
 
-import io.reactivex.Flowable;
+import io.reactivex.rxjava3.core.Flowable;
 
 public class RangedSupplierOp
     implements RangedSupplier<Long, Binding>, OpAttribute
@@ -55,7 +52,7 @@ public class RangedSupplierOp
 
         //QueryIterator it = execute(effectiveOp, context);
         //Stream<Binding> result = StreamUtils.stream(it);
-        
+
         Flowable<Binding> result = Flowable.fromIterable(() -> execute(finalEffectiveOp, context));
         //ClosableIterator<Binding> result = new IteratorClosable<>(it, () -> it.close());
         return result;

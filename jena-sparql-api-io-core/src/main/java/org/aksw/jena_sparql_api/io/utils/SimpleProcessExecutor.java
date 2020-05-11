@@ -15,12 +15,11 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Maps;
 
-import io.reactivex.BackpressureStrategy;
-import io.reactivex.Flowable;
-import io.reactivex.FlowableEmitter;
-import io.reactivex.Single;
-import io.reactivex.exceptions.Exceptions;
-import io.reactivex.plugins.RxJavaPlugins;
+import io.reactivex.rxjava3.core.BackpressureStrategy;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.FlowableEmitter;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.exceptions.Exceptions;
 
 public class SimpleProcessExecutor {
     private static final Logger logger = LoggerFactory.getLogger(SimpleProcessExecutor.class);

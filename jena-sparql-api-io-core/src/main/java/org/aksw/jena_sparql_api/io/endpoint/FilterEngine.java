@@ -3,7 +3,7 @@ package org.aksw.jena_sparql_api.io.endpoint;
 import java.io.InputStream;
 import java.nio.file.Path;
 
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Single;
 
 /**
  * An engine is a factory for executions that process input to output.

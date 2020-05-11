@@ -1,18 +1,14 @@
 package org.aksw.jena_sparql_api.lookup;
 
-import java.util.AbstractMap.SimpleEntry;
-import java.util.LinkedHashMap;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import org.apache.jena.ext.com.google.common.collect.Maps;
 
 import com.google.common.collect.Range;
 
-import io.reactivex.Flowable;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Single;
 
 /**
  * FIXME Possibly extend with generic transform instead of just value

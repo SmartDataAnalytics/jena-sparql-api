@@ -52,12 +52,12 @@ import com.google.common.collect.Iterators;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Range;
 
-import io.reactivex.BackpressureStrategy;
-import io.reactivex.Flowable;
-import io.reactivex.FlowableEmitter;
-import io.reactivex.Single;
-import io.reactivex.functions.Predicate;
-import io.reactivex.processors.PublishProcessor;
+import io.reactivex.rxjava3.core.BackpressureStrategy;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.FlowableEmitter;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.functions.Predicate;
+import io.reactivex.rxjava3.processors.PublishProcessor;
 
 /**
  * Utilities for wrapping SPARQL query execution with flows.

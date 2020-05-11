@@ -1,41 +1,25 @@
 package org.aksw.jena_sparql_api.io.filter.sys;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.lang.ProcessBuilder.Redirect;
-import java.nio.channels.ClosedChannelException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.Arrays;
 import java.util.NoSuchElementException;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
-import java.util.function.BiFunction;
-import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import org.aksw.jena_sparql_api.io.endpoint.Destination;
 import org.aksw.jena_sparql_api.io.endpoint.DestinationFromFile;
-import org.aksw.jena_sparql_api.io.endpoint.FileCreation;
 import org.aksw.jena_sparql_api.io.endpoint.FileWritingProcess;
 import org.aksw.jena_sparql_api.io.endpoint.FilterConfig;
 import org.aksw.jena_sparql_api.io.endpoint.HotFile;
-import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.riot.Lang;
-import org.apache.jena.riot.RDFDataMgr;
 
-import com.google.common.io.ByteStreams;
-
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Single;
 
 /**
  * Let's use IoEntity as an upper term for file or stream.

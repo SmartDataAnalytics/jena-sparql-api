@@ -5,7 +5,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.function.Supplier;
 
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Single;
 
 /**
  * Destination of a file that does not yet exist

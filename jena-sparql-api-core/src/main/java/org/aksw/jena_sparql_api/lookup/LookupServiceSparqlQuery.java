@@ -25,19 +25,19 @@ import org.slf4j.LoggerFactory;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 
-import io.reactivex.Flowable;
+import io.reactivex.rxjava3.core.Flowable;
 
 interface TraitQueryBuilder {
-	void setQuery(Query query);
-	
-	default void setQuery(String queryString, Syntax syntax) {
+    void setQuery(Query query);
+
+    default void setQuery(String queryString, Syntax syntax) {
 //		QueryFactory.parse(query, queryString, baseURI, syntaxURI)
-	}
-	
+    }
+
 }
 
 interface TraitConnectionBuilder {
-	
+
 }
 
 
@@ -47,34 +47,34 @@ public class LookupServiceSparqlQuery
     private static final Logger logger = LoggerFactory.getLogger(LookupServiceSparqlQuery.class);
 
     public static class Builder {
-    	protected QueryExecutionFactory qef;
-    	protected Query query;
-    	protected String queryString;
-    	protected Syntax syntax;
-    	
-    	public void setConnection(RDFConnection conn) {
-    		
-    	}
-    	
-    	public void setQuery(Query query) {
-    		
-    	}
-    	
-    	public void setQuery(String queryString, Syntax syntax) {
-    		
-    	}
-    	
-    	
-    	public LookupServiceSparqlQuery build() {
+        protected QueryExecutionFactory qef;
+        protected Query query;
+        protected String queryString;
+        protected Syntax syntax;
+
+        public void setConnection(RDFConnection conn) {
+
+        }
+
+        public void setQuery(Query query) {
+
+        }
+
+        public void setQuery(String queryString, Syntax syntax) {
+
+        }
+
+
+        public LookupServiceSparqlQuery build() {
 //    		if(queryString != null) {
 //    			query
 //    		}
-    		return null;
-    	}
-    
+            return null;
+        }
+
     }
-    
-    
+
+
     protected SparqlQueryConnection sparqlService;
     protected Query query;
     protected Var var;
@@ -85,12 +85,12 @@ public class LookupServiceSparqlQuery
         this.var = var;
     }
 
- 
+
     @Override
     public Flowable<Entry<Node, Table>> apply(Iterable<Node> keys) {
         //System.out.println("Lookup Request with " + Iterables.size(keys) + " keys: " + keys);
 
-    	Flowable<Entry<Node, Table>> result;
+        Flowable<Entry<Node, Table>> result;
 
         if(!Iterables.isEmpty(keys)) {
 
@@ -108,17 +108,17 @@ public class LookupServiceSparqlQuery
             logger.debug("Looking up: " + q);
 
             result = SparqlRx.execSelectRaw(() -> sparqlService.query(q))
-            	.groupBy(b -> b.get(var))
-            	.flatMapSingle(groups -> groups
-            			.collectInto((Table)new TableN(), (t, b) -> t.addBinding(b))
-            			.map(x -> (Entry<Node, Table>)Maps.immutableEntry(groups.getKey(), x)));
+                .groupBy(b -> b.get(var))
+                .flatMapSingle(groups -> groups
+                        .collectInto((Table)new TableN(), (t, b) -> t.addBinding(b))
+                        .map(x -> (Entry<Node, Table>)Maps.immutableEntry(groups.getKey(), x)));
         } else {
-        	result = Flowable.empty();
+            result = Flowable.empty();
         }
-            
+
 //            CompletableFuture<ResultSet> future = new CompletableFuture<ResultSet>();
 //
-//            
+//
 //            QueryExecution qe = sparqlService.createQueryExecution(q);
 //            //List<String> resultVars;
 //            try {
@@ -154,7 +154,7 @@ public class LookupServiceSparqlQuery
 //            }
 //        }
 
-        
+
         return result;
     }
 }

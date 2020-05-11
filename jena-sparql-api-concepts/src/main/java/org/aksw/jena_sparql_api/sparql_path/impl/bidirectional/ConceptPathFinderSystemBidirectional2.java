@@ -12,54 +12,54 @@ import org.aksw.jena_sparql_api.util.sparql.syntax.path.SimplePath;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
 
-import io.reactivex.Flowable;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Single;
 
 // I think this class is not used at all
 @Deprecated
 public class ConceptPathFinderSystemBidirectional2
-	// extends ConceptPathFinderFactorySummaryBase
-	implements ConceptPathFinderSystem
+    // extends ConceptPathFinderFactorySummaryBase
+    implements ConceptPathFinderSystem
 {
-	@Override
-	public Single<Model> computeDataSummary(SparqlQueryConnection dataConnection) {
-		return ConceptPathFinderBidirectionalUtils.createDefaultDataSummary(dataConnection);
-	}
+    @Override
+    public Single<Model> computeDataSummary(SparqlQueryConnection dataConnection) {
+        return ConceptPathFinderBidirectionalUtils.createDefaultDataSummary(dataConnection);
+    }
 
-	@Override
-	public ConceptPathFinderFactoryBidirectional<?> newPathFinderBuilder() {
-		return new ConceptPathFinderFactoryBidirectional<>();
-	}
-		
-	public static class ConceptPathFinderFactoryBidirectional<T extends ConceptPathFinderFactoryBidirectional<T>>
-		extends ConceptPathFinderFactorySummaryBase<T>
-	{
-		// NOTE We could add more specific attributes here if we wanted
-		@Override
-		public ConceptPathFinder build() {
-			return new ConceptPathFinderBase(dataSummary.getGraph(), dataConnection) {
-				@Override
-				public PathSearch<SimplePath> createSearch(UnaryRelation sourceConcept, UnaryRelation targetConcept) {
-					return new PathSearchSparqlBase(dataConnection, sourceConcept, targetConcept) {
-						@Override
-						public Flowable<SimplePath> execCore() {
-							return ConceptPathFinderBidirectionalUtils
-								.findPathsCore(
-										dataConnection,
-										sourceConcept,
-										targetConcept,
-										maxResults,
-										maxLength,
-										dataSummary,
-										shortestPathsOnly,
-										simplePathsOnly,
-										pathValidators,
-										new PathConstraint2(),
-										ConceptPathFinderBidirectionalUtils::convertGraphPathToSparqlPath);
-						}
-					};
-				}
-			};
-		}
-	}
+    @Override
+    public ConceptPathFinderFactoryBidirectional<?> newPathFinderBuilder() {
+        return new ConceptPathFinderFactoryBidirectional<>();
+    }
+
+    public static class ConceptPathFinderFactoryBidirectional<T extends ConceptPathFinderFactoryBidirectional<T>>
+        extends ConceptPathFinderFactorySummaryBase<T>
+    {
+        // NOTE We could add more specific attributes here if we wanted
+        @Override
+        public ConceptPathFinder build() {
+            return new ConceptPathFinderBase(dataSummary.getGraph(), dataConnection) {
+                @Override
+                public PathSearch<SimplePath> createSearch(UnaryRelation sourceConcept, UnaryRelation targetConcept) {
+                    return new PathSearchSparqlBase(dataConnection, sourceConcept, targetConcept) {
+                        @Override
+                        public Flowable<SimplePath> execCore() {
+                            return ConceptPathFinderBidirectionalUtils
+                                .findPathsCore(
+                                        dataConnection,
+                                        sourceConcept,
+                                        targetConcept,
+                                        maxResults,
+                                        maxLength,
+                                        dataSummary,
+                                        shortestPathsOnly,
+                                        simplePathsOnly,
+                                        pathValidators,
+                                        new PathConstraint2(),
+                                        ConceptPathFinderBidirectionalUtils::convertGraphPathToSparqlPath);
+                        }
+                    };
+                }
+            };
+        }
+    }
 }

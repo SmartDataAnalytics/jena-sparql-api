@@ -45,68 +45,68 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Streams;
 
-import io.reactivex.Flowable;
+import io.reactivex.rxjava3.core.Flowable;
 
 /**
  * Extensions to load models from .sparql files
- * 
+ *
  * @author Claus Stadler, Dec 18, 2018
  *
  */
 public class RDFDataMgrEx {
-	private static final Logger logger = LoggerFactory.getLogger(RDFDataMgrEx.class);
-	
-	
-	/**
-	 * Execute a sequence of SPARQL update statements from a file against a model.
-	 * For example, can be used to materialize triples.
-	 * 
-	 * @param model
-	 * @param filenameOrURI
-	 */
-	public static void execSparql(Model model, String filenameOrURI) {
-		execSparql(model, filenameOrURI, (Function<String, String>)null);
-	}
-
-	public static void execSparql(Model model, String filenameOrURI, Function<String, String> envLookup) {
-		try(RDFConnection conn = RDFConnectionFactory.connect(DatasetFactory.wrap(model))) {
-			execSparql(conn, filenameOrURI, envLookup);
-		}
-	}
-
-	public static void execSparql(Model model, String filenameOrURI, Map<String, String> envMap) {
-		try(RDFConnection conn = RDFConnectionFactory.connect(DatasetFactory.wrap(model))) {
-			execSparql(conn, filenameOrURI, envMap == null ? null : envMap::get);
-		}
-	}
-
-	public static void execSparql(RDFConnection conn, String filenameOrURI) {
-		readConnection(conn, filenameOrURI, null);
-	}
-
-	public static void execSparql(RDFConnection conn, String filenameOrURI, Function<String, String> envLookup) {
-		readConnection(conn, filenameOrURI, null, envLookup);
-	}
+    private static final Logger logger = LoggerFactory.getLogger(RDFDataMgrEx.class);
 
 
-	public static void readConnection(RDFConnection conn, String filenameOrURI, Consumer<Quad> quadConsumer) {
-		readConnection(conn, filenameOrURI, quadConsumer, System::getenv);
-		
-	}
-	
-	/**
-	 * Load a single query from a given file, URL or classpath resource
-	 * 
-	 * @param filenameOrURI
-	 * @return
-	 * @throws FileNotFoundException
-	 * @throws IOException
-	 * @throws ParseException
-	 */
-	public static Query loadQuery(String filenameOrURI) throws FileNotFoundException, IOException, ParseException {
-		return loadQuery(filenameOrURI, DefaultPrefixes.prefixes);
-	}
-	
+    /**
+     * Execute a sequence of SPARQL update statements from a file against a model.
+     * For example, can be used to materialize triples.
+     *
+     * @param model
+     * @param filenameOrURI
+     */
+    public static void execSparql(Model model, String filenameOrURI) {
+        execSparql(model, filenameOrURI, (Function<String, String>)null);
+    }
+
+    public static void execSparql(Model model, String filenameOrURI, Function<String, String> envLookup) {
+        try(RDFConnection conn = RDFConnectionFactory.connect(DatasetFactory.wrap(model))) {
+            execSparql(conn, filenameOrURI, envLookup);
+        }
+    }
+
+    public static void execSparql(Model model, String filenameOrURI, Map<String, String> envMap) {
+        try(RDFConnection conn = RDFConnectionFactory.connect(DatasetFactory.wrap(model))) {
+            execSparql(conn, filenameOrURI, envMap == null ? null : envMap::get);
+        }
+    }
+
+    public static void execSparql(RDFConnection conn, String filenameOrURI) {
+        readConnection(conn, filenameOrURI, null);
+    }
+
+    public static void execSparql(RDFConnection conn, String filenameOrURI, Function<String, String> envLookup) {
+        readConnection(conn, filenameOrURI, null, envLookup);
+    }
+
+
+    public static void readConnection(RDFConnection conn, String filenameOrURI, Consumer<Quad> quadConsumer) {
+        readConnection(conn, filenameOrURI, quadConsumer, System::getenv);
+
+    }
+
+    /**
+     * Load a single query from a given file, URL or classpath resource
+     *
+     * @param filenameOrURI
+     * @return
+     * @throws FileNotFoundException
+     * @throws IOException
+     * @throws ParseException
+     */
+    public static Query loadQuery(String filenameOrURI) throws FileNotFoundException, IOException, ParseException {
+        return loadQuery(filenameOrURI, DefaultPrefixes.prefixes);
+    }
+
 //	public static List<Query> loadQueries(String filenameOrURI, PrefixMapping pm) throws FileNotFoundException, IOException, ParseException {
 //		List<SparqlStmt> stmts = Streams.stream(SparqlStmtUtils.processFile(pm, filenameOrURI))
 //				.collect(Collectors.toList());
@@ -119,68 +119,68 @@ public class RDFDataMgrEx {
 //		} else {
 //			throw new RuntimeException("Expected a single query in " + filenameOrURI + "; got " + stmts.size());
 //		}
-//		
+//
 //
 //
 //		return result;
 //	}
-	
-	public static List<Query> loadQueries(InputStream in, PrefixMapping pm) throws FileNotFoundException, IOException, ParseException {
-		List<SparqlStmt> stmts = Streams.stream(SparqlStmtUtils.processInputStream(pm, null, in))
-				.collect(Collectors.toList());
 
-		List<Query> result = new ArrayList<>();
-		for(SparqlStmt stmt : stmts) {
-			Query query = stmt.getQuery();
-			query.setBaseURI((String)null);
-			QueryUtils.optimizePrefixes(query);
-			result.add(query);
-		}
+    public static List<Query> loadQueries(InputStream in, PrefixMapping pm) throws FileNotFoundException, IOException, ParseException {
+        List<SparqlStmt> stmts = Streams.stream(SparqlStmtUtils.processInputStream(pm, null, in))
+                .collect(Collectors.toList());
 
-		return result;
-	}
+        List<Query> result = new ArrayList<>();
+        for(SparqlStmt stmt : stmts) {
+            Query query = stmt.getQuery();
+            query.setBaseURI((String)null);
+            QueryUtils.optimizePrefixes(query);
+            result.add(query);
+        }
 
-	public static List<Query> loadQueries(String filenameOrURI, PrefixMapping pm) throws FileNotFoundException, IOException, ParseException {
-		List<SparqlStmt> stmts = Streams.stream(SparqlStmtUtils.processFile(pm, filenameOrURI))
-				.collect(Collectors.toList());
+        return result;
+    }
 
-		List<Query> result = new ArrayList<>();
-		for(SparqlStmt stmt : stmts) {
-			Query query = stmt.getQuery();
-			query.setBaseURI((String)null);
-			QueryUtils.optimizePrefixes(query);
-			result.add(query);
-		}
+    public static List<Query> loadQueries(String filenameOrURI, PrefixMapping pm) throws FileNotFoundException, IOException, ParseException {
+        List<SparqlStmt> stmts = Streams.stream(SparqlStmtUtils.processFile(pm, filenameOrURI))
+                .collect(Collectors.toList());
 
-		return result;
-	}
+        List<Query> result = new ArrayList<>();
+        for(SparqlStmt stmt : stmts) {
+            Query query = stmt.getQuery();
+            query.setBaseURI((String)null);
+            QueryUtils.optimizePrefixes(query);
+            result.add(query);
+        }
 
-	/**
-	 * Load exactly a single query from a file or URI.
-	 * Search includes the classpath.
-	 * 
-	 * @param filenameOrURI
-	 * @param pm Prefix mapping
-	 * @return Exactly a single query - nevel null.
-	 * @throws FileNotFoundException
-	 * @throws IOException
-	 * @throws ParseException
-	 */
-	public static Query loadQuery(String filenameOrURI, PrefixMapping pm) throws FileNotFoundException, IOException, ParseException {
-		List<Query> queries = loadQueries(filenameOrURI, pm);
-		
-		if(queries.size() != 1) {
-			throw new RuntimeException("Expected a single query in " + filenameOrURI + "; got " + queries.size());
-		}
-		
-		Query result = queries.get(0);
-		return result;
-	}
-	
-	public static void readConnection(RDFConnection conn, String filenameOrURI, Consumer<Quad> quadConsumer, Function<String, String> envLookup) {
-		//Sink<Quad> sink = SparqlStmtUtils.createSink(outFormat, System.out);
-		
-		PrefixMapping pm = new PrefixMappingImpl();
+        return result;
+    }
+
+    /**
+     * Load exactly a single query from a file or URI.
+     * Search includes the classpath.
+     *
+     * @param filenameOrURI
+     * @param pm Prefix mapping
+     * @return Exactly a single query - nevel null.
+     * @throws FileNotFoundException
+     * @throws IOException
+     * @throws ParseException
+     */
+    public static Query loadQuery(String filenameOrURI, PrefixMapping pm) throws FileNotFoundException, IOException, ParseException {
+        List<Query> queries = loadQueries(filenameOrURI, pm);
+
+        if(queries.size() != 1) {
+            throw new RuntimeException("Expected a single query in " + filenameOrURI + "; got " + queries.size());
+        }
+
+        Query result = queries.get(0);
+        return result;
+    }
+
+    public static void readConnection(RDFConnection conn, String filenameOrURI, Consumer<Quad> quadConsumer, Function<String, String> envLookup) {
+        //Sink<Quad> sink = SparqlStmtUtils.createSink(outFormat, System.out);
+
+        PrefixMapping pm = new PrefixMappingImpl();
 //		pm.setNsPrefixes(PrefixMapping.Extended);
 //		JenaExtensionUtil.addPrefixes(pm);
 //
@@ -188,36 +188,36 @@ public class RDFDataMgrEx {
 //
 //		// Extended SERVICE <> keyword implementation
 //		JenaExtensionFs.registerFileServiceHandler();
-		pm.setNsPrefixes(DefaultPrefixes.prefixes);
-		
-		try {
-			List<SparqlStmt> stmts = Streams.stream(SparqlStmtUtils.processFile(pm, filenameOrURI))
-					.collect(Collectors.toList());
-			
-			for(SparqlStmt stmt : stmts) {
-				SparqlStmt stmt2 = envLookup == null
-					? stmt
-					: SparqlStmtUtils.applyNodeTransform(stmt, x -> NodeUtils.substWithLookup(x, envLookup));
-				SparqlStmtUtils.process(conn, stmt2, new SPARQLResultSinkQuads(quadConsumer));
-			}
-			
-		} catch (IOException | ParseException e) {
-			throw new RuntimeException(e);
-		}
-	}
+        pm.setNsPrefixes(DefaultPrefixes.prefixes);
 
-	/**
-	 * Create a model by concatenation of a series of construct queries from a given .sparql file
-	 * @param conn
-	 * @param filenameOrURI
-	 * @return
-	 */
-	public static Model execConstruct(RDFConnection conn, String filenameOrURI) {
-		Model result = ModelFactory.createDefaultModel();
-		readConnection(conn, filenameOrURI,
-				q -> result.add(ModelUtils.tripleToStatement(result, q.asTriple())));
-		return result;
-	}
+        try {
+            List<SparqlStmt> stmts = Streams.stream(SparqlStmtUtils.processFile(pm, filenameOrURI))
+                    .collect(Collectors.toList());
+
+            for(SparqlStmt stmt : stmts) {
+                SparqlStmt stmt2 = envLookup == null
+                    ? stmt
+                    : SparqlStmtUtils.applyNodeTransform(stmt, x -> NodeUtils.substWithLookup(x, envLookup));
+                SparqlStmtUtils.process(conn, stmt2, new SPARQLResultSinkQuads(quadConsumer));
+            }
+
+        } catch (IOException | ParseException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Create a model by concatenation of a series of construct queries from a given .sparql file
+     * @param conn
+     * @param filenameOrURI
+     * @return
+     */
+    public static Model execConstruct(RDFConnection conn, String filenameOrURI) {
+        Model result = ModelFactory.createDefaultModel();
+        readConnection(conn, filenameOrURI,
+                q -> result.add(ModelUtils.tripleToStatement(result, q.asTriple())));
+        return result;
+    }
 
 //	public static Model execConstruct(RDFConnection conn, String queryStr) {
 //		Model result = ModelFactory.createDefaultModel();
@@ -226,119 +226,119 @@ public class RDFDataMgrEx {
 //		return result;
 //	}
 
-	public static void readDataset(Dataset dataset, String filenameOrURI, Consumer<Quad> quadConsumer) {
-		RDFConnection conn = RDFConnectionFactory.connect(dataset);
-		readConnection(conn, filenameOrURI, quadConsumer);
-	}
+    public static void readDataset(Dataset dataset, String filenameOrURI, Consumer<Quad> quadConsumer) {
+        RDFConnection conn = RDFConnectionFactory.connect(dataset);
+        readConnection(conn, filenameOrURI, quadConsumer);
+    }
 
-	public static void readModel(Model model, String filenameOrURI, Consumer<Quad> quadConsumer) {
-		Dataset dataset = DatasetFactory.wrap(model);
-		readDataset(dataset, filenameOrURI, quadConsumer);
-	}
-	
-	public static void main(String[] args) {
-		Model model = ModelFactory.createDefaultModel();
-		RDFDataMgrEx.readModel(model, "sparql-test.sparql", null);
-		
-		System.out.println("Model size: " + model.size());
-		
-	}
+    public static void readModel(Model model, String filenameOrURI, Consumer<Quad> quadConsumer) {
+        Dataset dataset = DatasetFactory.wrap(model);
+        readDataset(dataset, filenameOrURI, quadConsumer);
+    }
 
-	/**
-	 * Probe the content of the input stream against a given set of candidate languages.
-	 * Wraps the input stream as a BufferedInputStream and can thus also probe on STDIN.
-	 * This is also the reason why the method does not take an InputStream supplier as argument.
-	 * 
-	 * The result is a TypedInputStream which combines the BufferedInputStream with content
-	 * type information
-	 * 
-	 * 
-	 * @param in
-	 * @param candidates
-	 * @return
-	 */
-	public static TypedInputStream probeLang(InputStream in, Collection<Lang> candidates) {
-		BufferedInputStream bin = new BufferedInputStream(in);
-	
-		Multimap<Long, Lang> successCountToLang = ArrayListMultimap.create();
-		for(Lang cand : candidates) {
-			@SuppressWarnings("resource")
-			CloseShieldInputStream wbin = new CloseShieldInputStream(bin);
-	
-			// Here we rely on the VM/JDK not allocating the buffer right away but only
-			// using this as the max buffer size
-			// 1GB should be safe enough even for cases with huge literals such as for
-			// large spatial geometries (I encountered some around ~50MB)
-			bin.mark(1 * 1024 * 1024 * 1024);
-			//bin.mark(Integer.MAX_VALUE >> 1);
-			Flowable<?> flow;
-			if(RDFLanguages.isQuads(cand)) {
-				flow = RDFDataMgrRx.createFlowableQuads(() -> wbin, cand, null);
-			} else if(RDFLanguages.isTriples(cand)) {
-				flow = RDFDataMgrRx.createFlowableTriples(() -> wbin, cand, null);
-			} else {
-				logger.warn("Skipping probing of unknown Lang: " + cand);
-				continue;
-			}
-			
-			try {
-				long count = flow.limit(1000)
-					.count()
-					.blockingGet();
-				
-				successCountToLang.put(count, cand);
-				
-				logger.debug("Number of items parsed by content type probing for " + cand + ": " + count);
-			} catch(Exception e) {
-				continue;
-			} finally {
-				try {
-					bin.reset();
-				} catch (IOException x) {
-					throw new RuntimeException(x);
-				}
-			}
-		}
-	
-		Entry<Long, Lang> bestCand = successCountToLang.entries().stream()
-			.sorted((a, b) -> b.getKey().compareTo(a.getKey()))
-			.findFirst()
-			.orElse(null);
-	
-		ContentType bestContentType = bestCand == null ? null : bestCand.getValue().getContentType();
-		TypedInputStream result = new TypedInputStream(bin, bestContentType);
-	
-		return result;
-	}
+    public static void main(String[] args) {
+        Model model = ModelFactory.createDefaultModel();
+        RDFDataMgrEx.readModel(model, "sparql-test.sparql", null);
+
+        System.out.println("Model size: " + model.size());
+
+    }
+
+    /**
+     * Probe the content of the input stream against a given set of candidate languages.
+     * Wraps the input stream as a BufferedInputStream and can thus also probe on STDIN.
+     * This is also the reason why the method does not take an InputStream supplier as argument.
+     *
+     * The result is a TypedInputStream which combines the BufferedInputStream with content
+     * type information
+     *
+     *
+     * @param in
+     * @param candidates
+     * @return
+     */
+    public static TypedInputStream probeLang(InputStream in, Collection<Lang> candidates) {
+        BufferedInputStream bin = new BufferedInputStream(in);
+
+        Multimap<Long, Lang> successCountToLang = ArrayListMultimap.create();
+        for(Lang cand : candidates) {
+            @SuppressWarnings("resource")
+            CloseShieldInputStream wbin = new CloseShieldInputStream(bin);
+
+            // Here we rely on the VM/JDK not allocating the buffer right away but only
+            // using this as the max buffer size
+            // 1GB should be safe enough even for cases with huge literals such as for
+            // large spatial geometries (I encountered some around ~50MB)
+            bin.mark(1 * 1024 * 1024 * 1024);
+            //bin.mark(Integer.MAX_VALUE >> 1);
+            Flowable<?> flow;
+            if(RDFLanguages.isQuads(cand)) {
+                flow = RDFDataMgrRx.createFlowableQuads(() -> wbin, cand, null);
+            } else if(RDFLanguages.isTriples(cand)) {
+                flow = RDFDataMgrRx.createFlowableTriples(() -> wbin, cand, null);
+            } else {
+                logger.warn("Skipping probing of unknown Lang: " + cand);
+                continue;
+            }
+
+            try {
+                long count = flow.take(1000)
+                    .count()
+                    .blockingGet();
+
+                successCountToLang.put(count, cand);
+
+                logger.debug("Number of items parsed by content type probing for " + cand + ": " + count);
+            } catch(Exception e) {
+                continue;
+            } finally {
+                try {
+                    bin.reset();
+                } catch (IOException x) {
+                    throw new RuntimeException(x);
+                }
+            }
+        }
+
+        Entry<Long, Lang> bestCand = successCountToLang.entries().stream()
+            .sorted((a, b) -> b.getKey().compareTo(a.getKey()))
+            .findFirst()
+            .orElse(null);
+
+        ContentType bestContentType = bestCand == null ? null : bestCand.getValue().getContentType();
+        TypedInputStream result = new TypedInputStream(bin, bestContentType);
+
+        return result;
+    }
 
 
-	/**
-	 * Attempts to open the given src and probe for the content type
-	 * Src may be '-' but not NULL in order to refer to STDIN.
-	 * 
-	 * @param src
-	 * @param probeLangs
-	 * @return
-	 */
-	public static TypedInputStream open(String src, Collection<Lang> probeLangs) {
-		Objects.requireNonNull(src);
-		
-		boolean useStdIn = "-".equals(src);
-		
-		TypedInputStream result;
-		if(useStdIn) {
-			// Use the close shield to prevent closing stdin on .close()
-			// TODO Investigate if this is redundant; RDFDataMgr might already do it
-			result = probeLang(new CloseShieldInputStream(System.in), probeLangs);
-		} else {
-			result = Objects.requireNonNull(RDFDataMgr.open(src), "Could not create input stream from " + src);
-		
-			if(result.getMediaType() == null) {
-				result = probeLang(result.getInputStream(), probeLangs);
-			}
-		
-		}
-		
-		return result;
-	}
+    /**
+     * Attempts to open the given src and probe for the content type
+     * Src may be '-' but not NULL in order to refer to STDIN.
+     *
+     * @param src
+     * @param probeLangs
+     * @return
+     */
+    public static TypedInputStream open(String src, Collection<Lang> probeLangs) {
+        Objects.requireNonNull(src);
+
+        boolean useStdIn = "-".equals(src);
+
+        TypedInputStream result;
+        if(useStdIn) {
+            // Use the close shield to prevent closing stdin on .close()
+            // TODO Investigate if this is redundant; RDFDataMgr might already do it
+            result = probeLang(new CloseShieldInputStream(System.in), probeLangs);
+        } else {
+            result = Objects.requireNonNull(RDFDataMgr.open(src), "Could not create input stream from " + src);
+
+            if(result.getMediaType() == null) {
+                result = probeLang(result.getInputStream(), probeLangs);
+            }
+
+        }
+
+        return result;
+    }
 }

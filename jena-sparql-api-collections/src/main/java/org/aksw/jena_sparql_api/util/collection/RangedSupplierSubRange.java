@@ -7,31 +7,31 @@ import org.aksw.jena_sparql_api.utils.RangeUtils;
 import com.google.common.collect.DiscreteDomain;
 import com.google.common.collect.Range;
 
-import io.reactivex.Flowable;
+import io.reactivex.rxjava3.core.Flowable;
 
 public class RangedSupplierSubRange<I extends Comparable<I>, T>
-	extends RangedSupplierDelegated<I, T>
+    extends RangedSupplierDelegated<I, T>
 {
-	protected Range<I> subRange;
-	protected DiscreteDomain<I> domain;
-	protected BiFunction<I, Long, I> addition;
+    protected Range<I> subRange;
+    protected DiscreteDomain<I> domain;
+    protected BiFunction<I, Long, I> addition;
 
 
-	public RangedSupplierSubRange(RangedSupplier<I, T> delegate, Range<I> subRange, DiscreteDomain<I> domain,
-			BiFunction<I, Long, I> addition) {
-		super(delegate);
-		this.subRange = subRange;
-		this.domain = domain;
-		this.addition = addition;
-	}
+    public RangedSupplierSubRange(RangedSupplier<I, T> delegate, Range<I> subRange, DiscreteDomain<I> domain,
+            BiFunction<I, Long, I> addition) {
+        super(delegate);
+        this.subRange = subRange;
+        this.domain = domain;
+        this.addition = addition;
+    }
 
-	@Override
-	public Flowable<T> apply(Range<I> rawRequestRange) {
-		Range<I> effectiveRange = RangeUtils.makeAbsolute(subRange, rawRequestRange, domain, addition);
+    @Override
+    public Flowable<T> apply(Range<I> rawRequestRange) {
+        Range<I> effectiveRange = RangeUtils.makeAbsolute(subRange, rawRequestRange, domain, addition);
 
-		Flowable<T> result = delegate.apply(effectiveRange);
-		return result;
-	}
+        Flowable<T> result = delegate.apply(effectiveRange);
+        return result;
+    }
 //
 //	@Override
 //    public <X> X unwrap(Class<X> clazz, boolean reflexive) {
@@ -44,13 +44,13 @@ public class RangedSupplierSubRange<I extends Comparable<I>, T>
 //    }
 
 
-	public static <O> RangedSupplierSubRange<Long, O> create(RangedSupplier<Long, O> subRangeSupplier, Range<Long> subRange) {
-		RangedSupplierSubRange<Long, O> result = new RangedSupplierSubRange<>(
-				subRangeSupplier,
-				subRange,
-				DiscreteDomain.longs(),
-				(a, b) -> a + b);
-		return result;
-	}
+    public static <O> RangedSupplierSubRange<Long, O> create(RangedSupplier<Long, O> subRangeSupplier, Range<Long> subRange) {
+        RangedSupplierSubRange<Long, O> result = new RangedSupplierSubRange<>(
+                subRangeSupplier,
+                subRange,
+                DiscreteDomain.longs(),
+                (a, b) -> a + b);
+        return result;
+    }
 
 }

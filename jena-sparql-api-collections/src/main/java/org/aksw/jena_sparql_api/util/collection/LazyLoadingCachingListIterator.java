@@ -13,7 +13,7 @@ import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.Range;
 import com.google.common.collect.RangeMap;
 
-import io.reactivex.Flowable;
+import io.reactivex.rxjava3.core.Flowable;
 
 public class LazyLoadingCachingListIterator<T>
     extends AbstractIterator<T>
@@ -80,7 +80,7 @@ public class LazyLoadingCachingListIterator<T>
                         Range<Long> r = Range.atLeast(offset).intersection(canonicalRequestRange);
                         boolean cancelled[] = {false};
                         Flowable<T> stream = delegate.apply(r)
-                        		.takeWhile(x -> !cancelled[0]);
+                                .takeWhile(x -> !cancelled[0]);
 
                         Iterator<T> it = stream.blockingIterable().iterator();
                         currentIterator = new IteratorClosable<>(it, () -> cancelled[0] = true); //stream::close);

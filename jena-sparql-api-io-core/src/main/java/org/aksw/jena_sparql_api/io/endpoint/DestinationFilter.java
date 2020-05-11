@@ -3,7 +3,7 @@ package org.aksw.jena_sparql_api.io.endpoint;
 import java.nio.file.Path;
 import java.util.function.Supplier;
 
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Single;
 
 public class DestinationFilter
     implements Destination

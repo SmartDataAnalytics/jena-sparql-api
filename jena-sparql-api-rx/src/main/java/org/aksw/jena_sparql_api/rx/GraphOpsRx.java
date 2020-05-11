@@ -9,7 +9,7 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.sparql.graph.GraphFactory;
 
-import io.reactivex.FlowableTransformer;
+import io.reactivex.rxjava3.core.FlowableTransformer;
 
 public class GraphOpsRx {
     public static FlowableTransformer<Triple, Entry<Node, Graph>> groupConsecutiveTriplesRaw(

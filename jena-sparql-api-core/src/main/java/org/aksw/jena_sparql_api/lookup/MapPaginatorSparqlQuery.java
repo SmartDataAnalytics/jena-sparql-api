@@ -22,8 +22,8 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Range;
 
-import io.reactivex.Flowable;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Single;
 
 public class MapPaginatorSparqlQuery
     extends MapPaginatorSparqlQueryBase<Node, Table>
