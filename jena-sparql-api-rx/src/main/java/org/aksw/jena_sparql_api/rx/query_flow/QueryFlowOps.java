@@ -1,0 +1,209 @@
+package org.aksw.jena_sparql_api.rx.query_flow;
+
+import java.util.List;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
+
+import org.apache.jena.graph.Graph;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.query.ARQ;
+import org.apache.jena.query.Query;
+import org.apache.jena.sparql.ARQConstants;
+import org.apache.jena.sparql.algebra.Algebra;
+import org.apache.jena.sparql.algebra.Op;
+import org.apache.jena.sparql.core.Substitute;
+import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.core.VarExprList;
+import org.apache.jena.sparql.engine.ExecutionContext;
+import org.apache.jena.sparql.engine.binding.Binding;
+import org.apache.jena.sparql.engine.binding.BindingFactory;
+import org.apache.jena.sparql.engine.binding.BindingMap;
+import org.apache.jena.sparql.expr.Expr;
+import org.apache.jena.sparql.expr.ExprAggregator;
+import org.apache.jena.sparql.expr.ExprLib;
+import org.apache.jena.sparql.util.Context;
+import org.apache.jena.sparql.util.NodeFactoryExtra;
+import org.apache.jena.util.iterator.ClosableIterator;
+
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.FlowableTransformer;
+import io.reactivex.rxjava3.core.Maybe;
+
+public class QueryFlowOps
+{
+    /**
+     * Utility method to set up a default execution context
+     *
+     * @return
+     */
+    public static ExecutionContext createExecutionContextDefault() {
+        Context context = ARQ.getContext().copy();
+        context.set(ARQConstants.sysCurrentTime, NodeFactoryExtra.nowAsDateTime());
+        ExecutionContext result = new ExecutionContext(context, null, null, null);
+        return result;
+    }
+
+
+    /**
+     * Convenience method with default execution context.
+     *
+     * See {@link #createTransformForGroupBy(Query, ExecutionContext)}.
+     *
+     * @param query
+     * @return
+     */
+    public static FlowableTransformer<Binding, Binding> createTransformForGroupBy(Query query) {
+        ExecutionContext execCxt = createExecutionContextDefault();
+        FlowableTransformer<Binding, Binding> result = QueryFlowOps.createTransformForGroupBy(query, execCxt);
+        return result;
+    }
+
+
+    /**
+     * Wrap a supplier of {@link ClosableIterator} (base of ExtendedIterator) as a Flowable.
+     *
+     * @param <T>
+     * @param itSupp
+     * @return
+     */
+    public static <T> Flowable<T> wrap(Supplier<? extends ClosableIterator<T>> itSupp) {
+        return Flowable.generate(
+                () -> itSupp.get(),
+                (it, emitter) -> {
+                    if(it.hasNext()) {
+                        T item = it.next();
+                        emitter.onNext(item);
+                    } else {
+                        emitter.onComplete();
+                    }
+                },
+                ClosableIterator::close);
+    }
+
+    /**
+     * Create a mapper that for each binding performs a join using a lookup using the given graph and triple pattern.
+     * Usage: flowableOfBindings.flatMap(createMapper(g, tp))
+     *
+     * @param graph
+     * @param triplePattern
+     * @return
+     */
+    public static Function<Binding, Flowable<Binding>> createMapperForJoin(Graph graph, Triple triplePattern) {
+        return binding -> {
+            Triple tp = Substitute.substitute(triplePattern, binding);
+
+            return
+                    wrap(() -> graph.find(tp))
+                    .flatMapMaybe(contrib -> {
+
+                        BindingMap tmp = BindingFactory.create(binding);
+                        Binding r = mapper(tmp, triplePattern, contrib);
+
+                        return r == null ? Maybe.empty() : Maybe.just(r);
+                    });
+
+        };
+    }
+
+    /**
+     * Utility method used by {@link createMapperForJoin}
+     *
+     * @param result
+     * @param pattern
+     * @param match
+     * @return
+     */
+    public static Binding mapper(BindingMap result, Triple pattern, Triple match)
+    {
+        if (!insert(pattern.getMatchSubject(), match.getSubject(), result)) {
+            return null;
+        }
+
+        if (!insert(pattern.getMatchPredicate(), match.getPredicate(), result)) {
+            return null;
+        }
+
+        if (!insert(pattern.getMatchObject(), match.getObject(), result)) {
+            return null;
+        }
+
+        return result;
+    }
+
+    public static boolean insert(Node inputNode, Node outputNode, BindingMap results)
+    {
+        if ( ! Var.isVar(inputNode) )
+            return true ;
+
+        Var v = Var.alloc(inputNode) ;
+        Node x = results.get(v) ;
+        if ( x != null )
+            return outputNode.equals(x) ;
+
+        results.add(v, outputNode) ;
+        return true ;
+    }
+
+    /**
+     *
+     * Usage: flowableOfBindings.filter(createFilter(execCxt, expr))
+     *
+     * @param execCxt
+     * @param expr
+     * @return
+     */
+    public static Predicate<Binding> createFilter(ExecutionContext execCxt, Expr expr) {
+        return binding -> expr.isSatisfied(binding, execCxt);
+    }
+
+    /**
+     * Create a transformer that implements a group by operation based on the query
+     * thereby ignoring its query pattern. Instead of executing a query pattern,
+     * the bindings supplied by the upstream flow will be accumulated.
+     *
+     * Usage: flowableOfBindings.compose(createTransformForGroupBy(query, execCxt))
+     *
+     *
+     * @param query
+     * @param execCxt
+     * @return
+     */
+    public static FlowableTransformer<Binding, Binding> createTransformForGroupBy(Query query, ExecutionContext execCxt) {
+        VarExprList groupVarExpr = query.getGroupBy();
+        List<ExprAggregator> aggregators = query.getAggregators();
+
+        // Create an updated projection
+        VarExprList rawProj = query.getProject();
+
+
+        VarExprList exprs = new VarExprList();
+        for (Var v : rawProj.getVars() )
+        {
+            Expr e = rawProj.getExpr(v) ;
+            if ( e != null )
+            {
+                Expr e2 = ExprLib.replaceAggregateByVariable(e) ;
+                exprs.add(v, e2) ;
+            } else {
+                exprs.add(v);
+            }
+            // Include in project
+            // vars.add(v) ;
+        }
+
+
+
+        Op op = Algebra.compile(query);
+        System.out.println(op);
+
+        FlowableTransformer<Binding, Binding> result = upstream -> upstream
+                .compose(QueryFlowGroupBy.createTransformer(execCxt, groupVarExpr, aggregators))
+                .compose(QueryFlowAssign.createTransformer(execCxt, exprs))
+                .compose(QueryFlowProject.createTransformer(execCxt, exprs.getVars()));
+
+        return result;
+    }
+
+}

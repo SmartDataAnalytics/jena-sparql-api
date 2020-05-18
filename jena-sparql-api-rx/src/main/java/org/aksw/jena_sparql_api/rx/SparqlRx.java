@@ -69,6 +69,22 @@ public class SparqlRx {
 
     private static final Logger logger = LoggerFactory.getLogger(SparqlRx.class);
 
+    /**
+     * Create a Flowable from a supplier of connections and a query.
+     * Each subscription obtains a fresh connection
+     *
+     * FIXME Connection is not yet closed when the flowable completes!
+     *
+     * @param query
+     * @param queryConnSupp
+     * @return
+     */
+    public static Flowable<Binding> execSelectRaw(Query query, Supplier<? extends SparqlQueryConnection> queryConnSupp) {
+        // FIXME Close the connection; tie it to the query execution
+        // Queryexecution qe = new QueryExecution();
+        return SparqlRx.execSelectRaw(() -> queryConnSupp.get().query(query));
+    }
+
     public static <K, X> Flowable<Entry<K, List<X>>> groupByOrdered(
             Flowable<X> in, Function<X, K> getGroupKey) {
 
