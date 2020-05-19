@@ -35,7 +35,15 @@ public class QueryFlowAssign
         for (Var v : exprs.getVars()) {
             Node n = exprs.get(v, b, execCxt);
             if (n != null) {
-                b.add(v, n);
+                Node m = binding.get(v);
+                if(m != null) {
+                    if(!m.equals(n)) {
+                        // TODO Just return from function?
+                        throw new RuntimeException("Encountered incompatible mapping in join");
+                    }
+                } else {
+                    b.add(v, n);
+                }
             }
         }
         emitter.onNext(b);

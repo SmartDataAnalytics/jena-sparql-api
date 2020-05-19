@@ -10,6 +10,8 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.ARQ;
 import org.apache.jena.query.Query;
+import org.apache.jena.query.QueryFactory;
+import org.apache.jena.query.Syntax;
 import org.apache.jena.sparql.ARQConstants;
 import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
@@ -24,6 +26,7 @@ import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprAggregator;
 import org.apache.jena.sparql.expr.ExprLib;
 import org.apache.jena.sparql.util.Context;
+import org.apache.jena.sparql.util.ExprUtils;
 import org.apache.jena.sparql.util.NodeFactoryExtra;
 import org.apache.jena.util.iterator.ClosableIterator;
 
@@ -54,7 +57,22 @@ public class QueryFlowOps
      * @param query
      * @return
      */
-    public static FlowableTransformer<Binding, Binding> createTransformForGroupBy(Query query) {
+    public static FlowableTransformer<Binding, Binding> transformerFromQuery(String queryStr) {
+        Query query = QueryFactory.create(queryStr, Syntax.syntaxARQ);
+        FlowableTransformer<Binding, Binding> result = QueryFlowOps.transformerFromQuery(query);
+        return result;
+    }
+
+
+    /**
+     * Convenience method with default execution context.
+     *
+     * See {@link #createTransformForGroupBy(Query, ExecutionContext)}.
+     *
+     * @param query
+     * @return
+     */
+    public static FlowableTransformer<Binding, Binding> transformerFromQuery(Query query) {
         ExecutionContext execCxt = createExecutionContextDefault();
         FlowableTransformer<Binding, Binding> result = QueryFlowOps.createTransformForGroupBy(query, execCxt);
         return result;
@@ -103,6 +121,24 @@ public class QueryFlowOps
 
                         return r == null ? Maybe.empty() : Maybe.just(r);
                     });
+
+        };
+    }
+
+    public static Function<Binding, Flowable<Binding>> createMapperForOptionalJoin(Graph graph, Triple triplePattern) {
+        return binding -> {
+            Triple tp = Substitute.substitute(triplePattern, binding);
+
+            return
+                    wrap(() -> graph.find(tp))
+                    .flatMapMaybe(contrib -> {
+
+                        BindingMap tmp = BindingFactory.create(binding);
+                        Binding r = mapper(tmp, triplePattern, contrib);
+
+                        return r == null ? Maybe.empty() : Maybe.just(r);
+                    })
+                    .defaultIfEmpty(binding);
 
         };
     }
@@ -158,6 +194,11 @@ public class QueryFlowOps
         return binding -> expr.isSatisfied(binding, execCxt);
     }
 
+    public static Predicate<Binding> createFilter(ExecutionContext execCxt, String exprStr) {
+        Expr expr = ExprUtils.parse(exprStr);
+        return createFilter(execCxt, expr);
+    }
+
     /**
      * Create a transformer that implements a group by operation based on the query
      * thereby ignoring its query pattern. Instead of executing a query pattern,
@@ -193,17 +234,18 @@ public class QueryFlowOps
             // vars.add(v) ;
         }
 
-
-
-        Op op = Algebra.compile(query);
-        System.out.println(op);
+//        Op op = Algebra.compile(query);
+//        System.out.println(op);
 
         FlowableTransformer<Binding, Binding> result = upstream -> upstream
-                .compose(QueryFlowGroupBy.createTransformer(execCxt, groupVarExpr, aggregators))
+                // Do not apply group by if there are no aggregators
+                .compose(x -> aggregators.isEmpty() ? x : QueryFlowGroupBy.createTransformer(execCxt, groupVarExpr, aggregators).apply(x))
                 .compose(QueryFlowAssign.createTransformer(execCxt, exprs))
                 .compose(QueryFlowProject.createTransformer(execCxt, exprs.getVars()));
 
         return result;
     }
+
+
 
 }
