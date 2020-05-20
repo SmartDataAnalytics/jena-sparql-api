@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 
+import org.aksw.jena_sparql_api.io.binseach.BinarySearchOnSortedFile;
 import org.aksw.jena_sparql_api.io.binseach.GraphFromPrefixMatcher;
 import org.aksw.jena_sparql_api.io.binseach.GraphFromSubjectCache;
 import org.aksw.jena_sparql_api.rx.GraphOpsRx;
@@ -146,7 +147,7 @@ public class QueryIterServiceOrFile extends QueryIterService {
 
                 // Model generation wrapped as a flowable for resource management
                 Flowable<Binding> bindingFlow = Flowable.generate(() -> {
-                    Graph graph = new GraphFromPrefixMatcher(path);
+                    Graph graph = new GraphFromPrefixMatcher(BinarySearchOnSortedFile.create(path));
                     GraphFromSubjectCache subjectCacheGraph = new GraphFromSubjectCache(graph);
                     Model model = ModelFactory.createModelForGraph(subjectCacheGraph);
                     QueryExecution qe = QueryExecutionFactory.create(query, model);

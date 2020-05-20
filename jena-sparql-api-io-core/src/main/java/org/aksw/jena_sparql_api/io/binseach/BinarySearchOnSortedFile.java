@@ -19,8 +19,10 @@ import java.nio.file.StandardOpenOption;
  *
  */
 public class BinarySearchOnSortedFile
+    implements BinarySearcher
 {
     protected Seekable baseSeekable;
+    protected AutoCloseable closeAction;
     protected long channelSize;
     protected byte delimiter;
 
@@ -29,11 +31,11 @@ public class BinarySearchOnSortedFile
         PageManager pageManager = PageManagerForFileChannel.create(channel);
         Seekable seekable = new PageNavigator(pageManager);
         long channelSize = channel.size();
-        BinarySearchOnSortedFile result = new BinarySearchOnSortedFile(seekable, channelSize, (byte)'\n');
+        BinarySearchOnSortedFile result = new BinarySearchOnSortedFile(channel::close, seekable, channelSize, (byte)'\n');
         return result;
     }
 
-    public BinarySearchOnSortedFile(Seekable baseSeekable, long baseSeekableSize, byte delimiter) {
+    public BinarySearchOnSortedFile(AutoCloseable closeAction, Seekable baseSeekable, long baseSeekableSize, byte delimiter) {
         super();
         this.baseSeekable = baseSeekable;
         this.channelSize = baseSeekableSize;
@@ -65,10 +67,11 @@ public class BinarySearchOnSortedFile
 
     public InputStream searchCore(String prefix) throws IOException {
         byte[] prefixBytes = prefix.getBytes();
-        return searchCore(prefixBytes);
+        return search(prefixBytes);
     }
 
-    public InputStream searchCore(byte[] prefixBytes) throws IOException {
+    @Override
+    public InputStream search(byte[] prefixBytes) throws IOException {
         // -1 is the position of the delimiter before the file start
         // jump to the beginning of the file if the prefix is empty
         Seekable seeker = baseSeekable.clone();
@@ -142,6 +145,14 @@ public class BinarySearchOnSortedFile
         }
 
         return result;
+    }
+
+    @Override
+    public void close() throws Exception {
+        baseSeekable.close();
+        if(closeAction != null) {
+            closeAction.close();
+        }
     }
 
 }

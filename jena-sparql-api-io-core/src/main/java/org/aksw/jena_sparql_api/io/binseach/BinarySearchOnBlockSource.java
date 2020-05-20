@@ -13,10 +13,12 @@ public class BinarySearchOnBlockSource
     implements BinarySearcher
 {
     protected BlockSource blockSource;
+    protected AutoCloseable closeAction;
 
-    public BinarySearchOnBlockSource(BlockSource blockSource) {
+    public BinarySearchOnBlockSource(BlockSource blockSource, AutoCloseable closeAction) {
         super();
         this.blockSource = blockSource;
+        this.closeAction = closeAction;
     }
 
     @Override
@@ -25,7 +27,13 @@ public class BinarySearchOnBlockSource
 
         long maxBlockOffset = blockSource.size();
 
-        Reference<Block> blockRef = BlockSources.binarySearch(blockSource, 0, maxBlockOffset, (byte)'\n', prefix);
+        Reference<Block> blockRef;
+        if(prefix == null || prefix.length == 0) {
+            blockRef = blockSource.contentAtOrAfter(0, true);
+        } else {
+            blockRef = BlockSources.binarySearch(blockSource, 0, maxBlockOffset, (byte)'\n', prefix);
+        }
+
         if(blockRef == null) {
             result = new ByteArrayInputStream(new byte[0]);
         } else {
@@ -67,33 +75,48 @@ public class BinarySearchOnBlockSource
 
             SeekableFromBlock decodedView = new SeekableFromBlock(it.blockRef, 0, 0, Long.MIN_VALUE, maxPos);
 
-            long findPos = decodedView.binarySearch(-1, maxPos, (byte)'\n', prefix);
 
-            if(findPos == Long.MIN_VALUE) {
-                // System.out.println("No pos found in block");
-                result = new ByteArrayInputStream(new byte[0]);
+            if(prefix == null || prefix.length == 0) {
+                decodedView.setPos(0);
+
+                result = Channels.newInputStream(decodedView);
+
             } else {
-                // System.out.println(findPos);
+                long findPos = decodedView.binarySearch(-1, maxPos, (byte)'\n', prefix);
+
+                if(findPos == Long.MIN_VALUE) {
+                    // System.out.println("No pos found in block");
+                    result = new ByteArrayInputStream(new byte[0]);
+                } else {
+                    // System.out.println(findPos);
 
 
-                // Seekable continuousView = new SeekableFromBlock(blockRef, (int)findPos, findPos);
+                    // Seekable continuousView = new SeekableFromBlock(blockRef, (int)findPos, findPos);
 
 
-                long start = BinarySearchOnSortedFile.getPosOfFirstMatch(decodedView, (byte)'\n', prefix);
-                // Move past the delimiter
-                decodedView.nextPos(1);
+                    long start = BinarySearchOnSortedFile.getPosOfFirstMatch(decodedView, (byte)'\n', prefix);
+                    // Move past the delimiter
+                    decodedView.nextPos(1);
 
-                BinSearchScanState state = new BinSearchScanState();
-                state.firstDelimPos = start;
-                state.matchDelimPos = findPos;
-                state.prefixBytes = prefix;
-                state.size = Long.MAX_VALUE;
+                    BinSearchScanState state = new BinSearchScanState();
+                    state.firstDelimPos = start;
+                    state.matchDelimPos = findPos;
+                    state.prefixBytes = prefix;
+                    state.size = Long.MAX_VALUE;
 
 
-                result = BinarySearchOnSortedFile.newInputStream(decodedView, state);
+                    result = BinarySearchOnSortedFile.newInputStream(decodedView, state);
+                }
             }
         }
 
         return result;
+    }
+
+    @Override
+    public void close() throws Exception {
+        if(this.closeAction != null) {
+            closeAction.close();
+        }
     }
 }

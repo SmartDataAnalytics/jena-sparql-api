@@ -759,8 +759,38 @@ public class SeekableFromBlock
         return r;
     }
 
+
     @Override
     public int read(ByteBuffer dst) throws IOException {
+        int contrib = 0;
+
+        BlockIterState it = BlockIterState.fwd(true, currentBlockRef, currentSeekable);
+        while(it.hasNext()) {
+            it.advance();
+            // Position before the start - if there are no bytes, the contrib is 0
+            // it.seekable.posToStart();
+
+            setCurrent(it);
+
+            //while(it.seekable != null && dst.remaining() > 0) {
+            while(dst.remaining() > 0) {
+                int n = it.seekable.read(dst);
+                if(n == 0) {
+                    throw new RuntimeException("Read returned 0 bytes - this should never be the case");
+                } else if(n == -1) {
+                    break;
+                }
+                contrib += n;
+                actualPos += n;
+            }
+        }
+
+        int result = contrib == 0 && dst.remaining() > 0 ? -1 : contrib;
+
+        return result;
+    }
+
+    public int readBroken(ByteBuffer dst) throws IOException {
         int n = -1;
 
         // TODO Ensure we are at the right block for the set position (probably done)

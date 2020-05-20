@@ -8,14 +8,14 @@ import org.aksw.jena_sparql_api.io.common.Reference;
 
 public class BlockSources {
 
-    public static BinarySearcher createBinarySearcherBz2(FileChannel fileChannel) throws IOException {
+    public static BinarySearcher createBinarySearcherBz2(FileChannel fileChannel, boolean closeChannel) throws IOException {
         PageManager pageManager = PageManagerForFileChannel.create(fileChannel);
         // long maxBlockOffset = pageManager.getEndPos();
 
         SeekableSource pagedSource = new SeekableSourceFromPageManager(pageManager);
         BlockSource blockSource = BlockSourceBzip2.create(pagedSource);
 
-        BinarySearcher result = new BinarySearchOnBlockSource(blockSource);
+        BinarySearcher result = new BinarySearchOnBlockSource(blockSource, closeChannel ? fileChannel::close : null);
         return result;
     }
 

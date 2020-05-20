@@ -72,7 +72,7 @@ public class TestBinSearchBz2 {
         sw.reset().start();
         int i = 0;
         try(FileChannel fileChannel = FileChannel.open(path, StandardOpenOption.READ)) {
-            BinarySearcher bs = BlockSources.createBinarySearcherBz2(fileChannel);
+            BinarySearcher bs = BlockSources.createBinarySearcherBz2(fileChannel, false);
 
             // This key overlaps on the block boundary (byte 2700000)
 //            try(InputStream in = bs.search("<http://linkedgeodata.org/geometry/node1012767568>")) {

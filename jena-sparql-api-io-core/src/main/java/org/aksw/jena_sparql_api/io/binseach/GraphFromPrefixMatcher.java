@@ -2,11 +2,9 @@ package org.aksw.jena_sparql_api.io.binseach;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -20,7 +18,6 @@ import org.aksw.jena_sparql_api.stmt.SparqlStmt;
 import org.aksw.jena_sparql_api.stmt.SparqlStmtParserImpl;
 import org.aksw.jena_sparql_api.utils.ExtendedIteratorClosable;
 import org.apache.jena.graph.Graph;
-import org.apache.jena.graph.GraphStatisticsHandler;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.graph.impl.GraphBase;
@@ -33,7 +30,6 @@ import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.riot.lang.RiotParsers;
 import org.apache.jena.sys.JenaSystem;
 import org.apache.jena.util.iterator.ExtendedIterator;
-import org.apache.jena.util.iterator.WrappedIterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,14 +46,45 @@ import com.google.common.collect.Streams;
 public class GraphFromPrefixMatcher extends GraphBase {
     private static final Logger logger = LoggerFactory.getLogger(GraphFromPrefixMatcher.class);
 
-    protected Path path;
-    protected FileChannel channel = null;
-    protected BinarySearchOnSortedFile searcher = null;
+//    protected Path path;
+//    protected FileChannel channel = null;
+//    protected BinarySearchOnSortedFile searcher = null;
 
-    public GraphFromPrefixMatcher(Path path) {
+    protected BinarySearcher binarySearcher;
+    // protected AutoCloseable closeAction;
+
+    public GraphFromPrefixMatcher(BinarySearcher binarySearcher) {
         super();
-        this.path = path;
+        //this.path = path;
+        this.binarySearcher = binarySearcher;
+        // this.closeAction = closeAction;
     }
+
+
+//    public static BinarySearcher createBinarySearcher(Path path) throws IOException {
+//        FileChannel channel = FileChannel.open(path, StandardOpenOption.READ);
+//        PageManager pageManager = PageManagerForFileChannel.create(channel);
+//        Seekable seekable = new PageNavigator(pageManager);
+//        long channelSize = channel.size();
+//        BinarySearcher result = new BinarySearchOnSortedFile(seekable, channelSize, (byte)'\n');
+//        return result;
+//    	if(channel == null) {
+//      synchronized(this) {
+//          if(channel == null) {
+//        if(channel != null) {
+//            synchronized(this) {
+//                if(channel != null) {
+//                    try {
+//                        channel.close();
+//                        channel = null;
+//                        super.close();
+//                    } catch (IOException e) {
+//                        logger.warn("Exception on close", e);
+//                    }
+//                }
+//            }
+//        }
+//    }
 
     protected ExtendedIterator<Triple> graphBaseFindCore(Triple triplePattern) throws Exception {
         // Init channel on first request
@@ -65,17 +92,6 @@ public class GraphFromPrefixMatcher extends GraphBase {
         // System.err.println(triplePattern);
 
         // TODO Improve resource management ; we should close the seekable and the pageManager
-        if(channel == null) {
-            synchronized(this) {
-                if(channel == null) {
-                    channel = FileChannel.open(path, StandardOpenOption.READ);
-                    PageManager pageManager = PageManagerForFileChannel.create(channel);
-                    Seekable seekable = new PageNavigator(pageManager);
-                    long channelSize = channel.size();
-                    searcher = new BinarySearchOnSortedFile(seekable, channelSize, (byte)'\n');
-                }
-            }
-        }
 
         ExtendedIterator<Triple> result;
 
@@ -97,7 +113,7 @@ public class GraphFromPrefixMatcher extends GraphBase {
 
 //        System.out.println("PREFIX: " + prefix);
 
-        InputStream in = searcher.search(prefix);
+        InputStream in = binarySearcher.search(prefix);
 
         Stream<Triple> baseStream = Streams.stream(
                 //RDFDataMgrRx.createIteratorTriples(in, Lang.NTRIPLES, "http://www.example.org/"));
@@ -135,10 +151,6 @@ public class GraphFromPrefixMatcher extends GraphBase {
         return result;
     }
 
-    public static Graph createGraphFromSortedNtriples(Path path) {
-        Graph result = new GraphFromPrefixMatcher(path);
-        return result;
-    }
 
 //	public static Graph createGraphFromSortedNtriples(Path path, int maxCacheSize, int bufferSize) {
 //		// TODO Properly pass these parameters to the search component
@@ -148,18 +160,10 @@ public class GraphFromPrefixMatcher extends GraphBase {
 
     @Override
     public void close() {
-        if(channel != null) {
-            synchronized(this) {
-                if(channel != null) {
-                    try {
-                        channel.close();
-                        channel = null;
-                        super.close();
-                    } catch (IOException e) {
-                        logger.warn("Exception on close", e);
-                    }
-                }
-            }
+        try {
+            binarySearcher.close();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -172,7 +176,7 @@ public class GraphFromPrefixMatcher extends GraphBase {
         Path path = Paths.get("/home/raven/Projects/Data/LSQ/deleteme.sorted.nt");
 
 //		Path path = Paths.get("/home/raven/Projects/Data/LSQ/wtf.sorted.nt");
-        Graph graph = GraphFromPrefixMatcher.createGraphFromSortedNtriples(path);
+        Graph graph = new GraphFromPrefixMatcher(BinarySearchOnSortedFile.create(path));
 
         Model m = ModelFactory.createModelForGraph(graph);
 
