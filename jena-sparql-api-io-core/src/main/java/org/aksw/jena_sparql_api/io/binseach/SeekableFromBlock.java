@@ -765,8 +765,16 @@ public class SeekableFromBlock
         int contrib = 0;
 
         BlockIterState it = BlockIterState.fwd(true, currentBlockRef, currentSeekable);
-        while(it.hasNext()) {
+//        boolean isFirstIteration = true;
+        while(it.hasNext() && dst.remaining() > 0) {
             it.advance();
+
+//            if(isFirstIteration) {
+//                isFirstIteration = false;
+//            } else {
+//                it.seekable.posToStart();
+//                it.seekable.nextPos(1);
+//            }
             // Position before the start - if there are no bytes, the contrib is 0
             // it.seekable.posToStart();
 

@@ -88,6 +88,10 @@ public class TestBinSearchBz2 {
 //                System.out.println("Test #" + (++i) + ": " + s);
                 Graph expected = e.getValue();
 
+//                if(s.getURI().equals("http://linkedgeodata.org/geometry/node1012767568")) {
+//                    System.err.println("DEBUG POINT");
+//                }
+
                 //String str = s.isURI() ? "<" + s.getURI() + ">" : s.getBlankNodeLabel()
                 String str = NodeFmtLib.str(s);
                 try(InputStream in = bs.search(str)) {
