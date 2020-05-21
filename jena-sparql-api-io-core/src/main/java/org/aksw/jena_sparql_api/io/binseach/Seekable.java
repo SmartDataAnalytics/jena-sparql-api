@@ -613,7 +613,11 @@ public interface Seekable
                 result = binarySearch(nextDelimPos, max, delimiter, prefix);
             }
         } else { // if cmp > 0
-            result = binarySearch(min, delimPos - 1, delimiter, prefix);
+            if(delimPos >= max) {
+                result = Long.MIN_VALUE;
+            } else {
+                result = binarySearch(min, delimPos - 1, delimiter, prefix);
+            }
         }
 
         return result;

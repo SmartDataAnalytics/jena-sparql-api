@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api.rx.query_flow;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -13,8 +14,6 @@ import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryFactory;
 import org.apache.jena.query.Syntax;
 import org.apache.jena.sparql.ARQConstants;
-import org.apache.jena.sparql.algebra.Algebra;
-import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.core.Substitute;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.core.VarExprList;
@@ -25,10 +24,13 @@ import org.apache.jena.sparql.engine.binding.BindingMap;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprAggregator;
 import org.apache.jena.sparql.expr.ExprLib;
+import org.apache.jena.sparql.modify.TemplateLib;
+import org.apache.jena.sparql.syntax.Template;
 import org.apache.jena.sparql.util.Context;
 import org.apache.jena.sparql.util.ExprUtils;
 import org.apache.jena.sparql.util.NodeFactoryExtra;
 import org.apache.jena.util.iterator.ClosableIterator;
+import org.apache.jena.util.iterator.ExtendedIterator;
 
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.FlowableTransformer;
@@ -36,6 +38,12 @@ import io.reactivex.rxjava3.core.Maybe;
 
 public class QueryFlowOps
 {
+    public static Function<Binding, Flowable<Triple>> createMapperTriples(Template template) {
+        return binding -> Flowable.fromIterable(
+                    () -> TemplateLib.calcTriples(template.getTriples(), Collections.singleton(binding).iterator()));
+    }
+
+
     /**
      * Utility method to set up a default execution context
      *
@@ -86,7 +94,7 @@ public class QueryFlowOps
      * @param itSupp
      * @return
      */
-    public static <T> Flowable<T> wrap(Supplier<? extends ClosableIterator<T>> itSupp) {
+    public static <T> Flowable<T> wrapClosableIteratorSupplier(Supplier<? extends ClosableIterator<T>> itSupp) {
         return Flowable.generate(
                 () -> itSupp.get(),
                 (it, emitter) -> {
@@ -100,6 +108,14 @@ public class QueryFlowOps
                 ClosableIterator::close);
     }
 
+    public static Flowable<Triple> createFlowableFromGraph(Graph g, Triple pattern) {
+        return wrapClosableIteratorSupplier(() -> {
+            ExtendedIterator<Triple> r = g.find(pattern);
+            return r;
+        });
+    }
+
+
     /**
      * Create a mapper that for each binding performs a join using a lookup using the given graph and triple pattern.
      * Usage: flowableOfBindings.flatMap(createMapper(g, tp))
@@ -110,37 +126,58 @@ public class QueryFlowOps
      */
     public static Function<Binding, Flowable<Binding>> createMapperForJoin(Graph graph, Triple triplePattern) {
         return binding -> {
-            Triple tp = Substitute.substitute(triplePattern, binding);
+            Triple substPattern = Substitute.substitute(triplePattern, binding);
+            Triple findPattern = varToAny(substPattern);
 
             return
-                    wrap(() -> graph.find(tp))
-                    .flatMapMaybe(contrib -> {
+                wrapClosableIteratorSupplier(() -> {
+                    ExtendedIterator<Triple> r = graph.find(findPattern);
+                    return r;
+                })
+                .flatMapMaybe(contrib -> {
 
-                        BindingMap tmp = BindingFactory.create(binding);
-                        Binding r = mapper(tmp, triplePattern, contrib);
+                    BindingMap map = BindingFactory.create(binding);
+                    Binding r = mapper(map, substPattern, contrib);
 
-                        return r == null ? Maybe.empty() : Maybe.just(r);
-                    });
-
+                    return r == null ? Maybe.empty() : Maybe.just(r);
+                });
         };
     }
 
     public static Function<Binding, Flowable<Binding>> createMapperForOptionalJoin(Graph graph, Triple triplePattern) {
         return binding -> {
-            Triple tp = Substitute.substitute(triplePattern, binding);
+            Triple substPattern = Substitute.substitute(triplePattern, binding);
+            Triple findPattern = varToAny(substPattern);
 
             return
-                    wrap(() -> graph.find(tp))
-                    .flatMapMaybe(contrib -> {
+                wrapClosableIteratorSupplier(() -> {
+                    ExtendedIterator<Triple> r = graph.find(findPattern);
+                    return r;
+                })
+                .flatMapMaybe(contrib -> {
 
-                        BindingMap tmp = BindingFactory.create(binding);
-                        Binding r = mapper(tmp, triplePattern, contrib);
+                    BindingMap map = BindingFactory.create(binding);
+                    Binding r = mapper(map, substPattern, contrib);
 
-                        return r == null ? Maybe.empty() : Maybe.just(r);
-                    })
-                    .defaultIfEmpty(binding);
-
+                    return r == null ? Maybe.empty() : Maybe.just(r);
+                })
+                .defaultIfEmpty(binding);
         };
+    }
+
+    public static Node varToAny(Node node)
+    {
+        if ( node.isVariable() )
+            return Node.ANY ;
+        return node ;
+    }
+
+    public static Triple varToAny(Triple tp) {
+        Triple result = Triple.create(
+                varToAny(tp.getSubject()),
+                varToAny(tp.getPredicate()),
+                varToAny(tp.getObject()));
+        return result;
     }
 
     /**

@@ -5,6 +5,7 @@ import java.util.Map.Entry;
 import java.util.concurrent.ExecutionException;
 
 import org.aksw.jena_sparql_api.rx.GraphOpsRx;
+import org.aksw.jena_sparql_api.rx.query_flow.QueryFlowOps;
 import org.aksw.jena_sparql_api.utils.ExtendedIteratorClosable;
 import org.apache.jena.ext.com.google.common.cache.Cache;
 import org.apache.jena.ext.com.google.common.cache.CacheBuilder;
@@ -36,7 +37,7 @@ public class GraphFromSubjectCache
     }
 
     protected Graph loadGraph(Node s) {
-        Graph result = createFlowableFromGraph(delegate, Triple.create(s, Node.ANY, Node.ANY))
+        Graph result = QueryFlowOps.createFlowableFromGraph(delegate, Triple.create(s, Node.ANY, Node.ANY))
                 .compose(GraphOpsRx.graphFromConsecutiveTriples(Triple::getSubject, GraphFactory::createDefaultGraph))
                 .blockingFirst(Graph.emptyGraph);
 
@@ -61,7 +62,7 @@ public class GraphFromSubjectCache
         } else {
             Triple surrogatePattern = Triple.create(triplePattern.getSubject(), Node.ANY, Node.ANY);
             //delegate.find(surrogatePattern);
-            graphFlow = createFlowableFromGraph(delegate, surrogatePattern)
+            graphFlow = QueryFlowOps.createFlowableFromGraph(delegate, surrogatePattern)
                 .subscribeOn(Schedulers.io())
                 .compose(GraphOpsRx.groupConsecutiveTriplesRaw(Triple::getSubject, GraphFactory::createDefaultGraph))
                 .doOnNext(e -> {
@@ -77,8 +78,11 @@ public class GraphFromSubjectCache
         }
 
         Flowable<Triple> resultFlow = graphFlow
-            .flatMap(g -> createFlowableFromGraph(g, triplePattern)
-                    .filter(triplePattern::matches))
+            .flatMap(g -> QueryFlowOps.createFlowableFromGraph(g, triplePattern)
+                    .filter(candidate -> {
+                        boolean r = triplePattern.matches(candidate);
+                        return r;
+                    }))
             ;
 
         Iterator<Triple> itTriples = resultFlow
@@ -94,20 +98,20 @@ public class GraphFromSubjectCache
     }
 
 
-    public static Flowable<Triple> createFlowableFromGraph(Graph g, Triple pattern) {
-        // System.out.println("  Flow from " + pattern);
-        return Flowable.<Triple, ExtendedIterator<Triple>>generate(
-                () -> g.find(pattern),
-                (state, emitter) -> {
-                    if(state.hasNext()) {
-                        Triple t = state.next();
-                        emitter.onNext(t);
-                    } else {
-                        emitter.onComplete();
-                    }
-                },
-                ExtendedIterator::close);
-    }
+//    public static Flowable<Triple> createFlowableFromGraph(Graph g, Triple pattern) {
+//        // System.out.println("  Flow from " + pattern);
+//        return Flowable.<Triple, ExtendedIterator<Triple>>generate(
+//                () -> g.find(pattern),
+//                (state, emitter) -> {
+//                    if(state.hasNext()) {
+//                        Triple t = state.next();
+//                        emitter.onNext(t);
+//                    } else {
+//                        emitter.onComplete();
+//                    }
+//                },
+//                ExtendedIterator::close);
+//    }
 
     @Override
     public boolean isClosed() {
