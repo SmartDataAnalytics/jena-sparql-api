@@ -2,11 +2,18 @@ package org.aksw.jena_sparql_api.io.binseach;
 
 import java.io.IOException;
 import java.nio.channels.FileChannel;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 
 import org.aksw.jena_sparql_api.io.binseach.bz2.BlockSourceBzip2;
 import org.aksw.jena_sparql_api.io.common.Reference;
 
 public class BlockSources {
+    public static BinarySearcher createBinarySearcherBz2(Path path) throws IOException {
+        FileChannel channel = FileChannel.open(path, StandardOpenOption.READ);
+        BinarySearcher result = createBinarySearcherBz2(channel, true);
+        return result;
+    }
 
     public static BinarySearcher createBinarySearcherBz2(FileChannel fileChannel, boolean closeChannel) throws IOException {
         PageManager pageManager = PageManagerForFileChannel.create(fileChannel);

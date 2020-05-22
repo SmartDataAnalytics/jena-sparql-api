@@ -1,7 +1,9 @@
 package org.aksw.jena_sparql_api.io.binsearch;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -9,6 +11,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 import org.aksw.jena_sparql_api.io.binseach.BinarySearcher;
@@ -43,6 +46,38 @@ public class TestBinSearchBz2 {
 //    public static void main(String[] args) throws IOException {
 //        runTest();
 //    }
+
+    @Test
+    public void testFullRead() throws IOException {
+        Path path = Paths.get("src/test/resources/2015-11-02-Amenity.node.5mb-uncompressed.sorted.nt.bz2");
+//        Path path = Paths.get("/home/raven/tmp/sorttest/sorted.nt.bz2");
+
+        try(FileChannel fileChannel = FileChannel.open(path, StandardOpenOption.READ);
+            BufferedReader expected = new BufferedReader(new InputStreamReader(new BZip2CompressorInputStream(Files.newInputStream(path, StandardOpenOption.READ), true)))) {
+            BinarySearcher bs = BlockSources.createBinarySearcherBz2(fileChannel, false);
+
+            BufferedReader actual = new BufferedReader(new InputStreamReader(bs.search((String)null)));
+
+            String lineActual;
+            String lineExpected;
+            for(int i = 1; ; ++i) {
+                lineActual = actual.readLine();
+                lineExpected = expected.readLine();
+
+//                System.out.println("Line: " + i);
+                if(!Objects.equals(lineExpected, lineActual)) {
+                    logger.warn("Mismatch in line " + i);
+                    Assert.assertEquals(lineExpected, lineActual);
+                }
+
+                if(lineActual == null && lineExpected == null) {
+                    break;
+                }
+            }
+
+        }
+
+    }
 
     /**
      * For future reference and quantifying improvements:

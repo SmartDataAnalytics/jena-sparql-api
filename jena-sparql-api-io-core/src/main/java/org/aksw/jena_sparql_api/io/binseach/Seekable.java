@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
 
+import com.github.jsonldjava.shaded.com.google.common.primitives.Ints;
+
 /*
  *
  * checkNext(horizon, changePos); Return the number of available bytes up to the horizon.
@@ -116,6 +118,27 @@ public interface Seekable
      */
 //    void posToAfterEnd() throws IOException;
 
+
+    default byte get(long pos) throws IOException {
+        long currentPos = getPos();
+        int delta = Ints.checkedCast(currentPos - pos);
+
+        byte result;
+        if(delta > 0) {
+            nextPos(delta);
+            result = get();
+            prevPos(delta);
+        } else if(delta < 0) {
+            int tmp = -delta;
+            prevPos(tmp);
+            result = get();
+            nextPos(tmp);
+        } else {
+            result = get();
+        }
+
+        return result;
+    }
 
     /**
      * Read a byte at the current position

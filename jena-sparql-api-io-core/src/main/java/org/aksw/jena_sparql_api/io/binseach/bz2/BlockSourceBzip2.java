@@ -5,20 +5,24 @@ import java.io.InputStream;
 import java.math.BigInteger;
 import java.nio.channels.Channels;
 import java.util.concurrent.ExecutionException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.aksw.jena_sparql_api.io.binseach.Block;
 import org.aksw.jena_sparql_api.io.binseach.BlockSource;
 import org.aksw.jena_sparql_api.io.binseach.BufferFromInputStream;
+import org.aksw.jena_sparql_api.io.binseach.CharSequenceFromSeekable;
 import org.aksw.jena_sparql_api.io.binseach.DecodedDataBlock;
+import org.aksw.jena_sparql_api.io.binseach.ReverseCharSequenceFromSeekable;
 import org.aksw.jena_sparql_api.io.binseach.Seekable;
 import org.aksw.jena_sparql_api.io.binseach.SeekableSource;
 import org.aksw.jena_sparql_api.io.common.Reference;
 import org.aksw.jena_sparql_api.io.common.ReferenceImpl;
-import org.aksw.jena_sparql_api.io.deprecated.BoyerMooreMatcherFactory;
 import org.aksw.jena_sparql_api.io.deprecated.MatcherFactory;
 import org.aksw.jena_sparql_api.io.deprecated.SeekableMatcher;
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream;
 
+import com.github.jsonldjava.shaded.com.google.common.primitives.Ints;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 
@@ -29,11 +33,14 @@ public class BlockSourceBzip2
 //	public static final byte[] magic = new BigInteger("425a6839", 16).toByteArray();
     // The magic number in characters is: BZh91AY&SY
     // TODO Block size is a parameter - we should parse it out
-    public static final byte[] magic = new BigInteger("425a6839314159265359", 16).toByteArray();
+    public static final String magicStr = "BZh91AY&SY";
+//    public static final byte[] magic = new BigInteger("425a6839314159265359", 16).toByteArray();
+    public static final Pattern fwdMagicPattern = Pattern.compile(magicStr, Pattern.LITERAL);
+    public static final Pattern bwdMagicPattern = Pattern.compile(new StringBuilder(magicStr).reverse().toString(), Pattern.LITERAL);
 
     protected SeekableSource seekableSource;
-    protected MatcherFactory fwdBlockStartMatcherFactory;
-    protected MatcherFactory bwdBlockStartMatcherFactory;
+//    protected MatcherFactory fwdBlockStartMatcherFactory;
+//    protected MatcherFactory bwdBlockStartMatcherFactory;
 
     protected Cache<Long, Reference<Block>> blockCache = CacheBuilder.newBuilder().build();
 
@@ -45,13 +52,13 @@ public class BlockSourceBzip2
             MatcherFactory bwdBlockStartMatcherFactory) {
         super();
         this.seekableSource = seekableSource;
-        this.fwdBlockStartMatcherFactory = fwdBlockStartMatcherFactory;
-        this.bwdBlockStartMatcherFactory = bwdBlockStartMatcherFactory;
+//        this.fwdBlockStartMatcherFactory = fwdBlockStartMatcherFactory;
+//        this.bwdBlockStartMatcherFactory = bwdBlockStartMatcherFactory;
     }
 
 
     public static BlockSource create(SeekableSource seekableSource) {
-        String str = new String(magic);
+//        String str = new String(magic);
 //        System.out.println("Str: " + str);
         if(!seekableSource.supportsAbsolutePosition()) {
             throw new RuntimeException("The seekable source must support absolution positions");
@@ -59,11 +66,11 @@ public class BlockSourceBzip2
 
         // TODO Turn into constant
 
-        MatcherFactory fwdMatcher = BoyerMooreMatcherFactory.createFwd(magic);
-        MatcherFactory bwdMatcher = BoyerMooreMatcherFactory.createBwd(magic);
+//        MatcherFactory fwdMatcher = BoyerMooreMatcherFactory.createFwd(magic);
+//        MatcherFactory bwdMatcher = BoyerMooreMatcherFactory.createBwd(magic);
 
 
-        return new BlockSourceBzip2(seekableSource, fwdMatcher, bwdMatcher);
+        return new BlockSourceBzip2(seekableSource, null, null);
     }
 
 
@@ -94,18 +101,28 @@ public class BlockSourceBzip2
 //            inclusive = true;
 //        }
 
-        long internalRequestPos = requestPos - (inclusive ? 0 : 1);
+        long internalRequestPos = requestPos - (inclusive ? 0 : 1) + (magicStr.length() - 1);
         Reference<Block> result = blockCache.getIfPresent(internalRequestPos);
 
         if(result == null) {
             Seekable seekable = seekableSource.get(internalRequestPos);
-            SeekableMatcher matcher = bwdBlockStartMatcherFactory.newMatcher();
-            boolean didFind = matcher.find(seekable);
+
+
+//            SeekableMatcher matcher = bwdBlockStartMatcherFactory.newMatcher();
+//            boolean didFind = matcher.find(seekable);
+            CharSequence charSequence = new ReverseCharSequenceFromSeekable(seekable, 0, Ints.saturatedCast(internalRequestPos + 1));
+            Matcher matcher = bwdMagicPattern.matcher(charSequence);
+            boolean didFind = matcher.find();
+
             if(didFind) {
                 // Move to the beginning of the pattern
-                seekable.prevPos(magic.length - 1);
+                // seekable.prevPos(magic.length - 1);
 
-                long blockStart = seekable.getPos();
+                // long blockStart = seekable.getPos();
+                int end = matcher.end();
+                long blockStart = seekable.getPos() - (end - 1);
+                seekable.setPos(blockStart);
+
                 result = cache(blockStart, seekable);
             }
         }
@@ -134,11 +151,19 @@ public class BlockSourceBzip2
 
         if(result == null) {
             Seekable seekable = seekableSource.get(internalRequestPos);
-            SeekableMatcher matcher = fwdBlockStartMatcherFactory.newMatcher();
-            boolean didFind = matcher.find(seekable);
+//            SeekableMatcher matcher = fwdBlockStartMatcherFactory.newMatcher();
+//            boolean didFind = matcher.find(seekable);
+
+            CharSequence charSequence = new CharSequenceFromSeekable(seekable, 0, Ints.saturatedCast(seekableSource.size() - internalRequestPos));
+            Matcher matcher = fwdMagicPattern.matcher(charSequence);
+            boolean didFind = matcher.find();
+
             if(didFind) {
+                long blockStart = seekable.getPos() + matcher.start();
+                seekable.setPos(blockStart);
                 // We are now at the beginning of the pattern
-                long blockStart = seekable.getPos();
+                //long blockStart = seekable.getPos();
+//                System.err.println("Bz2 block for " + requestPos + " found at " + blockStart);
                 result = cache(blockStart, seekable);
             }
         }
@@ -169,8 +194,11 @@ public class BlockSourceBzip2
     public boolean hasBlockAfter(long pos) throws IOException {
         boolean result;
         try(Seekable seekable = seekableSource.get(pos + 1)) {
-            SeekableMatcher matcher = fwdBlockStartMatcherFactory.newMatcher();
-            result = matcher.find(seekable);
+//            SeekableMatcher matcher = fwdBlockStartMatcherFactory.newMatcher();
+//            result = matcher.find(seekable);
+            CharSequence charSequence = new CharSequenceFromSeekable(seekable, 0, Ints.saturatedCast(seekableSource.size() - (pos + 1)));
+            Matcher matcher = fwdMagicPattern.matcher(charSequence);
+            result = matcher.find();
         }
         return result;
     }
@@ -178,9 +206,15 @@ public class BlockSourceBzip2
     @Override
     public boolean hasBlockBefore(long pos) throws IOException {
         boolean result;
-        try(Seekable seekable = seekableSource.get(pos - 1)) {
-            SeekableMatcher matcher = bwdBlockStartMatcherFactory.newMatcher();
-            result = matcher.find(seekable);
+        long internalRequestPos = pos - 1 + (magicStr.length() - 1);
+        try(Seekable seekable = seekableSource.get(internalRequestPos)) {
+//            SeekableMatcher matcher = bwdBlockStartMatcherFactory.newMatcher();
+//            result = matcher.find(seekable);
+//            try(Seekable clone = seekable.clone()) {
+            CharSequence charSequence = new ReverseCharSequenceFromSeekable(seekable, 0, Ints.saturatedCast(internalRequestPos + 1));
+            Matcher matcher = bwdMagicPattern.matcher(charSequence);
+            result = matcher.find();
+//            }
         }
         return result;
     }
