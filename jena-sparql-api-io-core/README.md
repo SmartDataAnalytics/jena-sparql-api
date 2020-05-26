@@ -15,6 +15,66 @@ Special purpose IO functionality
 
 
 
+## System Process Abstraction
+Transparently switch between native and system-call data processors.
+
+## Motivation
+For many data processing tasks, such as conversion and encoding, although there may exist Java implementations, there often also exist highly optimized system tools that perform significantly faster. For example, counting lines with `wc -l` is at least twice as fast as a multi-threaded memory mapped io Java implementation. Other typical tools are `bzip2`, `grep`, etc. So why not transparently use the faster tooling if it is available and otherwise fall back to native tooling?
+
+
+### Example 1
+
+
+### Example 2
+This example shows how to create a flow that upon subscription yields an appropriate input stream:
+The initial file is first `cat`, then `sort`ed, then `grep`ped and an input stream to the result is supplied back to java.
+If the flow does not complete within the timeout the involved system processes will be terminated.
+
+Note, that that `sort.mapStreamToPath` writes out a file, and multiple subscriptions on the composite flowable would result in conflicting writes
+of the file. This means, that you need to take care on how to design flows - e.g. whether new filenames should be picked if they already exist,
+or whether new flows should wait for the first one to complete.
+
+
+
+```java
+Path path = Paths.get("lines.txt");
+PipeTransformRx cat = PipeTransformRx.fromSysCallStreamToStream("/bin/cat");
+PipeTransformRx sort = PipeTransformRx.fromSysCallStreamToStream("/usr/bin/sort");
+PipeTransformRx filter = PipeTransformRx.fromSysCallStreamToStream("/bin/grep", "size");
+
+InputStream in =
+  Single.just(path)
+    .compose(cat.mapPathToStream())
+    .compose(sort.mapStreamToPath(Paths.get("/tmp/foo.bar")))
+    .compose(filter.mapPathToStream())
+    // The timeout refers to when the InputStream becomes available i.e. the time when foo.bar has been written
+    // See below to set a timeout on data becoming ready on the input stream
+    .timeout(10, TimeUnit.SECONDS)
+    .blockingGet();
+```
+
+
+Set a timeout for data (lines) to become available:
+```
+  Flowable<String> lines = Flowable.generate(
+    () -> new BufferedReader(new InputStreamReader(in)),
+    (it, e) -> {
+      String line = it.readLine();
+      if(line == null) {
+        e.onComplete();
+      } else {
+        e.onNext(line);
+      }
+    },
+    AutoCloseable::close);
+
+    List<String> strs = lines
+      // This will raise an exception if it takes longer than 5 seconds to obtain the next line from the input stream
+      .timeout(5, TimeUnit.SECONDS)
+      .toList()
+      .blockingGet();
+```
+
 
 ## Sorted Blocked Turtle
 This is just a fun little idea and I consider it more of a gimmick - its not implemented (yet)

@@ -73,6 +73,10 @@ import io.reactivex.rxjava3.core.Maybe;
  *
  */
 public class RDFDataMgrRx {
+    public static Flowable<Triple> createFlowableTriples(String filenameOrURI, Lang lang, String baseIRI) {
+        return createFlowableTriples(() -> RDFDataMgr.open(filenameOrURI), lang, baseIRI);
+    }
+
     public static Flowable<Triple> createFlowableTriples(Callable<InputStream> inSupplier, Lang lang, String baseIRI) {
         return createFlowableFromInputStream(inSupplier, th -> eh -> in -> createIteratorTriples(in, lang, baseIRI, eh, th));
     }
