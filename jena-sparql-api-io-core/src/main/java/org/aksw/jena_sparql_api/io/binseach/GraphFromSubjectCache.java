@@ -1,9 +1,8 @@
 package org.aksw.jena_sparql_api.io.binseach;
 
 import java.util.Iterator;
-import java.util.Map.Entry;
-import java.util.concurrent.ExecutionException;
 
+import org.aksw.jena_sparql_api.rx.GraphFactoryEx;
 import org.aksw.jena_sparql_api.rx.GraphOpsRx;
 import org.aksw.jena_sparql_api.rx.query_flow.QueryFlowOps;
 import org.aksw.jena_sparql_api.utils.ExtendedIteratorClosable;
@@ -25,23 +24,30 @@ public class GraphFromSubjectCache
 {
     protected Graph delegate;
     protected Cache<Node, Graph> subjectCache;
+//    protected Map<Node, Graph> subjectCache = new LRUMap<>(1000);
 
     public GraphFromSubjectCache(Graph delegate) {//, CacheBuilder<Node, Graph> subjectCacheBuilder) {
         super();
         this.delegate = delegate;
-        this.subjectCache = CacheBuilder.newBuilder().recordStats().maximumSize(1000).build();
+        this.subjectCache = CacheBuilder.newBuilder()
+                .recordStats()
+                .maximumSize(1000)
+                .concurrencyLevel(1)
+                .build();
     }
 
     public Cache<Node, Graph> getSubjectCache() {
+//        return null;
         return subjectCache;
     }
 
     protected Graph loadGraph(Node s) {
+//        System.err.println("Cache miss for " + s);
         Graph result = QueryFlowOps.createFlowableFromGraph(delegate, Triple.create(s, Node.ANY, Node.ANY))
                 .compose(GraphOpsRx.graphFromConsecutiveTriples(Triple::getSubject, GraphFactory::createDefaultGraph))
                 .blockingFirst(Graph.emptyGraph);
 
-//        System.err.println("Needed to load " + s + " with size " + result.size());
+        System.err.println("Cache miss for " + s + "; loaded " + result.size() + " triples - cache size " + subjectCache.size());
         return result;
     }
 
@@ -54,27 +60,42 @@ public class GraphFromSubjectCache
         if(s.isConcrete()) {
             Graph g;
             try {
+//                if(subjectCache.getIfPresent(s) != null) {
+//                    System.err.println("Cache hit for " + s + " cache size " + subjectCache.size());
+//                }
+//                g = subjectCache.computeIfAbsent(s,  x -> loadGraph(x));
                 g = subjectCache.get(s, () -> loadGraph(s));
-            } catch (ExecutionException e1) {
+//            } catch (ExecutionException e1) {
+              } catch (Exception e1) {
                 throw new RuntimeException(e1);
             }
             graphFlow = g == null ? Flowable.empty() : Flowable.just(g);
         } else {
             Triple surrogatePattern = Triple.create(triplePattern.getSubject(), Node.ANY, Node.ANY);
             //delegate.find(surrogatePattern);
+
+            // TODO We create an rx flow just to eventually create an iterator from it
+            // The only reason we cannot get rid of rx here right now is because of
+            // groupConsecutiveTriplesRaw which does not fit into Jena's iterator machinery
+            // We could create a java stream based version and use it with flatMap
             graphFlow = QueryFlowOps.createFlowableFromGraph(delegate, surrogatePattern)
                 .subscribeOn(Schedulers.io())
-                .compose(GraphOpsRx.groupConsecutiveTriplesRaw(Triple::getSubject, GraphFactory::createDefaultGraph))
-                .doOnNext(e -> {
+                // Insert order preserving graphs should be more light weight because they only index by s/p/o
+                .compose(GraphOpsRx.groupConsecutiveTriplesRaw(Triple::getSubject, GraphFactoryEx::createInsertOrderPreservingGraph))
+//                .compose(GraphOpsRx.groupConsecutiveTriplesRaw(Triple::getSubject, GraphFactory::createDefaultGraph))
+                .map(e -> {
                     Node key = e.getKey();
                     Graph g = e.getValue();
 
 //                    if(key.toString().contains("https://d-nb.info/gnd/82890-7/about")) {
 //                        System.out.println("Scanned graph " + key + " with size " + g.size() + " cache size: " + subjectCache.size() + " cache stats: " + subjectCache.stats());
 //                    }
+//                    System.err.println("Putting: " + key);
                     subjectCache.put(key, g);
+                    return e.getValue();
                 })
-                .map(Entry::getValue);
+                ;
+                //.map(Entry::getValue);
         }
 
         Flowable<Triple> resultFlow = graphFlow
@@ -86,8 +107,7 @@ public class GraphFromSubjectCache
             ;
 
         Iterator<Triple> itTriples = resultFlow
-                //.observeOn(Schedulers.computation())
-                .blockingIterable().iterator();
+                .blockingIterable(1).iterator();
 
         ExtendedIterator<Triple> result = ExtendedIteratorClosable.create(itTriples, () -> {
             ((Disposable)itTriples).dispose();

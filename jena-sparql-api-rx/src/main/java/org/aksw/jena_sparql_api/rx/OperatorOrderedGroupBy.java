@@ -167,10 +167,13 @@ public final class OperatorOrderedGroupBy<T, K, V>
 
                         protected V currentAcc = null;
 
+//                        protected Subscription s;
                         @Override
                         public void onSubscribe(Subscription s) {
+//                            this.s = s;
                             child.setCancellable(s::cancel);
                             s.request(Long.MAX_VALUE);
+//                            s.request(1);
                         }
 
                         @Override
@@ -190,7 +193,10 @@ public final class OperatorOrderedGroupBy<T, K, V>
                                 currentAcc = accCtor.apply(currentKey);
                             }
                             accAdd.accept(currentAcc, item);
-                            priorKey = currentKey;                        }
+                            priorKey = currentKey;
+
+//                            s.request(1);
+                        }
 
                         @Override
                         public void onError(Throwable t) {
