@@ -102,6 +102,7 @@ public class QueryFlowOps
                         T item = it.next();
                         emitter.onNext(item);
                     } else {
+//                        System.out.println("Emitting completing event");
                         emitter.onComplete();
                     }
                 },

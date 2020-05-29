@@ -27,13 +27,17 @@ public class GraphFromSubjectCache
 //    protected Map<Node, Graph> subjectCache = new LRUMap<>(1000);
 
     public GraphFromSubjectCache(Graph delegate) {//, CacheBuilder<Node, Graph> subjectCacheBuilder) {
-        super();
-        this.delegate = delegate;
-        this.subjectCache = CacheBuilder.newBuilder()
+        this(delegate, CacheBuilder.newBuilder()
                 .recordStats()
                 .maximumSize(1000)
                 .concurrencyLevel(1)
-                .build();
+                .build());
+    }
+
+    public GraphFromSubjectCache(Graph delegate, Cache<Node, Graph> cache) {//, CacheBuilder<Node, Graph> subjectCacheBuilder) {
+        super();
+        this.delegate = delegate;
+        this.subjectCache = cache;
     }
 
     public Cache<Node, Graph> getSubjectCache() {
