@@ -17,6 +17,7 @@ import io.reactivex.rxjava3.core.FlowableOnSubscribe;
 import io.reactivex.rxjava3.core.FlowableOperator;
 import io.reactivex.rxjava3.core.FlowableSubscriber;
 import io.reactivex.rxjava3.core.FlowableTransformer;
+import io.reactivex.rxjava3.subscribers.DefaultSubscriber;
 
 /**
  * Ordered group by; somewhat similar to .toListWhile() but with dedicated support for
@@ -155,12 +156,11 @@ public final class OperatorOrderedGroupBy<T, K, V>
 
     public FlowableTransformer<T, Entry<K, V>> transformer() {
 
-        return upstream -> {
-            Flowable<Entry<K, V>> result = Flowable.create(new FlowableOnSubscribe<Entry<K, V>>() {
+        return upstream -> Flowable.create(new FlowableOnSubscribe<Entry<K, V>>() {
 
                 @Override
                 public void subscribe(FlowableEmitter<Entry<K, V>> child) throws Exception {
-                    upstream.subscribe(new FlowableSubscriber<T>() {
+                    upstream.subscribe(new DefaultSubscriber<T>() {
 
                         protected K priorKey;
                         protected K currentKey;
@@ -168,13 +168,14 @@ public final class OperatorOrderedGroupBy<T, K, V>
                         protected V currentAcc = null;
 
 //                        protected Subscription s;
-                        @Override
-                        public void onSubscribe(Subscription s) {
+//                        @Override
+//                        public void onSubscribe(Subscription s) {
 //                            this.s = s;
-                            child.setCancellable(s::cancel);
-                            s.request(Long.MAX_VALUE);
-//                            s.request(1);
-                        }
+//                            child.setCancellable(s::cancel);
+//                            long requested = child.requested();
+//                            s.request(requested);
+////                            s.request(1);
+//                        }
 
                         @Override
                         public void onNext(T item) {
@@ -188,14 +189,19 @@ public final class OperatorOrderedGroupBy<T, K, V>
                                 Objects.requireNonNull(currentAcc, "Got null for an accumulator");
                             } else if(!groupKeyCompare.apply(priorKey, currentKey)) {//if(!Objects.equals(priorKey, currentKey)) {
 
-                                child.onNext(Maps.immutableEntry(priorKey, currentAcc));
+                                Entry<K, V> e = Maps.immutableEntry(priorKey, currentAcc);
+                                child.onNext(e);
 
                                 currentAcc = accCtor.apply(currentKey);
                             }
                             accAdd.accept(currentAcc, item);
                             priorKey = currentKey;
 
-//                            s.request(1);
+//                            long requested = child.requested();
+//                            if(requested != 0) {
+//                                System.out.println("Subscribed for " + requested);
+//                                s.request(requested);
+//                            }
                         }
 
                         @Override
@@ -216,8 +222,5 @@ public final class OperatorOrderedGroupBy<T, K, V>
 
                 }
             }, BackpressureStrategy.BUFFER);
-
-            return result;
-        };
     }
 }

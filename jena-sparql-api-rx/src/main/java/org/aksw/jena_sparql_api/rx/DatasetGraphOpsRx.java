@@ -7,6 +7,8 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import org.apache.jena.graph.Node;
+import org.apache.jena.query.Dataset;
+import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.DatasetGraphFactory;
 import org.apache.jena.sparql.core.Quad;
@@ -17,7 +19,10 @@ public class DatasetGraphOpsRx {
     public static FlowableTransformer<Quad, Entry<Node, List<Quad>>> groupToList()
     {
         return new OperatorOrderedGroupBy<Quad, Node, List<Quad>>(
-                Quad::getGraph, graph -> new ArrayList<>(), (list, item) -> list.add(item)).transformer();
+                Quad::getGraph,
+                graph -> new ArrayList<>(),
+                (list, item) -> list.add(item)
+           ).transformer();
     }
 
     public static FlowableTransformer<Quad, Entry<Node, DatasetGraph>> groupConsecutiveQuadsRaw(
@@ -49,14 +54,25 @@ public class DatasetGraphOpsRx {
     }
 
     public static FlowableTransformer<Quad, DatasetGraph> graphsFromConsecutiveSubjects(Supplier<DatasetGraph> graphSupplier) {
-        return graphFromConsecutiveTriples(Quad::getGraph, graphSupplier);
+        return graphsFromConsecutiveQuads(Quad::getGraph, graphSupplier);
     }
 
-    public static FlowableTransformer<Quad, DatasetGraph> graphFromConsecutiveTriples(
+    public static FlowableTransformer<Quad, DatasetGraph> graphsFromConsecutiveQuads(
             Function<Quad, Node> grouper,
             Supplier<DatasetGraph> graphSupplier) {
         return upstream -> upstream
                 .compose(groupConsecutiveQuadsRaw(grouper, graphSupplier))
                 .map(Entry::getValue);
     }
+
+    public static FlowableTransformer<Quad, Dataset> datasetsFromConsecutiveQuads(
+            Function<Quad, Node> grouper,
+            Supplier<DatasetGraph> graphSupplier) {
+        return upstream -> upstream
+                .compose(groupConsecutiveQuadsRaw(grouper, graphSupplier))
+                .map(Entry::getValue)
+                .map(DatasetFactory::wrap)
+                ;
+    }
+
 }

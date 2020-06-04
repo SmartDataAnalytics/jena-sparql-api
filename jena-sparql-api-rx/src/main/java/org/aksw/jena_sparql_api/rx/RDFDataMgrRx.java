@@ -7,7 +7,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -39,6 +38,7 @@ import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
+import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
@@ -366,12 +366,10 @@ public class RDFDataMgrRx {
      */
     public static Flowable<Dataset> createFlowableDatasets(Callable<InputStream> inSupplier, Lang lang, String baseIRI) {
         Flowable<Dataset> result = createFlowableQuads(inSupplier, lang, baseIRI)
-//            .compose(Transformers.<Quad>toListWhile(
-//                    (list, t) -> list.isEmpty()
-//                                 || list.get(0).getGraph().equals(t.getGraph())))
-            .compose(DatasetGraphOpsRx.groupToList())
-            .map(Entry::getValue)
-            .map(DatasetFactoryEx::createInsertOrderPreservingDataset);
+            .compose(DatasetGraphOpsRx.datasetsFromConsecutiveQuads(
+                    Quad::getGraph,
+                    DatasetGraphFactoryEx::createInsertOrderPreservingDatasetGraph))
+            ;
 
         return result;
     }
@@ -386,12 +384,16 @@ public class RDFDataMgrRx {
                         in.getBaseURI(),
                         eh,
                         th))
+                .compose(DatasetGraphOpsRx.datasetsFromConsecutiveQuads(
+                        Quad::getGraph,
+                        DatasetGraphFactoryEx::createInsertOrderPreservingDatasetGraph))
+                ;
 //        .compose(Transformers.<Quad>toListWhile(
 //                (list, t) -> list.isEmpty()
 //                             || list.get(0).getGraph().equals(t.getGraph())))
-        .compose(DatasetGraphOpsRx.groupToList())
-        .map(Entry::getValue)
-        .map(DatasetFactoryEx::createInsertOrderPreservingDataset);
+//        .compose(DatasetGraphOpsRx.groupToList())
+//        .map(Entry::getValue)
+//        .map(DatasetFactoryEx::createInsertOrderPreservingDataset);
 
         return result;
     }
@@ -561,7 +563,7 @@ public class RDFDataMgrRx {
 
                                 // Parse errors after an invocation of close are ignored
                                 // I.e. if we asked for 5 items, and there is parse error at the 6th one,
-                                // we still completed the original request without errors
+                                // we still complete the original request without errors
                                 if(isParseError && state.closeInvoked) {
                                     report = false;
                                 }
@@ -795,11 +797,26 @@ public class RDFDataMgrRx {
 
     public static <D extends Dataset, C extends Collection<D>> FlowableTransformer<C, Throwable> createDatasetBatchWriter(OutputStream out, RDFFormat format) {
         QuadEncoderDistinguish encoder = new QuadEncoderDistinguish();
+        Lang lang = format.getLang();
+        boolean isLangTriples = RDFLanguages.isTriples(lang);
+
+        // TODO Prevent emitting of redundant prefix mappings
+
         return upstream -> upstream
                 .flatMapMaybe(batch -> {
                     for(Dataset item : batch) {
                         Dataset encoded = encoder.encode(item);
-                        RDFDataMgr.write(out, encoded, format);
+
+                        if(isLangTriples) {
+                            Iterator<String> it = item.listNames();
+                            while(it.hasNext()) {
+                                String name = it.next();
+                                Model m = item.getNamedModel(name);
+                                RDFDataMgr.write(out, m, format);
+                            }
+                        } else {
+                            RDFDataMgr.write(out, encoded, format);
+                        }
                     }
                     out.flush();
                     return Maybe.<Throwable>empty();
