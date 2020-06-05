@@ -53,8 +53,8 @@ import org.aksw.jena_sparql_api.http.repository.api.RdfHttpEntityFile;
 import org.aksw.jena_sparql_api.http.repository.api.ResourceStore;
 import org.aksw.jena_sparql_api.http.repository.impl.HttpResourceRepositoryFromFileSystemImpl;
 import org.aksw.jena_sparql_api.http.repository.impl.ResourceStoreImpl;
-import org.aksw.jena_sparql_api.rx.RDFDataMgrEx;
 import org.aksw.jena_sparql_api.rx.SparqlRx;
+import org.aksw.jena_sparql_api.rx.SparqlStmtMgr;
 import org.aksw.jena_sparql_api.stmt.SPARQLResultSinkQuads;
 import org.aksw.jena_sparql_api.stmt.SPARQLResultVisitor;
 import org.aksw.jena_sparql_api.stmt.SparqlStmt;
@@ -582,7 +582,7 @@ public class OpExecutorDefault
                 // TODO Actually preprocessing should have already taken care of the prefixes
                 List<Query> queries;
                 try {
-                    queries = RDFDataMgrEx.loadQueries(in, DefaultPrefixes.prefixes);
+                    queries = SparqlStmtMgr.loadQueries(in, DefaultPrefixes.prefixes);
                 } catch (IOException | ParseException e) {
                     throw new RuntimeException(e);
                 }

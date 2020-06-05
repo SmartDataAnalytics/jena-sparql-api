@@ -8,9 +8,8 @@ import java.util.Set;
 
 import org.aksw.jena_sparql_api.algebra.expr.transform.ExprTransformVirtualBnodeUris;
 import org.aksw.jena_sparql_api.core.RDFConnectionFactoryEx;
-import org.aksw.jena_sparql_api.rx.RDFDataMgrEx;
 import org.aksw.jena_sparql_api.rx.SparqlRx;
-import org.apache.jena.graph.Node;
+import org.aksw.jena_sparql_api.rx.SparqlStmtMgr;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
@@ -48,7 +47,7 @@ public class LoticoExamples {
     public void testJsonExtern() throws FileNotFoundException, IOException, ParseException {
         Model model = ModelFactory.createDefaultModel();
 
-        Query query = RDFDataMgrEx.loadQuery("sparql-with-json.rq");
+        Query query = SparqlStmtMgr.loadQuery("sparql-with-json.rq");
 
         try(QueryExecution qe = QueryExecutionFactory.create(query, model)) {
             System.out.println(ResultSetFormatter.asText(qe.execSelect()));
@@ -74,7 +73,7 @@ public class LoticoExamples {
         //ExprTransformVirtualBnodeUris xform = new ExprTransformVirtualBnodeUris(vendorLabel, bnodeLabelFn);
 
         Model model = RDFDataMgr.loadModel("bnode-rewrites.ttl");
-        RDFDataMgrEx.execSparql(model, "udf-inferences.sparql");
+        SparqlStmtMgr.execSparql(model, "udf-inferences.sparql");
 
         Set<String> activeProfiles = new HashSet<>(Arrays.asList("http://ns.aksw.org/profile/" + profile));
         ExprTransformVirtualBnodeUris xform = ExprTransformVirtualBnodeUris.createTransformFromUdfModel(model, activeProfiles);

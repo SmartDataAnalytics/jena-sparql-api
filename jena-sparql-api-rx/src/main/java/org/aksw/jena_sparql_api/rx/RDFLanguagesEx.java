@@ -10,6 +10,12 @@ import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.riot.RDFLanguages;
 import org.apache.jena.riot.RDFWriterRegistry;
 
+/**
+ * Convenience methods related to Jena's {@link RDFLanguages} class.
+ *
+ * @author raven
+ *
+ */
 public class RDFLanguagesEx {
 
     public static List<Lang> getTripleLangs() {
