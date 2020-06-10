@@ -10,133 +10,154 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.sparql.util.ModelUtils;
 
 public class RDFNodeMapperImpl<T>
-	implements RDFNodeMapper<T>
+    implements RDFNodeMapper<T>
 {
-	protected TypeMapper typeMapper;
-	protected TypeDecider typeDecider;
-	protected Class<T> viewClass;
-	
-	// Flag to indicate that requested resource views should be applied even
-	// if the TypeDecider cannot find a better view class
-	protected boolean isViewAll;
+    protected TypeMapper typeMapper;
+    protected TypeDecider typeDecider;
+    protected Class<T> viewClass;
 
-	protected transient NodeMapper<T> nodeMapper;
+    // Flag to indicate that requested resource views should be applied even
+    // if the TypeDecider cannot find a better view class
+    protected boolean isViewAll;
 
-	
-	public RDFNodeMapperImpl(Class<T> viewClass, TypeMapper typeMapper, TypeDecider typeDecider, boolean isViewAll) {
-		super();
-		this.typeMapper = typeMapper;
-		this.typeDecider = typeDecider;
-		this.viewClass = viewClass;
-		this.isViewAll = isViewAll;
+    /**
+     * If true, checks via Resource.canAs(viewClass) are performed.
+     * For mapping purposes, it seems better to avoid the check because
+     * viewClass's implementation may requires triples to exist which may prevent creation of the
+     * view that would add those triples.
+     *
+     */
+    protected boolean enableCanAsCheck;
 
-		this.nodeMapper = Node.class.isAssignableFrom(viewClass)
-				? (NodeMapper<T>)new NodeMapperPassthrough()
-				: new NodeMapperFromTypeMapper<>(viewClass, typeMapper) //NodeMapperFactory.from(viewClass, typeMapper);
-				;
-	}
-	
-	public boolean canMap(RDFNode rdfNode) {			
-		Object tmp = toJava(rdfNode);
-		boolean result = tmp != null;
-		return result;
-	}
-	
-	public T toJava(RDFNode rdfNode) {
-		Objects.requireNonNull(rdfNode);
-		Objects.requireNonNull(viewClass);
-		
-		Node n = rdfNode.asNode();
-		
-		T result;
-		if(nodeMapper.canMap(n)) {
-			result = nodeMapper.toJava(n);
-		} else {
-			result = castRdfNode(rdfNode, viewClass, typeDecider, isViewAll);
-		}
-
-		return result;
-	}
-
-	public static <T extends RDFNode> T castRdfNode(RDFNode rdfNode,  Class<?> viewClass, TypeDecider typeDecider, boolean isViewAll) {
-		Class<?> effectiveType;
-		if(rdfNode.isResource()) {
-			Resource r = rdfNode.asResource();
-			effectiveType = getEffectiveType(r, viewClass, typeDecider, isViewAll);
-		} else {
-			effectiveType = viewClass;
-		}
-		
-		T result = effectiveType == null
-				? null
-				: rdfNode.canAs((Class)effectiveType) 
-					? (T)rdfNode.as((Class)effectiveType)
-					: null;
-
-		return result;
-	}
-	
-	public static Class<?> getEffectiveType(Resource r, Class<?> viewClass, TypeDecider typeDecider, boolean isViewAll) {
-		Class<?> effectiveType;
-		effectiveType = ResourceUtils.getMostSpecificSubclass(r, viewClass, typeDecider);
-		
-		if(effectiveType == null) {
-			// If we could not obtain a specific type, and the request was for
-			// a super class of RDFNode/Resource, yield a generic RDFNode view
-			if(viewClass.isAssignableFrom(Resource.class)) {
-				effectiveType = RDFNode.class;
-			} else if(Resource.class.isAssignableFrom(viewClass)) {
-				if(isViewAll) {
-					effectiveType = viewClass;
-				}
-			}
-
-			// We could not obtain a more specific type that the one requested -
-			// try the requested type as a fallback
-			// NOTE This case happens, if a resource with a model x was added to a model y:
-			// In this case, all triples and thus the type information is lost, so no more
-			// specific type is found
-		}
-		return effectiveType;
-	}
+    protected transient NodeMapper<T> nodeMapper;
 
 
-	@Override
-	public Class<?> getJavaClass() {
-		return viewClass;
-	}
+    public RDFNodeMapperImpl(
+            Class<T> viewClass,
+            TypeMapper typeMapper,
+            TypeDecider typeDecider,
+            boolean isViewAll,
+            boolean enableCanAsCheck) {
+        super();
+        this.typeMapper = typeMapper;
+        this.typeDecider = typeDecider;
+        this.viewClass = viewClass;
+        this.isViewAll = isViewAll;
+        this.enableCanAsCheck = enableCanAsCheck;
 
-	@Override
-	public RDFNode toNode(T obj) {
-		RDFNode result;
-		
-		// If the view demands subclasses of RDFNode, use the type decider system
+        this.nodeMapper = Node.class.isAssignableFrom(viewClass)
+                ? (NodeMapper<T>)new NodeMapperPassthrough()
+                : new NodeMapperFromTypeMapper<>(viewClass, typeMapper) //NodeMapperFactory.from(viewClass, typeMapper);
+                ;
+    }
+
+    public boolean canMap(RDFNode rdfNode) {
+        Object tmp = toJava(rdfNode);
+        boolean result = tmp != null;
+        return result;
+    }
+
+    public T toJava(RDFNode rdfNode) {
+        Objects.requireNonNull(rdfNode);
+        Objects.requireNonNull(viewClass);
+
+        Node n = rdfNode.asNode();
+
+        T result;
+        if(nodeMapper.canMap(n)) {
+            result = nodeMapper.toJava(n);
+        } else {
+            result = castRdfNode(rdfNode, viewClass, typeDecider, isViewAll, enableCanAsCheck);
+        }
+
+        return result;
+    }
+
+    public static <T extends RDFNode> T castRdfNode(
+            RDFNode rdfNode,
+            Class<?> viewClass,
+            TypeDecider typeDecider,
+            boolean isViewAll,
+            boolean enableCanAsCheck) {
+        Class<?> effectiveType;
+        if(rdfNode.isResource()) {
+            Resource r = rdfNode.asResource();
+            effectiveType = getEffectiveType(r, viewClass, typeDecider, isViewAll);
+        } else {
+            effectiveType = viewClass;
+        }
+
+        @SuppressWarnings({ "unchecked", "rawtypes" })
+        T result = effectiveType == null
+                ? null
+                : (enableCanAsCheck ? rdfNode.canAs((Class)effectiveType) : true)
+                    ? (T)rdfNode.as((Class)effectiveType)
+                    : null;
+
+        return result;
+    }
+
+    public static Class<?> getEffectiveType(Resource r, Class<?> viewClass, TypeDecider typeDecider, boolean isViewAll) {
+        Class<?> effectiveType;
+        effectiveType = ResourceUtils.getMostSpecificSubclass(r, viewClass, typeDecider);
+
+        if(effectiveType == null) {
+            // If we could not obtain a specific type, and the request was for
+            // a super class of RDFNode/Resource, yield a generic RDFNode view
+            if(viewClass.isAssignableFrom(Resource.class)) {
+                effectiveType = RDFNode.class;
+            } else if(Resource.class.isAssignableFrom(viewClass)) {
+                if(isViewAll) {
+                    effectiveType = viewClass;
+                }
+            }
+
+            // We could not obtain a more specific type that the one requested -
+            // try the requested type as a fallback
+            // NOTE This case happens, if a resource with a model x was added to a model y:
+            // In this case, all triples and thus the type information is lost, so no more
+            // specific type is found
+        }
+        return effectiveType;
+    }
+
+
+    @Override
+    public Class<?> getJavaClass() {
+        return viewClass;
+    }
+
+    @Override
+    public RDFNode toNode(T obj) {
+        RDFNode result;
+
+        // If the view demands subclasses of RDFNode, use the type decider system
 //		if(RDFNode.class.isAssignableFrom(viewClass) && obj instanceof Resource) {
-		if(obj instanceof Resource) {
-			Resource r = (Resource)obj;
-			Class<?> effectiveViewClass = ResourceUtils.getMostSpecificSubclass(r, viewClass, typeDecider);
-			
-			if(effectiveViewClass == null && isViewAll) {
-				effectiveViewClass = viewClass;
-			}
-			
-			Objects.requireNonNull(effectiveViewClass);
-			
-			// If we ended up with parent of RDFNode, constrain to RDFNode 
-			if(effectiveViewClass.isAssignableFrom(RDFNode.class)) {
-				effectiveViewClass = RDFNode.class;
-			}
-			
-			// TODO If there are multiple types, we return null  for now
-			// We could however under certain circumstances create a proxy that implements all types
-			// (i.e. all but one types must be interfaces)
-			result = effectiveViewClass == null ? null : r.as((Class)effectiveViewClass);
-		} else {
-			Node n = nodeMapper.toNode(obj);
-			result = ModelUtils.convertGraphNodeToRDFNode(n);
-		}
-		
-		return result;
-	}
+        if(obj instanceof Resource) {
+            Resource r = (Resource)obj;
+            Class<?> effectiveViewClass = ResourceUtils.getMostSpecificSubclass(r, viewClass, typeDecider);
+
+            if(effectiveViewClass == null && isViewAll) {
+                effectiveViewClass = viewClass;
+            }
+
+            Objects.requireNonNull(effectiveViewClass);
+
+            // If we ended up with parent of RDFNode, constrain to RDFNode
+            if(effectiveViewClass.isAssignableFrom(RDFNode.class)) {
+                effectiveViewClass = RDFNode.class;
+            }
+
+            // TODO If there are multiple types, we return null  for now
+            // We could however under certain circumstances create a proxy that implements all types
+            // (i.e. all but one types must be interfaces)
+            result = effectiveViewClass == null ? null : r.as((Class)effectiveViewClass);
+        } else {
+            Node n = nodeMapper.toNode(obj);
+            result = ModelUtils.convertGraphNodeToRDFNode(n);
+        }
+
+        return result;
+    }
 
 }

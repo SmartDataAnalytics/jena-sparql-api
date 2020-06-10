@@ -285,7 +285,7 @@ public class MapperProxyUtils {
         if(String.class.isAssignableFrom(itemType) && isIriType) {
             result = p -> s -> new SetFromMappedPropertyValues<>(s, p, NodeMappers.uriString);
         } else {
-            RDFNodeMapper<?> rdfNodeMapper = RDFNodeMappers.from(itemType, typeMapper, typeDecider, isViewAll);
+            RDFNodeMapper<?> rdfNodeMapper = RDFNodeMappers.from(itemType, typeMapper, typeDecider, isViewAll, false);
 
             result = p -> s ->
                 new SetFromCollection<>(
@@ -335,10 +335,10 @@ public class MapperProxyUtils {
 //						new ListFromRDFList(s, p),
 //						new ConverterFromNodeMapperAndModel<>(s.getModel(), RDFNode.class, new ConverterFromNodeMapper<>(NodeMappers.uriString)));
         } else {
-            RDFNodeMapper<?> keyMapper = RDFNodeMappers.from(keyType, typeMapper, typeDecider, isViewAll);
+            RDFNodeMapper<?> keyMapper = RDFNodeMappers.from(keyType, typeMapper, typeDecider, isViewAll, false);
             Converter<RDFNode, ?> keyConverter  = new ConverterFromRDFNodeMapper<>(keyMapper);
 
-            RDFNodeMapper<?> valueMapper = RDFNodeMappers.from(valueType, typeMapper, typeDecider, isViewAll);
+            RDFNodeMapper<?> valueMapper = RDFNodeMappers.from(valueType, typeMapper, typeDecider, isViewAll, false);
             Converter<RDFNode, ?> valueConverter  = new ConverterFromRDFNodeMapper<>(valueMapper);
 
             result = p -> s ->
@@ -364,7 +364,7 @@ public class MapperProxyUtils {
                         new ListFromRDFList(s, p),
                         new ConverterFromNodeMapperAndModel<>(s.getModel(), RDFNode.class, new ConverterFromNodeMapper<>(NodeMappers.uriString)));
         } else {
-            RDFNodeMapper<?> rdfNodeMapper = RDFNodeMappers.from(itemType, typeMapper, typeDecider, isViewAll);
+            RDFNodeMapper<?> rdfNodeMapper = RDFNodeMappers.from(itemType, typeMapper, typeDecider, isViewAll, false);
 
             result = p -> s -> new ListFromConverter<>(
                     new ListFromRDFList(s, p),
@@ -629,7 +629,7 @@ public class MapperProxyUtils {
 
                 result = p -> s -> ResourceUtils.getPropertyValue(s, p, NodeMappers.uriString);
             } else {
-                RDFNodeMapper<?> rdfNodeMapper = RDFNodeMappers.from(effectiveType, typeMapper, typeDecider, isViewAll);
+                RDFNodeMapper<?> rdfNodeMapper = RDFNodeMappers.from(effectiveType, typeMapper, typeDecider, isViewAll, false);
                 result = p -> s -> ResourceUtils.getPropertyValue(s, p, (RDFNodeMapper)rdfNodeMapper);
             }
         }
@@ -898,7 +898,7 @@ public class MapperProxyUtils {
             }
             result = p -> (s, o) -> ResourceUtils.updateProperty(s, p, (NodeMapper)NodeMappers.uriString, o);
         } else {
-            RDFNodeMapper<?> rdfNodeMapper = RDFNodeMappers.from(effectiveType, typeMapper, typeDecider, isViewAll);
+            RDFNodeMapper<?> rdfNodeMapper = RDFNodeMappers.from(effectiveType, typeMapper, typeDecider, isViewAll, false);
 
             result = p -> (s, o) -> ResourceUtils.updateProperty(s, p, (RDFNodeMapper)rdfNodeMapper, o);
         }

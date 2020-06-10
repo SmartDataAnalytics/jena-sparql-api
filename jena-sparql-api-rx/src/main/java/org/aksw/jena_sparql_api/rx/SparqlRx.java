@@ -613,4 +613,16 @@ public class SparqlRx {
         return result;
     }
 
+    public static <T extends RDFNode> Flowable<T> execConcept(Supplier<QueryExecution> qeSupp, Var var, Class<T> clazz) {
+        return execConcept(qeSupp, var)
+            .map(rdfNode -> rdfNode.as(clazz));
+    }
+
+    public static Flowable<RDFNode> execConcept(Supplier<QueryExecution> qeSupp, Var var) {
+        String varName = var.getName();
+
+        return SparqlRx.execSelect(qeSupp)
+            .map(qs -> qs.get(varName));
+    }
+
 }

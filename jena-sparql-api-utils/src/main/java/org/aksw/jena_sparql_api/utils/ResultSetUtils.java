@@ -188,7 +188,6 @@ public class ResultSetUtils {
         return result;
     }
 
-
     public static Map<Node, ResultSetPart> partition(ResultSet rs, Var var) {
         List<String> varNames = rs.getResultVars();
         Map<Node, ResultSetPart> result = new LinkedHashMap<Node, ResultSetPart>();
