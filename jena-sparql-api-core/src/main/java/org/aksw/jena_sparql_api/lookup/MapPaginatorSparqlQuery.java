@@ -116,7 +116,10 @@ public class MapPaginatorSparqlQuery
 //      PublishProcessor<Node> boundaryIndicator = PublishProcessor.create();
 
       return SparqlRx.execSelectRaw(() -> qef.query(query))
-              .lift(new OperatorOrderedGroupBy<Binding, Node, Table>(b -> b.get(attrVar), groupKey -> new TableN(), Table::addBinding));
+              .lift(OperatorOrderedGroupBy.<Binding, Node, Table>create(
+                      b -> b.get(attrVar),
+                      groupKey -> new TableN(),
+                      Table::addBinding));
 //      return ReactiveSparqlUtils.groupByOrdered(
 //    		  ReactiveSparqlUtils.execSelect(() -> qef.createQueryExecution(query)),
 //    		  b -> b.get(attrVar))

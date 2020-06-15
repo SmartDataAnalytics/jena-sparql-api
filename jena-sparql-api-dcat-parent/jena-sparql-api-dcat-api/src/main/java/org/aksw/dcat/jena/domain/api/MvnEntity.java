@@ -14,7 +14,7 @@ import org.apache.jena.rdf.model.Resource;
  */
 @ResourceView
 public interface MvnEntity
-    extends Resource
+    extends Resource, MvnEntityCore
 {
     @Iri("http://dataid.dbpedia.org/ns/core#group")
     String getGroupId();

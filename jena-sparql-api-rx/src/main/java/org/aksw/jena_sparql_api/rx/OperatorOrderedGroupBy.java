@@ -10,14 +10,9 @@ import org.apache.jena.ext.com.google.common.collect.Maps;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 
-import io.reactivex.rxjava3.core.BackpressureStrategy;
-import io.reactivex.rxjava3.core.Flowable;
-import io.reactivex.rxjava3.core.FlowableEmitter;
-import io.reactivex.rxjava3.core.FlowableOnSubscribe;
 import io.reactivex.rxjava3.core.FlowableOperator;
 import io.reactivex.rxjava3.core.FlowableSubscriber;
 import io.reactivex.rxjava3.core.FlowableTransformer;
-import io.reactivex.rxjava3.subscribers.DefaultSubscriber;
 
 /**
  * Ordered group by; somewhat similar to .toListWhile() but with dedicated support for
@@ -48,11 +43,19 @@ public final class OperatorOrderedGroupBy<T, K, V>
     protected Function<? super K, ? extends V> accCtor;
     protected BiConsumer<? super V, ? super T> accAdd;
 
-    public OperatorOrderedGroupBy(
+    public static <T, K, V> OperatorOrderedGroupBy<T, K, V> create(
             Function<? super T, ? extends K> getGroupKey,
             Function<? super K, ? extends V> accCtor,
             BiConsumer<? super V, ? super T> accAdd) {
-        this(getGroupKey, Objects::equals, accCtor, accAdd);
+        return create(getGroupKey, Objects::equals, accCtor, accAdd);
+    }
+
+    public static <T, K, V> OperatorOrderedGroupBy<T, K, V> create(
+            Function<? super T, ? extends K> getGroupKey,
+            BiFunction<? super K, ? super K, Boolean> groupKeyCompare,
+            Function<? super K, ? extends V> accCtor,
+            BiConsumer<? super V, ? super T> accAdd) {
+        return new OperatorOrderedGroupBy<>(getGroupKey, groupKeyCompare, accCtor, accAdd);
     }
 
     public OperatorOrderedGroupBy(
@@ -68,43 +71,44 @@ public final class OperatorOrderedGroupBy<T, K, V>
     }
 
     @Override
-    public Subscriber<? super T> apply(Subscriber<? super Entry<K, V>> child) throws Exception {
-        return new Op<>(child, getGroupKey, groupKeyCompare, accCtor, accAdd);
+    public Subscriber<? super T> apply(Subscriber<? super Entry<K, V>> downstream) throws Exception {
+        return new SubscriberImpl(downstream);
     }
 
-    static final class Op<T, K, V> implements FlowableSubscriber<T>, Subscription {
-        final Subscriber<? super Entry<K, V>> child;
+    /**
+     * Deprecated; just use .lift() instead of .compose()
+     * @return
+     */
+    @Deprecated
+    public FlowableTransformer<T, Entry<K, V>> transformer() {
+        return upstream -> upstream.lift(this);
+    }
 
-        protected Subscription s;
-
-        protected Function<? super T, ? extends K> getGroupKey;
-        protected BiFunction<? super K, ? super K, Boolean> groupKeyCompare;
-        protected Function<? super K, ? extends V> accCtor;
-        protected BiConsumer<? super V, ? super T> accAdd;
+    public class SubscriberImpl
+        implements FlowableSubscriber<T>, Subscription
+    {
+        protected Subscriber<? super Entry<K, V>> downstream;
+        protected Subscription upstream;
 
         protected K priorKey;
         protected K currentKey;
 
         protected V currentAcc = null;
 
+        protected long pending = 0;
 
-        public Op(Subscriber<? super Entry<K, V>> child,
-                Function<? super T, ? extends K> getGroupKey,
-                BiFunction<? super K, ? super K, Boolean> groupKeyCompare,
-                Function<? super K, ? extends V> accCtor,
-                BiConsumer<? super V, ? super T> accAdd) {
-            super();
-            this.child = child;
-            this.getGroupKey = getGroupKey;
-            this.groupKeyCompare = groupKeyCompare;
-            this.accCtor = accCtor;
-            this.accAdd = accAdd;
+        public SubscriberImpl(Subscriber<? super Entry<K, V>> downstream) {
+           this.downstream = downstream;
         }
 
         @Override
         public void onSubscribe(Subscription s) {
-            this.s = s;
-            child.onSubscribe(this);
+            if (upstream != null) {
+                s.cancel();
+            } else {
+                upstream = s;
+                downstream.onSubscribe(this);
+            }
         }
 
         @Override
@@ -117,110 +121,47 @@ public final class OperatorOrderedGroupBy<T, K, V>
                 currentAcc = accCtor.apply(currentKey);
 
                 Objects.requireNonNull(currentAcc, "Got null for an accumulator");
-            } else if (!groupKeyCompare.apply(priorKey, currentKey)) { //(!Objects.equals(priorKey, currentKey)) {
+            } else if(!groupKeyCompare.apply(priorKey, currentKey)) {//if(!Objects.equals(priorKey, currentKey)) {
 
-                child.onNext(Maps.immutableEntry(priorKey, currentAcc));
+                Entry<K, V> e = Maps.immutableEntry(priorKey, currentAcc);
+//                System.out.println("Passing on " + e);
+                downstream.onNext(e);
+                --pending;
 
                 currentAcc = accCtor.apply(currentKey);
             }
             accAdd.accept(currentAcc, item);
             priorKey = currentKey;
+
+            if(pending > 0) {
+                upstream.request(1);
+            }
+
         }
 
         @Override
-        public void onError(Throwable e) {
-            child.onError(e);
+        public void onError(Throwable t) {
+            downstream.onError(t);
         }
 
         @Override
         public void onComplete() {
             if(currentAcc != null) {
-                child.onNext(Maps.immutableEntry(currentKey, currentAcc));
+                downstream.onNext(Maps.immutableEntry(currentKey, currentAcc));
             }
 
-            child.onComplete();
-        }
-
-        @Override
-        public void cancel() {
-            s.cancel();
+            downstream.onComplete();
         }
 
         @Override
         public void request(long n) {
-            s.request(Long.MAX_VALUE);
+            pending = n;
+            upstream.request(1);
         }
-    }
 
-
-
-    public FlowableTransformer<T, Entry<K, V>> transformer() {
-
-        return upstream -> Flowable.create(new FlowableOnSubscribe<Entry<K, V>>() {
-
-                @Override
-                public void subscribe(FlowableEmitter<Entry<K, V>> child) throws Exception {
-                    upstream.subscribe(new DefaultSubscriber<T>() {
-
-                        protected K priorKey;
-                        protected K currentKey;
-
-                        protected V currentAcc = null;
-
-//                        protected Subscription s;
-//                        @Override
-//                        public void onSubscribe(Subscription s) {
-//                            this.s = s;
-//                            child.setCancellable(s::cancel);
-//                            long requested = child.requested();
-//                            s.request(requested);
-////                            s.request(1);
-//                        }
-
-                        @Override
-                        public void onNext(T item) {
-                            currentKey = getGroupKey.apply(item);
-
-                            if(currentAcc == null) {
-                                // First time init
-                                priorKey = currentKey;
-                                currentAcc = accCtor.apply(currentKey);
-
-                                Objects.requireNonNull(currentAcc, "Got null for an accumulator");
-                            } else if(!groupKeyCompare.apply(priorKey, currentKey)) {//if(!Objects.equals(priorKey, currentKey)) {
-
-                                Entry<K, V> e = Maps.immutableEntry(priorKey, currentAcc);
-                                child.onNext(e);
-
-                                currentAcc = accCtor.apply(currentKey);
-                            }
-                            accAdd.accept(currentAcc, item);
-                            priorKey = currentKey;
-
-//                            long requested = child.requested();
-//                            if(requested != 0) {
-//                                System.out.println("Subscribed for " + requested);
-//                                s.request(requested);
-//                            }
-                        }
-
-                        @Override
-                        public void onError(Throwable t) {
-                            child.onError(t);
-                        }
-
-                        @Override
-                        public void onComplete() {
-                            if(currentAcc != null) {
-                                child.onNext(Maps.immutableEntry(currentKey, currentAcc));
-                            }
-
-                            child.onComplete();
-                        }
-
-                    });
-
-                }
-            }, BackpressureStrategy.BUFFER);
+        @Override
+        public void cancel() {
+            upstream.cancel();
+        }
     }
 }

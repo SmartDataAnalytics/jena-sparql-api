@@ -1146,7 +1146,7 @@
 			<dependency>
 				<groupId>io.reactivex.rxjava3</groupId>
 				<artifactId>rxjava</artifactId>
-				<version>3.0.3</version>
+				<version>3.0.4</version>
 			</dependency>
 
 

@@ -18,7 +18,7 @@ import io.reactivex.rxjava3.core.FlowableTransformer;
 public class DatasetGraphOpsRx {
     public static FlowableTransformer<Quad, Entry<Node, List<Quad>>> groupToList()
     {
-        return new OperatorOrderedGroupBy<Quad, Node, List<Quad>>(
+        return OperatorOrderedGroupBy.<Quad, Node, List<Quad>>create(
                 Quad::getGraph,
                 graph -> new ArrayList<>(),
                 (list, item) -> list.add(item)
@@ -29,10 +29,11 @@ public class DatasetGraphOpsRx {
             Function<Quad, Node> grouper,
             Supplier<DatasetGraph> graphSupplier) {
 
-        return new OperatorOrderedGroupBy<Quad, Node, DatasetGraph>(
+        return OperatorOrderedGroupBy.<Quad, Node, DatasetGraph>create(
                 grouper::apply,
                 groupKey -> graphSupplier.get(),
                 DatasetGraph::add).transformer();
+
 //        return upstream ->
 //            upstream
 //                .lift(new OperatorOrderedGroupBy<Triple, Node, Graph>(

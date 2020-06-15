@@ -16,7 +16,7 @@ public class GraphOpsRx {
             Function<Triple, Node> grouper,
             Supplier<Graph> graphSupplier) {
 
-        return new OperatorOrderedGroupBy<Triple, Node, Graph>(
+        return OperatorOrderedGroupBy.<Triple, Node, Graph>create(
                 grouper::apply,
                 groupKey -> graphSupplier.get(),
                 Graph::add).transformer();
