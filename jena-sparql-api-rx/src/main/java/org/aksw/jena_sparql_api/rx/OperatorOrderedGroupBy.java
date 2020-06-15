@@ -25,7 +25,7 @@ import io.reactivex.rxjava3.core.FlowableTransformer;
  * 		Flowable<Entry<Integer, List<Integer>>> list = Flowable
  *			.range(0, 10)
  *			.map(i -> Maps.immutableEntry((int)(i / 3), i))
- *			.lift(new OperatorOrderedGroupBy<Entry<Integer, Integer>, Integer, List<Integer>>(Entry::getKey, ArrayList::new, (acc, e) -> acc.add(e.getValue())));
+ *			.lift(OperatorOrderedGroupBy.<Entry<Integer, Integer>, Integer, List<Integer>>create(Entry::getKey, ArrayList::new, (acc, e) -> acc.add(e.getValue())));
  *
  * }</pre>
  *
