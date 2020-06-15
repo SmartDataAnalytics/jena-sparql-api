@@ -9,6 +9,8 @@ public interface SparqlStmt {
     boolean isQuery();
     boolean isUpdateRequest();
 
+    boolean isUnknown();
+
     boolean isParsed();
 
     SparqlStmtUpdate getAsUpdateStmt();
@@ -20,7 +22,8 @@ public interface SparqlStmt {
     SparqlStmt clone();
 
     /**
-     * Return the prefix mapping of the query or update request
+     * Return the prefix mapping of the query or update request.
+     * Only valid if isParsed() is true.
      *
      * @return the prefix mapping
      */

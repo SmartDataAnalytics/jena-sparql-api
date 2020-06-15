@@ -4,7 +4,6 @@ import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryParseException;
 import org.apache.jena.query.Syntax;
 import org.apache.jena.shared.PrefixMapping;
-import org.apache.jena.sparql.ARQException;
 import org.apache.jena.sparql.core.Prologue;
 import org.apache.jena.update.UpdateRequest;
 
@@ -54,7 +53,7 @@ public class SparqlStmtParserImpl
         return actAsClassifier;
     }
 
-    
+
     @Override
     public SparqlStmt apply(String stmtStr) {
         SparqlStmt result;
@@ -62,7 +61,7 @@ public class SparqlStmtParserImpl
             Query query = queryParser.apply(stmtStr);
             result = new SparqlStmtQuery(query);
         } catch(QueryParseException queryException) {
-        	
+
             try {
                 UpdateRequest updateRequest = updateParser.apply(stmtStr);
                 result = new SparqlStmtUpdate(updateRequest);
@@ -75,17 +74,29 @@ public class SparqlStmtParserImpl
                     if(actAsClassifier) {
                         result = new SparqlStmtQuery(stmtStr, queryException);
                     } else {
-                        throw new ARQException("Failed to parse " + stmtStr, queryException);
+                        throw new QueryParseException("Failed to parse " + stmtStr, queryException, queryException.getLine(), queryException.getColumn());
                     }
                 } else {
                     if(actAsClassifier) {
                         result = new SparqlStmtUpdate(stmtStr, updateException);
                     } else {
-                        throw new ARQException("Failed to parse " + stmtStr, updateException);
+                        throw new QueryParseException("Failed to parse " + stmtStr, updateException, updateException.getLine(), updateException.getColumn());
                     }
+                }
+            } catch(Exception e) {
+                if(actAsClassifier) {
+                    result = new SparqlStmtUnknown(stmtStr, new QueryParseException(e, 1, 1));
+                } else {
+                    throw new QueryParseException("Failed to parse " + stmtStr, e, 1, 1);
                 }
             }
 
+        } catch(Exception e) {
+            if(actAsClassifier) {
+                result = new SparqlStmtUnknown(stmtStr, new QueryParseException(e, 1, 1));
+            } else {
+                throw new QueryParseException("Failed to parse " + stmtStr, e, 1, 1);
+            }
         }
 
         return result;

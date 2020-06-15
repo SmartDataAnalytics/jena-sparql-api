@@ -791,11 +791,17 @@ public class RDFDataMgrRx {
 //
 //	}
 
-    public static Consumer<Dataset> createDatasetWriter(OutputStream out, RDFFormat format) {
-        return ds -> RDFDataMgr.write(out, ds, format);
+//    public static Consumer<Dataset> createDatasetWriter(OutputStream out, RDFFormat format) {
+//        return ds -> RDFDataMgr.write(out, ds, format);
+//    }
+
+    public static FlowableTransformer<? super Dataset, Throwable> createDatasetWriter(OutputStream out, RDFFormat format) {
+        return upstream -> upstream
+            .buffer(1)
+            .compose(RDFDataMgrRx.createDatasetBatchWriter(out, format));
     }
 
-    public static <D extends Dataset, C extends Collection<D>> FlowableTransformer<C, Throwable> createDatasetBatchWriter(OutputStream out, RDFFormat format) {
+    public static <C extends Collection<? extends Dataset>> FlowableTransformer<C, Throwable> createDatasetBatchWriter(OutputStream out, RDFFormat format) {
         QuadEncoderDistinguish encoder = new QuadEncoderDistinguish();
         Lang lang = format.getLang();
         boolean isLangTriples = RDFLanguages.isTriples(lang);
