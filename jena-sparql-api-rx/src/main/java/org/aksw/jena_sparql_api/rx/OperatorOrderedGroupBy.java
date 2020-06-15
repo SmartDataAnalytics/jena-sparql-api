@@ -2,6 +2,7 @@ package org.aksw.jena_sparql_api.rx;
 
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -13,6 +14,7 @@ import org.reactivestreams.Subscription;
 import io.reactivex.rxjava3.core.FlowableOperator;
 import io.reactivex.rxjava3.core.FlowableSubscriber;
 import io.reactivex.rxjava3.core.FlowableTransformer;
+import io.reactivex.rxjava3.internal.subscriptions.SubscriptionHelper;
 
 /**
  * Ordered group by; somewhat similar to .toListWhile() but with dedicated support for
@@ -95,7 +97,7 @@ public final class OperatorOrderedGroupBy<T, K, V>
 
         protected V currentAcc = null;
 
-        protected long pending = 0;
+        protected AtomicLong pending = new AtomicLong();
 
         public SubscriberImpl(Subscriber<? super Entry<K, V>> downstream) {
            this.downstream = downstream;
@@ -126,14 +128,14 @@ public final class OperatorOrderedGroupBy<T, K, V>
                 Entry<K, V> e = Maps.immutableEntry(priorKey, currentAcc);
 //                System.out.println("Passing on " + e);
                 downstream.onNext(e);
-                --pending;
+                pending.decrementAndGet();
 
                 currentAcc = accCtor.apply(currentKey);
             }
             accAdd.accept(currentAcc, item);
             priorKey = currentKey;
 
-            if(pending > 0) {
+            if(pending.get() > 0) {
                 upstream.request(1);
             }
 
@@ -155,8 +157,10 @@ public final class OperatorOrderedGroupBy<T, K, V>
 
         @Override
         public void request(long n) {
-            pending = n;
-            upstream.request(1);
+            if (SubscriptionHelper.validate(n)) {
+                pending.addAndGet(n);
+                upstream.request(1);
+            }
         }
 
         @Override
