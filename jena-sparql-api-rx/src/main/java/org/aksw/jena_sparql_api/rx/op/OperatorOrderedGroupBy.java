@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.rx;
+package org.aksw.jena_sparql_api.rx.op;
 
 import java.util.Map.Entry;
 import java.util.Objects;
@@ -35,7 +35,7 @@ import io.reactivex.rxjava3.internal.subscriptions.SubscriptionHelper;
  *
  * @param <T> Item type
  * @param <K> Group key type
- * @param <V> accumulator type
+ * @param <V> Accumulator type
  */
 public final class OperatorOrderedGroupBy<T, K, V>
     implements FlowableOperator<Entry<K, V>, T> {

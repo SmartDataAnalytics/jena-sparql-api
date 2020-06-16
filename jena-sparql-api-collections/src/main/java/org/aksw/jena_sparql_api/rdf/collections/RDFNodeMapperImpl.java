@@ -127,15 +127,19 @@ public class RDFNodeMapperImpl<T>
         return viewClass;
     }
 
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     @Override
     public RDFNode toNode(T obj) {
         RDFNode result;
 
         // If the view demands subclasses of RDFNode, use the type decider system
 //		if(RDFNode.class.isAssignableFrom(viewClass) && obj instanceof Resource) {
-        if(obj instanceof Resource) {
-            Resource r = (Resource)obj;
-            Class<?> effectiveViewClass = ResourceUtils.getMostSpecificSubclass(r, viewClass, typeDecider);
+        if(obj instanceof RDFNode) {
+            RDFNode r = (RDFNode)obj;
+
+            Class<?> effectiveViewClass = r.isResource()
+                    ? ResourceUtils.getMostSpecificSubclass(r.asResource(), viewClass, typeDecider)
+                    : viewClass;
 
             if(effectiveViewClass == null && isViewAll) {
                 effectiveViewClass = viewClass;
