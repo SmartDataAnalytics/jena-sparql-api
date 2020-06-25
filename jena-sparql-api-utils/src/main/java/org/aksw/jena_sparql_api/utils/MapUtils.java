@@ -19,17 +19,17 @@ import com.google.common.collect.Sets;
 
 public class MapUtils {
 
-    public static <K, V> Map<K, V> index(Collection<K> keys, Function<K, V> fn) {
+    public static <K, V> Map<K, V> index(Collection<? extends K> keys, Function<K, V> fn) {
         Map<K, V> result = index(keys, fn, new HashMap<>());
         return result;
     }
 
-    public static <K, V> Map<K, V> indexIdentity(Collection<K> keys, Function<K, V> fn) {
+    public static <K, V> Map<K, V> indexIdentity(Collection<? extends K> keys, Function<K, V> fn) {
         Map<K, V> result = index(keys, fn, new IdentityHashMap<>());
         return result;
     }
 
-    public static <K, V> Map<K, V> index(Collection<K> keys, Function<K, V> fn, Map<K, V> result) {
+    public static <K, V> Map<K, V> index(Collection<? extends K> keys, Function<K, V> fn, Map<K, V> result) {
         for(K key : keys) {
             V value = fn.apply(key);
             result.put(key, value);

@@ -23,24 +23,30 @@ public class ListFromRDFList
 {
     protected Resource s;
     protected Property p;
+    protected boolean isFwd;
 
 
     protected RDFList getList() {
         // Pick any resource and treat it as a list
         // Also, clear all any other value for consistency
-        Resource o = ResourceUtils.getPropertyValue(s, p, Resource.class);
+        Resource o = ResourceUtils.getPropertyValue(s, p, isFwd, Resource.class);
         if(o == null) {
             o = RDF.nil.inModel(s.getModel());
         }
-        ResourceUtils.setProperty(s, p, o);
+        ResourceUtils.setProperty(s, p, isFwd, o);
 
         return o.as(RDFList.class);
     }
 
     public ListFromRDFList(Resource subject, Property property) {
+        this(subject, property, true);
+    }
+
+    public ListFromRDFList(Resource subject, Property property, boolean isFwd) {
         super();
         this.s = subject;
         this.p = property;
+        this.isFwd = isFwd;
     }
 
     @Override

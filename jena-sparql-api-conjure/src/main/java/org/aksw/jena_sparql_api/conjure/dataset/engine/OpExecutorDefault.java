@@ -155,7 +155,7 @@ public class OpExecutorDefault
      * @return
      */
     public <T extends RDFNode> RdfDataPod wrapWithGetFromHash(T op, Function<T, RdfDataPod> generator) {
-        String hash = ResourceTreeUtils.createGenericHash(op);
+        String hash = ResourceTreeUtils.createGenericHash(op).toString();
         RdfDataPod result = DataPods.create(hash, repo);
         return result;
     }
@@ -338,16 +338,16 @@ public class OpExecutorDefault
 
         // The sup without operators that do not modify the result
         Op semanticSubOp = OpUtils.stripCache(op);
-        HashCode subOpHash = ResourceTreeUtils.createGenericHash2(semanticSubOp);
+        HashCode subOpHash = ResourceTreeUtils.createGenericHash(semanticSubOp);
 
         // Hash the task context
         // HashCode taskcon
-        HashCode inputRecordHash = ResourceTreeUtils.createGenericHash2(taskContext.getInputRecord());
+        HashCode inputRecordHash = ResourceTreeUtils.createGenericHash(taskContext.getInputRecord());
 
         List<HashCode> dataRefHashes = taskContext.getDataRefMapping().entrySet().stream().map(e ->
                 Hashing.combineOrdered(Arrays.asList(
                     Hashing.sha256().hashString(e.getKey(), StandardCharsets.UTF_8),
-                    ResourceTreeUtils.createGenericHash2(e.getValue()))))
+                    ResourceTreeUtils.createGenericHash(e.getValue()))))
             .collect(Collectors.toList());
 
         if(dataRefHashes.isEmpty()) {

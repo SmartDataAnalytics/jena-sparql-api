@@ -251,9 +251,9 @@ public class MainConjurePlayground {
 
         Op test = OpUtils.stripCache(conjureWorkflow);
 
-        String origHash = ResourceTreeUtils.createGenericHash(conjureWorkflow);
-        String coreHash = ResourceTreeUtils.createGenericHash(coreOp);
-        String cleanedHash = ResourceTreeUtils.createGenericHash(test);
+        String origHash = ResourceTreeUtils.createGenericHash(conjureWorkflow).toString();
+        String coreHash = ResourceTreeUtils.createGenericHash(coreOp).toString();
+        String cleanedHash = ResourceTreeUtils.createGenericHash(test).toString();
 
         // Assertion: cleaned hash == orig hash
         System.out.println("ORIG HASH: " + origHash);

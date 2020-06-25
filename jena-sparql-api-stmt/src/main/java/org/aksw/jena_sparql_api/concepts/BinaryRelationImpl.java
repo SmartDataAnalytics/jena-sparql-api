@@ -8,6 +8,10 @@ import java.util.function.Function;
 import org.aksw.commons.collections.SetUtils;
 import org.aksw.jena_sparql_api.stmt.SparqlElementParser;
 import org.aksw.jena_sparql_api.stmt.SparqlElementParserImpl;
+import org.aksw.jena_sparql_api.stmt.SparqlPrologueParser;
+import org.aksw.jena_sparql_api.stmt.SparqlPrologueParserImpl;
+import org.aksw.jena_sparql_api.stmt.SparqlQueryParser;
+import org.aksw.jena_sparql_api.stmt.SparqlQueryParserImpl;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.VarUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
@@ -31,7 +35,7 @@ import org.apache.jena.sparql.syntax.PatternVars;
  *
  */
 public class BinaryRelationImpl
-	implements BinaryRelation // TODO Actually we could just extend RelationImpl
+    implements BinaryRelation // TODO Actually we could just extend RelationImpl
 {
     private Var sourceVar;
     private Var targetVar;
@@ -44,9 +48,9 @@ public class BinaryRelationImpl
     }
 
     public List<Var> getVars() {
-    	return Arrays.asList(sourceVar, targetVar);
+        return Arrays.asList(sourceVar, targetVar);
     }
-    
+
     public Var getSourceVar() {
         return sourceVar;
     }
@@ -63,6 +67,17 @@ public class BinaryRelationImpl
             String targetVarName) {
         SparqlElementParser parser = SparqlElementParserImpl.create(Syntax.syntaxARQ, null);
         BinaryRelation result = create(elementStr, sourceVarName, targetVarName, parser);
+        return result;
+    }
+
+    public static BinaryRelation create(String prologueStr, String elementStr, String sourceVarName,
+            String targetVarName) {
+        SparqlQueryParser queryParser = SparqlQueryParserImpl.create();
+        SparqlPrologueParser prologueParser = new SparqlPrologueParserImpl(queryParser);
+
+        Prologue prologue = prologueParser.apply(prologueStr);
+
+        BinaryRelation result = create(elementStr, sourceVarName, targetVarName, prologue);
         return result;
     }
 
@@ -149,7 +164,7 @@ public class BinaryRelationImpl
 
     /**
      * Create a relation ?s ?o | ?s p ?o
-     * 
+     *
      * @param s
      * @param p
      * @param o
@@ -162,7 +177,7 @@ public class BinaryRelationImpl
 
     /**
      * Create a relation ?o ?s | ?s p ?o
-     * 
+     *
      * @param s
      * @param p
      * @param o
@@ -174,7 +189,7 @@ public class BinaryRelationImpl
     }
 
     /**
-     * 
+     *
      * @param s
      * @param p
      * @param o
@@ -182,8 +197,8 @@ public class BinaryRelationImpl
      */
     public static BinaryRelation create(Var s, Node p, Var o, boolean isFwd) {
         BinaryRelation result = isFwd
-        		? createFwd(s, p, o)
-        		: createBwd(s, p, o);
+                ? createFwd(s, p, o)
+                : createBwd(s, p, o);
 
         return result;
     }
@@ -236,12 +251,12 @@ public class BinaryRelationImpl
                 + ", element=" + element + "]";
          */
     }
-    
+
     public static BinaryRelation empty() {
-    	return new BinaryRelationImpl(new ElementGroup(), Vars.s, Vars.s);
+        return new BinaryRelationImpl(new ElementGroup(), Vars.s, Vars.s);
     }
 
     public static BinaryRelation empty(Var var) {
-    	return new BinaryRelationImpl(new ElementGroup(), var, var);
+        return new BinaryRelationImpl(new ElementGroup(), var, var);
     }
 }

@@ -3,6 +3,7 @@ package org.aksw.jena_sparql_api.utils.views.map;
 import java.util.AbstractMap;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.BiFunction;
 
 import org.aksw.commons.accessors.CollectionFromConverter;
 import org.aksw.commons.collections.sets.SetFromCollection;
@@ -50,22 +51,36 @@ import com.google.common.collect.Maps;
  */
 public class MapFromResourceUnmanaged
     extends AbstractMap<RDFNode, Resource>
+    implements RdfMap<RDFNode, Resource>
 {
     protected final Resource subject;
     protected final Property entryProperty;
     //protected final boolean isReverseEntryProperty;
     protected final Property keyProperty;
 
+    protected BiFunction<Resource, RDFNode, Resource> sAndKeyToEntry;
+
     //protected fin
     //protected Function<String, Resource> entryResourceFactory;
 
     public MapFromResourceUnmanaged(
-            Resource subject, Property entryProperty, Property keyProperty) {
+            Resource subject,
+            Property entryProperty,
+            Property keyProperty) {
+        this(subject, entryProperty, keyProperty, (s, k) -> s.getModel().createResource());
+    }
+
+    public MapFromResourceUnmanaged(
+            Resource subject,
+            Property entryProperty,
+            Property keyProperty,
+            BiFunction<Resource, RDFNode, Resource> sAndKeyToEntry) {
         super();
         this.subject = subject;
         this.entryProperty = entryProperty;
         //this.isReverseEntryProperty = false;
         this.keyProperty = keyProperty;
+        this.sAndKeyToEntry = sAndKeyToEntry;
     }
 
     @Override
@@ -118,6 +133,16 @@ public class MapFromResourceUnmanaged
     public boolean containsKey(Object key) {
         Resource r = get(key);
         boolean result = r != null;
+        return result;
+    }
+
+    @Override
+    public Resource allocate(RDFNode key) {
+        Resource result = get(key);
+        if(result == null) {
+            result = sAndKeyToEntry.apply(subject, key);
+            put(key, result);
+        }
         return result;
     }
 

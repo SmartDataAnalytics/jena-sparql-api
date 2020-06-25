@@ -28,6 +28,7 @@ import java.util.function.Function;
 import org.aksw.commons.accessors.CollectionFromConverter;
 import org.aksw.commons.accessors.ListFromConverter;
 import org.aksw.commons.collections.sets.SetFromCollection;
+import org.aksw.jena_sparql_api.mapper.annotation.Inverse;
 import org.aksw.jena_sparql_api.mapper.annotation.Iri;
 import org.aksw.jena_sparql_api.mapper.annotation.IriNs;
 import org.aksw.jena_sparql_api.mapper.annotation.IriType;
@@ -278,7 +279,13 @@ public class MapperProxyUtils {
         return result;
     }
 
-    public static Function<Property, Function<Resource, Object>> viewAsSet(Method m, boolean isIriType, boolean isViewAll, Class<?> itemType, TypeMapper typeMapper, TypeDecider typeDecider) {
+    public static Function<Property, Function<Resource, Object>> viewAsSet(
+            Method m,
+            boolean isIriType,
+            boolean isViewAll,
+            Class<?> itemType,
+            TypeMapper typeMapper,
+            TypeDecider typeDecider) {
         Function<Property, Function<Resource, Object>> result = null;
 
 //		boolean isIriType = m.getAnnotation(IriType.class) != null;
@@ -611,14 +618,14 @@ public class MapperProxyUtils {
     }
 
 
-    public static Function<Property, Function<Resource, Object>> viewAsScalarGetter(
+    public static BiFunction<Property, Boolean, Function<Resource, Object>> viewAsScalarGetter(
             MethodDescriptor methodDescriptor,
             Class<?> effectiveType,
             boolean isIriType,
             boolean isViewAll,
             TypeMapper typeMapper,
             TypeDecider typeDecider) {
-        Function<Property, Function<Resource, Object>> result = null;
+        BiFunction<Property, Boolean, Function<Resource, Object>> result = null;
 
         if(methodDescriptor.isGetter()) {
             if(isIriType) {
@@ -627,10 +634,10 @@ public class MapperProxyUtils {
                     throw new RuntimeException("@IriType annotation requires String type");
                 }
 
-                result = p -> s -> ResourceUtils.getPropertyValue(s, p, NodeMappers.uriString);
+                result = (p, isFwd) -> s -> ResourceUtils.getPropertyValue(s, p, isFwd, NodeMappers.uriString);
             } else {
                 RDFNodeMapper<?> rdfNodeMapper = RDFNodeMappers.from(effectiveType, typeMapper, typeDecider, isViewAll, false);
-                result = p -> s -> ResourceUtils.getPropertyValue(s, p, (RDFNodeMapper)rdfNodeMapper);
+                result = (p, isFwd) -> s -> ResourceUtils.getPropertyValue(s, p, isFwd, (RDFNodeMapper)rdfNodeMapper);
             }
         }
 
@@ -646,7 +653,7 @@ public class MapperProxyUtils {
      * @param typeMapper
      * @return
      */
-    public static Function<Property, Function<Resource, Object>> viewAsScalarGetterOldAndUnused(
+    public static BiFunction<Property, Boolean, Function<Resource, Object>> viewAsScalarGetterOldAndUnused(
             MethodDescriptor methodDescriptor,
             Class<?> effectiveType,
             boolean isIriType,
@@ -659,7 +666,7 @@ public class MapperProxyUtils {
 //		Method method = methodDescriptor.getMethod();
         //Class<?> type = methodDescriptor.getType();
 
-        Function<Property, Function<Resource, Object>> result = null;
+        BiFunction<Property, Boolean, Function<Resource, Object>> result = null;
         //int paramCount = m.getParameterCount();
 
         //boolean isIterableReturnType = false;
@@ -678,7 +685,7 @@ public class MapperProxyUtils {
             if(RDFNode.class.isAssignableFrom(effectiveType)) {
                 @SuppressWarnings("unchecked")
                 Class<? extends RDFNode> rdfType = (Class<? extends RDFNode>)effectiveType;
-                result = p -> s -> ResourceUtils.getPropertyValue(s, p, rdfType);
+                result = (p, isFwd) -> s -> ResourceUtils.getPropertyValue(s, p, isFwd, rdfType);
             } else {
                 if(isIriType) {
                     if(!String.class.isAssignableFrom(effectiveType)) {
@@ -686,7 +693,7 @@ public class MapperProxyUtils {
                         throw new RuntimeException("@IriType annotation requires String type");
                     }
 
-                    result = p -> s -> ResourceUtils.getPropertyValue(s, p, NodeMappers.uriString);
+                    result = (p, isFwd) -> s -> ResourceUtils.getPropertyValue(s, p, isFwd, NodeMappers.uriString);
                 } else {
                     Object defaultValue = effectiveType.isPrimitive()
                             ? Defaults.defaultValue(effectiveType)
@@ -695,7 +702,8 @@ public class MapperProxyUtils {
                     RDFDatatype dtype = typeMapper.getTypeByClass(effectiveType);
 
                     if(dtype != null) {
-                        result = p -> s -> {
+                        result = (p, isFwd) -> s -> {
+                            // TODO isFwd must be true!
                             Object r = ResourceUtils.getLiteralPropertyValue(s, p, effectiveType);
                             if(r == null) {
                                 r = defaultValue;
@@ -879,7 +887,7 @@ public class MapperProxyUtils {
     }
 
     @SuppressWarnings("unchecked")
-    public static Function<Property, BiConsumer<Resource, Object>> viewAsScalarSetter(
+    public static BiFunction<Property, Boolean, BiConsumer<Resource, Object>> viewAsScalarSetter(
             MethodDescriptor methodDescriptor,
             Class<?> effectiveType,
             boolean isIriType,
@@ -888,7 +896,7 @@ public class MapperProxyUtils {
             TypeDecider typeDecider) {
         // Strict setters return void, but e.g. in the case of fluent APIs return types may vary
 
-        Function<Property, BiConsumer<Resource, Object>> result = null;
+        BiFunction<Property, Boolean, BiConsumer<Resource, Object>> result = null;
         Class<?> paramType = effectiveType; //methodDescriptor.getType();
 
         if(isIriType) {
@@ -896,18 +904,18 @@ public class MapperProxyUtils {
                 // TODO Change to warning
                 throw new RuntimeException("@IriType annotation requires String type");
             }
-            result = p -> (s, o) -> ResourceUtils.updateProperty(s, p, (NodeMapper)NodeMappers.uriString, o);
+            result = (p, isFwd) -> (s, o) -> ResourceUtils.updateProperty(s, p, isFwd, (NodeMapper)NodeMappers.uriString, o);
         } else {
             RDFNodeMapper<?> rdfNodeMapper = RDFNodeMappers.from(effectiveType, typeMapper, typeDecider, isViewAll, false);
 
-            result = p -> (s, o) -> ResourceUtils.updateProperty(s, p, (RDFNodeMapper)rdfNodeMapper, o);
+            result = (p, isFwd) -> (s, o) -> ResourceUtils.updateProperty(s, p, isFwd, (RDFNodeMapper)rdfNodeMapper, o);
         }
 
         return result;
     }
 
     @SuppressWarnings("unchecked")
-    public static Function<Property, BiConsumer<Resource, Object>> viewAsScalarSetterOld(
+    public static BiFunction<Property, Boolean, BiConsumer<Resource, Object>> viewAsScalarSetterOld(
             MethodDescriptor methodDescriptor,
             Class<?> effectiveType,
             boolean isIriType,
@@ -915,7 +923,7 @@ public class MapperProxyUtils {
             TypeDecider typeDecider) {
         // Strict setters return void, but e.g. in the case of fluent APIs return types may vary
 
-        Function<Property, BiConsumer<Resource, Object>> result = null;
+        BiFunction<Property, Boolean, BiConsumer<Resource, Object>> result = null;
         //Method m = methodDescriptor.getMethod();
 
         Class<?> paramType = effectiveType; //methodDescriptor.getType();
@@ -925,19 +933,20 @@ public class MapperProxyUtils {
         if(RDFNode.class.isAssignableFrom(paramType)) {
 //				@SuppressWarnings("unchecked")
 //				Class<? extends RDFNode> rdfType = (Class<? extends RDFNode>)paramType;
-            result = p -> (s, o) -> ResourceUtils.setProperty(s, p, (RDFNode)o);
+            result = (p, isFwd) -> (s, o) -> ResourceUtils.setProperty(s, p, isFwd, (RDFNode)o);
         } else {
             if(isIriType) {
                 if(!String.class.isAssignableFrom(paramType)) {
                     // TODO Change to warning
                     throw new RuntimeException("@IriType annotation requires String type");
                 }
-                result = p -> (s, o) -> ResourceUtils.updateProperty(s, p, (NodeMapper)NodeMappers.uriString, o);
+                result = (p, isFwd) -> (s, o) -> ResourceUtils.updateProperty(s, p, isFwd, (NodeMapper)NodeMappers.uriString, o);
             } else {
                 RDFDatatype dtype = typeMapper.getTypeByClass(paramType);
 
                 if(dtype != null) {
-                    result = p -> (s, o) -> ResourceUtils.updateLiteralProperty(s, p, (Class)paramType, o);
+                    // TODO Ensure isFwd is true
+                    result = (p, isFwd) -> (s, o) -> ResourceUtils.updateLiteralProperty(s, p, (Class)paramType, o);
                 }
             }
         }
@@ -1198,12 +1207,14 @@ public class MapperProxyUtils {
 //			Class<?> readKeyType = null;
             boolean isReadIriType = false;
             boolean isReadViewAll = false;
+            boolean isReadInverse = false;
 
             Class<?> writeType = null;
             Class<?> writeCollectionType = null;
             Class<?> writeItemType = null;
             boolean isWriteIriType = false;
             boolean isWriteViewAll = false;
+            boolean isWriteInverse = false;
 
             if(readMethodDescriptor != null) {
                 readType = readMethodDescriptor.getType();
@@ -1211,6 +1222,7 @@ public class MapperProxyUtils {
                 readItemType = readMethodDescriptor.getItemType();
                 isReadIriType = readMethod.getAnnotation(IriType.class) != null;
                 isReadViewAll = readMethod.getAnnotation(PolymorphicOnly.class) == null;
+                isReadInverse = readMethod.getAnnotation(Inverse.class) != null;
             }
 
             if(writeMethodDescriptor != null) {
@@ -1219,6 +1231,7 @@ public class MapperProxyUtils {
                 writeItemType = writeMethodDescriptor.getItemType();
                 isWriteIriType = writeMethod.getAnnotation(IriType.class) != null;
                 isWriteViewAll = writeMethod.getAnnotation(PolymorphicOnly.class) == null;
+                isWriteInverse = writeMethod.getAnnotation(Inverse.class) != null;
             }
 
             Class<?> effectiveType = getStricterType(readType, writeType);
@@ -1226,6 +1239,9 @@ public class MapperProxyUtils {
             Class<?> effectiveItemType = getStricterType(readItemType, writeItemType);
             boolean  isIriType = isReadIriType || isWriteIriType;
             boolean isViewAll = isReadViewAll || isWriteViewAll;
+            boolean isInverse = isReadInverse || isWriteInverse;
+
+            boolean isFwd = !isInverse;
 
             Property p = ResourceFactory.createProperty(path.getNode().getURI());
 //System.out.println(p);
@@ -1381,9 +1397,9 @@ public class MapperProxyUtils {
                     }
 
                     // Scalar case
-                    Function<Property, Function<Resource, Object>> getter = viewAsScalarGetter(readMethodDescriptor, effectiveType, isIriType, isViewAll, typeMapper, typeDecider);
+                    BiFunction<Property, Boolean, Function<Resource, Object>> getter = viewAsScalarGetter(readMethodDescriptor, effectiveType, isIriType, isViewAll, typeMapper, typeDecider);
                     if(getter != null) {
-                        Function<Resource, Object> g = getter.apply(p);
+                        Function<Resource, Object> g = getter.apply(p, isFwd);
                         methodImplMap.put(readMethod, (o, args) -> g.apply((Resource)o));
                     }
 
@@ -1392,11 +1408,11 @@ public class MapperProxyUtils {
                         // Non collection valued case
                         // We need to find out whether the property type is
                         // directly RDFNode based or whether we need to map a Java type
-                        Function<Property, BiConsumer<Resource, Object>> setter = viewAsScalarSetter(writeMethodDescriptor, effectiveType, isIriType, isViewAll, typeMapper, typeDecider);
+                        BiFunction<Property, Boolean, BiConsumer<Resource, Object>> setter = viewAsScalarSetter(writeMethodDescriptor, effectiveType, isIriType, isViewAll, typeMapper, typeDecider);
 
 
                         if(setter != null) {
-                            BiConsumer<Resource, Object> s = setter.apply(p);
+                            BiConsumer<Resource, Object> s = setter.apply(p, isFwd);
 
                             // Detect fluent API style methods - i.e.
                             // methods that return the class it is defined in or one of its super types.
