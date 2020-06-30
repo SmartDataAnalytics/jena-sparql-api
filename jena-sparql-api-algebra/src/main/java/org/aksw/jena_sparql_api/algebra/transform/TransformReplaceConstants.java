@@ -7,6 +7,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiFunction;
 import java.util.function.Predicate;
 
 import org.aksw.commons.collections.generator.Generator;
@@ -36,26 +37,63 @@ import org.apache.jena.sparql.expr.NodeValue;
 public class TransformReplaceConstants
     extends TransformCopy
 {
-
     protected Generator<Var> generator;
-    protected boolean omitDefaultGraphFilter;
 
     // TODO The test method might need additional arguments in the future,
     // such as the occurrences (gspo) of the node
-    protected Predicate<Node> testTransform;
+    protected BiFunction<Node, Integer, SubstitutionStrategy> testTransform;
 
-    public TransformReplaceConstants(Generator<Var> generator, boolean omitDefaultGraphFilter) {
-    	this(generator, omitDefaultGraphFilter, null);
+    public TransformReplaceConstants(Generator<Var> generator) {
+        this(generator, null);
     }
 
-    public TransformReplaceConstants(Generator<Var> generator, boolean omitDefaultGraphFilter, Predicate<Node> testTransform) {
+//    public TransformReplaceConstants(Generator<Var> generator, boolean omitDefaultGraphFilter, Predicate<Node> testTransform) {
+//        this(generator, omitDefaultGraphFilter, testTransform, true);
+//    }
+
+    /**
+     *
+     * @param generator
+     * @param injectFilter
+     * @param testTransform
+     * @param substitute If true, do not substitute default graphs in quads with variables
+     */
+    public TransformReplaceConstants(Generator<Var> generator, BiFunction<Node, Integer, SubstitutionStrategy> testTransform) {
         this.generator = generator;
-        this.omitDefaultGraphFilter = omitDefaultGraphFilter;
-        this.testTransform = testTransform == null ? x -> true : testTransform;
+        this.testTransform = testTransform; //testTransform == null ? x -> true : testTransform;
     }
 
 
-    public static Op transform(Op op, Predicate<Node> testTransform)
+    /**
+     * Transform function based on a predicate that accepts a Node to test.
+     * A return value of true maps to
+     * SUSTITUTE_AND_FILTER and false to RETAIN.
+     *
+     * @param op
+     * @param testTransform
+     * @return
+     */
+    public static Op transform(Op op, Predicate<Node> testTransform) {
+        return transform(op, (x, i) -> {
+            boolean tmp = testTransform.test(x);
+            SubstitutionStrategy r = tmp ? SubstitutionStrategy.SUSTITUTE_AND_FILTER : SubstitutionStrategy.RETAIN;
+            return r;
+        });
+    }
+
+    /**
+     * Transform function that decides whether to replace a concrete node based on a BiFunction.
+     * The BiFunction receives the node and and the index in the triple/quad and must return an appropriate
+     * SubstitutionStrategy value.
+     * Indexes: 0=s, 1=p, 2=o, 3=g
+     * Note that the graph component has index 3 in order to allow for uniform handling of
+     * triples and quads.
+     *
+     * @param op
+     * @param testTransform
+     * @return
+     */
+    public static Op transform(Op op, BiFunction<Node, Integer, SubstitutionStrategy> testTransform)
     {
         Collection<Var> mentionedVars = OpVars.mentionedVars(op);
 
@@ -63,7 +101,7 @@ public class TransformReplaceConstants
 
         Generator<Var> gen = VarGeneratorBlacklist.create("v", mentionedVars);
 
-        Transform transform = new TransformReplaceConstants(gen, false, testTransform);
+        Transform transform = new TransformReplaceConstants(gen, testTransform);
         Op result = Transformer.transform(transform, op);
 
         // Ensure the correct projection
@@ -76,39 +114,53 @@ public class TransformReplaceConstants
 
         return result;
     }
-    
-    public static Op transform(Op op)
+
+    public static Op transform(Op op, SubstitutionStrategy defaultGraphSubstitutionStrategy)
     {
-    	Op result = transform(op, null);
-    	return result;
+        BiFunction<Node, Integer, SubstitutionStrategy> testTransform = (node, i) -> {
+            // Graph component has index 3 (s=0, p=1, o=2, g=3)
+            SubstitutionStrategy r = (i == 3 && Quad.isDefaultGraph(node))
+                    ? defaultGraphSubstitutionStrategy
+                    : SubstitutionStrategy.SUSTITUTE_AND_FILTER;
+
+            return r;
+        };
+
+        Op result = transform(op, testTransform);
+        return result;
     }
 
-    
+    public static Op transform(Op op) {
+        return transform(op, SubstitutionStrategy.SUBSTITUTE);
+    }
+
+
     public static Map<Node, Var> transform(Map<Node, Var> nodeToVar, Iterable<Node> inNodes, Generator<Var> generator) {
         //Node result;
-    	Map<Node, Var> result = new LinkedHashMap<>();
+        Map<Node, Var> result = new LinkedHashMap<>();
 
-    	for(Node node : inNodes) {
-    		Node n = transform(nodeToVar, node, false, generator, null, false);
-    		if(n.isVariable() && !n.equals(node)) {
-    			result.put(node, (Var)n);
-    		}
-    	}
+        for(Node node : inNodes) {
+            Node n = transform(nodeToVar, node, generator, null, SubstitutionStrategy.SUSTITUTE_AND_FILTER);
+            if(n.isVariable() && !n.equals(node)) {
+                result.put(node, (Var)n);
+            }
+        }
 
         return result;
     }
 
-    public static Node transform(Map<Node, Var> nodeToVar, Node node, boolean isNodeInGraphComponent, Generator<Var> generator, ExprList filters, boolean omitDefaultGraphFilter) {
+    public static Node transform(Map<Node, Var> nodeToVar, Node node, Generator<Var> generator, ExprList filters, SubstitutionStrategy strategy) {
         Node result;
 
-        if(node.isConcrete()) {
+        if(node.isConcrete() && strategy.isSubstitute()) {
             Var var = nodeToVar.get(node);
             if(var == null) {
                 var = generator.next();
                 nodeToVar.put(node, var);
 
                 // Use of the constant Quad.defaultGraphNodeGenerated in the graph position results in a free variable.
-                if(filters != null && (!omitDefaultGraphFilter || !(isNodeInGraphComponent && node.equals(Quad.defaultGraphNodeGenerated)))) {
+//                if(filters != null && (!omitDefaultGraphFilter || !(isNodeInGraphComponent && Quad.isDefaultGraph(node)))) {
+                if(filters != null && strategy.isInjectFilter()) {
                     Expr condition = new E_Equals(new ExprVar(var), NodeValue.makeNode(node));
                     filters.add(condition);
                 }
@@ -147,9 +199,9 @@ public class TransformReplaceConstants
         return result;
     }
 
-    
+
     public BasicPattern transform(
-    		Collection<Triple> ts,
+            Collection<Triple> ts,
             Map<Node, Var> nodeToVar,
             ExprList filters) {
 
@@ -159,10 +211,11 @@ public class TransformReplaceConstants
         for(Triple triple : ts) {
 
 
-            for(Node node : TripleUtils.tripleToList(triple)) {
-                Node n = testTransform.test(node)
-                		? transform(nodeToVar, node, false, generator, filters, omitDefaultGraphFilter)
-                		: node;
+            List<Node> tmp = TripleUtils.tripleToList(triple);
+            for(int i = 0; i < tmp.size(); ++i) {
+                Node node = tmp.get(i);
+                SubstitutionStrategy strategy = testTransform.apply(node, i);
+                Node n = transform(nodeToVar, node, generator, filters, strategy);
                 nodes.add(n);
             }
 
@@ -172,10 +225,10 @@ public class TransformReplaceConstants
 
             nodes.clear();
         }
- 
+
         return triples;
     }
-    
+
     public Op transform(OpQuadPattern op) {
 
         //List<Var> vars = new ArrayList<>(OpVars.visibleVars(op));
@@ -183,13 +236,17 @@ public class TransformReplaceConstants
         ExprList filters = new ExprList();
         //BasicPattern triples = new BasicPattern();
 
-        boolean retainDefaultGraphNode = true;
         Node gn = op.getGraphNode();
-        Node graphNode = retainDefaultGraphNode && gn.equals(Quad.defaultGraphNodeGenerated)
-                ? Quad.defaultGraphNodeGenerated
-                : testTransform.test(gn)
-                	? transform(nodeToVar, gn, true, generator, filters, omitDefaultGraphFilter)
-                	: gn;
+        SubstitutionStrategy strategy = testTransform.apply(gn, 3);
+
+        Node graphNode = transform(nodeToVar, gn, generator, filters, strategy);
+
+//        boolean retainDefaultGraphNode = true;
+//        Node graphNode = retainDefaultGraphNode && Quad.isDefaultGraph(gn)
+//                ? Quad.defaultGraphNodeGenerated
+//                : testTransform.test(gn)
+//                    ? transform(nodeToVar, gn, true, generator, filters, omitDefaultGraphFilter)
+//                    : gn;
 
 
         List<Triple> ts = op.getBasicPattern().getList();

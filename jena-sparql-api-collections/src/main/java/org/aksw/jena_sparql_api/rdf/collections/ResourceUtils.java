@@ -991,6 +991,11 @@ public class ResourceUtils {
         return result;
     }
 
+    public static <T extends RDFNode> T getPropertyValue(Resource s, Property p, Class<T> clazz) {
+        T result = getPropertyValue(s, p, true, clazz);
+        return result;
+    }
+
     public static <T extends RDFNode> ExtendedIterator<T> listPropertyValues(Resource s, Property p, Class<T> clazz) {
         ExtendedIterator<T> result = listPropertyValues(s, p, true, clazz);
         return result;
@@ -1009,6 +1014,21 @@ public class ResourceUtils {
 
     public static <T extends RDFNode> ExtendedIterator<T> listPropertyValues(Model model, Resource s, Property p, Class<T> clazz) {
         ExtendedIterator<T> result = listPropertyValues(model, s, p, true, clazz);
+        return result;
+    }
+
+    public static <T extends RDFNode> T getPropertyValue(Statement stmt, Class<T> clazz) {
+        T result = getPropertyValue(stmt, true, clazz);
+        return result;
+    }
+
+    public static <T extends RDFNode> T getPropertyValue(Statement stmt, NodeMapper<T> nodeMapper) {
+        T result = getPropertyValue(stmt, true, nodeMapper);
+        return result;
+    }
+
+    public static <T extends RDFNode> T getPropertyValue(Statement stmt, RDFNodeMapper<T> rdfNodeMapper) {
+        T result = getPropertyValue(stmt, true, rdfNodeMapper);
         return result;
     }
 

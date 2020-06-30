@@ -108,7 +108,7 @@ public class QuadUtils {
 
             Node graph = entry.getKey();
 
-            Element f = graph == null || graph.equals(Quad.defaultGraphNodeGenerated)
+            Element f = graph == null || Quad.isDefaultGraph(graph)
                     ? e
                     : new ElementNamedGraph(graph, e);
 

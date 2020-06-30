@@ -19,6 +19,7 @@ import org.aksw.commons.collections.generator.Generator;
 import org.aksw.commons.collections.multimaps.BiHashMultimap;
 import org.aksw.commons.collections.multimaps.IBiSetMultimap;
 import org.aksw.jena_sparql_api.algebra.analysis.VarInfo;
+import org.aksw.jena_sparql_api.algebra.transform.SubstitutionStrategy;
 import org.aksw.jena_sparql_api.algebra.transform.TransformAddFilterFromExtend;
 import org.aksw.jena_sparql_api.algebra.transform.TransformDeduplicatePatterns;
 import org.aksw.jena_sparql_api.algebra.transform.TransformDistributeJoinOverUnion;
@@ -308,8 +309,7 @@ public class AlgebraUtils {
 
         Map<Var, Node> varToNode = CnfUtils.getConstants(cnf, true);
         Map<Var, Node> candMap = varToNode.entrySet().stream().filter(
-                e -> (Quad.defaultGraphIRI.equals(e.getValue())
-                    || Quad.defaultGraphNodeGenerated.equals(e.getValue())))
+                e -> Quad.isDefaultGraph(e.getValue()))
                 .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
 
         Set<Var> candVars = candMap.keySet();
