@@ -1,6 +1,7 @@
 package org.aksw.jena_sparql_api.mapper.proxy;
 
 import java.beans.Introspector;
+import java.io.ByteArrayOutputStream;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles.Lookup;
 import java.lang.reflect.Constructor;
@@ -15,6 +16,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -33,6 +35,7 @@ import org.aksw.jena_sparql_api.mapper.annotation.Iri;
 import org.aksw.jena_sparql_api.mapper.annotation.IriNs;
 import org.aksw.jena_sparql_api.mapper.annotation.IriType;
 import org.aksw.jena_sparql_api.mapper.annotation.PolymorphicOnly;
+import org.aksw.jena_sparql_api.mapper.annotation.ToString;
 import org.aksw.jena_sparql_api.rdf.collections.ConverterFromNodeMapper;
 import org.aksw.jena_sparql_api.rdf.collections.ConverterFromNodeMapperAndModel;
 import org.aksw.jena_sparql_api.rdf.collections.ConverterFromRDFNodeMapper;
@@ -58,11 +61,15 @@ import org.apache.jena.ext.com.google.common.collect.Maps;
 import org.apache.jena.ext.com.google.common.collect.Sets;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdf.model.impl.ResourceImpl;
+import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.path.P_Link;
 import org.apache.jena.sparql.path.P_Path0;
@@ -1032,6 +1039,22 @@ public class MapperProxyUtils {
 //
 //	}
 
+
+    public static Set<String> indexToStringByBeanPropertyName(Class<?> clazz) {
+        Set<String> result = new LinkedHashSet<>();
+        for(Method method : clazz.getMethods()) {
+            String methodName = method.getName();
+            String beanPropertyName = deriveBeanPropertyName(methodName);
+            ToString toString = method.getAnnotation(ToString.class);
+
+            if(toString != null) {
+                result.add(beanPropertyName);
+            }
+        }
+
+        return result;
+    }
+
     public static Map<String, P_Path0> indexPathsByBeanPropertyName(Class<?> clazz, PrefixMapping pm) {
         Map<String, P_Path0> result = new LinkedHashMap<>();
         for(Method method : clazz.getMethods()) {
@@ -1098,6 +1121,14 @@ public class MapperProxyUtils {
 
         // Find all methods with a @Iri annotation
         Map<String, P_Path0> paths = indexPathsByBeanPropertyName(clazz, pm);
+
+//        Set<String> toStringBeanPropertyNames = indexToStringByBeanPropertyName(clazz);
+//        if(toStringBeanPropertyNames.isEmpty()) {
+//            toStringBeanPropertyNames = paths.keySet();
+//        }
+
+        // Find all methods with a @ToString annotation
+
 
         // FIXME - We can have multiple methods for a bean property
         // E.g. both a simple and a dynamic collection getter
@@ -1170,6 +1201,31 @@ public class MapperProxyUtils {
                 paths.put(beanPropertyName, path);
             }
         }
+
+        Method toStringMethod = null;
+        try {
+            toStringMethod = ResourceImpl.class.getMethod("toString");
+        } catch (NoSuchMethodException | SecurityException e1) {
+            logger.warn("Method " + clazz.getName() + ".toString() not found");
+        }
+
+
+        methodImplMap.put(toStringMethod, (that, args) -> {
+            Resource res = (Resource)that;
+            // Model m = org.apache.jena.util.ResourceUtils.reachableClosure(res);
+            Model m = ModelFactory.createDefaultModel();
+            m.add(res.listProperties());
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            RDFDataMgr.write(baos, m, RDFFormat.TURTLE_PRETTY);
+            String r = baos.toString();
+            return r;
+
+//        	StringBuilder sb = new StringBuilder();
+//        	for(String beanPropertyName : beanPropertyNames) {
+//        		Method readMethod = readMethods.get(beanPropertyName);
+//        	}
+        });
+
 
 
 //		System.out.println("BeanPropertyNames: " + beanPropertyNames);

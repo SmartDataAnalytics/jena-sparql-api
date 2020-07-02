@@ -43,21 +43,41 @@ public class DatasetGraphOpsRx {
 //                        Graph::add));
     }
 
-    public static FlowableTransformer<Quad, Entry<Node, DatasetGraph>> graphsFromConsecutiveSubjectsRaw() {
-        return graphsFromConsecutiveSubjectsRaw(DatasetGraphFactory::create);
-    }
 
-    public static FlowableTransformer<Quad, Entry<Node, DatasetGraph>> graphsFromConsecutiveSubjectsRaw(Supplier<DatasetGraph> graphSupplier) {
-        return groupConsecutiveQuadsRaw(Quad::getGraph, graphSupplier);
-    }
+//    public static FlowableTransformer<Quad, Entry<Node, DatasetGraph>> graphsFromConsecutiveSubjectsRaw() {
+//        return graphsFromConsecutiveSubjectsRaw(DatasetGraphFactory::create);
+//    }
+//
+//    public static FlowableTransformer<Quad, Entry<Node, DatasetGraph>> graphsFromConsecutiveSubjectsRaw(Supplier<DatasetGraph> graphSupplier) {
+//        return groupConsecutiveQuadsRaw(Quad::getGraph, graphSupplier);
+//    }
+//
+//    public static FlowableTransformer<Quad, DatasetGraph> graphsFromConsecutiveSubjects() {
+//        return graphsFromConsecutiveSubjects(DatasetGraphFactory::create);
+//    }
+//
+//    public static FlowableTransformer<Quad, DatasetGraph> graphsFromConsecutiveSubjects(Supplier<DatasetGraph> graphSupplier) {
+//        return graphsFromConsecutiveQuads(Quad::getGraph, graphSupplier);
+//    }
+//
 
-    public static FlowableTransformer<Quad, DatasetGraph> graphsFromConsecutiveSubjects() {
-        return graphsFromConsecutiveSubjects(DatasetGraphFactory::create);
-    }
+//    public static FlowableTransformer<Quad, Entry<Node, DatasetGraph>> graphsFromConsecutiveGraphsRaw() {
+//        return graphsFromConsecutiveSubjectsRaw(DatasetGraphFactory::create);
+//    }
+//
+//    public static FlowableTransformer<Quad, Entry<Node, DatasetGraph>> graphsFromConsecutiveGraphsRaw(Supplier<DatasetGraph> graphSupplier) {
+//        return groupConsecutiveQuadsRaw(Quad::getGraph, graphSupplier);
+//    }
+//
+//    public static FlowableTransformer<Quad, DatasetGraph> graphsFromConsecutiveGraphs() {
+//        return graphsFromConsecutiveSubjects(DatasetGraphFactory::create);
+//    }
+//
+//    public static FlowableTransformer<Quad, DatasetGraph> graphsFromConsecutiveGraphs(Supplier<DatasetGraph> graphSupplier) {
+//        return graphsFromConsecutiveQuads(Quad::getGraph, graphSupplier);
+//    }
 
-    public static FlowableTransformer<Quad, DatasetGraph> graphsFromConsecutiveSubjects(Supplier<DatasetGraph> graphSupplier) {
-        return graphsFromConsecutiveQuads(Quad::getGraph, graphSupplier);
-    }
+
 
     public static FlowableTransformer<Quad, DatasetGraph> graphsFromConsecutiveQuads(
             Function<Quad, Node> grouper,

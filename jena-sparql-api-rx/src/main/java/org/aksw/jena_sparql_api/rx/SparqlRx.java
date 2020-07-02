@@ -34,7 +34,6 @@ import org.apache.jena.query.SortCondition;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.RDFNode;
-import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.apache.jena.sparql.algebra.Table;
 import org.apache.jena.sparql.algebra.table.TableData;
@@ -219,11 +218,11 @@ public class SparqlRx {
         return execSelect(qes, ResultSet::next);
     }
 
-    public static Flowable<QuerySolution> execSelect(RDFConnection conn, String queryStr) {
+    public static Flowable<QuerySolution> execSelect(SparqlQueryConnection conn, String queryStr) {
         return execSelect(() -> conn.query(queryStr), ResultSet::next);
     }
 
-    public static Flowable<QuerySolution> execSelect(RDFConnection conn, Query query) {
+    public static Flowable<QuerySolution> execSelect(SparqlQueryConnection conn, Query query) {
         return execSelect(() -> conn.query(query), ResultSet::next);
     }
 
@@ -462,10 +461,14 @@ public class SparqlRx {
         return execConstructGrouped(conn, q, s, sortRowsByPartitionVar);
     }
 
+    /* Use grouped execution which aggregates over multiple rows */
+    @Deprecated
     public static Flowable<RDFNode> execPartitioned(SparqlQueryConnection conn, Entry<? extends Node, Query> e) {
         return execPartitioned(conn, e, true);
     }
 
+    /* Use grouped execution which aggregates over multiple rows */
+    @Deprecated
     public static Flowable<RDFNode> execPartitioned(SparqlQueryConnection conn, Entry<? extends Node, Query> e, boolean sortRowsByPartitionVar) {
         Node s = e.getKey();
         Query q = e.getValue();
@@ -473,19 +476,22 @@ public class SparqlRx {
         return execPartitioned(conn, s, q, sortRowsByPartitionVar);
     }
 
-    //public static Acc
+
     public static Flowable<RDFNode> execConstructGrouped(SparqlQueryConnection conn, Query query, Node s) {
         return execConstructGrouped(conn, query, s, true);
     }
+
 
     public static Flowable<RDFNode> execConstructGrouped(SparqlQueryConnection conn, Query query, Node s, boolean sortRowsByPartitionVar) {
         return execConstructGrouped(conn, query, Collections.singletonList((Var)s), s, sortRowsByPartitionVar)
                 .map(Entry::getValue);
     }
 
+
     public static Flowable<Entry<Binding, RDFNode>> execConstructGrouped(SparqlQueryConnection conn, Query query, List<Var> primaryKeyVars, Node rootNode, boolean sortRowsByPartitionVar) {
         return execConstructGrouped(q -> conn.query(q), query, primaryKeyVars, rootNode, sortRowsByPartitionVar);
     }
+
 
     public static Flowable<Entry<Binding, RDFNode>> execConstructGrouped(Function<Query, QueryExecution> qeSupp, Query query, List<Var> primaryKeyVars, Node rootNode, boolean sortRowsByPartitionVar) {
         if(rootNode.isVariable() && !primaryKeyVars.contains(rootNode)) {
@@ -581,6 +587,8 @@ public class SparqlRx {
     }
 
 
+    /* Use grouped execution which aggregates over multiple rows */
+    @Deprecated
     public static Flowable<RDFNode> execPartitioned(SparqlQueryConnection conn, Node s, Query q, boolean sortRowsByPartitionVar) {
 
         Template template = q.getConstructTemplate();
@@ -617,10 +625,12 @@ public class SparqlRx {
         return result;
     }
 
+
     public static <T extends RDFNode> Flowable<T> execConcept(Supplier<QueryExecution> qeSupp, Var var, Class<T> clazz) {
         return execConcept(qeSupp, var)
             .map(rdfNode -> rdfNode.as(clazz));
     }
+
 
     public static Flowable<RDFNode> execConcept(Supplier<QueryExecution> qeSupp, Var var) {
         String varName = var.getName();

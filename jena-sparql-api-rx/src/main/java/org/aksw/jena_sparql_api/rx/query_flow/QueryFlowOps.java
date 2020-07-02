@@ -14,6 +14,7 @@ import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryFactory;
 import org.apache.jena.query.Syntax;
 import org.apache.jena.sparql.ARQConstants;
+import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.Substitute;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.core.VarExprList;
@@ -43,6 +44,19 @@ public class QueryFlowOps
                     () -> TemplateLib.calcTriples(template.getTriples(), Collections.singleton(binding).iterator()));
     }
 
+    /**
+     *
+     * Usage
+     *   Flowable<Quad> quads = flowOfBindings.concatMap(createMapperQuads(template)::apply);
+     *
+     *
+     * @param template
+     * @return
+     */
+    public static Function<Binding, Flowable<Quad>> createMapperQuads(Template template) {
+        return binding -> Flowable.fromIterable(
+                    () -> TemplateLib.calcQuads(template.getQuads(), Collections.singleton(binding).iterator()));
+    }
 
     /**
      * Utility method to set up a default execution context
