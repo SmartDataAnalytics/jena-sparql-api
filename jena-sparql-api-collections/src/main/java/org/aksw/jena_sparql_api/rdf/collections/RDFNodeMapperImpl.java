@@ -18,7 +18,7 @@ public class RDFNodeMapperImpl<T>
 
     // Flag to indicate that requested resource views should be applied even
     // if the TypeDecider cannot find a better view class
-    protected boolean isViewAll;
+    protected boolean polymorphicOnly;
 
     /**
      * If true, checks via Resource.canAs(viewClass) are performed.
@@ -36,13 +36,13 @@ public class RDFNodeMapperImpl<T>
             Class<T> viewClass,
             TypeMapper typeMapper,
             TypeDecider typeDecider,
-            boolean isViewAll,
+            boolean polymorphicOnly,
             boolean enableCanAsCheck) {
         super();
         this.typeMapper = typeMapper;
         this.typeDecider = typeDecider;
         this.viewClass = viewClass;
-        this.isViewAll = isViewAll;
+        this.polymorphicOnly = polymorphicOnly;
         this.enableCanAsCheck = enableCanAsCheck;
 
         this.nodeMapper = Node.class.isAssignableFrom(viewClass)
@@ -67,7 +67,7 @@ public class RDFNodeMapperImpl<T>
         if(nodeMapper.canMap(n)) {
             result = nodeMapper.toJava(n);
         } else {
-            result = castRdfNode(rdfNode, viewClass, typeDecider, isViewAll, enableCanAsCheck);
+            result = castRdfNode(rdfNode, viewClass, typeDecider, polymorphicOnly, enableCanAsCheck);
         }
 
         return result;
@@ -77,12 +77,12 @@ public class RDFNodeMapperImpl<T>
             RDFNode rdfNode,
             Class<?> viewClass,
             TypeDecider typeDecider,
-            boolean isViewAll,
+            boolean polymorphicOnly,
             boolean enableCanAsCheck) {
         Class<?> effectiveType;
         if(rdfNode.isResource()) {
             Resource r = rdfNode.asResource();
-            effectiveType = getEffectiveType(r, viewClass, typeDecider, isViewAll);
+            effectiveType = getEffectiveType(r, viewClass, typeDecider, polymorphicOnly);
         } else {
             effectiveType = viewClass;
         }
@@ -97,7 +97,7 @@ public class RDFNodeMapperImpl<T>
         return result;
     }
 
-    public static Class<?> getEffectiveType(Resource r, Class<?> viewClass, TypeDecider typeDecider, boolean isViewAll) {
+    public static Class<?> getEffectiveType(Resource r, Class<?> viewClass, TypeDecider typeDecider, boolean polymorphicOnly) {
         Class<?> effectiveType;
         effectiveType = ResourceUtils.getMostSpecificSubclass(r, viewClass, typeDecider);
 
@@ -107,7 +107,7 @@ public class RDFNodeMapperImpl<T>
             if(viewClass.isAssignableFrom(Resource.class)) {
                 effectiveType = RDFNode.class;
             } else if(Resource.class.isAssignableFrom(viewClass)) {
-                if(isViewAll) {
+                if(!polymorphicOnly) {
                     effectiveType = viewClass;
                 }
             }
@@ -141,7 +141,7 @@ public class RDFNodeMapperImpl<T>
                     ? ResourceUtils.getMostSpecificSubclass(r.asResource(), viewClass, typeDecider)
                     : viewClass;
 
-            if(effectiveViewClass == null && isViewAll) {
+            if(effectiveViewClass == null && !polymorphicOnly) {
                 effectiveViewClass = viewClass;
             }
 

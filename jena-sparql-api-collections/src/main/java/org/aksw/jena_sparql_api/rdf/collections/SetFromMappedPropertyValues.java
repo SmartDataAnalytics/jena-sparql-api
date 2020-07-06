@@ -2,7 +2,6 @@ package org.aksw.jena_sparql_api.rdf.collections;
 
 import java.util.AbstractSet;
 import java.util.Iterator;
-import java.util.stream.Stream;
 
 import org.apache.jena.ext.com.google.common.collect.Iterators;
 import org.apache.jena.graph.Node;
@@ -19,8 +18,6 @@ public class SetFromMappedPropertyValues<T>
     protected Property property;
     protected boolean isFwd;
     protected NodeMapper<T> nodeMapper;
-    //protected Class<T> clazz;
-
 
     public SetFromMappedPropertyValues(Resource subject, Property property, NodeMapper<T> nodeMapper) {
         this(subject, property, true, nodeMapper);

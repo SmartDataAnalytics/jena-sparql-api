@@ -23,9 +23,9 @@ public class RDFNodeMappers {
             Class<T> viewBaseClass,
             TypeMapper typeMapper,
             TypeDecider typeDecider,
-            boolean isViewAll,
+            boolean polymorphicOnly,
             boolean enableCanAsCheck) {
-        return new RDFNodeMapperImpl<T>(viewBaseClass, typeMapper, typeDecider, isViewAll, enableCanAsCheck);
+        return new RDFNodeMapperImpl<T>(viewBaseClass, typeMapper, typeDecider, polymorphicOnly, enableCanAsCheck);
     }
 
 //	public static RDFNodeMapper<Object> from(TypeDecider typeDecider) {

@@ -12,6 +12,7 @@ import java.util.stream.Stream;
 
 import org.aksw.commons.util.reflect.ClassUtils;
 import org.aksw.jena_sparql_api.mapper.proxy.TypeDecider;
+import org.aksw.jena_sparql_api.utils.NodeUtils;
 import org.apache.jena.datatypes.RDFDatatype;
 import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.ext.com.google.common.collect.Iterables;
@@ -208,6 +209,7 @@ public class ResourceUtils {
 
     public static <T extends RDFNode> ExtendedIterator<T> listPropertyValues(Model model, Resource s, Property p, boolean isFwd, Class<T> clazz) {
         ExtendedIterator<T> result = listProperties(model, s, p, isFwd)
+                .filterKeep(stmt -> canAsProperty(stmt, isFwd, clazz))
                 .mapWith(stmt -> getPropertyValue(stmt, isFwd, clazz));
         return result;
     }
@@ -970,8 +972,15 @@ public class ResourceUtils {
     }
 
     public static StmtIterator listProperties(Model m, RDFNode s, Property p, boolean isFwd) {
+        Resource x = s == null
+            ? null
+            : s.isResource()
+                ? s.asResource()
+                : m.wrapAsResource(NodeUtils.nullUriNode);
+
+
         StmtIterator result = isFwd
-                ? m.listStatements(s.asResource(), p, (RDFNode)null)
+                ? m.listStatements(x, p, (RDFNode)null)
                 : m.listStatements(null, p, s);
         return result;
     }

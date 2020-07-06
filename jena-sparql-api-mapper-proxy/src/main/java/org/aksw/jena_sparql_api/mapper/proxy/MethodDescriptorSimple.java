@@ -7,6 +7,7 @@ public class MethodDescriptorSimple
 {
     protected Class<?> type;
     // TODO Add support for wrapping the type in a java.unit.Optional
+    // Should we treat Optional as a (cardinality restricted) collection?
 
     public MethodDescriptorSimple(Method method, boolean isGetter, boolean isFluentCompatible, Class<?> type) {
         super(method, isGetter, isFluentCompatible);

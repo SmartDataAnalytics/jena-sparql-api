@@ -1,6 +1,7 @@
 package org.aksw.jena_sparql_api.rdf.collections;
 
 import java.util.AbstractSet;
+import java.util.Collection;
 import java.util.Iterator;
 
 import org.apache.jena.rdf.model.Model;
@@ -19,6 +20,7 @@ import com.google.common.collect.Iterators;
  */
 public class SetFromPropertyValues<T extends RDFNode>
     extends AbstractSet<T>
+    implements RdfBackedCollection<T>
 {
     protected Resource subject;
     protected Property property;
@@ -68,4 +70,10 @@ public class SetFromPropertyValues<T extends RDFNode>
     public int size() {
         int result = Iterators.size(iterator());
         return result;
-    }}
+    }
+
+    @Override
+    public Collection<RDFNode> getRawCollection() {
+        return new SetFromPropertyValues<>(subject, property, isFwd, RDFNode.class);
+    }
+}
