@@ -26,8 +26,11 @@ import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import org.aksw.commons.accessors.CollectionFromConverter;
+import org.aksw.commons.accessors.CollectionFromPredicate;
+import org.aksw.commons.accessors.ConverterUtils;
 import org.aksw.commons.accessors.ListFromConverter;
 import org.aksw.commons.collections.sets.SetFromCollection;
 import org.aksw.jena_sparql_api.mapper.annotation.HashId;
@@ -37,21 +40,20 @@ import org.aksw.jena_sparql_api.mapper.annotation.IriNs;
 import org.aksw.jena_sparql_api.mapper.annotation.IriType;
 import org.aksw.jena_sparql_api.mapper.annotation.PolymorphicOnly;
 import org.aksw.jena_sparql_api.mapper.annotation.ToString;
+import org.aksw.jena_sparql_api.mapper.hashid.ClassDescriptor;
 import org.aksw.jena_sparql_api.mapper.hashid.DepGraph;
-import org.aksw.jena_sparql_api.mapper.hashid.DepGraph.ClassDesc;
-import org.aksw.jena_sparql_api.mapper.hashid.DepGraph.PropertyDesc;
 import org.aksw.jena_sparql_api.mapper.hashid.DepGraph.PropertyDescCollection;
+import org.aksw.jena_sparql_api.mapper.hashid.HashIdCxt;
+import org.aksw.jena_sparql_api.mapper.hashid.PropertyDescriptor;
 import org.aksw.jena_sparql_api.rdf.collections.ConverterFromNodeMapper;
 import org.aksw.jena_sparql_api.rdf.collections.ConverterFromNodeMapperAndModel;
 import org.aksw.jena_sparql_api.rdf.collections.ConverterFromRDFNodeMapper;
 import org.aksw.jena_sparql_api.rdf.collections.ListFromRDFList;
 import org.aksw.jena_sparql_api.rdf.collections.NodeMapper;
-import org.aksw.jena_sparql_api.rdf.collections.NodeMapperFromRdfDatatype;
 import org.aksw.jena_sparql_api.rdf.collections.NodeMappers;
 import org.aksw.jena_sparql_api.rdf.collections.RDFNodeMapper;
 import org.aksw.jena_sparql_api.rdf.collections.RDFNodeMappers;
 import org.aksw.jena_sparql_api.rdf.collections.ResourceUtils;
-import org.aksw.jena_sparql_api.rdf.collections.SetFromLiteralPropertyValues;
 import org.aksw.jena_sparql_api.rdf.collections.SetFromMappedPropertyValues;
 import org.aksw.jena_sparql_api.rdf.collections.SetFromPropertyValues;
 import org.aksw.jena_sparql_api.utils.views.map.MapFromKeyConverter;
@@ -62,8 +64,11 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.apache.jena.datatypes.RDFDatatype;
 import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.enhanced.EnhGraph;
+import org.apache.jena.ext.com.google.common.collect.Lists;
 import org.apache.jena.ext.com.google.common.collect.Maps;
 import org.apache.jena.ext.com.google.common.collect.Sets;
+import org.apache.jena.ext.com.google.common.hash.HashCode;
+import org.apache.jena.ext.com.google.common.hash.Hashing;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.rdf.model.Model;
@@ -84,7 +89,6 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Converter;
 import com.google.common.base.Defaults;
-import com.google.common.collect.Lists;
 
 import net.sf.cglib.proxy.Enhancer;
 import net.sf.cglib.proxy.MethodInterceptor;
@@ -247,11 +251,11 @@ public class MapperProxyUtils {
      * @param typeMapper
      * @return
      */
-    public static Function<Class<?>, Function<Property, Function<Resource, Object>>>
+    public static Function<Class<?>, BiFunction<Property, Boolean, Function<Resource, Object>>>
         viewAsDynamicSet(Method m, boolean isIriType, boolean polymorphicOnly, TypeMapper typeMapper, TypeDecider typeDecider)
     {
 //
-        Function<Class<?>, Function<Property, Function<Resource, Object>>> result = null;
+        Function<Class<?>, BiFunction<Property, Boolean, Function<Resource, Object>>> result = null;
 //
 //		// Check for subClassOf List
 //		Class<?> baseItemType = canActAsCollectionView(m, List.class, true, null);
@@ -275,10 +279,10 @@ public class MapperProxyUtils {
     }
 
 
-    public static Function<Class<?>, Function<Property, Function<Resource, Object>>>
+    public static Function<Class<?>, BiFunction<Property, Boolean, Function<Resource, Object>>>
         viewAsDynamicList(Method m, boolean isIriType, boolean polymorphicOnly, TypeMapper typeMapper, TypeDecider typeDecider)
     {
-        Function<Class<?>, Function<Property, Function<Resource, Object>>> result = null;
+        Function<Class<?>, BiFunction<Property, Boolean, Function<Resource, Object>>> result = null;
 
         // Check for superClassOfSet
         Class<?> baseItemType = canActAsCollectionView(m, List.class, true, null);
@@ -291,26 +295,32 @@ public class MapperProxyUtils {
         return result;
     }
 
-    public static Function<Property, Function<Resource, Object>> viewAsSet(
+
+    public static BiFunction<Property, Boolean, Function<Resource, Object>> viewAsSet(
             Method m,
             boolean isIriType,
             boolean polymorphicOnly,
             Class<?> itemType,
             TypeMapper typeMapper,
             TypeDecider typeDecider) {
-        Function<Property, Function<Resource, Object>> result = null;
+        BiFunction<Property, Boolean, Function<Resource, Object>> result = null;
 
 //		boolean isIriType = m.getAnnotation(IriType.class) != null;
         if(String.class.isAssignableFrom(itemType) && isIriType) {
-            result = p -> s -> new SetFromMappedPropertyValues<>(s, p, NodeMappers.uriString);
+            result = (p, isFwd) -> s -> new SetFromMappedPropertyValues<>(s, p, isFwd, NodeMappers.uriString);
         } else {
             RDFNodeMapper<?> rdfNodeMapper = RDFNodeMappers.from(itemType, typeMapper, typeDecider, polymorphicOnly, false);
 
-            result = p -> s ->
-                new SetFromCollection<>(
+            result = (p, isFwd) -> s -> {
+                Converter<RDFNode, ?> converter = new ConverterFromRDFNodeMapper<>(rdfNodeMapper);
+
+                return new SetFromCollection<>(
                         new CollectionFromConverter<>(
-                                new SetFromPropertyValues<>(s, p, RDFNode.class),
-                                new ConverterFromRDFNodeMapper<>(rdfNodeMapper)));
+                                new CollectionFromPredicate<>(
+                                    new SetFromPropertyValues<>(s, p, isFwd, RDFNode.class),
+                                    ConverterUtils.createPredicate(converter)::test),
+                                converter));
+            };
         }
 
         return result;
@@ -371,21 +381,22 @@ public class MapperProxyUtils {
 
 
 
-    public static Function<Property, Function<Resource, Object>>
+    // TODO Throw an exception if used with isFwd=false
+    public static BiFunction<Property, Boolean, Function<Resource, Object>>
         viewAsList(Method m, boolean isIriType, boolean polymorphicOnly, Class<?> itemType, TypeMapper typeMapper, TypeDecider typeDecider)
     {
-        Function<Property, Function<Resource, Object>> result = null;
+        BiFunction<Property, Boolean, Function<Resource, Object>> result = null;
 
     //	boolean isIriType = m.getAnnotation(IriType.class) != null;
         if(String.class.isAssignableFrom(itemType) && isIriType) {
-            result = p -> s ->
+            result = (p, isFwd) -> s ->
                 new ListFromConverter<String, RDFNode>(
                         new ListFromRDFList(s, p),
                         new ConverterFromNodeMapperAndModel<>(s.getModel(), RDFNode.class, new ConverterFromNodeMapper<>(NodeMappers.uriString)));
         } else {
             RDFNodeMapper<?> rdfNodeMapper = RDFNodeMappers.from(itemType, typeMapper, typeDecider, polymorphicOnly, false);
 
-            result = p -> s -> new ListFromConverter<>(
+            result = (p, isFwd) -> s -> new ListFromConverter<>(
                     new ListFromRDFList(s, p),
                     new ConverterFromRDFNodeMapper<>(rdfNodeMapper));//new SetFromPropertyValues<>(s, p, rdfType);
         }
@@ -394,39 +405,39 @@ public class MapperProxyUtils {
     }
 
 
-    public static Function<Property, Function<Resource, Object>>
-        viewAsListOld(Method m, boolean isIriType, TypeMapper typeMapper, Class<?> itemType)
-    {
-        Function<Property, Function<Resource, Object>> result = null;
-
-    //	boolean isIriType = m.getAnnotation(IriType.class) != null;
-        if(String.class.isAssignableFrom(itemType) && isIriType) {
-            result = p -> s ->
-                new ListFromConverter<String, RDFNode>(
-                        new ListFromRDFList(s, p),
-                        new ConverterFromNodeMapperAndModel<>(s.getModel(), RDFNode.class, new ConverterFromNodeMapper<>(NodeMappers.uriString)));
-        } else if(RDFNode.class.isAssignableFrom(itemType)) {
-            @SuppressWarnings("unchecked")
-            Class<? extends RDFNode> rdfType = (Class<? extends RDFNode>)itemType;
-
-            // TODO Apply a filter to the list
-
-            result = p -> s -> new ListFromConverter<>(new ListFromRDFList(s, p), Converter.<RDFNode, RDFNode>from(r -> r, r -> r.as(rdfType)));//new SetFromPropertyValues<>(s, p, rdfType);
-        } else {
-            RDFDatatype dtype = typeMapper.getTypeByClass(itemType);
-
-            if(dtype != null) {
-                result = p -> s -> new ListFromConverter<>(new ListFromRDFList(s, p), new ConverterFromNodeMapperAndModel<RDFNode, Object>(s.getModel(), RDFNode.class, new ConverterFromNodeMapper<>(new NodeMapperFromRdfDatatype<Object>(dtype))));
-
-                //new SetFromLiteralPropertyValues<>(s, p, itemType);
-            }
-
-            // This method can only return null, if itemType is neither a subclass of
-            // RDFNode nor registered in the given type mapper
-        }
-
-        return result;
-    }
+//    public static Function<Property, Function<Resource, Object>>
+//        viewAsListOld(Method m, boolean isIriType, TypeMapper typeMapper, Class<?> itemType)
+//    {
+//        Function<Property, Function<Resource, Object>> result = null;
+//
+//    //	boolean isIriType = m.getAnnotation(IriType.class) != null;
+//        if(String.class.isAssignableFrom(itemType) && isIriType) {
+//            result = p -> s ->
+//                new ListFromConverter<String, RDFNode>(
+//                        new ListFromRDFList(s, p),
+//                        new ConverterFromNodeMapperAndModel<>(s.getModel(), RDFNode.class, new ConverterFromNodeMapper<>(NodeMappers.uriString)));
+//        } else if(RDFNode.class.isAssignableFrom(itemType)) {
+//            @SuppressWarnings("unchecked")
+//            Class<? extends RDFNode> rdfType = (Class<? extends RDFNode>)itemType;
+//
+//            // TODO Apply a filter to the list
+//
+//            result = p -> s -> new ListFromConverter<>(new ListFromRDFList(s, p), Converter.<RDFNode, RDFNode>from(r -> r, r -> r.as(rdfType)));//new SetFromPropertyValues<>(s, p, rdfType);
+//        } else {
+//            RDFDatatype dtype = typeMapper.getTypeByClass(itemType);
+//
+//            if(dtype != null) {
+//                result = p -> s -> new ListFromConverter<>(new ListFromRDFList(s, p), new ConverterFromNodeMapperAndModel<RDFNode, Object>(s.getModel(), RDFNode.class, new ConverterFromNodeMapper<>(new NodeMapperFromRdfDatatype<Object>(dtype))));
+//
+//                //new SetFromLiteralPropertyValues<>(s, p, itemType);
+//            }
+//
+//            // This method can only return null, if itemType is neither a subclass of
+//            // RDFNode nor registered in the given type mapper
+//        }
+//
+//        return result;
+//    }
 
     public static MethodDescriptor classifyMethod(Method m) {
         MethodDescriptor result = null;
@@ -926,45 +937,45 @@ public class MapperProxyUtils {
         return result;
     }
 
-    @SuppressWarnings("unchecked")
-    public static BiFunction<Property, Boolean, BiConsumer<Resource, Object>> viewAsScalarSetterOld(
-            MethodDescriptor methodDescriptor,
-            Class<?> effectiveType,
-            boolean isIriType,
-            TypeMapper typeMapper,
-            TypeDecider typeDecider) {
-        // Strict setters return void, but e.g. in the case of fluent APIs return types may vary
-
-        BiFunction<Property, Boolean, BiConsumer<Resource, Object>> result = null;
-        //Method m = methodDescriptor.getMethod();
-
-        Class<?> paramType = effectiveType; //methodDescriptor.getType();
-
-        //Class<?>[] paramTypes = m.getParameterTypes();
-
-        if(RDFNode.class.isAssignableFrom(paramType)) {
-//				@SuppressWarnings("unchecked")
-//				Class<? extends RDFNode> rdfType = (Class<? extends RDFNode>)paramType;
-            result = (p, isFwd) -> (s, o) -> ResourceUtils.setProperty(s, p, isFwd, (RDFNode)o);
-        } else {
-            if(isIriType) {
-                if(!String.class.isAssignableFrom(paramType)) {
-                    // TODO Change to warning
-                    throw new RuntimeException("@IriType annotation requires String type");
-                }
-                result = (p, isFwd) -> (s, o) -> ResourceUtils.updateProperty(s, p, isFwd, (NodeMapper)NodeMappers.uriString, o);
-            } else {
-                RDFDatatype dtype = typeMapper.getTypeByClass(paramType);
-
-                if(dtype != null) {
-                    // TODO Ensure isFwd is true
-                    result = (p, isFwd) -> (s, o) -> ResourceUtils.updateLiteralProperty(s, p, (Class)paramType, o);
-                }
-            }
-        }
-
-        return result;
-    }
+//    @SuppressWarnings("unchecked")
+//    public static BiFunction<Property, Boolean, BiConsumer<Resource, Object>> viewAsScalarSetterOld(
+//            MethodDescriptor methodDescriptor,
+//            Class<?> effectiveType,
+//            boolean isIriType,
+//            TypeMapper typeMapper,
+//            TypeDecider typeDecider) {
+//        // Strict setters return void, but e.g. in the case of fluent APIs return types may vary
+//
+//        BiFunction<Property, Boolean, BiConsumer<Resource, Object>> result = null;
+//        //Method m = methodDescriptor.getMethod();
+//
+//        Class<?> paramType = effectiveType; //methodDescriptor.getType();
+//
+//        //Class<?>[] paramTypes = m.getParameterTypes();
+//
+//        if(RDFNode.class.isAssignableFrom(paramType)) {
+////				@SuppressWarnings("unchecked")
+////				Class<? extends RDFNode> rdfType = (Class<? extends RDFNode>)paramType;
+//            result = (p, isFwd) -> (s, o) -> ResourceUtils.setProperty(s, p, isFwd, (RDFNode)o);
+//        } else {
+//            if(isIriType) {
+//                if(!String.class.isAssignableFrom(paramType)) {
+//                    // TODO Change to warning
+//                    throw new RuntimeException("@IriType annotation requires String type");
+//                }
+//                result = (p, isFwd) -> (s, o) -> ResourceUtils.updateProperty(s, p, isFwd, (NodeMapper)NodeMappers.uriString, o);
+//            } else {
+//                RDFDatatype dtype = typeMapper.getTypeByClass(paramType);
+//
+//                if(dtype != null) {
+//                    // TODO Ensure isFwd is true
+//                    result = (p, isFwd) -> (s, o) -> ResourceUtils.updateLiteralProperty(s, p, (Class)paramType, o);
+//                }
+//            }
+//        }
+//
+//        return result;
+//    }
 
     public static String deriveBeanPropertyName(String methodName) {
         // TODO Check whether the subsequent character is upper case
@@ -1115,9 +1126,17 @@ public class MapperProxyUtils {
             PrefixMapping pm,
             TypeDecider typeDecider) {
 
+
+        // TODO Implement me. The global hash id processor does a lookup for the appropriate
+        // class descriptor of the RDFNode's type and passes the id computation to the appropriate local ones
+        BiFunction<RDFNode, HashIdCxt, HashCode> globalHashIdProcessor = null;
+
+
         // The map of implementations to be populated
         Map<Method, BiFunction<Object, Object[], Object>> methodImplMap = new LinkedHashMap<>();
 
+
+        Map<String, BiConsumer<Object, HashIdCxt>> propertyToHashIdProcessor = new LinkedHashMap<>();
 
         // Search for methods with @Iri annotation
         // getter pattern: any x()
@@ -1294,7 +1313,7 @@ public class MapperProxyUtils {
             boolean isHashId = isReadHashId || isWriteHashId;
             boolean isFwd = !isInverse;
 
-
+            BiConsumer<Resource, HashIdCxt> hashIdProcessor = null;
 
             Property p = ResourceFactory.createProperty(path.getNode().getURI());
 //System.out.println(p);
@@ -1338,7 +1357,7 @@ public class MapperProxyUtils {
 
 
                     if(isDynamicGetter) {
-                        Function<Class<?>, Function<Property, Function<Resource, Object>>> collectionGetter;
+                        Function<Class<?>, BiFunction<Property, Boolean, Function<Resource, Object>>> collectionGetter;
                         if(isSetType) {
                             collectionGetter = viewAsDynamicSet(readMethod, isIriType, polymorphicOnly, typeMapper, typeDecider);
                         } else if(isListType) {
@@ -1351,19 +1370,32 @@ public class MapperProxyUtils {
                         if(collectionGetter != null) {
                             readImpl = (o, args) -> {
                                 Class<?> clz = Objects.requireNonNull((Class<?>)args[0]);
-                                Function<Property, Function<Resource, Object>> ps = collectionGetter.apply(clz);
-                                Function<Resource, Object> s = ps.apply(p);
+                                BiFunction<Property, Boolean, Function<Resource, Object>> ps = collectionGetter.apply(clz);
+                                Function<Resource, Object> s = ps.apply(p, isFwd);
                                 Object r = s.apply((Resource)o);
                                 return r;
                             };
 
                             methodImplMap.put(readMethod, readImpl);
+
+
+                            if(isHashId) {
+//                                hashIdProcessor = (res, cxt) -> createPropertyHashIdProcessor(
+//                                    globalHashIdProcessor,
+//                                    path,
+//                                    isListType,
+//                                    () -> {
+//                                        Object rawCol = readImpl.apply(res, new Object[] {effectiveItemType});
+//                                        Collection<? extends RDFNode> col = (Collection<? extends RDFNode>)rawCol;
+//                                        return col;
+//                                    });
+                            }
                         }
 
 
 //							throw new RuntimeException("todo dynamic collection support implement");
                     } else { // Non-dynamic collection handling
-                        Function<Property, Function<Resource, Object>>  collectionView;
+                        BiFunction<Property, Boolean, Function<Resource, Object>>  collectionView;
                         if(isListType) {
                             collectionView = viewAsList(readMethod, isIriType, polymorphicOnly, effectiveItemType, typeMapper, typeDecider);
                         } else if(isSetType) {
@@ -1373,9 +1405,21 @@ public class MapperProxyUtils {
                         }
 
 
-                        Function<Resource, Object> raw = collectionView.apply(p);
+                        Function<Resource, Object> raw = collectionView.apply(p, isFwd);
                         readImpl = (s, args) -> raw.apply((Resource)s);
                         methodImplMap.put(readMethod, readImpl);
+
+                        if(isHashId) {
+                            // TODO View ned the raw RDFNode-based list/set view with the
+                            // java-mapping-induced filtering but without the mapping applied
+
+
+//                            hashIdProcessor = (res, cxt) -> createPropertyHashIdProcessor(path, () -> {
+//                                Object rawCol = readImpl.apply(res, new Object[] {effectiveItemType});
+//                                Collection<? extends RDFNode> col = (Collection<? extends RDFNode>)rawCol;
+//                                return col;
+//                            }, isListType);
+                        }
 
 
                         // Implement write methods based on the read method
@@ -1455,6 +1499,15 @@ public class MapperProxyUtils {
                         Function<Resource, Object> g = getter.apply(p, isFwd);
                         methodImplMap.put(readMethod, (o, args) -> g.apply((Resource)o));
                     }
+
+                    if(isHashId) {
+//                        hashIdProcessor = (res, cxt) -> createPropertyHashIdProcessor(path, () -> {
+//                            Object rawCol = readImpl.apply(res, new Object[] {effectiveItemType});
+//                            Collection<? extends RDFNode> col = (Collection<? extends RDFNode>)rawCol;
+//                            return col;
+//                        }, isListType);
+                    }
+
 
                     if(writeMethod != null) {
 
@@ -1792,9 +1845,9 @@ public class MapperProxyUtils {
         Class<?> clazz = root.getClass();
 
         DepGraph depGraph = null;
-        ClassDesc cd = depGraph.getOrCreate(clazz);
+        ClassDescriptor cd = depGraph.getOrCreate(clazz);
 
-        for(PropertyDesc pd : cd.getPropertyDescs()) {
+        for(PropertyDescriptor pd : cd.getPropertyDescs()) {
             if(pd.isHashId()) {
 //        		pd.getProperty()) {
 //        			root.getP
@@ -1817,5 +1870,33 @@ public class MapperProxyUtils {
         }
 
         return null;
+    }
+
+
+    public static BiFunction<RDFNode, HashIdCxt, HashCode> createPropertyHashIdProcessor(
+            BiFunction<RDFNode, HashIdCxt, HashCode> globalHashProcessor,
+            P_Path0 path,
+            boolean isOrdered,
+            Supplier<Collection<? extends RDFNode>> valuesSupplier)
+    {
+        return (rdfNode, cxt) -> {
+            cxt.declareVisit(rdfNode);
+
+            Collection<? extends RDFNode> col = valuesSupplier.get();
+            int size = col.size();
+            List<HashCode> contribs = new ArrayList<>(size);
+            for(RDFNode item : col) {
+                HashCode contrib = globalHashProcessor.apply(item, cxt);
+                contribs.add(contrib);
+            }
+
+            HashCode hc = isOrdered
+                    ? Hashing.combineOrdered(contribs)
+                    : Hashing.combineUnordered(contribs);
+
+            cxt.putHash(rdfNode, hc);
+
+            return hc;
+        };
     }
 }

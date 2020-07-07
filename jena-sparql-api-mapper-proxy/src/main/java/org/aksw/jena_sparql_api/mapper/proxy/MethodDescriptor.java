@@ -4,6 +4,19 @@ import java.lang.reflect.Method;
 import java.util.Map.Entry;
 
 public interface MethodDescriptor {
+
+//	boolean isCollection();
+//	boolean isScalar();
+//	boolean isMap();
+//	MethodDescriptorCollection asCollection();
+//	MethodDescriptorSimple asScalar();
+//	MethodDescriptorMap asMap();
+
+    /**
+     * The method described by this descriptor
+     *
+     * @return
+     */
     Method getMethod();
 
     boolean isGetter();
@@ -15,9 +28,13 @@ public interface MethodDescriptor {
     default boolean isSetter() { return !isGetter(); }
     boolean isCollectionValued();
 
-    // For signatures where the item type is dynamic based on a given class:
-    // <T extends RDFNode> Collection<T> get(Class<T> clazz)
-    // Only applies if isCollectionValued is true
+    /**
+     * For signatures where the item type is dynamic based on a given class:
+     * <T extends RDFNode> Collection<T> get(Class<T> clazz)
+     * Only applies if isCollectionValued is true
+     *
+     * @return
+     */
     boolean isDynamicCollection();
 
     Class<?> getType();

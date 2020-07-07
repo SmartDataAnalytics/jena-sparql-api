@@ -177,7 +177,7 @@ public class TestDynamicRDFNodeViews {
 
 
         Converter<RDFNode, ?> converter = new ConverterFromRDFNodeMapper<>(mapper);
-        Collection<?> col = new CollectionFromConverter<>(backend, converter);
+        Collection<?> col = CollectionFromConverter.createSafe(backend, converter);
 
         for(Object o : col) {
             System.out.println(o + " -> " + o.getClass());

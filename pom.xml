@@ -118,7 +118,7 @@
 
 		<spring.version>4.3.23.RELEASE</spring.version>
 		<spring.batch.version>4.0.0.RELEASE</spring.batch.version>
-		<aksw.commons.version>0.8.13</aksw.commons.version>
+		<aksw.commons.version>0.8.14-SNAPSHOT</aksw.commons.version>
 
 		<!-- <atmosphere.version>2.0.0.RC3</atmosphere.version> -->
 		<!-- <atmosphere-spring.version>1.1.0.RC5</atmosphere-spring.version> -->
