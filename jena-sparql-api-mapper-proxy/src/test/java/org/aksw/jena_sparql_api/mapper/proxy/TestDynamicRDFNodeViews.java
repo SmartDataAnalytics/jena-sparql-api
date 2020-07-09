@@ -6,7 +6,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-import org.aksw.commons.accessors.CollectionFromConverter;
+import org.aksw.commons.collections.ConvertingCollection;
 import org.aksw.commons.collections.sets.SetFromCollection;
 import org.aksw.jena_sparql_api.mapper.annotation.IriNs;
 import org.aksw.jena_sparql_api.mapper.annotation.PolymorphicOnly;
@@ -177,7 +177,7 @@ public class TestDynamicRDFNodeViews {
 
 
         Converter<RDFNode, ?> converter = new ConverterFromRDFNodeMapper<>(mapper);
-        Collection<?> col = CollectionFromConverter.createSafe(backend, converter);
+        Collection<?> col = ConvertingCollection.createSafe(backend, converter);
 
         for(Object o : col) {
             System.out.println(o + " -> " + o.getClass());

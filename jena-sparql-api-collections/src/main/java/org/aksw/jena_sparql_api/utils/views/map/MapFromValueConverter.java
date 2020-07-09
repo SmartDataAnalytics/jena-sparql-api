@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-import org.aksw.commons.accessors.CollectionFromConverter;
+import org.aksw.commons.collections.ConvertingCollection;
 import org.aksw.commons.collections.sets.SetFromCollection;
 
 import com.google.common.base.Converter;
@@ -51,7 +51,7 @@ public class MapFromValueConverter<K, U, V>
 	
 	@Override
 	public Collection<V> values() {
-		return new CollectionFromConverter<>(map.values(), converter);
+		return new ConvertingCollection<>(map.values(), converter);
 	}
 
 	// public static <K, L> Entry<L, V> transform(Entry<K, V>, Function<? super K, ?
@@ -60,7 +60,7 @@ public class MapFromValueConverter<K, U, V>
 	@Override
 	public Set<Entry<K, V>> entrySet() {
 		return new SetFromCollection<>(
-				new CollectionFromConverter<>(map.entrySet(), EntryConverterByKey.converterByValue(converter)));
+				new ConvertingCollection<>(map.entrySet(), EntryConverterByKey.converterByValue(converter)));
 	}
 
 }

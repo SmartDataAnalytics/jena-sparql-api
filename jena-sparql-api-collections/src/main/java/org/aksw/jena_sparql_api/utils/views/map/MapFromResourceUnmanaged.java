@@ -5,7 +5,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.BiFunction;
 
-import org.aksw.commons.accessors.CollectionFromConverter;
+import org.aksw.commons.collections.ConvertingCollection;
 import org.aksw.commons.collections.sets.SetFromCollection;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.RelationUtils;
@@ -174,7 +174,7 @@ public class MapFromResourceUnmanaged
 
         Set<Entry<RDFNode, Resource>> result =
             new SetFromCollection<>(
-                new CollectionFromConverter<>(
+                new ConvertingCollection<>(
                     new SetFromPropertyValues<>(subject, entryProperty, Resource.class),
                     converter));
 

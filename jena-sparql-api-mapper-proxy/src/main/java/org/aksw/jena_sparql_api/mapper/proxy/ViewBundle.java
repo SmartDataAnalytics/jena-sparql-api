@@ -1,20 +1,16 @@
 package org.aksw.jena_sparql_api.mapper.proxy;
 
 import java.util.Collection;
-import java.util.function.BiFunction;
-import java.util.function.Function;
 
-import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
-import org.apache.jena.rdf.model.Resource;
 
 public class ViewBundle {
     /**
      * The raw yield yields the set of RDFNodes that back the java view
-     * (predicate, isFwd) -> (subject -> rdfObjects)
+     * (predicate, isFwd) -> (subject -> collectionOfRdfNodes)
      *
      */
-    public BiFunction<Property, Boolean, Function<Resource, Collection<RDFNode>>> rawView;
+    protected Collection<RDFNode> rawView;
 
     /**
      * The function that yields the appropriate java type
@@ -22,13 +18,22 @@ public class ViewBundle {
      *
      * @return
      */
-    public BiFunction<Property, Boolean, Function<Resource, Object>> javaView;
+    protected Object javaView;
 
 
-    public ViewBundle(BiFunction<Property, Boolean, Function<Resource, Collection<RDFNode>>> rawView,
-            BiFunction<Property, Boolean, Function<Resource, Object>> javaView) {
+    public ViewBundle(Collection<RDFNode> rawView, Object javaView) {
         super();
         this.rawView = rawView;
         this.javaView = javaView;
+    }
+
+
+    public Collection<RDFNode> getRawView() {
+        return rawView;
+    }
+
+
+    public Object getJavaView() {
+        return javaView;
     }
 }

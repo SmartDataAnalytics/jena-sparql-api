@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -28,10 +29,10 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import org.aksw.commons.accessors.CollectionFromConverter;
-import org.aksw.commons.accessors.CollectionFromPredicate;
-import org.aksw.commons.accessors.ConverterUtils;
-import org.aksw.commons.accessors.ListFromConverter;
+import org.aksw.commons.collections.MutableCollectionViews;
+import org.aksw.commons.collections.ConvertingCollection;
+import org.aksw.commons.collections.ConvertingList;
+import org.aksw.commons.collections.ConvertingSet;
 import org.aksw.commons.collections.sets.SetFromCollection;
 import org.aksw.jena_sparql_api.mapper.annotation.HashId;
 import org.aksw.jena_sparql_api.mapper.annotation.Inverse;
@@ -54,7 +55,6 @@ import org.aksw.jena_sparql_api.rdf.collections.NodeMappers;
 import org.aksw.jena_sparql_api.rdf.collections.RDFNodeMapper;
 import org.aksw.jena_sparql_api.rdf.collections.RDFNodeMappers;
 import org.aksw.jena_sparql_api.rdf.collections.ResourceUtils;
-import org.aksw.jena_sparql_api.rdf.collections.SetFromMappedPropertyValues;
 import org.aksw.jena_sparql_api.rdf.collections.SetFromPropertyValues;
 import org.aksw.jena_sparql_api.utils.views.map.MapFromKeyConverter;
 import org.aksw.jena_sparql_api.utils.views.map.MapFromResource;
@@ -251,11 +251,11 @@ public class MapperProxyUtils {
      * @param typeMapper
      * @return
      */
-    public static Function<Class<?>, BiFunction<Property, Boolean, Function<Resource, Object>>>
+    public static Function<Class<?>, BiFunction<Property, Boolean, Function<Resource, ViewBundle>>>
         viewAsDynamicSet(Method m, boolean isIriType, boolean polymorphicOnly, TypeMapper typeMapper, TypeDecider typeDecider)
     {
 //
-        Function<Class<?>, BiFunction<Property, Boolean, Function<Resource, Object>>> result = null;
+        Function<Class<?>, BiFunction<Property, Boolean, Function<Resource, ViewBundle>>> result = null;
 //
 //		// Check for subClassOf List
 //		Class<?> baseItemType = canActAsCollectionView(m, List.class, true, null);
@@ -279,10 +279,10 @@ public class MapperProxyUtils {
     }
 
 
-    public static Function<Class<?>, BiFunction<Property, Boolean, Function<Resource, Object>>>
+    public static Function<Class<?>, BiFunction<Property, Boolean, Function<Resource, ViewBundle>>>
         viewAsDynamicList(Method m, boolean isIriType, boolean polymorphicOnly, TypeMapper typeMapper, TypeDecider typeDecider)
     {
-        Function<Class<?>, BiFunction<Property, Boolean, Function<Resource, Object>>> result = null;
+        Function<Class<?>, BiFunction<Property, Boolean, Function<Resource, ViewBundle>>> result = null;
 
         // Check for superClassOfSet
         Class<?> baseItemType = canActAsCollectionView(m, List.class, true, null);
@@ -296,31 +296,37 @@ public class MapperProxyUtils {
     }
 
 
-    public static BiFunction<Property, Boolean, Function<Resource, Object>> viewAsSet(
+    public static BiFunction<Property, Boolean, Function<Resource, ViewBundle>> viewAsSet(
             Method m,
             boolean isIriType,
             boolean polymorphicOnly,
             Class<?> itemType,
             TypeMapper typeMapper,
             TypeDecider typeDecider) {
-        BiFunction<Property, Boolean, Function<Resource, Object>> result = null;
+        BiFunction<Property, Boolean, Function<Resource, ViewBundle>> result = null;
 
 //		boolean isIriType = m.getAnnotation(IriType.class) != null;
+
         if(String.class.isAssignableFrom(itemType) && isIriType) {
-            result = (p, isFwd) -> s -> new SetFromMappedPropertyValues<>(s, p, isFwd, NodeMappers.uriString);
+
+            // TODO SetFromMappedPropertyValues does both filter/transform. Disentangle...
+            result = (p, isFwd) -> s -> createViewBundleFromSetAndConverter(
+                        new SetFromPropertyValues<>(s, p, isFwd, RDFNode.class),
+                        new ConverterFromNodeMapperAndModel<>(
+                                s.getModel(),
+                                RDFNode.class,
+                                new ConverterFromNodeMapper<>(NodeMappers.uriString)),
+                        false);
+
+                //new SetFromMappedPropertyValues<>(s, p, isFwd, NodeMappers.uriString);
         } else {
             RDFNodeMapper<?> rdfNodeMapper = RDFNodeMappers.from(itemType, typeMapper, typeDecider, polymorphicOnly, false);
 
-            result = (p, isFwd) -> s -> {
-                Converter<RDFNode, ?> converter = new ConverterFromRDFNodeMapper<>(rdfNodeMapper);
-
-                return new SetFromCollection<>(
-                        new CollectionFromConverter<>(
-                                new CollectionFromPredicate<>(
-                                    new SetFromPropertyValues<>(s, p, isFwd, RDFNode.class),
-                                    ConverterUtils.createPredicate(converter)::test),
-                                converter));
-            };
+            result = (p, isFwd) -> s ->
+                createViewBundleFromSetAndConverter(
+                        new SetFromPropertyValues<>(s, p, isFwd, RDFNode.class),
+                        new ConverterFromRDFNodeMapper<>(rdfNodeMapper),
+                        false);
         }
 
         return result;
@@ -382,28 +388,69 @@ public class MapperProxyUtils {
 
 
     // TODO Throw an exception if used with isFwd=false
-    public static BiFunction<Property, Boolean, Function<Resource, Object>>
+    public static BiFunction<Property, Boolean, Function<Resource, ViewBundle>>
         viewAsList(Method m, boolean isIriType, boolean polymorphicOnly, Class<?> itemType, TypeMapper typeMapper, TypeDecider typeDecider)
     {
-        BiFunction<Property, Boolean, Function<Resource, Object>> result = null;
+        BiFunction<Property, Boolean, Function<Resource, ViewBundle>> result = null;
 
     //	boolean isIriType = m.getAnnotation(IriType.class) != null;
         if(String.class.isAssignableFrom(itemType) && isIriType) {
-            result = (p, isFwd) -> s ->
-                new ListFromConverter<String, RDFNode>(
-                        new ListFromRDFList(s, p),
-                        new ConverterFromNodeMapperAndModel<>(s.getModel(), RDFNode.class, new ConverterFromNodeMapper<>(NodeMappers.uriString)));
+            result = (p, isFwd) -> s -> createViewBundleFromListAndConverter(
+                    new ListFromRDFList(s, p),
+                    new ConverterFromNodeMapperAndModel<>(
+                            s.getModel(),
+                            RDFNode.class,
+                            new ConverterFromNodeMapper<>(NodeMappers.uriString)));
         } else {
             RDFNodeMapper<?> rdfNodeMapper = RDFNodeMappers.from(itemType, typeMapper, typeDecider, polymorphicOnly, false);
 
-            result = (p, isFwd) -> s -> new ListFromConverter<>(
+            result = (p, isFwd) -> s -> createViewBundleFromListAndConverter(
                     new ListFromRDFList(s, p),
-                    new ConverterFromRDFNodeMapper<>(rdfNodeMapper));//new SetFromPropertyValues<>(s, p, rdfType);
+                    new ConverterFromRDFNodeMapper<>(rdfNodeMapper));
         }
 
         return result;
     }
 
+
+    public static ViewBundle createViewBundleFromListAndConverter(List<RDFNode> list, Converter<RDFNode, ?> converter) {
+        List<RDFNode> rawView = MutableCollectionViews.filteringList(list, converter);
+
+        List<?> javaView = new ConvertingList<>(
+            rawView,
+            converter);//new SetFromPropertyValues<>(s, p, rdfType);
+
+        return new ViewBundle(rawView, javaView);
+    }
+
+    /**
+     *
+     * @param set
+     * @param converter
+     * @param isInjectiveConversion Whether the converter is injective.
+     *        If it is not then additional wrapping is performed to ensure set nature.
+     * @return
+     */
+    public static ViewBundle createViewBundleFromSetAndConverter(
+            Set<RDFNode> set,
+            Converter<RDFNode, ?> converter,
+            boolean isInjectiveConversion) {
+        Set<RDFNode> rawView = MutableCollectionViews.filteringSet(set, converter);
+
+        Set<?> javaView;
+        if(isInjectiveConversion) {
+            javaView = new ConvertingSet<>(
+                    rawView,
+                    converter);//new SetFromPropertyValues<>(s, p, rdfType);
+        } else {
+            javaView = new SetFromCollection<>(
+                    new ConvertingCollection<>(
+                            rawView,
+                            converter));
+        }
+
+        return new ViewBundle(rawView, javaView);
+    }
 
 //    public static Function<Property, Function<Resource, Object>>
 //        viewAsListOld(Method m, boolean isIriType, TypeMapper typeMapper, Class<?> itemType)
@@ -641,27 +688,38 @@ public class MapperProxyUtils {
     }
 
 
-    public static BiFunction<Property, Boolean, Function<Resource, Object>> viewAsScalarGetter(
+    public static BiFunction<Property, Boolean, Function<Resource, ViewBundle>> viewAsScalarGetter(
             MethodDescriptor methodDescriptor,
             Class<?> effectiveType,
             boolean isIriType,
             boolean polymorphicOnly,
             TypeMapper typeMapper,
             TypeDecider typeDecider) {
-        BiFunction<Property, Boolean, Function<Resource, Object>> result = null;
+        BiFunction<Property, Boolean, Function<Resource, ViewBundle>> result = null;
 
         if(methodDescriptor.isGetter()) {
-            if(isIriType) {
-                if(!String.class.isAssignableFrom(effectiveType)) {
-                    // TODO Change to warning
-                    throw new RuntimeException("@IriType annotation requires String type");
-                }
+            BiFunction<Property, Boolean, Function<Resource, ViewBundle>> setView = viewAsSet(methodDescriptor.getMethod(), isIriType, polymorphicOnly, effectiveType, typeMapper, typeDecider);
 
-                result = (p, isFwd) -> s -> ResourceUtils.getPropertyValue(s, p, isFwd, NodeMappers.uriString);
-            } else {
-                RDFNodeMapper<?> rdfNodeMapper = RDFNodeMappers.from(effectiveType, typeMapper, typeDecider, polymorphicOnly, false);
-                result = (p, isFwd) -> s -> ResourceUtils.getPropertyValue(s, p, isFwd, (RDFNodeMapper)rdfNodeMapper);
-            }
+            result = (p, isFwd) -> s -> {
+                ViewBundle viewBundle = setView.apply(p, isFwd).apply(s);
+
+                Set<?> set = (Set<?>)viewBundle.getJavaView();
+                Iterator<?> it = set.iterator();
+                Object r = it.hasNext() ? it.next() : null;
+
+                return new ViewBundle(viewBundle.getRawView(), r);
+            };
+//            if(isIriType) {
+//                if(!String.class.isAssignableFrom(effectiveType)) {
+//                    // TODO Change to warning
+//                    throw new RuntimeException("@IriType annotation requires String type");
+//                }
+//
+//                result = (p, isFwd) -> s -> ResourceUtils.getPropertyValue(s, p, isFwd, NodeMappers.uriString);
+//            } else {
+//                RDFNodeMapper<?> rdfNodeMapper = RDFNodeMappers.from(effectiveType, typeMapper, typeDecider, polymorphicOnly, false);
+//                result = (p, isFwd) -> s -> ResourceUtils.getPropertyValue(s, p, isFwd, (RDFNodeMapper)rdfNodeMapper);
+//            }
         }
 
         return result;
@@ -919,23 +977,33 @@ public class MapperProxyUtils {
             TypeDecider typeDecider) {
         // Strict setters return void, but e.g. in the case of fluent APIs return types may vary
 
-        BiFunction<Property, Boolean, BiConsumer<Resource, Object>> result = null;
-        Class<?> paramType = effectiveType; //methodDescriptor.getType();
+        BiFunction<Property, Boolean, Function<Resource, ViewBundle>> setView = viewAsSet(methodDescriptor.getMethod(), isIriType, polymorphicOnly, effectiveType, typeMapper, typeDecider);
 
-        if(isIriType) {
-            if(!String.class.isAssignableFrom(paramType)) {
-                // TODO Change to warning
-                throw new RuntimeException("@IriType annotation requires String type");
-            }
-            result = (p, isFwd) -> (s, o) -> ResourceUtils.updateProperty(s, p, isFwd, (NodeMapper)NodeMappers.uriString, o);
-        } else {
-            RDFNodeMapper<?> rdfNodeMapper = RDFNodeMappers.from(effectiveType, typeMapper, typeDecider, polymorphicOnly, false);
+        BiFunction<Property, Boolean, BiConsumer<Resource, Object>> result = (p, isFwd) -> (s, o) -> {
+            ViewBundle viewBundle = setView.apply(p, isFwd).apply(s);
 
-            result = (p, isFwd) -> (s, o) -> ResourceUtils.updateProperty(s, p, isFwd, (RDFNodeMapper)rdfNodeMapper, o);
-        }
+            Set set = (Set)viewBundle.getJavaView();
+            set.clear();
+            set.add(o);
+        };
 
         return result;
     }
+
+//  Class<?> paramType = effectiveType; //methodDescriptor.getType();
+//
+//  if(isIriType) {
+//      if(!String.class.isAssignableFrom(paramType)) {
+//          // TODO Change to warning
+//          throw new RuntimeException("@IriType annotation requires String type");
+//      }
+//      result = (p, isFwd) -> (s, o) -> ResourceUtils.updateProperty(s, p, isFwd, (NodeMapper)NodeMappers.uriString, o);
+//  } else {
+//      RDFNodeMapper<?> rdfNodeMapper = RDFNodeMappers.from(effectiveType, typeMapper, typeDecider, polymorphicOnly, false);
+//
+//      result = (p, isFwd) -> (s, o) -> ResourceUtils.updateProperty(s, p, isFwd, (RDFNodeMapper)rdfNodeMapper, o);
+//  }
+//
 
 //    @SuppressWarnings("unchecked")
 //    public static BiFunction<Property, Boolean, BiConsumer<Resource, Object>> viewAsScalarSetterOld(
@@ -1357,7 +1425,7 @@ public class MapperProxyUtils {
 
 
                     if(isDynamicGetter) {
-                        Function<Class<?>, BiFunction<Property, Boolean, Function<Resource, Object>>> collectionGetter;
+                        Function<Class<?>, BiFunction<Property, Boolean, Function<Resource, ViewBundle>>> collectionGetter;
                         if(isSetType) {
                             collectionGetter = viewAsDynamicSet(readMethod, isIriType, polymorphicOnly, typeMapper, typeDecider);
                         } else if(isListType) {
@@ -1370,9 +1438,10 @@ public class MapperProxyUtils {
                         if(collectionGetter != null) {
                             readImpl = (o, args) -> {
                                 Class<?> clz = Objects.requireNonNull((Class<?>)args[0]);
-                                BiFunction<Property, Boolean, Function<Resource, Object>> ps = collectionGetter.apply(clz);
-                                Function<Resource, Object> s = ps.apply(p, isFwd);
-                                Object r = s.apply((Resource)o);
+                                BiFunction<Property, Boolean, Function<Resource, ViewBundle>> ps = collectionGetter.apply(clz);
+                                Function<Resource, ViewBundle> s = ps.apply(p, isFwd);
+                                ViewBundle v = s.apply((Resource)o);
+                                Object r = v.getJavaView();
                                 return r;
                             };
 
@@ -1395,7 +1464,7 @@ public class MapperProxyUtils {
 
 //							throw new RuntimeException("todo dynamic collection support implement");
                     } else { // Non-dynamic collection handling
-                        BiFunction<Property, Boolean, Function<Resource, Object>>  collectionView;
+                        BiFunction<Property, Boolean, Function<Resource, ViewBundle>>  collectionView;
                         if(isListType) {
                             collectionView = viewAsList(readMethod, isIriType, polymorphicOnly, effectiveItemType, typeMapper, typeDecider);
                         } else if(isSetType) {
@@ -1405,8 +1474,8 @@ public class MapperProxyUtils {
                         }
 
 
-                        Function<Resource, Object> raw = collectionView.apply(p, isFwd);
-                        readImpl = (s, args) -> raw.apply((Resource)s);
+                        Function<Resource, ViewBundle> raw = collectionView.apply(p, isFwd);
+                        readImpl = (s, args) -> raw.apply((Resource)s).getJavaView();
                         methodImplMap.put(readMethod, readImpl);
 
                         if(isHashId) {
@@ -1494,10 +1563,10 @@ public class MapperProxyUtils {
                     }
 
                     // Scalar case
-                    BiFunction<Property, Boolean, Function<Resource, Object>> getter = viewAsScalarGetter(readMethodDescriptor, effectiveType, isIriType, polymorphicOnly, typeMapper, typeDecider);
+                    BiFunction<Property, Boolean, Function<Resource, ViewBundle>> getter = viewAsScalarGetter(readMethodDescriptor, effectiveType, isIriType, polymorphicOnly, typeMapper, typeDecider);
                     if(getter != null) {
-                        Function<Resource, Object> g = getter.apply(p, isFwd);
-                        methodImplMap.put(readMethod, (o, args) -> g.apply((Resource)o));
+                        Function<Resource, ViewBundle> g = getter.apply(p, isFwd);
+                        methodImplMap.put(readMethod, (o, args) -> g.apply((Resource)o).getJavaView());
                     }
 
                     if(isHashId) {

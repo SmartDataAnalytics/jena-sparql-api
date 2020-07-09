@@ -6,7 +6,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.BiFunction;
 
-import org.aksw.commons.accessors.CollectionFromConverter;
+import org.aksw.commons.collections.ConvertingCollection;
 import org.aksw.commons.collections.SinglePrefetchIterator;
 import org.aksw.commons.collections.sets.SetFromCollection;
 import org.aksw.jena_sparql_api.concepts.Concept;
@@ -179,7 +179,7 @@ public class MapFromResource
 
         Set<Entry<RDFNode, RDFNode>> result =
             new SetFromCollection<>(
-                new CollectionFromConverter<>(
+                new ConvertingCollection<>(
                     new SetFromPropertyValues<Resource>(subject, entryProperty, Resource.class) {
                         public Iterator<Resource> iterator() {
                             Iterator<Resource> baseIt = super.iterator();
