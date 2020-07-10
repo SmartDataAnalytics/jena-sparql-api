@@ -11,6 +11,7 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.lang.reflect.WildcardType;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -29,10 +30,10 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import org.aksw.commons.collections.MutableCollectionViews;
 import org.aksw.commons.collections.ConvertingCollection;
 import org.aksw.commons.collections.ConvertingList;
 import org.aksw.commons.collections.ConvertingSet;
+import org.aksw.commons.collections.MutableCollectionViews;
 import org.aksw.commons.collections.sets.SetFromCollection;
 import org.aksw.jena_sparql_api.mapper.annotation.HashId;
 import org.aksw.jena_sparql_api.mapper.annotation.Inverse;
@@ -42,24 +43,24 @@ import org.aksw.jena_sparql_api.mapper.annotation.IriType;
 import org.aksw.jena_sparql_api.mapper.annotation.PolymorphicOnly;
 import org.aksw.jena_sparql_api.mapper.annotation.ToString;
 import org.aksw.jena_sparql_api.mapper.hashid.ClassDescriptor;
-import org.aksw.jena_sparql_api.mapper.hashid.DepGraph;
-import org.aksw.jena_sparql_api.mapper.hashid.DepGraph.PropertyDescCollection;
 import org.aksw.jena_sparql_api.mapper.hashid.HashIdCxt;
-import org.aksw.jena_sparql_api.mapper.hashid.PropertyDescriptor;
+import org.aksw.jena_sparql_api.mapper.hashid.HashIdCxtImpl;
+import org.aksw.jena_sparql_api.mapper.hashid.Metamodel;
 import org.aksw.jena_sparql_api.rdf.collections.ConverterFromNodeMapper;
 import org.aksw.jena_sparql_api.rdf.collections.ConverterFromNodeMapperAndModel;
 import org.aksw.jena_sparql_api.rdf.collections.ConverterFromRDFNodeMapper;
 import org.aksw.jena_sparql_api.rdf.collections.ListFromRDFList;
-import org.aksw.jena_sparql_api.rdf.collections.NodeMapper;
 import org.aksw.jena_sparql_api.rdf.collections.NodeMappers;
 import org.aksw.jena_sparql_api.rdf.collections.RDFNodeMapper;
 import org.aksw.jena_sparql_api.rdf.collections.RDFNodeMappers;
 import org.aksw.jena_sparql_api.rdf.collections.ResourceUtils;
 import org.aksw.jena_sparql_api.rdf.collections.SetFromPropertyValues;
+import org.aksw.jena_sparql_api.utils.Vars;
 import org.aksw.jena_sparql_api.utils.views.map.MapFromKeyConverter;
 import org.aksw.jena_sparql_api.utils.views.map.MapFromResource;
 import org.aksw.jena_sparql_api.utils.views.map.MapFromValueConverter;
 import org.aksw.jena_sparql_api.utils.views.map.MapVocab;
+import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.jena.datatypes.RDFDatatype;
 import org.apache.jena.datatypes.TypeMapper;
@@ -67,8 +68,6 @@ import org.apache.jena.enhanced.EnhGraph;
 import org.apache.jena.ext.com.google.common.collect.Lists;
 import org.apache.jena.ext.com.google.common.collect.Maps;
 import org.apache.jena.ext.com.google.common.collect.Sets;
-import org.apache.jena.ext.com.google.common.hash.HashCode;
-import org.apache.jena.ext.com.google.common.hash.Hashing;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.rdf.model.Model;
@@ -80,6 +79,7 @@ import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdf.model.impl.ResourceImpl;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
+import org.apache.jena.riot.out.NodeFmtLib;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.path.P_Link;
 import org.apache.jena.sparql.path.P_Path0;
@@ -89,6 +89,9 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Converter;
 import com.google.common.base.Defaults;
+import com.google.common.hash.HashCode;
+import com.google.common.hash.HashFunction;
+import com.google.common.hash.Hashing;
 
 import net.sf.cglib.proxy.Enhancer;
 import net.sf.cglib.proxy.MethodInterceptor;
@@ -311,6 +314,7 @@ public class MapperProxyUtils {
 
             // TODO SetFromMappedPropertyValues does both filter/transform. Disentangle...
             result = (p, isFwd) -> s -> createViewBundleFromSetAndConverter(
+                        itemType,
                         new SetFromPropertyValues<>(s, p, isFwd, RDFNode.class),
                         new ConverterFromNodeMapperAndModel<>(
                                 s.getModel(),
@@ -324,6 +328,7 @@ public class MapperProxyUtils {
 
             result = (p, isFwd) -> s ->
                 createViewBundleFromSetAndConverter(
+                        itemType,
                         new SetFromPropertyValues<>(s, p, isFwd, RDFNode.class),
                         new ConverterFromRDFNodeMapper<>(rdfNodeMapper),
                         false);
@@ -396,6 +401,7 @@ public class MapperProxyUtils {
     //	boolean isIriType = m.getAnnotation(IriType.class) != null;
         if(String.class.isAssignableFrom(itemType) && isIriType) {
             result = (p, isFwd) -> s -> createViewBundleFromListAndConverter(
+                    itemType,
                     new ListFromRDFList(s, p),
                     new ConverterFromNodeMapperAndModel<>(
                             s.getModel(),
@@ -405,6 +411,7 @@ public class MapperProxyUtils {
             RDFNodeMapper<?> rdfNodeMapper = RDFNodeMappers.from(itemType, typeMapper, typeDecider, polymorphicOnly, false);
 
             result = (p, isFwd) -> s -> createViewBundleFromListAndConverter(
+                    itemType,
                     new ListFromRDFList(s, p),
                     new ConverterFromRDFNodeMapper<>(rdfNodeMapper));
         }
@@ -413,18 +420,24 @@ public class MapperProxyUtils {
     }
 
 
-    public static ViewBundle createViewBundleFromListAndConverter(List<RDFNode> list, Converter<RDFNode, ?> converter) {
+    public static ViewBundle createViewBundleFromListAndConverter(Class<?> itemType, List<RDFNode> list, Converter<RDFNode, ?> converter) {
         List<RDFNode> rawView = MutableCollectionViews.filteringList(list, converter);
 
         List<?> javaView = new ConvertingList<>(
             rawView,
             converter);//new SetFromPropertyValues<>(s, p, rdfType);
 
+        boolean isRdfItems = RDFNode.class.isAssignableFrom(RDFNode.class);
+        if(isRdfItems) {
+            rawView = (List<RDFNode>)javaView;
+        }
+
         return new ViewBundle(rawView, javaView);
     }
 
     /**
      *
+     * @param itemType If it is a subclass of RDFNode, the raw view already has the converter applied
      * @param set
      * @param converter
      * @param isInjectiveConversion Whether the converter is injective.
@@ -432,9 +445,13 @@ public class MapperProxyUtils {
      * @return
      */
     public static ViewBundle createViewBundleFromSetAndConverter(
+            Class<?> itemType,
             Set<RDFNode> set,
             Converter<RDFNode, ?> converter,
             boolean isInjectiveConversion) {
+
+        boolean isRdfItems = RDFNode.class.isAssignableFrom(itemType);
+
         Set<RDFNode> rawView = MutableCollectionViews.filteringSet(set, converter);
 
         Set<?> javaView;
@@ -447,6 +464,10 @@ public class MapperProxyUtils {
                     new ConvertingCollection<>(
                             rawView,
                             converter));
+        }
+
+        if(isRdfItems) {
+            rawView = (Set<RDFNode>) javaView;
         }
 
         return new ViewBundle(rawView, javaView);
@@ -1194,17 +1215,12 @@ public class MapperProxyUtils {
             PrefixMapping pm,
             TypeDecider typeDecider) {
 
-
-        // TODO Implement me. The global hash id processor does a lookup for the appropriate
-        // class descriptor of the RDFNode's type and passes the id computation to the appropriate local ones
-        BiFunction<RDFNode, HashIdCxt, HashCode> globalHashIdProcessor = null;
+        Metamodel metamodel = Metamodel.get();
+        ClassDescriptor classDescriptor = metamodel.getOrCreate(clazz);
 
 
         // The map of implementations to be populated
         Map<Method, BiFunction<Object, Object[], Object>> methodImplMap = new LinkedHashMap<>();
-
-
-        Map<String, BiConsumer<Object, HashIdCxt>> propertyToHashIdProcessor = new LinkedHashMap<>();
 
         // Search for methods with @Iri annotation
         // getter pattern: any x()
@@ -1381,9 +1397,11 @@ public class MapperProxyUtils {
             boolean isHashId = isReadHashId || isWriteHashId;
             boolean isFwd = !isInverse;
 
-            BiConsumer<Resource, HashIdCxt> hashIdProcessor = null;
 
             Property p = ResourceFactory.createProperty(path.getNode().getURI());
+
+
+
 //System.out.println(p);
             // It is only valid to have a read method without a write one
             // if it yields a collection view
@@ -1449,14 +1467,29 @@ public class MapperProxyUtils {
 
 
                             if(isHashId) {
+                                classDescriptor.registerRawAccessor(path, s -> {
+                                    BiFunction<Property, Boolean, Function<Resource, ViewBundle>> ps = collectionGetter.apply(effectiveItemType);
+                                    Function<Resource, ViewBundle> sx = ps.apply(p, isFwd);
+                                    ViewBundle v = sx.apply(s);
+                                    Collection<RDFNode> r = v.getRawView();
+                                    return r;
+                                });
+
 //                                hashIdProcessor = (res, cxt) -> createPropertyHashIdProcessor(
 //                                    globalHashIdProcessor,
 //                                    path,
-//                                    isListType,
 //                                    () -> {
-//                                        Object rawCol = readImpl.apply(res, new Object[] {effectiveItemType});
-//                                        Collection<? extends RDFNode> col = (Collection<? extends RDFNode>)rawCol;
-//                                        return col;
+//                                        // The rawView and javaView are the same
+//                                        // We could thus rely on calling the read method (backed by getJavaView)
+//                                        // but it is more coherent using getRawView
+//                                        // Object rawCol = readImpl.apply(res, new Object[] {effectiveItemType});
+//                                        // Collection<? extends RDFNode> r = (Collection<? extends RDFNode>)rawCol;
+//
+//                                        BiFunction<Property, Boolean, Function<Resource, ViewBundle>> ps = collectionGetter.apply(effectiveItemType);
+//                                        Function<Resource, ViewBundle> s = ps.apply(p, isFwd);
+//                                        ViewBundle v = s.apply(res);
+//                                        Collection<RDFNode> r = v.getRawView();
+//                                        return r;
 //                                    });
                             }
                         }
@@ -1479,23 +1512,26 @@ public class MapperProxyUtils {
                         methodImplMap.put(readMethod, readImpl);
 
                         if(isHashId) {
-                            // TODO View ned the raw RDFNode-based list/set view with the
-                            // java-mapping-induced filtering but without the mapping applied
+                            classDescriptor.registerRawAccessor(path, s -> {
+                              ViewBundle vb = raw.apply(s);
+                              Collection<? extends RDFNode> col = vb.getRawView();
+                              return col;
+                            });
 
-
-//                            hashIdProcessor = (res, cxt) -> createPropertyHashIdProcessor(path, () -> {
-//                                Object rawCol = readImpl.apply(res, new Object[] {effectiveItemType});
-//                                Collection<? extends RDFNode> col = (Collection<? extends RDFNode>)rawCol;
-//                                return col;
-//                            }, isListType);
+//                            hashIdProcessor = (res, cxt) -> createPropertyHashIdProcessor(
+//                                globalHashIdProcessor,
+//                                path,
+//                                () -> {
+//                                    ViewBundle vb = raw.apply(res);
+//                                    Collection<? extends RDFNode> col = vb.getRawView();
+//                                    return col;
+//                                });
                         }
 
 
                         // Implement write methods based on the read method
                         if(writeMethod != null) {
-
                             if(isListType || isSetType) {
-
                                 boolean returnThis = writeMethodDescriptor.isFluentCompatible();//effectiveItemType.isAssignableFrom(clazz);
 
                                 methodImplMap.put(writeMethod, (obj, args) -> {
@@ -1510,7 +1546,6 @@ public class MapperProxyUtils {
                                     Object r = returnThis ? obj: null;
                                     return r;
                                 });
-
 //								System.out.println("list type");
                             } else { //if(effectiveCollectionType.isAssignableFrom(Set.class) ||
                                     //Set.class.isAssignableFrom(effectiveCollectionType)) {
@@ -1567,16 +1602,24 @@ public class MapperProxyUtils {
                     if(getter != null) {
                         Function<Resource, ViewBundle> g = getter.apply(p, isFwd);
                         methodImplMap.put(readMethod, (o, args) -> g.apply((Resource)o).getJavaView());
-                    }
 
-                    if(isHashId) {
-//                        hashIdProcessor = (res, cxt) -> createPropertyHashIdProcessor(path, () -> {
-//                            Object rawCol = readImpl.apply(res, new Object[] {effectiveItemType});
-//                            Collection<? extends RDFNode> col = (Collection<? extends RDFNode>)rawCol;
-//                            return col;
-//                        }, isListType);
-                    }
+                        if(isHashId) {
+                            classDescriptor.registerRawAccessor(path, s -> {
+                                ViewBundle vb = g.apply(s);
+                                Collection<? extends RDFNode> col = vb.getRawView();
+                                return col;
+                              });
 
+//                            hashIdProcessor = (res, cxt) -> createPropertyHashIdProcessor(
+//                                globalHashIdProcessor,
+//                                path,
+//                                () -> {
+//                                    ViewBundle vb = g.apply(res);
+//                                    Collection<? extends RDFNode> col = vb.getRawView();
+//                                    return col;
+//                                });
+                        }
+                    }
 
                     if(writeMethod != null) {
 
@@ -1608,107 +1651,9 @@ public class MapperProxyUtils {
 
                 }
             }
-
         }
 
 
-//			if(writeMethod != null) {
-//				Function<Property, BiConsumer<Resource, Object>> setter = viewAsSetter(writeMethod, typeMapper);
-//
-//				if(setter != null) {
-//					BiConsumer<Resource, Object> s = setter.apply(p);
-//					methodImplMap.put(writeMethod, (o, args) -> {
-//						s.accept((Resource)o, args[0]);
-//
-//						// Detect fluent API style methods - i.e.
-//						// methods that return the class it is defined in or one of its super types.
-//						Object r = method.getReturnType().isAssignableFrom(clazz)
-//							? o
-//							: null;
-//
-//						return r;
-//					});
-//				}
-//
-//			}
-//
-//
-//
-//			// System.out.println("Method " + method);
-////			P_Path0 path = Optional.ofNullable(derivePathFromMethod(method, pm))
-////					.orElseGet(() -> paths.get(beanPropertyName));
-//
-//
-//		}
-//
-//
-//
-//
-//			if(path != null) {
-////				if(path != null && path.toString().contains("style")) {
-////					System.out.println("style here");
-////				}
-//
-//
-//				Function<Class<?>, Function<Property, Function<Resource, Object>>> collectionViewer = viewAsCollectionViewer(method, typeMapper);
-//				if(collectionViewer != null) {
-//					methodImplMap.put(method, (o, args) -> {
-//						Class<?> clz = Objects.requireNonNull((Class<?>)args[0]);
-//						Function<Property, Function<Resource, Object>> ps = collectionViewer.apply(clz);
-//						Function<Resource, Object> s = ps.apply(p);
-//						Object r = s.apply((Resource)o);
-//						return r;
-//					});
-//				} else {
-//
-//
-//					Function<Property, Function<Resource, Object>> getter = viewAsGetter(method, typeMapper);
-//					if(getter != null) {
-//						Function<Resource, Object> g = getter.apply(p);
-//						methodImplMap.put(method, (o, args) -> g.apply((Resource)o));
-//					} else {
-//						phaseTwoMethods.add(method);
-//					}
-//				}
-//			}
-//		}
-
-//
-//			// Check whether a method is a collection setter
-//			P_Path0 path = Optional.ofNullable(derivePathFromMethod(method, pm))
-//					.orElseGet(() -> paths.get(deriveBeanPropertyName(method.getName())));
-//
-//			if(path != null) {
-////				if(path != null && path.toString().contains("style")) {
-////					System.out.println("style here");
-////				}
-//
-//				Property p = ResourceFactory.createProperty(path.getNode().getURI());
-//
-//
-//
-//				//MethodDescriptor d = methodClassifications.get(method);
-//
-//
-//
-//				Function<Property, BiConsumer<Resource, Object>> setter = viewAsSetter(method, typeMapper);
-//
-//				if(setter != null) {
-//					BiConsumer<Resource, Object> s = setter.apply(p);
-//					methodImplMap.put(method, (o, args) -> {
-//						s.accept((Resource)o, args[0]);
-//
-//						// Detect fluent API style methods - i.e.
-//						// methods that return the class it is defined in or one of its super types.
-//						Object r = method.getReturnType().isAssignableFrom(clazz)
-//							? o
-//							: null;
-//
-//						return r;
-//					});
-//				}
-//			}
-//		}
 
         BiFunction<Node, EnhGraph, T> result;
         boolean useCgLib = true;
@@ -1789,6 +1734,11 @@ public class MapperProxyUtils {
                     return r;
                 }
             });
+
+//            Class<?> proxyClass = enhancer.createClass();
+//            Class<?> proxyClass2 = enhancer.createClass();
+//            System.out.println(proxyClass2.equals(proxyClass));
+//            metamodel.registerProxyClass(clazz, proxyClass);
 
             result = (n, g) -> {
                 Class<?>[] argTypes = new Class<?>[] {Node.class, EnhGraph.class};
@@ -1909,43 +1859,58 @@ public class MapperProxyUtils {
      * @param cxt In/out map of visited resources to assigned hash values
      * @return
      */
-    public static <T extends RDFNode> String getHashId(T root, Function<? super RDFNode, String> cxt) {
-        // Determine the class and get the appropriate mapping of that class
-        Class<?> clazz = root.getClass();
+    public static HashIdCxt getHashId(RDFNode root) {
+        HashIdCxt cxt = new HashIdCxtImpl(Hashing.sha256(), MapperProxyUtils::getHashId);
 
-        DepGraph depGraph = null;
-        ClassDescriptor cd = depGraph.getOrCreate(clazz);
+        getHashId(root, cxt);
 
-        for(PropertyDescriptor pd : cd.getPropertyDescs()) {
-            if(pd.isHashId()) {
-//        		pd.getProperty()) {
-//        			root.getP
-//        		}
+        return cxt;
+    }
 
-                pd.getIri();
-                pd.isInverse();
+    public static HashCode getHashId(RDFNode root, HashIdCxt cxt) {
+        HashCode result;
+        cxt.declareVisit(root);
 
+        HashFunction hashFn = cxt.getHashFunction();
 
-                if(pd.isCollection()) {
-                    PropertyDescCollection pdc = pd.asCollectionProperty();
-                    Collection<?> col = pdc.getValue(root);
+        if(root.isLiteral()) {
+            Node n = root.isAnon() ? Vars.x : root.asNode();
+            result = hashFn.hashString(NodeFmtLib.str(n), StandardCharsets.UTF_8);//Objects.toString(rdfNode);
+        } else {
+            Metamodel metamodel = Metamodel.get();
 
+            Class<?> clazz = root.getClass();
 
-                    if(pdc.doesOrderMatter()) {
+            List<Class<?>> scanClasses = new ArrayList<>();
+            scanClasses.add(clazz);
+            scanClasses.addAll(ClassUtils.getAllSuperclasses(clazz));
+            scanClasses.addAll(ClassUtils.getAllInterfaces(clazz));
 
-                    }
+            ClassDescriptor cd = null;
+            for(Class<?> c : scanClasses) {
+                cd = metamodel.get(c);
+                if(cd != null) {
+                    break;
                 }
+            }
+
+            if(cd != null) {
+                // NOTE Do not call root.asResource() as this will return an unproxied resource!
+                result = cd.computeHashId((Resource)root, cxt);
+            } else {
+                throw new RuntimeException("No id computation registered for " + clazz);
             }
         }
 
-        return null;
+        cxt.putHash(root, result);
+
+        return result;
     }
 
 
     public static BiFunction<RDFNode, HashIdCxt, HashCode> createPropertyHashIdProcessor(
             BiFunction<RDFNode, HashIdCxt, HashCode> globalHashProcessor,
             P_Path0 path,
-            boolean isOrdered,
             Supplier<Collection<? extends RDFNode>> valuesSupplier)
     {
         return (rdfNode, cxt) -> {
@@ -1959,7 +1924,7 @@ public class MapperProxyUtils {
                 contribs.add(contrib);
             }
 
-            HashCode hc = isOrdered
+            HashCode hc = col instanceof List
                     ? Hashing.combineOrdered(contribs)
                     : Hashing.combineUnordered(contribs);
 
@@ -1969,3 +1934,105 @@ public class MapperProxyUtils {
         };
     }
 }
+
+
+
+
+
+//if(writeMethod != null) {
+//	Function<Property, BiConsumer<Resource, Object>> setter = viewAsSetter(writeMethod, typeMapper);
+//
+//	if(setter != null) {
+//		BiConsumer<Resource, Object> s = setter.apply(p);
+//		methodImplMap.put(writeMethod, (o, args) -> {
+//			s.accept((Resource)o, args[0]);
+//
+//			// Detect fluent API style methods - i.e.
+//			// methods that return the class it is defined in or one of its super types.
+//			Object r = method.getReturnType().isAssignableFrom(clazz)
+//				? o
+//				: null;
+//
+//			return r;
+//		});
+//	}
+//
+//}
+//
+//
+//
+//// System.out.println("Method " + method);
+////P_Path0 path = Optional.ofNullable(derivePathFromMethod(method, pm))
+////		.orElseGet(() -> paths.get(beanPropertyName));
+//
+//
+//}
+//
+//
+//
+//
+//if(path != null) {
+////	if(path != null && path.toString().contains("style")) {
+////		System.out.println("style here");
+////	}
+//
+//
+//	Function<Class<?>, Function<Property, Function<Resource, Object>>> collectionViewer = viewAsCollectionViewer(method, typeMapper);
+//	if(collectionViewer != null) {
+//		methodImplMap.put(method, (o, args) -> {
+//			Class<?> clz = Objects.requireNonNull((Class<?>)args[0]);
+//			Function<Property, Function<Resource, Object>> ps = collectionViewer.apply(clz);
+//			Function<Resource, Object> s = ps.apply(p);
+//			Object r = s.apply((Resource)o);
+//			return r;
+//		});
+//	} else {
+//
+//
+//		Function<Property, Function<Resource, Object>> getter = viewAsGetter(method, typeMapper);
+//		if(getter != null) {
+//			Function<Resource, Object> g = getter.apply(p);
+//			methodImplMap.put(method, (o, args) -> g.apply((Resource)o));
+//		} else {
+//			phaseTwoMethods.add(method);
+//		}
+//	}
+//}
+//}
+
+//
+//// Check whether a method is a collection setter
+//P_Path0 path = Optional.ofNullable(derivePathFromMethod(method, pm))
+//		.orElseGet(() -> paths.get(deriveBeanPropertyName(method.getName())));
+//
+//if(path != null) {
+////	if(path != null && path.toString().contains("style")) {
+////		System.out.println("style here");
+////	}
+//
+//	Property p = ResourceFactory.createProperty(path.getNode().getURI());
+//
+//
+//
+//	//MethodDescriptor d = methodClassifications.get(method);
+//
+//
+//
+//	Function<Property, BiConsumer<Resource, Object>> setter = viewAsSetter(method, typeMapper);
+//
+//	if(setter != null) {
+//		BiConsumer<Resource, Object> s = setter.apply(p);
+//		methodImplMap.put(method, (o, args) -> {
+//			s.accept((Resource)o, args[0]);
+//
+//			// Detect fluent API style methods - i.e.
+//			// methods that return the class it is defined in or one of its super types.
+//			Object r = method.getReturnType().isAssignableFrom(clazz)
+//				? o
+//				: null;
+//
+//			return r;
+//		});
+//	}
+//}
+//}

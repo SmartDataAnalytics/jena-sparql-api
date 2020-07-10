@@ -1,5 +1,8 @@
 package org.aksw.jena_sparql_api.mapper.annotation;
 
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+
 /**
  * This is just an idea, the MapperProxyUtils annotation processor does not implement this annotation.
  *
@@ -68,6 +71,7 @@ package org.aksw.jena_sparql_api.mapper.annotation;
  * @author raven
  *
  */
+@Retention(RetentionPolicy.RUNTIME)
 public @interface HashId {
 
 }

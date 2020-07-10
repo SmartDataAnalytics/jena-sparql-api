@@ -1,6 +1,6 @@
 package org.aksw.jena_sparql_api.mapper.hashid;
 
-import org.aksw.jena_sparql_api.mapper.hashid.DepGraph.PropertyDescCollection;
+import org.aksw.jena_sparql_api.mapper.hashid.Metamodel.PropertyDescCollection;
 import org.apache.jena.rdf.model.RDFNode;
 
 import com.google.common.collect.Multimap;

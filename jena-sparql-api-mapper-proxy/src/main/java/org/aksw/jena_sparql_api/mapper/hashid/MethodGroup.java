@@ -17,13 +17,13 @@ public interface MethodGroup {
 
     MethodDescriptor getter();
     MethodDescriptor setter();
+    MethodDescriptor dynamicGetter();
 
 //    MethodDescriptor collectionAccessor();
     // E.g: .getDcatDistributions(MyDcatDist.class);
-    MethodDescriptor dynamicGetter();
 
-    MethodDescriptor collectionSetter();
-    // setFoo(List<? extends T>)
-    MethodDescriptor setSetter();
-    MethodDescriptor listSetter();
+//    MethodDescriptor collectionSetter();
+//    // setFoo(List<? extends T>)
+//    MethodDescriptor setSetter();
+//    MethodDescriptor listSetter();
 }

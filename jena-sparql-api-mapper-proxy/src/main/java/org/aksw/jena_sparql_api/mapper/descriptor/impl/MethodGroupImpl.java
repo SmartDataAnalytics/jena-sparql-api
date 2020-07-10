@@ -43,23 +43,6 @@ public class MethodGroupImpl
         return dynamicGetter;
     }
 
-    @Override
-    public MethodDescriptor collectionSetter() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public MethodDescriptor setSetter() {
-        return null;
-    }
-
-    @Override
-    public MethodDescriptor listSetter() {
-        return null;
-    }
-
-
     public void add(MethodDescriptor m) {
         // Validate that the method belongs to this group
         // clazz.isAssignableFrom().(m.getMethod().getDeclaringClass())

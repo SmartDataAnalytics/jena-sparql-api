@@ -1,9 +1,22 @@
 package org.aksw.jena_sparql_api.mapper.hashid;
 
-import org.apache.jena.ext.com.google.common.hash.HashCode;
+import java.util.function.BiFunction;
+
 import org.apache.jena.rdf.model.RDFNode;
 
+import com.google.common.hash.HashCode;
+import com.google.common.hash.HashFunction;
+
 public interface HashIdCxt {
+    BiFunction<? super RDFNode, ? super HashIdCxt, ? extends HashCode> getGlobalProcessor();
+
+    /**
+     * The hashing used in this context
+     *
+     * @return
+     */
+    HashFunction getHashFunction();
+
     /**
      * Declare a node to be visited.
      * Throws an exception if visited more than once without a hash being available.
@@ -19,6 +32,7 @@ public interface HashIdCxt {
     boolean declareVisit(RDFNode node);
 
 
-    boolean putHash(RDFNode node, HashCode hashCode);
+    // TODO A node
+    HashCode putHash(RDFNode node, HashCode hashCode);
     HashCode getHash(RDFNode node);
 }
