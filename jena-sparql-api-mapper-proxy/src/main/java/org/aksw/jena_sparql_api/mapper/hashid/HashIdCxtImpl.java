@@ -45,7 +45,7 @@ public class HashIdCxtImpl
         boolean added = seen.add(node);
 
         if(!added && !priorHash.containsKey(node)) {
-            throw new IllegalStateException("Cyclic dependency; visited this node twice: " + node);
+            throw new IllegalStateException("Cyclic dependency; visited this node twice: " + node + " "  + node.getClass());
         }
         return added;
     }
@@ -68,5 +68,16 @@ public class HashIdCxtImpl
     @Override
     public HashFunction getHashFunction() {
         return hashFn;
+    }
+
+    @Override
+    public Map<RDFNode, HashCode> getMapping() {
+        return priorHash;
+    }
+
+    @Override
+    public boolean isVisited(RDFNode node) {
+        boolean result = seen.contains(node);
+        return result;
     }
 }

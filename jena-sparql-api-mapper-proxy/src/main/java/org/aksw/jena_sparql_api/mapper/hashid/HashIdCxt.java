@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api.mapper.hashid;
 
+import java.util.Map;
 import java.util.function.BiFunction;
 
 import org.apache.jena.rdf.model.RDFNode;
@@ -32,7 +33,11 @@ public interface HashIdCxt {
     boolean declareVisit(RDFNode node);
 
 
-    // TODO A node
+    boolean isVisited(RDFNode node);
+
     HashCode putHash(RDFNode node, HashCode hashCode);
     HashCode getHash(RDFNode node);
+
+    // TODO Consider using ImmutableMap?
+    Map<RDFNode, HashCode> getMapping();
 }

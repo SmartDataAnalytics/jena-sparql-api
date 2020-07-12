@@ -23,7 +23,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
@@ -65,7 +64,6 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.apache.jena.datatypes.RDFDatatype;
 import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.enhanced.EnhGraph;
-import org.apache.jena.ext.com.google.common.collect.Lists;
 import org.apache.jena.ext.com.google.common.collect.Maps;
 import org.apache.jena.ext.com.google.common.collect.Sets;
 import org.apache.jena.graph.Node;
@@ -87,8 +85,10 @@ import org.apache.jena.sparql.path.PathParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.github.jsonldjava.shaded.com.google.common.base.Optional;
 import com.google.common.base.Converter;
 import com.google.common.base.Defaults;
+import com.google.common.collect.Lists;
 import com.google.common.hash.HashCode;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
@@ -143,8 +143,9 @@ import net.sf.cglib.proxy.Proxy;
 //
 
 /**
+ * Utility methods for generating java proxies that appropriately implement
+ * subclasses of Resource based on annotations.
  *
- * TODO IriType annotation currently has to be provided on both getter and setter
  *
  * @author Claus Stadler, Nov 29, 2018
  *
@@ -420,6 +421,18 @@ public class MapperProxyUtils {
     }
 
 
+    /**
+     * If the converter converts RDFNodes to other RDFNodes (rather than Java types),
+     * then the raw view already has the converter applied and thus the java view are the same.
+     * The assumption is that this way the RDFNodes have may be converter to sub-types managed
+     * in the mapper's meta model.
+     *
+     *
+     * @param itemType
+     * @param list
+     * @param converter
+     * @return
+     */
     public static ViewBundle createViewBundleFromListAndConverter(Class<?> itemType, List<RDFNode> list, Converter<RDFNode, ?> converter) {
         List<RDFNode> rawView = MutableCollectionViews.filteringList(list, converter);
 
@@ -1203,6 +1216,19 @@ public class MapperProxyUtils {
         return result;
     }
 
+    @SuppressWarnings("unchecked")
+    public static <T> T niceInvoke(Method method, Object target, Object ...args) {
+        T result;
+        try {
+            Object tmp = method.invoke(target, args);
+            result = (T)tmp;
+        } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+            throw new RuntimeException(e);
+        }
+
+        return result;
+    }
+
     /**
      * Method level annotations are processed into property level ones.
      *
@@ -1218,6 +1244,13 @@ public class MapperProxyUtils {
         Metamodel metamodel = Metamodel.get();
         ClassDescriptor classDescriptor = metamodel.getOrCreate(clazz);
 
+
+        boolean hasClassHashId = clazz.getAnnotation(HashId.class) != null;
+        if(hasClassHashId) {
+            P_Path0 tmp = new P_Link(NodeFactory.createURI("urn://classname"));
+            classDescriptor.registerDirectHashIdProcessor(tmp, (r, cxt) ->
+                cxt.getHashFunction().hashString(clazz.getCanonicalName(), StandardCharsets.UTF_8));
+        }
 
         // The map of implementations to be populated
         Map<Method, BiFunction<Object, Object[], Object>> methodImplMap = new LinkedHashMap<>();
@@ -1290,9 +1323,9 @@ public class MapperProxyUtils {
             String beanPropertyName = deriveBeanPropertyName(method.getName());
 
             // Skip methods not associated with a path
-            if(!paths.containsKey(beanPropertyName)) {
-                continue;
-            }
+//            if(!paths.containsKey(beanPropertyName)) {
+//                continue;
+//            }
 
             methodDescriptors.put(method, descriptor);
 
@@ -1326,14 +1359,6 @@ public class MapperProxyUtils {
 
         // Process properties
         for(String beanPropertyName : beanPropertyNames) {
-
-
-            // Only consider properties that have a path
-            P_Path0 path = paths.get(beanPropertyName);
-            if(path == null) {
-                continue;
-            }
-
 
             Method readMethod = readMethods.get(beanPropertyName);
             MethodDescriptor readMethodDescriptor = methodDescriptors.get(readMethod);
@@ -1398,6 +1423,42 @@ public class MapperProxyUtils {
             boolean isFwd = !isInverse;
 
 
+            // Predominantly consider only properties that have a path
+            // However, there are some execptions such as custom hash functions
+            P_Path0 path = paths.get(beanPropertyName);
+
+            if(path == null) {
+
+                // A simple read method may be a custom hash function
+                if(isHashId) {
+
+                    // This is somewhat hacky - write method classification does not check the return type
+                    // So the signature HashCode myHashId(HashIdCxt) looks like a setter
+                    BiFunction<Resource, HashIdCxt, HashCode> fn = null;
+                    if(writeMethod != null) {
+                        Class<?> returnType = writeMethod.getReturnType();
+                        if(HashCode.class.isAssignableFrom(returnType) && HashIdCxt.class.equals(effectiveType)) {
+                            logger.info("  Found direct hash method: " + writeMethod);
+                            fn = (s, cxt) -> niceInvoke(writeMethod, s, cxt);
+                        }
+                    } else if(readMethod != null) {
+                        logger.info("  Found direct hash method: " + readMethod);
+                        fn = (s, cxt) -> niceInvoke(readMethod, s);
+                    }
+
+                    if(fn == null) {
+                        throw new RuntimeException("HashId annotation found, but method signature does not match. Candidates: " + writeMethod + " " + readMethod);
+                    }
+                    // If the the method takes a HashIdCxt, pass it on
+                    // TODO Find a better place for this handling
+                    // if(readMethod.getParameterTypes() == 0)
+                    classDescriptor.registerDirectHashIdProcessor(path, fn);
+                }
+
+                continue;
+            }
+
+
             Property p = ResourceFactory.createProperty(path.getNode().getURI());
 
 
@@ -1413,6 +1474,7 @@ public class MapperProxyUtils {
 //				if(isDynamicGetter) {
 //					System.out.println("DEBUG POINT");
 //				}
+
                 if(isCollectionValued) {
 
                     // Check if the write method is consistent
@@ -1466,8 +1528,7 @@ public class MapperProxyUtils {
                             methodImplMap.put(readMethod, readImpl);
 
 
-                            if(isHashId) {
-                                classDescriptor.registerRawAccessor(path, s -> {
+                                classDescriptor.registerRawAccessor(path, isHashId, s -> {
                                     BiFunction<Property, Boolean, Function<Resource, ViewBundle>> ps = collectionGetter.apply(effectiveItemType);
                                     Function<Resource, ViewBundle> sx = ps.apply(p, isFwd);
                                     ViewBundle v = sx.apply(s);
@@ -1491,7 +1552,6 @@ public class MapperProxyUtils {
 //                                        Collection<RDFNode> r = v.getRawView();
 //                                        return r;
 //                                    });
-                            }
                         }
 
 
@@ -1511,12 +1571,11 @@ public class MapperProxyUtils {
                         readImpl = (s, args) -> raw.apply((Resource)s).getJavaView();
                         methodImplMap.put(readMethod, readImpl);
 
-                        if(isHashId) {
-                            classDescriptor.registerRawAccessor(path, s -> {
-                              ViewBundle vb = raw.apply(s);
-                              Collection<? extends RDFNode> col = vb.getRawView();
-                              return col;
-                            });
+                        classDescriptor.registerRawAccessor(path, isHashId, s -> {
+                          ViewBundle vb = raw.apply(s);
+                          Collection<? extends RDFNode> col = vb.getRawView();
+                          return col;
+                        });
 
 //                            hashIdProcessor = (res, cxt) -> createPropertyHashIdProcessor(
 //                                globalHashIdProcessor,
@@ -1526,7 +1585,6 @@ public class MapperProxyUtils {
 //                                    Collection<? extends RDFNode> col = vb.getRawView();
 //                                    return col;
 //                                });
-                        }
 
 
                         // Implement write methods based on the read method
@@ -1603,8 +1661,7 @@ public class MapperProxyUtils {
                         Function<Resource, ViewBundle> g = getter.apply(p, isFwd);
                         methodImplMap.put(readMethod, (o, args) -> g.apply((Resource)o).getJavaView());
 
-                        if(isHashId) {
-                            classDescriptor.registerRawAccessor(path, s -> {
+                            classDescriptor.registerRawAccessor(path, isHashId, s -> {
                                 ViewBundle vb = g.apply(s);
                                 Collection<? extends RDFNode> col = vb.getRawView();
                                 return col;
@@ -1618,7 +1675,6 @@ public class MapperProxyUtils {
 //                                    Collection<? extends RDFNode> col = vb.getRawView();
 //                                    return col;
 //                                });
-                        }
                     }
 
                     if(writeMethod != null) {
@@ -1895,7 +1951,9 @@ public class MapperProxyUtils {
             }
 
             if(cd != null) {
-                // NOTE Do not call root.asResource() as this will return an unproxied resource!
+                // NOTE Do not call root.asResource() as this may unproxy proxied resources!
+                // The unproxying is experimental behavior due due to apache spark / kryo
+                // where proxies may not recognized be the serializer
                 result = cd.computeHashId((Resource)root, cxt);
             } else {
                 throw new RuntimeException("No id computation registered for " + clazz);
