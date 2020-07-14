@@ -21,7 +21,8 @@ public class HashIdCxtImpl
     protected HashFunction hashFn;
     protected BiFunction<? super RDFNode, ? super HashIdCxt, ? extends HashCode> globalProcessor;
     protected Set<RDFNode> seen = new LinkedHashSet<>();
-    protected Map<RDFNode, HashCode> priorHash = new LinkedHashMap<>();
+    protected Map<RDFNode, HashCode> rdfNodeToHashCode = new LinkedHashMap<>();
+    protected Map<RDFNode, String> rdfNodeToString = new LinkedHashMap<>();
 
     protected boolean useInnerIris;
     protected BiPredicate<? super RDFNode, ? super Integer> filterKeep;
@@ -44,7 +45,7 @@ public class HashIdCxtImpl
     public boolean declareVisit(RDFNode node) {
         boolean added = seen.add(node);
 
-        if(!added && !priorHash.containsKey(node)) {
+        if(!added && !rdfNodeToHashCode.containsKey(node)) {
             throw new IllegalStateException("Cyclic dependency; visited this node twice: " + node + " "  + node.getClass());
         }
         return added;
@@ -52,12 +53,12 @@ public class HashIdCxtImpl
 
     @Override
     public HashCode putHash(RDFNode node, HashCode hashCode) {
-        return priorHash.put(node, hashCode);
+        return rdfNodeToHashCode.put(node, hashCode);
     }
 
     @Override
     public HashCode getHash(RDFNode node) {
-        return priorHash.get(node);
+        return rdfNodeToHashCode.get(node);
     }
 
     @Override
@@ -72,12 +73,27 @@ public class HashIdCxtImpl
 
     @Override
     public Map<RDFNode, HashCode> getMapping() {
-        return priorHash;
+        return rdfNodeToHashCode;
     }
 
     @Override
     public boolean isVisited(RDFNode node) {
         boolean result = seen.contains(node);
         return result;
+    }
+
+    @Override
+    public String getString(RDFNode node) {
+        return rdfNodeToString.get(node);
+    }
+
+    @Override
+    public String putString(RDFNode node, String str) {
+        return rdfNodeToString.put(node, str);
+    }
+
+    @Override
+    public Map<RDFNode, String> getStringMapping() {
+        return rdfNodeToString;
     }
 }

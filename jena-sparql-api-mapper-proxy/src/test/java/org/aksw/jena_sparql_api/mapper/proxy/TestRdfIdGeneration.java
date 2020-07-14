@@ -11,6 +11,8 @@ import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
 import org.junit.Test;
 
+import com.google.common.io.BaseEncoding;
+
 public class TestRdfIdGeneration {
 
     @ResourceView

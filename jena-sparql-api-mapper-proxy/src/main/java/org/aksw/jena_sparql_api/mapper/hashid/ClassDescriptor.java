@@ -31,6 +31,8 @@ public class ClassDescriptor {
 
     protected Set<BiFunction<? super Resource, ? super HashIdCxt, ? extends HashCode>> directHashIdProcessors = new LinkedHashSet<>();
 
+    protected Set<BiFunction<? super Resource, ? super HashIdCxt, ? extends String>> directStringIdProcessors = new LinkedHashSet<>();
+
 
     public ClassDescriptor(Class<?> clazz) {
         super();
@@ -55,8 +57,12 @@ public class ClassDescriptor {
     }
 
 
-    public void registerDirectHashIdProcessor(P_Path0 path, BiFunction<? super Resource, ? super HashIdCxt, ? extends HashCode> processor) {
+    public void registerDirectHashIdProcessor(BiFunction<? super Resource, ? super HashIdCxt, ? extends HashCode> processor) {
         directHashIdProcessors.add(processor);
+    }
+
+    public void registerDirectStringIdProcessor(BiFunction<? super Resource, ? super HashIdCxt, ? extends String> processor) {
+        directStringIdProcessors.add(processor);
     }
 
 
@@ -140,6 +146,12 @@ public class ClassDescriptor {
         // The alternative would be to register all reachable non-hashid nodes to the cxt
         // and let the outer procedure recurse over it
         cxt.putHash(node, result);
+
+
+        for(BiFunction<? super Resource, ? super HashIdCxt, ? extends String> e : directStringIdProcessors) {
+            String str = e.apply(node, cxt);
+            cxt.putString(node, str);
+        }
 
 
         for(Entry<P_Path0, Function<? super Resource, ? extends Collection<? extends RDFNode>>> e : nonHashIdProcessors.entrySet()) {

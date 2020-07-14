@@ -73,5 +73,5 @@ import java.lang.annotation.RetentionPolicy;
  */
 @Retention(RetentionPolicy.RUNTIME)
 public @interface HashId {
-
+//    Class<? extends HashIdMergeStrategy> value() default HashIdMergeStrategy.class;
 }

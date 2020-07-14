@@ -38,6 +38,17 @@ public interface HashIdCxt {
     HashCode putHash(RDFNode node, HashCode hashCode);
     HashCode getHash(RDFNode node);
 
-    // TODO Consider using ImmutableMap?
+
+    // Hash representation is generic, independent of strings and is always computed before applying
+    // a string mapping
+    // The purpose of strings is to allow for crafting nice IRIs
+    // TODO It may be more flexible to allow for using an RDF model to capture hash codes, strings or other
+    // pieces of information. However, then we would have to introduce new custom datatypes, such as
+    // "0ab0c"^^eg:hexString
+    String putString(RDFNode node, String id);
+    String getString(RDFNode node);
+
+    // TODO Consider using ImmutableMap - or even an RDF model?
     Map<RDFNode, HashCode> getMapping();
+    Map<RDFNode, String> getStringMapping();
 }

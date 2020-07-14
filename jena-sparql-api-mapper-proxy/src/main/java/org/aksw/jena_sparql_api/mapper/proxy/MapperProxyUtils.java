@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
@@ -34,6 +35,7 @@ import org.aksw.commons.collections.ConvertingList;
 import org.aksw.commons.collections.ConvertingSet;
 import org.aksw.commons.collections.MutableCollectionViews;
 import org.aksw.commons.collections.sets.SetFromCollection;
+import org.aksw.commons.util.strings.StringUtils;
 import org.aksw.jena_sparql_api.mapper.annotation.HashId;
 import org.aksw.jena_sparql_api.mapper.annotation.Inverse;
 import org.aksw.jena_sparql_api.mapper.annotation.Iri;
@@ -85,13 +87,14 @@ import org.apache.jena.sparql.path.PathParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.github.jsonldjava.shaded.com.google.common.base.Optional;
+import com.google.common.base.CaseFormat;
 import com.google.common.base.Converter;
 import com.google.common.base.Defaults;
 import com.google.common.collect.Lists;
 import com.google.common.hash.HashCode;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
+import com.google.common.io.BaseEncoding;
 
 import net.sf.cglib.proxy.Enhancer;
 import net.sf.cglib.proxy.MethodInterceptor;
@@ -1247,10 +1250,25 @@ public class MapperProxyUtils {
 
         boolean hasClassHashId = clazz.getAnnotation(HashId.class) != null;
         if(hasClassHashId) {
-            P_Path0 tmp = new P_Link(NodeFactory.createURI("urn://classname"));
-            classDescriptor.registerDirectHashIdProcessor(tmp, (r, cxt) ->
+            //P_Path0 tmp = new P_Link(NodeFactory.createURI("urn://classname"));
+            classDescriptor.registerDirectHashIdProcessor((r, cxt) ->
                 cxt.getHashFunction().hashString(clazz.getCanonicalName(), StandardCharsets.UTF_8));
         }
+
+        // Set up default behavior that converts the hash into a string of form
+        // "{classnameInLowerCamelCase}-{hashInBase64}"
+        // TODO Probably we want to make string generation configurable via the context.
+        // For this purpose we could here create an RDF model about the class name and possibly information
+        // from further annotations and pass that to the context
+        // The client code could configure the context with a lambda that gets the
+        // RDF model passed from which arbitrary strings can be generated
+        String prefix = CaseFormat.UPPER_CAMEL.converterTo(CaseFormat.LOWER_CAMEL).convert(clazz.getSimpleName()) + "-";
+        classDescriptor.registerDirectStringIdProcessor((r, cxt) -> {
+            HashCode hashCode = cxt.getHash(r);
+            String part = BaseEncoding.base64Url().omitPadding().encode(hashCode.asBytes());
+            String rr = prefix + part;
+            return rr;
+        });
 
         // The map of implementations to be populated
         Map<Method, BiFunction<Object, Object[], Object>> methodImplMap = new LinkedHashMap<>();
@@ -1452,7 +1470,7 @@ public class MapperProxyUtils {
                     // If the the method takes a HashIdCxt, pass it on
                     // TODO Find a better place for this handling
                     // if(readMethod.getParameterTypes() == 0)
-                    classDescriptor.registerDirectHashIdProcessor(path, fn);
+                    classDescriptor.registerDirectHashIdProcessor(fn);
                 }
 
                 continue;
