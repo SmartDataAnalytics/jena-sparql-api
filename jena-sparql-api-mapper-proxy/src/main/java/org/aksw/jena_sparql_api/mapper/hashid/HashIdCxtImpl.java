@@ -6,11 +6,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
+import java.util.function.Function;
 
 import org.apache.jena.rdf.model.RDFNode;
 
 import com.google.common.hash.HashCode;
 import com.google.common.hash.HashFunction;
+import com.google.common.io.BaseEncoding;
 
 public class HashIdCxtImpl
     implements HashIdCxt
@@ -23,6 +25,8 @@ public class HashIdCxtImpl
     protected Set<RDFNode> seen = new LinkedHashSet<>();
     protected Map<RDFNode, HashCode> rdfNodeToHashCode = new LinkedHashMap<>();
     protected Map<RDFNode, String> rdfNodeToString = new LinkedHashMap<>();
+
+    protected Function<HashCode, String> hashCodeEncoder;
 
     protected boolean useInnerIris;
     protected BiPredicate<? super RDFNode, ? super Integer> filterKeep;
@@ -37,6 +41,7 @@ public class HashIdCxtImpl
         this.filterKeep = (rdfNode, depth) -> true;
         this.hashFn = hashFn;
         this.globalProcessor = globalProcessor;
+        this.hashCodeEncoder = hashCode -> BaseEncoding.base64Url().omitPadding().encode(hashCode.asBytes());
 
         this.seen = new LinkedHashSet<>();
     }
@@ -95,5 +100,21 @@ public class HashIdCxtImpl
     @Override
     public Map<RDFNode, String> getStringMapping() {
         return rdfNodeToString;
+    }
+
+
+    @Override
+    public String getHashAsString(HashCode hashCode) {
+        String result = hashCodeEncoder.apply(hashCode);
+        return result;
+    }
+
+
+    // TODO Make it a default method in the interface?
+    @Override
+    public String getHashAsString(RDFNode rdfNode) {
+        HashCode hashCode = getHash(rdfNode);
+        String result = hashCode == null ? null : getHashAsString(hashCode);
+        return result;
     }
 }

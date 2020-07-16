@@ -42,6 +42,7 @@ import org.aksw.jena_sparql_api.mapper.annotation.Iri;
 import org.aksw.jena_sparql_api.mapper.annotation.IriNs;
 import org.aksw.jena_sparql_api.mapper.annotation.IriType;
 import org.aksw.jena_sparql_api.mapper.annotation.PolymorphicOnly;
+import org.aksw.jena_sparql_api.mapper.annotation.StringId;
 import org.aksw.jena_sparql_api.mapper.annotation.ToString;
 import org.aksw.jena_sparql_api.mapper.hashid.ClassDescriptor;
 import org.aksw.jena_sparql_api.mapper.hashid.HashIdCxt;
@@ -1262,13 +1263,11 @@ public class MapperProxyUtils {
         // from further annotations and pass that to the context
         // The client code could configure the context with a lambda that gets the
         // RDF model passed from which arbitrary strings can be generated
-        String prefix = CaseFormat.UPPER_CAMEL.converterTo(CaseFormat.LOWER_CAMEL).convert(clazz.getSimpleName()) + "-";
-        classDescriptor.registerDirectStringIdProcessor((r, cxt) -> {
-            HashCode hashCode = cxt.getHash(r);
-            String part = BaseEncoding.base64Url().omitPadding().encode(hashCode.asBytes());
-            String rr = prefix + part;
-            return rr;
-        });
+        String prefix = classToTag(clazz);
+
+        // This is a default that is eventually set if there is no override by a
+        // @StringId annotation
+        BiFunction<Resource, HashIdCxt, String> directStringIdProcessor = null;
 
         // The map of implementations to be populated
         Map<Method, BiFunction<Object, Object[], Object>> methodImplMap = new LinkedHashMap<>();
@@ -1322,7 +1321,8 @@ public class MapperProxyUtils {
                 }
 
                 methodImplMap.put(method, defaultMethodDelegate);
-                continue;
+                // We may still want to process annotations on default methods
+                // continue;
             }
 
             MethodDescriptor descriptor = classifyMethod(method);
@@ -1402,6 +1402,7 @@ public class MapperProxyUtils {
             boolean isReadPolymorphicOnly = false;
             boolean isReadInverse = false;
             boolean isReadHashId = false;
+            boolean isReadStringId = false;
 
             Class<?> writeType = null;
             Class<?> writeCollectionType = null;
@@ -1410,6 +1411,7 @@ public class MapperProxyUtils {
             boolean isWritePolymorphicOnly = false;
             boolean isWriteInverse = false;
             boolean isWriteHashId = false;
+            boolean isWriteStringId = false;
 
             if(readMethodDescriptor != null) {
                 readType = readMethodDescriptor.getType();
@@ -1419,6 +1421,7 @@ public class MapperProxyUtils {
                 isReadPolymorphicOnly = readMethod.getAnnotation(PolymorphicOnly.class) != null;
                 isReadInverse = readMethod.getAnnotation(Inverse.class) != null;
                 isReadHashId = readMethod.getAnnotation(HashId.class) != null;
+                isReadStringId = readMethod.getAnnotation(StringId.class) != null;
             }
 
             if(writeMethodDescriptor != null) {
@@ -1429,6 +1432,7 @@ public class MapperProxyUtils {
                 isWritePolymorphicOnly = writeMethod.getAnnotation(PolymorphicOnly.class) != null;
                 isWriteInverse = writeMethod.getAnnotation(Inverse.class) != null;
                 isWriteHashId = writeMethod.getAnnotation(HashId.class) != null;
+                isWriteStringId = writeMethod.getAnnotation(StringId.class) != null;
             }
 
             Class<?> effectiveType = getStricterType(readType, writeType);
@@ -1438,6 +1442,7 @@ public class MapperProxyUtils {
             boolean polymorphicOnly = isReadPolymorphicOnly || isWritePolymorphicOnly;
             boolean isInverse = isReadInverse || isWriteInverse;
             boolean isHashId = isReadHashId || isWriteHashId;
+            boolean isStringId = isReadStringId || isWriteStringId;
             boolean isFwd = !isInverse;
 
 
@@ -1471,6 +1476,41 @@ public class MapperProxyUtils {
                     // TODO Find a better place for this handling
                     // if(readMethod.getParameterTypes() == 0)
                     classDescriptor.registerDirectHashIdProcessor(fn);
+                }
+
+
+                // A simple read method may be a custom hash function
+                if(isStringId) {
+
+                    if(directStringIdProcessor != null) {
+                        // FIXME Add conflicting methods to the error message
+                        throw new RuntimeException("String id processor already registered for " + clazz);
+                    }
+
+                    // This is somewhat hacky - write method classification does not check the return type
+                    // So the signature HashCode myHashId(HashIdCxt) looks like a setter
+                    BiFunction<Resource, HashIdCxt, String> fn = null;
+                    if(writeMethod != null) {
+                        Class<?> returnType = writeMethod.getReturnType();
+                        if(String.class.isAssignableFrom(returnType) && HashIdCxt.class.equals(effectiveType)) {
+                            logger.info("  Found direct stringId method: " + writeMethod);
+                            fn = (s, cxt) -> niceInvoke(writeMethod, s, cxt);
+                        }
+                    } else if(readMethod != null) {
+                        // TODO Ensure the result type is String
+                        logger.info("  Found direct string method: " + readMethod);
+                        fn = (s, cxt) -> niceInvoke(readMethod, s);
+                    }
+
+                    if(fn == null) {
+                        throw new RuntimeException("HashId annotation found, but method signature does not match. Candidates: " + writeMethod + " " + readMethod);
+                    }
+
+                    directStringIdProcessor = fn;
+                    // If the the method takes a HashIdCxt, pass it on
+                    // TODO Find a better place for this handling
+                    // if(readMethod.getParameterTypes() == 0)
+                    // classDescriptor.registerDirectStringIdProcessor(fn);
                 }
 
                 continue;
@@ -1575,7 +1615,7 @@ public class MapperProxyUtils {
 
 //							throw new RuntimeException("todo dynamic collection support implement");
                     } else { // Non-dynamic collection handling
-                        BiFunction<Property, Boolean, Function<Resource, ViewBundle>>  collectionView;
+                        BiFunction<Property, Boolean, Function<Resource, ViewBundle>> collectionView;
                         if(isListType) {
                             collectionView = viewAsList(readMethod, isIriType, polymorphicOnly, effectiveItemType, typeMapper, typeDecider);
                         } else if(isSetType) {
@@ -1583,7 +1623,6 @@ public class MapperProxyUtils {
                         } else {
                             throw new RuntimeException("Unsupported collection type");
                         }
-
 
                         Function<Resource, ViewBundle> raw = collectionView.apply(p, isFwd);
                         readImpl = (s, args) -> raw.apply((Resource)s).getJavaView();
@@ -1726,6 +1765,18 @@ public class MapperProxyUtils {
                 }
             }
         }
+
+
+        if(directStringIdProcessor == null) {
+            directStringIdProcessor = (r, cxt) -> {
+                HashCode hashCode = cxt.getHash(r);
+                String part = cxt.getHashAsString(hashCode); //BaseEncoding.base64Url().omitPadding().encode(hashCode.asBytes());
+                String rr = prefix + "-" + part;
+                return rr;
+            };
+        }
+
+        classDescriptor.registerDirectStringIdProcessor(directStringIdProcessor);
 
 
 
@@ -2008,6 +2059,19 @@ public class MapperProxyUtils {
 
             return hc;
         };
+    }
+
+
+    /**
+     * Convert a class into a 'tag' (or label) to be included into generated identifiers such as by prefixing.
+     *
+     * @param clazz
+     */
+    public static String classToTag(Class<?> clazz) {
+        String result = CaseFormat.UPPER_CAMEL
+                .converterTo(CaseFormat.LOWER_CAMEL)
+                .convert(clazz.getSimpleName());
+        return result;
     }
 }
 

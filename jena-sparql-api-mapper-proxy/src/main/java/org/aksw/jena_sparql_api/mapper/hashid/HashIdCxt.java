@@ -39,6 +39,16 @@ public interface HashIdCxt {
     HashCode getHash(RDFNode node);
 
 
+    /**
+     * Default approach for converting a HashCode into string representation, such as by applying
+     * base64url encoding
+     *
+     * @param hashCode
+     * @return
+     */
+    String getHashAsString(HashCode hashCode);
+    String getHashAsString(RDFNode rdfNod);
+
     // Hash representation is generic, independent of strings and is always computed before applying
     // a string mapping
     // The purpose of strings is to allow for crafting nice IRIs
