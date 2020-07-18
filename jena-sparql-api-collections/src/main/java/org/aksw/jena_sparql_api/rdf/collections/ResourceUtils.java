@@ -27,8 +27,12 @@ import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.StmtIterator;
+import org.apache.jena.rdf.model.impl.LiteralImpl;
+import org.apache.jena.rdf.model.impl.ModelCom;
 import org.apache.jena.rdf.model.impl.PropertyImpl;
+import org.apache.jena.rdf.model.impl.ResourceImpl;
 import org.apache.jena.sparql.path.P_Path0;
+import org.apache.jena.sparql.util.ModelUtils;
 import org.apache.jena.util.iterator.ExtendedIterator;
 
 import com.google.common.collect.Streams;
@@ -41,6 +45,34 @@ import com.google.common.collect.Streams;
  */
 public class ResourceUtils {
 
+    /**
+     * Return the basic jena RDFNode implementation for a given RDFNode, namely
+     * PropertyImpl, ResourceImpl and LiteralImpl. Any other type - including subclasses
+     * (which are typically custom views) - will be converted.
+     * Returns the node as-is if it is already uses a basic view implementation.
+     *
+     * TODO Create a separate RDFNodeUtils class?
+     *
+     * @param rdfNode
+     */
+    public static RDFNode makeBasic(RDFNode rdfNode) {
+        Class<?> clazz = rdfNode.getClass();
+        Node n = rdfNode.asNode();
+        Model m = rdfNode.getModel();
+
+        RDFNode result;
+        if(rdfNode instanceof Property) {
+            result = clazz.equals(PropertyImpl.class)
+                    ? rdfNode
+                    : new PropertyImpl(n, (ModelCom)m);
+        } else {
+            result = clazz.equals(ResourceImpl.class) || clazz.equals(LiteralImpl.class)
+                ? rdfNode
+                : ModelUtils.convertGraphNodeToRDFNode(n, m);
+        }
+
+        return result;
+    }
 
 //    public static void addLiteral(Resource r, Property p, Object o) {
 //        if(o != null) {
