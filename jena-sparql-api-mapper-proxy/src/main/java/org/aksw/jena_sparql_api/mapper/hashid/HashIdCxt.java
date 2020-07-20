@@ -1,6 +1,7 @@
 package org.aksw.jena_sparql_api.mapper.hashid;
 
 import java.util.Map;
+import java.util.Set;
 import java.util.function.BiFunction;
 
 import org.apache.jena.rdf.model.RDFNode;
@@ -19,21 +20,33 @@ public interface HashIdCxt {
     HashFunction getHashFunction();
 
     /**
-     * Declare a node to be visited.
-     * Throws an exception if visited more than once without a hash being available.
+     * Declare a node to be in processing state.
+     * Throws an exception if invoked more than once without a hash being available.
      * I.e. the first visit should result in the computation of a hash code and not a further visit -
      * which indicates a loop.
      *
-     *
+     * TODO requestProcessing(State) may be a better name - as the request may fail.
      *
      *
      * @param node
      * @return
      */
-    boolean declareVisit(RDFNode node);
+    boolean declareProcessing(RDFNode node);
 
+    /**
+     * Declare traversal of a node. Traversal is the search for nodes subject to processing.
+     * A node may be declared as traversed any number of times - in contrast to declareProcessing
+     * which may only be invoked once on an unprocessed node.
+     *
+     * @param node
+     * @return
+     */
+    boolean declarePending(RDFNode node);
+    boolean isPending(RDFNode node);
+    Set<RDFNode> getPending();
 
     boolean isVisited(RDFNode node);
+
 
     HashCode putHash(RDFNode node, HashCode hashCode);
     HashCode getHash(RDFNode node);

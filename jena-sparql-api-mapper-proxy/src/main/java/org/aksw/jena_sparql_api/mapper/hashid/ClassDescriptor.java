@@ -12,6 +12,8 @@ import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+import org.aksw.jena_sparql_api.mapper.proxy.MapperProxyUtils;
+import org.aksw.jena_sparql_api.rdf.collections.ResourceUtils;
 import org.apache.jena.ext.com.google.common.collect.Maps;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
@@ -86,9 +88,6 @@ public class ClassDescriptor {
         Map<P_Path0, Function<? super Resource, ? extends Collection<? extends RDFNode>>>
             hashIdProcessors = Maps.filterKeys(rawPropertyProcessors, hashIdPaths::contains);
 
-        Map<P_Path0, Function<? super Resource, ? extends Collection<? extends RDFNode>>>
-            nonHashIdProcessors = Maps.filterKeys(rawPropertyProcessors, x -> !hashIdPaths.contains(x));
-
 
         List<HashCode> hashes = new ArrayList<>();
         for(Entry<P_Path0, Function<? super Resource, ? extends Collection<? extends RDFNode>>> e : hashIdProcessors.entrySet()) {
@@ -106,7 +105,13 @@ public class ClassDescriptor {
 
             List<HashCode> hashContribs = new ArrayList<>();
             for(RDFNode item : col) {
+                System.err.println("Gathering hashId contrib from " + clazz.getCanonicalName() + "." + path + " from " + ResourceUtils.makeBasic(node) + " to " + ResourceUtils.makeBasic(item));
+
                 HashCode partialHashContrib = cxt.getGlobalProcessor().apply(item, cxt);
+
+                if(partialHashContrib == null) {
+                    throw new NullPointerException();
+                }
 
                 // Note that here we repeatedly compute the hash of the property
                 // We may want to factor this out
@@ -135,7 +140,7 @@ public class ClassDescriptor {
         }
 
         if(hashes.isEmpty()) {
-            throw new RuntimeException("Could not obtain ID hashes for " + node.getClass() + " " + node);
+            throw new RuntimeException("Could not obtain ID hashes for " + clazz.getCanonicalName() + " with node " + node);
         }
 
         HashCode result = Hashing.combineUnordered(hashes);
@@ -154,7 +159,18 @@ public class ClassDescriptor {
         }
 
 
-        for(Entry<P_Path0, Function<? super Resource, ? extends Collection<? extends RDFNode>>> e : nonHashIdProcessors.entrySet()) {
+//        cxt.putHash(node, result);
+
+        return result;
+    }
+
+    public void collectReachableResources(Resource node, HashIdCxt cxt) {
+
+//        Map<P_Path0, Function<? super Resource, ? extends Collection<? extends RDFNode>>>
+//            nonHashIdProcessors = Maps.filterKeys(rawPropertyProcessors, x -> !hashIdPaths.contains(x));
+
+
+        for(Entry<P_Path0, Function<? super Resource, ? extends Collection<? extends RDFNode>>> e : rawPropertyProcessors.entrySet()) {
             P_Path0 path = e.getKey();
 //            System.err.println("Scanning " + path);
             Function<? super Resource, ? extends Collection<? extends RDFNode>> propertyAccessor = e.getValue();
@@ -162,8 +178,11 @@ public class ClassDescriptor {
 
             for(RDFNode rdfNode : col) {
                 try {
-                    if(!cxt.isVisited(rdfNode)) {
-                        cxt.getGlobalProcessor().apply(rdfNode, cxt);
+                    if(!cxt.isPending(rdfNode)) {
+//                        System.err.println("Traversing from " + node.asResource() + " (" + clazz + ") to " + rdfNode.asResource() + " via " + path);
+                        System.err.println("Traversal " + clazz.getCanonicalName() + "." + path + " from " + ResourceUtils.makeBasic(node) + " to " + ResourceUtils.makeBasic(rdfNode));
+                        // cxt.getGlobalProcessor().apply(rdfNode, cxt);
+                        MapperProxyUtils.collectReachableResources(rdfNode, cxt);
                     }
                 } catch(IllegalStateException ex) {
                     throw ex;
@@ -173,10 +192,6 @@ public class ClassDescriptor {
                 }
             }
         }
-
-//        cxt.putHash(node, result);
-
-        return result;
     }
 }
 

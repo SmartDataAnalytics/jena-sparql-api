@@ -22,8 +22,19 @@ public class HashIdCxtImpl
 //    protected RDFNode rdfNode;
     protected HashFunction hashFn;
     protected BiFunction<? super RDFNode, ? super HashIdCxt, ? extends HashCode> globalProcessor;
-    protected Set<RDFNode> seen = new LinkedHashSet<>();
+
+    /** The set of items for which processing was requested (items are thus in processing or processed state) */
+    protected Set<RDFNode> processing = new LinkedHashSet<>();
+
+    /** The set of reachable items not yet in processing */
+    protected Set<RDFNode> pending = new LinkedHashSet<>();
+
+    /** Items that are fully processed have an entry of the processing result in this map */
     protected Map<RDFNode, HashCode> rdfNodeToHashCode = new LinkedHashMap<>();
+
+    /** The set of items in traversed state. */
+//    protected Set<RDFNode> traversals = new LinkedHashSet<>();
+
     protected Map<RDFNode, String> rdfNodeToString = new LinkedHashMap<>();
 
     protected Function<HashCode, String> hashCodeEncoder;
@@ -43,18 +54,34 @@ public class HashIdCxtImpl
         this.globalProcessor = globalProcessor;
         this.hashCodeEncoder = hashCode -> BaseEncoding.base64Url().omitPadding().encode(hashCode.asBytes());
 
-        this.seen = new LinkedHashSet<>();
+        this.processing = new LinkedHashSet<>();
     }
 
+    /**
+     * Declaration of processing implies a call to declareTraversal.
+     * Conversely, it is possible to traverse through nodes without triggering processing.
+     *
+     */
     @Override
-    public boolean declareVisit(RDFNode node) {
-        boolean added = seen.add(node);
+    public boolean declareProcessing(RDFNode node) {
+        boolean added = processing.add(node);
 
         if(!added && !rdfNodeToHashCode.containsKey(node)) {
-            throw new IllegalStateException("Cyclic dependency; visited this node twice: " + node + " "  + node.getClass());
+            throw new IllegalStateException("Cyclic dependency; visited this node twice: " + node.asResource() + " "  + node.getClass());
         }
+
+        pending.remove(node);
+
+//        declareTraversal(node);
+
         return added;
     }
+
+//    @Override
+//    public boolean declareTraversal(RDFNode node) {
+//        boolean added = traversals.add(node);
+//        return added;
+//    }
 
     @Override
     public HashCode putHash(RDFNode node, HashCode hashCode) {
@@ -83,7 +110,7 @@ public class HashIdCxtImpl
 
     @Override
     public boolean isVisited(RDFNode node) {
-        boolean result = seen.contains(node);
+        boolean result = processing.contains(node);
         return result;
     }
 
@@ -116,5 +143,21 @@ public class HashIdCxtImpl
         HashCode hashCode = getHash(rdfNode);
         String result = hashCode == null ? null : getHashAsString(hashCode);
         return result;
+    }
+
+    @Override
+    public boolean declarePending(RDFNode node) {
+        boolean result = pending.add(node);
+        return result;
+    }
+
+    @Override
+    public boolean isPending(RDFNode node) {
+        return pending.contains(node);
+    }
+
+    @Override
+    public Set<RDFNode> getPending() {
+        return pending;
     }
 }

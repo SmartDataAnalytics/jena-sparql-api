@@ -1985,7 +1985,9 @@ public class MapperProxyUtils {
      * @return
      */
     public static HashIdCxt getHashId(RDFNode root) {
-        HashIdCxt cxt = new HashIdCxtImpl(Hashing.sha256(), MapperProxyUtils::getHashId);
+        HashIdCxt cxt = new HashIdCxtImpl(Hashing.sha256(), MapperProxyUtils::getHashIdCore);
+
+        cxt.declarePending(root);
 
         getHashId(root, cxt);
 
@@ -1993,8 +1995,36 @@ public class MapperProxyUtils {
     }
 
     public static HashCode getHashId(RDFNode root, HashIdCxt cxt) {
+        collectReachableResources(root, cxt);
+//        logger.info("Collected " + cxt.getPending().size() + " reachable nodes");
+        System.err.println("Collected " + cxt.getPending().size() + " reachable nodes");
+
+        Set<RDFNode> pending = cxt.getPending();
+
+        while(!pending.isEmpty()) {
+            RDFNode start = pending.iterator().next();
+            getHashIdCore(start, cxt);
+        }
+
+        return cxt.getHash(root);
+    }
+
+    public static HashCode getHashIdCore(RDFNode root, HashIdCxt cxt) {
         HashCode result;
-        cxt.declareVisit(root);
+        Map<RDFNode, HashCode> mapping = cxt.getMapping();
+        // Need to use containsKey as hash is null for nodes without id definitions
+        if(mapping.containsKey(root)) {
+            result = mapping.get(root);
+        } else {
+            result = getHashIdActual(root, cxt);
+        }
+        return result;
+    }
+
+
+    public static HashCode getHashIdActual(RDFNode root, HashIdCxt cxt) {
+        HashCode result;
+        cxt.declareProcessing(root);
 
         HashFunction hashFn = cxt.getHashFunction();
 
@@ -2002,30 +2032,22 @@ public class MapperProxyUtils {
             Node n = root.isAnon() ? Vars.x : root.asNode();
             result = hashFn.hashString(NodeFmtLib.str(n), StandardCharsets.UTF_8);//Objects.toString(rdfNode);
         } else {
-            Metamodel metamodel = Metamodel.get();
-
-            Class<?> clazz = root.getClass();
-
-            List<Class<?>> scanClasses = new ArrayList<>();
-            scanClasses.add(clazz);
-            scanClasses.addAll(ClassUtils.getAllSuperclasses(clazz));
-            scanClasses.addAll(ClassUtils.getAllInterfaces(clazz));
-
-            ClassDescriptor cd = null;
-            for(Class<?> c : scanClasses) {
-                cd = metamodel.get(c);
-                if(cd != null) {
-                    break;
-                }
-            }
+            ClassDescriptor cd = getClassDescriptor(root.getClass());
 
             if(cd != null) {
                 // NOTE Do not call root.asResource() as this may unproxy proxied resources!
-                // The unproxying is experimental behavior due due to apache spark / kryo
-                // where proxies may not recognized be the serializer
+                // The unproxying is experimental behavior due due to apache spark / kryo settings
+                // where proxies are typically not recognized be the serializer
                 result = cd.computeHashId((Resource)root, cxt);
             } else {
-                throw new RuntimeException("No id computation registered for " + clazz);
+                result = null;
+                // FIXME Implement properly; we may need the TypeDecider - the problem with LSQ is, that an
+                // RDFterm can be represented by literal or a resource denoting a variable
+                System.err.println("HACK using a FAKE ID for moving on; needs urgent fix");
+                result = hashFn.hashInt(0);
+
+
+                // throw new RuntimeException("No id computation registered for " + clazz);
             }
         }
 
@@ -2034,6 +2056,38 @@ public class MapperProxyUtils {
         return result;
     }
 
+    public static void collectReachableResources(RDFNode root, HashIdCxt cxt) {
+        cxt.declarePending(root);
+
+        ClassDescriptor cd = getClassDescriptor(root.getClass());
+
+        if(cd != null) {
+            // NOTE Do not call root.asResource() as this may unproxy proxied resources!
+            // The unproxying is experimental behavior due due to apache spark / kryo settings
+            // where proxies are typically not recognized be the serializer
+            cd.collectReachableResources((Resource)root, cxt);
+        }
+    }
+
+
+    public static ClassDescriptor getClassDescriptor(Class<?> clazz) {
+        Metamodel metamodel = Metamodel.get();
+
+        List<Class<?>> scanClasses = new ArrayList<>();
+        scanClasses.add(clazz);
+        scanClasses.addAll(ClassUtils.getAllSuperclasses(clazz));
+        scanClasses.addAll(ClassUtils.getAllInterfaces(clazz));
+
+        ClassDescriptor result = null;
+        for(Class<?> c : scanClasses) {
+            result = metamodel.get(c);
+            if(result != null) {
+                break;
+            }
+        }
+
+        return result;
+    }
 
     public static BiFunction<RDFNode, HashIdCxt, HashCode> createPropertyHashIdProcessor(
             BiFunction<RDFNode, HashIdCxt, HashCode> globalHashProcessor,
@@ -2041,7 +2095,7 @@ public class MapperProxyUtils {
             Supplier<Collection<? extends RDFNode>> valuesSupplier)
     {
         return (rdfNode, cxt) -> {
-            cxt.declareVisit(rdfNode);
+            cxt.declareProcessing(rdfNode);
 
             Collection<? extends RDFNode> col = valuesSupplier.get();
             int size = col.size();
