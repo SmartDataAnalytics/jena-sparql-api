@@ -2006,7 +2006,8 @@ public class MapperProxyUtils {
             getHashIdCore(start, cxt);
         }
 
-        return cxt.getHash(root);
+        HashCode result = cxt.getHash(root);
+        return result;
     }
 
     public static HashCode getHashIdCore(RDFNode root, HashIdCxt cxt) {
@@ -2059,6 +2060,7 @@ public class MapperProxyUtils {
     public static void collectReachableResources(RDFNode root, HashIdCxt cxt) {
         cxt.declarePending(root);
 
+        // If there is a class descriptor, root is implicitly a resource
         ClassDescriptor cd = getClassDescriptor(root.getClass());
 
         if(cd != null) {
