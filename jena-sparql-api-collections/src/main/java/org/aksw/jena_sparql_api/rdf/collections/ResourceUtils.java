@@ -55,7 +55,7 @@ public class ResourceUtils {
      *
      * @param rdfNode
      */
-    public static RDFNode makeBasic(RDFNode rdfNode) {
+    public static RDFNode asBasicRdfNode(RDFNode rdfNode) {
         Class<?> clazz = rdfNode.getClass();
         Node n = rdfNode.asNode();
         Model m = rdfNode.getModel();

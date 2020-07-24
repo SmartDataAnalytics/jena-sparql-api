@@ -35,7 +35,6 @@ import org.aksw.commons.collections.ConvertingList;
 import org.aksw.commons.collections.ConvertingSet;
 import org.aksw.commons.collections.MutableCollectionViews;
 import org.aksw.commons.collections.sets.SetFromCollection;
-import org.aksw.commons.util.strings.StringUtils;
 import org.aksw.jena_sparql_api.mapper.annotation.HashId;
 import org.aksw.jena_sparql_api.mapper.annotation.Inverse;
 import org.aksw.jena_sparql_api.mapper.annotation.Iri;
@@ -95,7 +94,6 @@ import com.google.common.collect.Lists;
 import com.google.common.hash.HashCode;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
-import com.google.common.io.BaseEncoding;
 
 import net.sf.cglib.proxy.Enhancer;
 import net.sf.cglib.proxy.MethodInterceptor;
@@ -1131,10 +1129,18 @@ public class MapperProxyUtils {
             //result = new P_Link(p);
         } else if(iriNs != null) {
             String ns = iriNs.value();
-            String uri = pm.getNsPrefixURI(ns);
-            if(uri == null) {
-                throw new RuntimeException("Undefined prefix: " + ns);
+            String uri;
+            // If there is a colon we assume a IRI prefix - otherwise we assume a namespace
+            // <schema>: part - i.e. whether there is a colon
+            if(ns.contains(":")) {
+                uri = ns;
+            } else {
+                uri = pm.getNsPrefixURI(ns);
+                if(uri == null) {
+                    throw new RuntimeException("Undefined prefix: " + ns + " on method " + method);
+                }
             }
+
             String localName = deriveBeanPropertyName(method.getName());
 
             result = new P_Link(NodeFactory.createURI(uri + localName));
@@ -2001,6 +2007,15 @@ public class MapperProxyUtils {
 
         Set<RDFNode> pending = cxt.getPending();
 
+        // Get the set of blanknodes
+        for(RDFNode node : pending) {
+            if(node.isAnon()) {
+                if(node.asResource().hasProperty(ResourceFactory.createProperty("http://lsq.aksw.org/vocab#benchmarkRun"))) {
+                    System.out.println("Anon: " + ResourceUtils.asBasicRdfNode(node) + "" + node);
+                }
+            }
+        }
+
         while(!pending.isEmpty()) {
             RDFNode start = pending.iterator().next();
             getHashIdCore(start, cxt);
@@ -2013,8 +2028,13 @@ public class MapperProxyUtils {
     public static HashCode getHashIdCore(RDFNode root, HashIdCxt cxt) {
         HashCode result;
         Map<RDFNode, HashCode> mapping = cxt.getMapping();
+        // Update: We now allow overriding null with concrete hash; Rationale:
+        // A resource may be referneced multiple times. Multiple references with different types and IDs are
+        // troublesome, but a reference via a method 'ResourceWithId getFoo' should take precedence over
+        // a reference as a plain resource.
         // Need to use containsKey as hash is null for nodes without id definitions
-        if(mapping.containsKey(root)) {
+        result = mapping.get(root);
+        if(result != null) {
             result = mapping.get(root);
         } else {
             result = getHashIdActual(root, cxt);
@@ -2044,9 +2064,9 @@ public class MapperProxyUtils {
                 result = null;
                 // FIXME Implement properly; we may need the TypeDecider - the problem with LSQ is, that an
                 // RDFterm can be represented by literal or a resource denoting a variable
-                System.err.println("HACK using a FAKE ID for moving on; needs urgent fix");
-                result = hashFn.hashInt(0);
-
+                // System.err.println("HACK using a FAKE ID for moving on; needs urgent fix; resource: " + ResourceUtils.asBasicRdfNode(root));
+                // result = hashFn.hashInt(0);
+                System.err.println("No class descriptor found for node; may be undesired " + ResourceUtils.asBasicRdfNode(root) + " - " + root);
 
                 // throw new RuntimeException("No id computation registered for " + clazz);
             }

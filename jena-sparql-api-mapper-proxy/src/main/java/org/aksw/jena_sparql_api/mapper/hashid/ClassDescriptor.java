@@ -105,7 +105,7 @@ public class ClassDescriptor {
 
             List<HashCode> hashContribs = new ArrayList<>();
             for(RDFNode item : col) {
-                System.err.println("Gathering hashId contrib from " + clazz.getCanonicalName() + "." + path + " from " + ResourceUtils.makeBasic(node) + " to " + ResourceUtils.makeBasic(item));
+                System.err.println("Gathering hashId contrib from " + clazz.getCanonicalName() + "." + path + " from " + ResourceUtils.asBasicRdfNode(node) + " to " + ResourceUtils.asBasicRdfNode(item));
 
                 HashCode partialHashContrib = cxt.getGlobalProcessor().apply(item, cxt);
 
@@ -180,7 +180,7 @@ public class ClassDescriptor {
                 try {
                     if(!cxt.isPending(rdfNode)) {
 //                        System.err.println("Traversing from " + node.asResource() + " (" + clazz + ") to " + rdfNode.asResource() + " via " + path);
-                        System.err.println("Traversal " + clazz.getCanonicalName() + "." + path + " from " + ResourceUtils.makeBasic(node) + " to " + ResourceUtils.makeBasic(rdfNode));
+                        System.err.println("Traversal " + clazz.getCanonicalName() + "." + path + " from " + ResourceUtils.asBasicRdfNode(node) + " to " + ResourceUtils.asBasicRdfNode(rdfNode));
                         // cxt.getGlobalProcessor().apply(rdfNode, cxt);
                         MapperProxyUtils.collectReachableResources(rdfNode, cxt);
                     }

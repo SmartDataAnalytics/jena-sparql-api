@@ -1,5 +1,18 @@
 package org.aksw.jena_sparql_api.algebra.transform;
 
+/**
+ * Substitution strategy for constants in SPARQL graph patterns.
+ * One of:
+ * <ul>
+ * <li>RETAIN => do nothing</li>
+ * <li>SUBSTITUTE => substitute affected constant with a variable, but do NOT inject a filter to the constant</li>
+ * <li>SUSTITUTE_AND_FILTER => substitute affected constant with a variablbe and inject a filter statement
+ *   that constraints the variable to the original value</li>
+ * </ul>
+ *
+ * @author raven
+ *
+ */
 public enum SubstitutionStrategy {
     /**
      * Retain the value - suppress substitution
