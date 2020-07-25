@@ -3,6 +3,7 @@ package org.aksw.jena_sparql_api.mapper.hashid;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
@@ -53,6 +54,9 @@ public class HashIdCxtImpl
         this.hashFn = hashFn;
         this.globalProcessor = globalProcessor;
         this.hashCodeEncoder = hashCode -> BaseEncoding.base64Url().omitPadding().encode(hashCode.asBytes());
+
+        // TODO do we need null handling?
+        //        this.hashCodeEncoder = hashCode -> hashCode == null ? "(null)" : BaseEncoding.base64Url().omitPadding().encode(hashCode.asBytes());
 
         this.processing = new LinkedHashSet<>();
     }
@@ -132,6 +136,7 @@ public class HashIdCxtImpl
 
     @Override
     public String getHashAsString(HashCode hashCode) {
+        Objects.requireNonNull(hashCode, "hashCode should not be null here");
         String result = hashCodeEncoder.apply(hashCode);
         return result;
     }

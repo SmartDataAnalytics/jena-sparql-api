@@ -89,74 +89,81 @@ public class ClassDescriptor {
             hashIdProcessors = Maps.filterKeys(rawPropertyProcessors, hashIdPaths::contains);
 
 
-        List<HashCode> hashes = new ArrayList<>();
-        for(Entry<P_Path0, Function<? super Resource, ? extends Collection<? extends RDFNode>>> e : hashIdProcessors.entrySet()) {
-            P_Path0 path = e.getKey();
-//            System.err.println("Computing id via " + path);
+        HashCode result;
+        if(!hashIdProcessors.isEmpty() || !directHashIdProcessors.isEmpty()) {
+            List<HashCode> hashes = new ArrayList<>();
+            for(Entry<P_Path0, Function<? super Resource, ? extends Collection<? extends RDFNode>>> e : hashIdProcessors.entrySet()) {
+                P_Path0 path = e.getKey();
+    //            System.err.println("Computing id via " + path);
 
-            String iri = path.getNode().getURI();
-            boolean isFwd = path.isForward();
-            Function<? super Resource, ? extends Collection<? extends RDFNode>> propertyAccessor = e.getValue();
+                String iri = path.getNode().getURI();
+                boolean isFwd = path.isForward();
+                Function<? super Resource, ? extends Collection<? extends RDFNode>> propertyAccessor = e.getValue();
 
-            Collection<? extends RDFNode> col = propertyAccessor.apply(node);
-            Class<?> colClass = col.getClass();
+                Collection<? extends RDFNode> col = propertyAccessor.apply(node);
+                Class<?> colClass = col.getClass();
 
-            boolean isOrdered = List.class.isAssignableFrom(colClass);
+                boolean isOrdered = List.class.isAssignableFrom(colClass);
 
-            List<HashCode> hashContribs = new ArrayList<>();
-            for(RDFNode item : col) {
-                System.err.println("Gathering hashId contrib from " + clazz.getCanonicalName() + "." + path + " from " + ResourceUtils.asBasicRdfNode(node) + " to " + ResourceUtils.asBasicRdfNode(item));
+                List<HashCode> hashContribs = new ArrayList<>();
+                for(RDFNode item : col) {
+                    System.err.println("Gathering hashId contrib from " + clazz.getCanonicalName() + "." + path + " from " + ResourceUtils.asBasicRdfNode(node) + " to " + ResourceUtils.asBasicRdfNode(item));
 
-                HashCode partialHashContrib = cxt.getGlobalProcessor().apply(item, cxt);
+                    HashCode partialHashContrib = cxt.getGlobalProcessor().apply(item, cxt);
 
-                if(partialHashContrib == null) {
-                    throw new NullPointerException();
+                    if(partialHashContrib == null) {
+                        throw new NullPointerException();
+                    }
+
+                    // Note that here we repeatedly compute the hash of the property
+                    // We may want to factor this out
+                    HashCode fullHashContrib = hashFn.newHasher()
+                        .putString(iri, StandardCharsets.UTF_8)
+                        .putBoolean(isFwd)
+                        .putBytes(partialHashContrib.asBytes())
+                        .hash();
+
+                    hashContribs.add(fullHashContrib);
                 }
 
-                // Note that here we repeatedly compute the hash of the property
-                // We may want to factor this out
-                HashCode fullHashContrib = hashFn.newHasher()
-                    .putString(iri, StandardCharsets.UTF_8)
-                    .putBoolean(isFwd)
-                    .putBytes(partialHashContrib.asBytes())
-                    .hash();
 
-                hashContribs.add(fullHashContrib);
+                HashCode propertyHash = hashContribs.isEmpty()
+                        ? hashFn.hashInt(0)
+                        : isOrdered
+                            ? Hashing.combineOrdered(hashContribs)
+                            : Hashing.combineUnordered(hashContribs);
+
+                hashes.add(propertyHash);
             }
 
+            for(BiFunction<? super Resource, ? super HashIdCxt, ? extends HashCode> directHashIdProcessor : directHashIdProcessors) {
+                HashCode contrib = directHashIdProcessor.apply(node, cxt);
+                hashes.add(contrib);
+            }
 
-            HashCode propertyHash = hashContribs.isEmpty()
-                    ? hashFn.hashInt(0)
-                    : isOrdered
-                        ? Hashing.combineOrdered(hashContribs)
-                        : Hashing.combineUnordered(hashContribs);
+            if(hashes.isEmpty()) {
+                throw new RuntimeException("Could not obtain ID hashes for " + clazz.getCanonicalName() + " with node " + node);
+            }
 
-            hashes.add(propertyHash);
+            result = Hashing.combineUnordered(hashes);
+
+            // TODO HACK Ideally this code should not have to rely on registering hashes manually
+            // But right now the subsequent depth-first-traversal for computing ids of all reachable
+            // resources requires this kind of handling
+            // The alternative would be to register all reachable non-hashid nodes to the cxt
+            // and let the outer procedure recurse over it
+            cxt.putHash(node, result);
+            for(BiFunction<? super Resource, ? super HashIdCxt, ? extends String> e : directStringIdProcessors) {
+                String str = e.apply(node, cxt);
+                cxt.putString(node, str);
+            }
+        } else {
+            result = null;
+            if(cxt.getHash(node) == null) {
+                cxt.putHash(node, null);
+            }
         }
 
-        for(BiFunction<? super Resource, ? super HashIdCxt, ? extends HashCode> directHashIdProcessor : directHashIdProcessors) {
-            HashCode contrib = directHashIdProcessor.apply(node, cxt);
-            hashes.add(contrib);
-        }
-
-        if(hashes.isEmpty()) {
-            throw new RuntimeException("Could not obtain ID hashes for " + clazz.getCanonicalName() + " with node " + node);
-        }
-
-        HashCode result = Hashing.combineUnordered(hashes);
-
-        // TODO HACK Ideally this code should not have to rely on registering hashes manually
-        // But right now the subsequent depth-first-traversal for computing ids of all reachable
-        // resources requires this kind of handling
-        // The alternative would be to register all reachable non-hashid nodes to the cxt
-        // and let the outer procedure recurse over it
-        cxt.putHash(node, result);
-
-
-        for(BiFunction<? super Resource, ? super HashIdCxt, ? extends String> e : directStringIdProcessors) {
-            String str = e.apply(node, cxt);
-            cxt.putString(node, str);
-        }
 
 
 //        cxt.putHash(node, result);
