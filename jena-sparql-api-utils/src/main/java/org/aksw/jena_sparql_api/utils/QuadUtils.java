@@ -50,20 +50,20 @@ public class QuadUtils {
 
 
     public static Map<Node, Set<Quad>> partitionByGraph(Iterable<Quad> quads) {
-    	Map<Node, Set<Quad>> result = new HashMap<>();
-    	
-    	partitionByGraph(quads.iterator(), result, HashSet::new);
-    	
-    	return result;
+        Map<Node, Set<Quad>> result = new HashMap<>();
+
+        partitionByGraph(quads.iterator(), result, HashSet::new);
+
+        return result;
     }
 
     public static <C extends Collection<Quad>, M extends Map<Node, C>> M partitionByGraph(
-    		Iterator<Quad> it,
-    		M result,
-    		Supplier<? extends C> supplier) {
+            Iterator<Quad> it,
+            M result,
+            Supplier<? extends C> supplier) {
         //Map<Node, Set<Quad>> result = new HashMap<Node, Set<Quad>>();
         while(it.hasNext()) {
-        	Quad quad = it.next();
+            Quad quad = it.next();
             Node g = quad.getGraph();
             C qs = result.get(g);
             if (qs == null) {
