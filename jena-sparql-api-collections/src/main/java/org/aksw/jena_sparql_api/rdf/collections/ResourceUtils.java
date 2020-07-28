@@ -19,6 +19,7 @@ import org.apache.jena.ext.com.google.common.collect.Iterables;
 import org.apache.jena.ext.com.google.common.collect.Sets;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
+import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Literal;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -27,12 +28,14 @@ import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.StmtIterator;
+import org.apache.jena.rdf.model.impl.IteratorFactory;
 import org.apache.jena.rdf.model.impl.LiteralImpl;
 import org.apache.jena.rdf.model.impl.ModelCom;
 import org.apache.jena.rdf.model.impl.PropertyImpl;
 import org.apache.jena.rdf.model.impl.ResourceImpl;
 import org.apache.jena.sparql.path.P_Path0;
 import org.apache.jena.sparql.util.ModelUtils;
+import org.apache.jena.util.iterator.ClosableIterator;
 import org.apache.jena.util.iterator.ExtendedIterator;
 
 import com.google.common.collect.Streams;
@@ -256,18 +259,62 @@ public class ResourceUtils {
 //		return result;
 //	}
 
+    /**
+     * It turned out that the problem was that GraphViews do not support removals...
+     *
+     * For some reason (transactions?) the iterator returneb by calling s.listProperties)
+     * does not allow removal
+     *
+     * @param m
+     * @param s
+     * @param p
+     * @param o
+     * @return
+     */
+    public static StmtIterator listStatementsWithRemovalAllowed(Model m, Resource s, Property p, RDFNode o) {
+        Graph g = m.getGraph();
+        Node ns = s == null ? Node.ANY : s.asNode();
+        Node np = p == null ? Node.ANY : p.asNode();
+        Node no = o == null ? Node.ANY : o.asNode();
+        ExtendedIterator<Triple> coreIt = g.find(ns, np, no);
+
+        ClosableIterator<Triple> it = new ForwardingIteratorWithForcedRemoval<>(
+                coreIt, triple -> m.getGraph().delete(triple));
+//        StmtIterator result = new StmtIteratorImpl( WrappedIterator.create(coreIt).mapWith( t ->  m.asStatement( t ) ) ) {
+//        	@Override
+//        	public void remove() {
+//        		try {
+//        			super.remove();
+//        		} catch(UnsupportedOperationException) {
+//        			// consume the remaining iterator
+//        			coreIt
+//        		}
+//        	}
+//        };
+
+
+
+         return IteratorFactory.asStmtIterator(it, (ModelCom)m);
+    }
+
     public static StmtIterator listProperties(Resource s) {
-        StmtIterator result = s.listProperties();
+//        StmtIterator result = s.listProperties();
+        Model m = s.getModel();
+        StmtIterator result = listStatementsWithRemovalAllowed(m, s, null, null);
         return result;
     }
 
     public static StmtIterator listProperties(Resource s, Property p) {
-        StmtIterator result = s.listProperties(p);
+        Model m = s.getModel();
+        StmtIterator result = listStatementsWithRemovalAllowed(m, s, p, null);
+//        StmtIterator result = s.listProperties(p);
         return result;
     }
 
     public static ExtendedIterator<RDFNode> listPropertyValues(Resource s, Property p) {
         ExtendedIterator<RDFNode> result = listProperties(s, p)
+//        Model m = s.getModel();
+//        ExtendedIterator<RDFNode> result = listStatementsWithRemovalAllowed(m, s, p, null)
                 .mapWith(Statement::getObject);
         return result;
     }
@@ -725,6 +772,7 @@ public class ResourceUtils {
     }
 
     /**
+     * Remove a set of statements and add up to one new one.
      *
      * @param m
      * @param removals
@@ -732,6 +780,41 @@ public class ResourceUtils {
      * @return
      */
     public static boolean replaceProperties(Model m, ExtendedIterator<Statement> removals, Statement stmt) {
+        boolean result = replacePropertiesUsingIterator(m, removals, stmt);
+        return result;
+    }
+
+//    public static boolean replacePropertiesOld(Model m, ExtendedIterator<Statement> removals, Statement stmt) {
+//        boolean result;
+//        try {
+//            result = replacePropertiesUsingIterator(m, removals, stmt);
+//        } catch(UnsupportedOperationException e) {
+//            result = replaceProperties(m, removals, stmt);
+//        }
+//        return result;
+//    }
+
+
+    public static boolean replacePropertiesUsingModel(Model m, ExtendedIterator<Statement> removals, Statement newStmt) {
+        Set<Statement> stmts = removals.toSet();
+        boolean stmtSeen = false;
+        for(Statement stmt : stmts) {
+            Statement item = removals.next();
+            if(item.equals(stmt)) {
+                stmtSeen = true;
+            } else {
+                m.remove(stmt);
+            }
+        }
+
+        boolean result = newStmt != null && !stmtSeen;
+        if(result) {
+            m.add(newStmt);
+        }
+        return result;
+    }
+
+    public static boolean replacePropertiesUsingIterator(Model m, ExtendedIterator<Statement> removals, Statement stmt) {
         boolean stmtSeen = false;
         while(removals.hasNext()) {
             Statement item = removals.next();

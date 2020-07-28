@@ -12,7 +12,7 @@ import org.apache.jena.sparql.core.mem.QuadTable;
 import org.apache.jena.sparql.core.mem.TripleTable;
 
 /**
- * A TripleTable view on top a QuadTable.
+ * A {@link TripleTable} view on top of a {@link QuadTable}.
  *
  * Used to create a simple insert-order-preserving Dataset view with
  * proper prefix-mapping support using
