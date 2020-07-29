@@ -2,6 +2,7 @@ package org.aksw.jena_sparql_api.mapper.hashid;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -15,9 +16,14 @@ import java.util.function.Function;
 import org.aksw.jena_sparql_api.mapper.proxy.MapperProxyUtils;
 import org.aksw.jena_sparql_api.rdf.collections.ResourceUtils;
 import org.apache.jena.ext.com.google.common.collect.Maps;
+import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.RDFList;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.sparql.path.P_Path0;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.hash.HashCode;
 import com.google.common.hash.HashFunction;
@@ -25,6 +31,8 @@ import com.google.common.hash.Hashing;
 
 
 public class ClassDescriptor {
+    private static Logger logger = LoggerFactory.getLogger(ClassDescriptor.class);
+
     protected Class<?> clazz;
     protected Map<P_Path0, Function<? super Resource, ? extends Collection<? extends RDFNode>>> rawPropertyProcessors = new LinkedHashMap<>();
 
@@ -90,6 +98,7 @@ public class ClassDescriptor {
 
 
         HashCode result;
+        String resultStr = null;
         if(!hashIdProcessors.isEmpty() || !directHashIdProcessors.isEmpty()) {
             List<HashCode> hashes = new ArrayList<>();
             for(Entry<P_Path0, Function<? super Resource, ? extends Collection<? extends RDFNode>>> e : hashIdProcessors.entrySet()) {
@@ -107,7 +116,7 @@ public class ClassDescriptor {
 
                 List<HashCode> hashContribs = new ArrayList<>();
                 for(RDFNode item : col) {
-                    System.err.println("Gathering hashId contrib from " + clazz.getCanonicalName() + "." + path + " from " + ResourceUtils.asBasicRdfNode(node) + " to " + ResourceUtils.asBasicRdfNode(item));
+                    logger.debug("Gathering hashId contrib from " + clazz.getCanonicalName() + "." + path + " from " + ResourceUtils.asBasicRdfNode(node) + " to " + ResourceUtils.asBasicRdfNode(item));
 
                     HashCode partialHashContrib = cxt.getGlobalProcessor().apply(item, cxt);
 
@@ -125,7 +134,6 @@ public class ClassDescriptor {
 
                     hashContribs.add(fullHashContrib);
                 }
-
 
                 HashCode propertyHash = hashContribs.isEmpty()
                         ? hashFn.hashInt(0)
@@ -154,8 +162,8 @@ public class ClassDescriptor {
             // and let the outer procedure recurse over it
             cxt.putHash(node, result);
             for(BiFunction<? super Resource, ? super HashIdCxt, ? extends String> e : directStringIdProcessors) {
-                String str = e.apply(node, cxt);
-                cxt.putString(node, str);
+                resultStr = e.apply(node, cxt);
+                cxt.putString(node, resultStr);
             }
         } else {
             result = null;
@@ -165,6 +173,50 @@ public class ClassDescriptor {
         }
 
 
+        // Post processing for assigning hashes and strings to the intermediate nodes of rdf:lists
+        // Iterates all @HashId annotated properties and checks for List types and whether the underlying
+        // RDF conforms to an RDFList
+        for(Entry<P_Path0, Function<? super Resource, ? extends Collection<? extends RDFNode>>> e : hashIdProcessors.entrySet()) {
+            P_Path0 path = e.getKey();
+
+            String iri = path.getNode().getURI();
+            Property p = ResourceFactory.createProperty(iri);
+            boolean isFwd = path.isForward();
+            Function<? super Resource, ? extends Collection<? extends RDFNode>> propertyAccessor = e.getValue();
+
+            RDFNode val = ResourceUtils.getPropertyValue(node, p, isFwd, RDFNode.class);
+            if(val != null) {
+                Collection<? extends RDFNode> col = propertyAccessor.apply(node);
+                Class<?> colClass = col.getClass();
+
+                boolean isJavaList = List.class.isAssignableFrom(colClass);
+
+                if(isJavaList && val.canAs(RDFList.class)) {
+                    RDFList list = val.as(RDFList.class);
+                    RDFList currentEntry = list;
+                    int index = 0;
+                    while(!currentEntry.isEmpty()) {
+                        HashCode indexHash = hashFn.hashInt(index);
+                        RDFNode item = currentEntry.getHead();
+                        HashCode itemHash = cxt.getHash(item);
+                        if(itemHash != null) {
+                            HashCode entryHash = Hashing.combineOrdered(Arrays.asList(result, indexHash, itemHash));
+                            cxt.putHash(currentEntry, entryHash);
+
+                            String entryStr =
+                                    (resultStr == null ? "" : resultStr + "_") + cxt.getHashAsString(entryHash);
+
+                            cxt.putString(currentEntry, entryStr);
+                        }
+
+                        ++index;
+                        currentEntry = currentEntry.getTail();
+                    }
+
+//                    System.out.println(list);
+                }
+            }
+        }
 
 //        cxt.putHash(node, result);
 
@@ -187,7 +239,7 @@ public class ClassDescriptor {
                 try {
                     if(!cxt.isPending(rdfNode)) {
 //                        System.err.println("Traversing from " + node.asResource() + " (" + clazz + ") to " + rdfNode.asResource() + " via " + path);
-                        System.err.println("Traversal " + clazz.getCanonicalName() + "." + path + " from " + ResourceUtils.asBasicRdfNode(node) + " to " + ResourceUtils.asBasicRdfNode(rdfNode));
+                        logger.debug("Traversal " + clazz.getCanonicalName() + "." + path + " from " + ResourceUtils.asBasicRdfNode(node) + " to " + ResourceUtils.asBasicRdfNode(rdfNode));
                         // cxt.getGlobalProcessor().apply(rdfNode, cxt);
                         MapperProxyUtils.collectReachableResources(rdfNode, cxt);
                     }

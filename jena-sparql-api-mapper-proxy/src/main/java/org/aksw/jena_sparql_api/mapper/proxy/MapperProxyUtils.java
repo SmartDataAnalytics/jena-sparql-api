@@ -1467,11 +1467,11 @@ public class MapperProxyUtils {
                     if(writeMethod != null) {
                         Class<?> returnType = writeMethod.getReturnType();
                         if(HashCode.class.isAssignableFrom(returnType) && HashIdCxt.class.equals(effectiveType)) {
-                            logger.info("  Found direct hash method: " + writeMethod);
+                            logger.debug("  Found direct hash method: " + writeMethod);
                             fn = (s, cxt) -> niceInvoke(writeMethod, s, cxt);
                         }
                     } else if(readMethod != null) {
-                        logger.info("  Found direct hash method: " + readMethod);
+                        logger.debug("  Found direct hash method: " + readMethod);
                         fn = (s, cxt) -> niceInvoke(readMethod, s);
                     }
 
@@ -1499,12 +1499,12 @@ public class MapperProxyUtils {
                     if(writeMethod != null) {
                         Class<?> returnType = writeMethod.getReturnType();
                         if(String.class.isAssignableFrom(returnType) && HashIdCxt.class.equals(effectiveType)) {
-                            logger.info("  Found direct stringId method: " + writeMethod);
+                            logger.debug("  Found direct stringId method: " + writeMethod);
                             fn = (s, cxt) -> niceInvoke(writeMethod, s, cxt);
                         }
                     } else if(readMethod != null) {
                         // TODO Ensure the result type is String
-                        logger.info("  Found direct string method: " + readMethod);
+                        logger.debug("  Found direct string method: " + readMethod);
                         fn = (s, cxt) -> niceInvoke(readMethod, s);
                     }
 
@@ -2003,18 +2003,18 @@ public class MapperProxyUtils {
     public static HashCode getHashId(RDFNode root, HashIdCxt cxt) {
         collectReachableResources(root, cxt);
 //        logger.info("Collected " + cxt.getPending().size() + " reachable nodes");
-        System.err.println("Collected " + cxt.getPending().size() + " reachable nodes");
+//        System.err.println("Collected " + cxt.getPending().size() + " reachable nodes");
 
         Set<RDFNode> pending = cxt.getPending();
 
         // Get the set of blanknodes
-        for(RDFNode node : pending) {
-            if(node.isAnon()) {
-                if(node.asResource().hasProperty(ResourceFactory.createProperty("http://lsq.aksw.org/vocab#benchmarkRun"))) {
-                    System.out.println("Anon: " + ResourceUtils.asBasicRdfNode(node) + "" + node);
-                }
-            }
-        }
+//        for(RDFNode node : pending) {
+//            if(node.isAnon()) {
+//                if(node.asResource().hasProperty(ResourceFactory.createProperty("http://lsq.aksw.org/vocab#benchmarkRun"))) {
+//                    System.out.println("Anon: " + ResourceUtils.asBasicRdfNode(node) + "" + node);
+//                }
+//            }
+//        }
 
         while(!pending.isEmpty()) {
             RDFNode start = pending.iterator().next();
