@@ -51,6 +51,7 @@ public class QueryExecutionIterated
     // If false, the whole query iterator will be consumed
     // (query iterators may be endless)
     protected boolean stopOnEmptyResult;
+    protected boolean stopIfLimitNotReached;
 
     protected IClosable currentCloseAction = null;
 
@@ -62,16 +63,25 @@ public class QueryExecutionIterated
 //        super.setDecoratee(decoratee);
 //    }
 
-    public QueryExecutionIterated(Query originalQuery, QueryExecutionFactory factory, Iterator<Query> queryIterator) {
-        this(originalQuery, factory, queryIterator, true);
+    public QueryExecutionIterated(
+            Query originalQuery,
+            QueryExecutionFactory factory,
+            Iterator<Query> queryIterator) {
+        this(originalQuery, factory, queryIterator, true, true);
     }
 
-    public QueryExecutionIterated(Query originalQuery, QueryExecutionFactory factory, Iterator<Query> queryIterator, boolean stopOnEmptyResult) {
+    public QueryExecutionIterated(
+            Query originalQuery,
+            QueryExecutionFactory factory,
+            Iterator<Query> queryIterator,
+            boolean stopOnEmptyResult,
+            boolean stopIfLimitNotReached) {
         super();
         this.originalQuery = originalQuery;
         this.queryIterator = queryIterator;
         this.factory = factory;
         this.stopOnEmptyResult = stopOnEmptyResult;
+        this.stopIfLimitNotReached = stopIfLimitNotReached;
     }
 
     @Override
@@ -91,7 +101,7 @@ public class QueryExecutionIterated
 
     @Override
     public ResultSet execSelect() {
-        ResultSetPaginated it = new ResultSetPaginated(factory, queryIterator, stopOnEmptyResult);
+        ResultSetPaginated it = new ResultSetPaginated(factory, queryIterator, stopOnEmptyResult, stopIfLimitNotReached);
 
         // Note: This line forces the iterator to initialize the result set...
         it.hasNext();

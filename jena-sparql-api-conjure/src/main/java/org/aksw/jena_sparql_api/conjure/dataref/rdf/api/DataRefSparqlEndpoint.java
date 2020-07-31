@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 import org.aksw.jena_sparql_api.conjure.dataref.core.api.PlainDataRefSparqlEndpoint;
+import org.aksw.jena_sparql_api.mapper.annotation.HashId;
 import org.aksw.jena_sparql_api.mapper.annotation.Iri;
 import org.aksw.jena_sparql_api.mapper.annotation.IriType;
 import org.aksw.jena_sparql_api.mapper.annotation.RdfTypeNs;
@@ -15,15 +16,18 @@ import org.apache.jena.rdf.model.Model;
 public interface DataRefSparqlEndpoint
     extends PlainDataRefSparqlEndpoint, DataRef
 {
+    @HashId
     @Iri("rpif:serviceUrl")
     @IriType
     DataRefSparqlEndpoint setServiceUrl(String serviceUrl);
 
+    @HashId
     @Override
     @Iri("rpif:namedGraph")
     @IriType
     List<String> getNamedGraphs();
 
+    @HashId
     @Override
     @Iri("rpif:defaultGraph")
     @IriType
