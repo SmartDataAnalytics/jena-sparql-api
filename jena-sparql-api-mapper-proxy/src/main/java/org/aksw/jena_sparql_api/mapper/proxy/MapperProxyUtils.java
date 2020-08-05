@@ -1608,6 +1608,7 @@ public class MapperProxyUtils {
                                 classDescriptor.getOrCreatePropertyDescriptor(path)
                                     .setIncludedInHashId(isHashId)
                                     .setRdfPropertyExcludedFromHashId(isHashIdWithoutProperty)
+                                    .setIriType(isIriType)
                                     .setRawProcessor(s -> {
                                         BiFunction<Property, Boolean, Function<Resource, ViewBundle>> ps = collectionGetter.apply(effectiveItemType);
                                         Function<Resource, ViewBundle> sx = ps.apply(p, isFwd);
@@ -1653,6 +1654,7 @@ public class MapperProxyUtils {
                         classDescriptor.getOrCreatePropertyDescriptor(path)
                             .setIncludedInHashId(isHashId)
                             .setRdfPropertyExcludedFromHashId(isHashIdWithoutProperty)
+                            .setIriType(isIriType)
                             .setRawProcessor(s -> {
                                 ViewBundle vb = raw.apply(s);
                                 Collection<? extends RDFNode> col = vb.getRawView();
@@ -1746,6 +1748,7 @@ public class MapperProxyUtils {
                             classDescriptor.getOrCreatePropertyDescriptor(path)
                                 .setIncludedInHashId(isHashId)
                                 .setRdfPropertyExcludedFromHashId(isHashIdWithoutProperty)
+                                .setIriType(isIriType)
                                 .setRawProcessor(s -> {
                                     ViewBundle vb = g.apply(s);
                                     Collection<? extends RDFNode> col = vb.getRawView();

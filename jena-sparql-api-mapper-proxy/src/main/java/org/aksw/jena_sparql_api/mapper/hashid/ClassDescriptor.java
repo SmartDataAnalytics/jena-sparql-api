@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.mapper.proxy.MapperProxyUtils;
 import org.aksw.jena_sparql_api.rdf.collections.ResourceUtils;
+import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFList;
 import org.apache.jena.rdf.model.RDFNode;
@@ -126,6 +127,7 @@ public class ClassDescriptor {
             for(PropertyDescriptor pd : hashIdProcessors) {
                 P_Path0 path = pd.getPath();
 
+                boolean isIriType = pd.isIriType();
                 boolean excludeRdfProperty = pd.isExcludeRdfPropertyFromHashId();
 
     //            System.err.println("Computing id via " + path);
@@ -141,6 +143,15 @@ public class ClassDescriptor {
 
                 List<HashCode> hashContribs = new ArrayList<>();
                 for(RDFNode item : col) {
+
+                    // If the property is marked as iriType then IRIs are treated as strings
+                    if(isIriType) {
+                        if(item.isURIResource()) {
+                            String tmp = item.asResource().getURI();
+                            item = item.getModel().createLiteral(tmp);
+                        }
+                    }
+
                     logger.debug("Gathering hashId contrib from " + clazz.getCanonicalName() + "." + path + " from " + ResourceUtils.asBasicRdfNode(node) + " to " + ResourceUtils.asBasicRdfNode(item));
 
                     HashCode partialHashContrib = cxt.getGlobalProcessor().apply(item, cxt);
@@ -263,23 +274,26 @@ public class ClassDescriptor {
         for(PropertyDescriptor pd : getPropertyDescriptors()) {
             //P_Path0 path = e.getKey();
             P_Path0 path = pd.getPath();
-//            System.err.println("Scanning " + path);
-            Function<? super Resource, ? extends Collection<? extends RDFNode>> propertyAccessor = pd.getRawProcessor();
-            Collection<? extends RDFNode> col = propertyAccessor.apply(node);
 
-            for(RDFNode rdfNode : col) {
-                try {
-                    if(!cxt.isPending(rdfNode)) {
-//                        System.err.println("Traversing from " + node.asResource() + " (" + clazz + ") to " + rdfNode.asResource() + " via " + path);
-                        logger.debug("Traversal " + clazz.getCanonicalName() + "." + path + " from " + ResourceUtils.asBasicRdfNode(node) + " to " + ResourceUtils.asBasicRdfNode(rdfNode));
-                        // cxt.getGlobalProcessor().apply(rdfNode, cxt);
-                        MapperProxyUtils.collectReachableResources(rdfNode, cxt);
+            if(!pd.isIriType()) {
+    //            System.err.println("Scanning " + path);
+                Function<? super Resource, ? extends Collection<? extends RDFNode>> propertyAccessor = pd.getRawProcessor();
+                Collection<? extends RDFNode> col = propertyAccessor.apply(node);
+
+                for(RDFNode rdfNode : col) {
+                    try {
+                        if(!cxt.isPending(rdfNode)) {
+    //                        System.err.println("Traversing from " + node.asResource() + " (" + clazz + ") to " + rdfNode.asResource() + " via " + path);
+                            logger.debug("Traversal " + clazz.getCanonicalName() + "." + path + " from " + ResourceUtils.asBasicRdfNode(node) + " to " + ResourceUtils.asBasicRdfNode(rdfNode));
+                            // cxt.getGlobalProcessor().apply(rdfNode, cxt);
+                            MapperProxyUtils.collectReachableResources(rdfNode, cxt);
+                        }
+                    } catch(IllegalStateException ex) {
+                        throw ex;
+                    } catch(Exception ex) {
+    //                    System.err.println("Failed to scan " + path + " " + ex);
+                        // TODO Silently catching the exception here is bad
                     }
-                } catch(IllegalStateException ex) {
-                    throw ex;
-                } catch(Exception ex) {
-//                    System.err.println("Failed to scan " + path + " " + ex);
-                    // TODO Silently catching the exception here is bad
                 }
             }
         }

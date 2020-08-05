@@ -15,6 +15,10 @@ public class PropertyDescriptor {
 
     protected boolean includedInHashId;
 
+    // If true the values are represented as IRIs but for the sake of identity are treated as string literals
+    // Hence, ID computation does not descend into those RDF resources
+    protected boolean isIriType;
+
     /**
      * Only valid if includeInHashId is true:
      * Usually the rdf property (path) is combined with the value to form the id. This excludes the rdf property
@@ -49,6 +53,15 @@ public class PropertyDescriptor {
 
     public boolean isIncludedInHashId() {
         return includedInHashId;
+    }
+
+    public PropertyDescriptor setIriType(boolean isIriType) {
+        this.isIriType = isIriType;
+        return this;
+    }
+
+    public boolean isIriType() {
+        return isIriType;
     }
 
     public void setRawProcessor(Function<? super Resource, ? extends Collection<? extends RDFNode>> rawProcessor) {
