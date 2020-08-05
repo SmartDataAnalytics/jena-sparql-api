@@ -70,6 +70,7 @@ import org.apache.jena.ext.com.google.common.collect.Maps;
 import org.apache.jena.ext.com.google.common.collect.Sets;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
+import org.apache.jena.rdf.model.Literal;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Property;
@@ -1409,6 +1410,8 @@ public class MapperProxyUtils {
             boolean isReadInverse = false;
             boolean isReadHashId = false;
             boolean isReadStringId = false;
+            boolean isReadHashIdWithoutProperty = false;
+
 
             Class<?> writeType = null;
             Class<?> writeCollectionType = null;
@@ -1418,6 +1421,7 @@ public class MapperProxyUtils {
             boolean isWriteInverse = false;
             boolean isWriteHashId = false;
             boolean isWriteStringId = false;
+            boolean isWriteHashIdWithoutProperty = false;
 
             if(readMethodDescriptor != null) {
                 readType = readMethodDescriptor.getType();
@@ -1426,7 +1430,11 @@ public class MapperProxyUtils {
                 isReadIriType = readMethod.getAnnotation(IriType.class) != null;
                 isReadPolymorphicOnly = readMethod.getAnnotation(PolymorphicOnly.class) != null;
                 isReadInverse = readMethod.getAnnotation(Inverse.class) != null;
-                isReadHashId = readMethod.getAnnotation(HashId.class) != null;
+
+                HashId readHashId = readMethod.getAnnotation(HashId.class);
+                isReadHashId = readHashId != null;
+                isReadHashIdWithoutProperty = isReadHashId && readHashId.excludeRdfProperty();
+
                 isReadStringId = readMethod.getAnnotation(StringId.class) != null;
             }
 
@@ -1437,7 +1445,11 @@ public class MapperProxyUtils {
                 isWriteIriType = writeMethod.getAnnotation(IriType.class) != null;
                 isWritePolymorphicOnly = writeMethod.getAnnotation(PolymorphicOnly.class) != null;
                 isWriteInverse = writeMethod.getAnnotation(Inverse.class) != null;
-                isWriteHashId = writeMethod.getAnnotation(HashId.class) != null;
+
+                HashId writeHashId = writeMethod.getAnnotation(HashId.class);
+                isWriteHashId = writeHashId != null;
+                isWriteHashIdWithoutProperty = isWriteHashId && writeHashId.excludeRdfProperty();
+
                 isWriteStringId = writeMethod.getAnnotation(StringId.class) != null;
             }
 
@@ -1448,6 +1460,7 @@ public class MapperProxyUtils {
             boolean polymorphicOnly = isReadPolymorphicOnly || isWritePolymorphicOnly;
             boolean isInverse = isReadInverse || isWriteInverse;
             boolean isHashId = isReadHashId || isWriteHashId;
+            boolean isHashIdWithoutProperty = isReadHashIdWithoutProperty || isWriteHashIdWithoutProperty;
             boolean isStringId = isReadStringId || isWriteStringId;
             boolean isFwd = !isInverse;
 
@@ -1592,13 +1605,16 @@ public class MapperProxyUtils {
                             methodImplMap.put(readMethod, readImpl);
 
 
-                                classDescriptor.registerRawAccessor(path, isHashId, s -> {
-                                    BiFunction<Property, Boolean, Function<Resource, ViewBundle>> ps = collectionGetter.apply(effectiveItemType);
-                                    Function<Resource, ViewBundle> sx = ps.apply(p, isFwd);
-                                    ViewBundle v = sx.apply(s);
-                                    Collection<RDFNode> r = v.getRawView();
-                                    return r;
-                                });
+                                classDescriptor.getOrCreatePropertyDescriptor(path)
+                                    .setIncludedInHashId(isHashId)
+                                    .setRdfPropertyExcludedFromHashId(isHashIdWithoutProperty)
+                                    .setRawProcessor(s -> {
+                                        BiFunction<Property, Boolean, Function<Resource, ViewBundle>> ps = collectionGetter.apply(effectiveItemType);
+                                        Function<Resource, ViewBundle> sx = ps.apply(p, isFwd);
+                                        ViewBundle v = sx.apply(s);
+                                        Collection<RDFNode> r = v.getRawView();
+                                        return r;
+                                    });
 
 //                                hashIdProcessor = (res, cxt) -> createPropertyHashIdProcessor(
 //                                    globalHashIdProcessor,
@@ -1634,11 +1650,14 @@ public class MapperProxyUtils {
                         readImpl = (s, args) -> raw.apply((Resource)s).getJavaView();
                         methodImplMap.put(readMethod, readImpl);
 
-                        classDescriptor.registerRawAccessor(path, isHashId, s -> {
-                          ViewBundle vb = raw.apply(s);
-                          Collection<? extends RDFNode> col = vb.getRawView();
-                          return col;
-                        });
+                        classDescriptor.getOrCreatePropertyDescriptor(path)
+                            .setIncludedInHashId(isHashId)
+                            .setRdfPropertyExcludedFromHashId(isHashIdWithoutProperty)
+                            .setRawProcessor(s -> {
+                                ViewBundle vb = raw.apply(s);
+                                Collection<? extends RDFNode> col = vb.getRawView();
+                                return col;
+                            });
 
 //                            hashIdProcessor = (res, cxt) -> createPropertyHashIdProcessor(
 //                                globalHashIdProcessor,
@@ -1724,11 +1743,14 @@ public class MapperProxyUtils {
                         Function<Resource, ViewBundle> g = getter.apply(p, isFwd);
                         methodImplMap.put(readMethod, (o, args) -> g.apply((Resource)o).getJavaView());
 
-                            classDescriptor.registerRawAccessor(path, isHashId, s -> {
-                                ViewBundle vb = g.apply(s);
-                                Collection<? extends RDFNode> col = vb.getRawView();
-                                return col;
-                              });
+                            classDescriptor.getOrCreatePropertyDescriptor(path)
+                                .setIncludedInHashId(isHashId)
+                                .setRdfPropertyExcludedFromHashId(isHashIdWithoutProperty)
+                                .setRawProcessor(s -> {
+                                    ViewBundle vb = g.apply(s);
+                                    Collection<? extends RDFNode> col = vb.getRawView();
+                                    return col;
+                                });
 
 //                            hashIdProcessor = (res, cxt) -> createPropertyHashIdProcessor(
 //                                globalHashIdProcessor,
@@ -2051,7 +2073,17 @@ public class MapperProxyUtils {
 
         if(root.isLiteral()) {
             Node n = root.isAnon() ? Vars.x : root.asNode();
-            result = hashFn.hashString(NodeFmtLib.str(n), StandardCharsets.UTF_8);//Objects.toString(rdfNode);
+
+            // TODO Pass bytes, ints, long and such to the appropriate hashFn function so that the
+            // hash is the same as if it was called with the appropriate java object
+            Literal l = root.asLiteral();
+            Object o = l.getValue();
+            if(o instanceof String) { // TODO Take language tag into account! Maybe we have to check the datatype explicitly for xsd:string?
+                String str = (String)o;
+                result = hashFn.hashString(str, StandardCharsets.UTF_8);
+            } else {
+                result = hashFn.hashString(NodeFmtLib.str(n), StandardCharsets.UTF_8);//Objects.toString(rdfNode);
+            }
         } else {
             ClassDescriptor cd = getClassDescriptor(root.getClass());
 
@@ -2064,9 +2096,7 @@ public class MapperProxyUtils {
                 result = null;
                 // FIXME Implement properly; we may need the TypeDecider - the problem with LSQ is, that an
                 // RDFterm can be represented by literal or a resource denoting a variable
-                // System.err.println("HACK using a FAKE ID for moving on; needs urgent fix; resource: " + ResourceUtils.asBasicRdfNode(root));
-                // result = hashFn.hashInt(0);
-                System.err.println("No class descriptor found for node; may be undesired " + ResourceUtils.asBasicRdfNode(root) + " - " + root);
+                logger.debug("No class descriptor found for node; may be undesired " + ResourceUtils.asBasicRdfNode(root) + " - " + root);
 
                 // throw new RuntimeException("No id computation registered for " + clazz);
             }

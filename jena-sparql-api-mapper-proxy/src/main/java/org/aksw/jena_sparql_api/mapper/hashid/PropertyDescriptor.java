@@ -1,42 +1,61 @@
 package org.aksw.jena_sparql_api.mapper.hashid;
 
-import org.aksw.jena_sparql_api.mapper.hashid.Metamodel.PropertyDescCollection;
-import org.apache.jena.rdf.model.RDFNode;
+import java.util.Collection;
+import java.util.function.Function;
 
-import com.google.common.collect.Multimap;
+import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.sparql.path.P_Path0;
 
 public class PropertyDescriptor {
-    String iri;
+    protected ClassDescriptor classDescriptor;
+    protected P_Path0 path;
+
+    protected Function<? super Resource, ? extends Collection<? extends RDFNode>> rawProcessor;
+
+    protected boolean includedInHashId;
 
     /**
-     * Methods grouped by their name.
-     * This allows getFoo and setFoo go into one group and getFoos and setFoos into another.
-     *
+     * Only valid if includeInHashId is true:
+     * Usually the rdf property (path) is combined with the value to form the id. This excludes the rdf property
+     * and thus only uses the value.
      *
      */
-    protected Multimap<String, MethodGroup> methodGroup;
+    protected boolean rdfPropertyExcludedFromHashId;
 
-    public String getIri() {
-        return iri;
+    public PropertyDescriptor(ClassDescriptor classDescriptor, P_Path0 path) {
+        super();
+        this.classDescriptor = classDescriptor;
+        this.path = path;
     }
 
-    public boolean isInverse() {
-        return false;
+    public P_Path0 getPath() {
+        return path;
     }
 
-    public boolean isCollection() {
-        return false;
+    public PropertyDescriptor setRdfPropertyExcludedFromHashId(boolean onOrOff) {
+        this.rdfPropertyExcludedFromHashId = onOrOff;
+        return this;
     }
 
-    public boolean isHashId() {
-        return false;
+    public boolean isExcludeRdfPropertyFromHashId() {
+        return rdfPropertyExcludedFromHashId;
     }
 
-    public Object getValue(RDFNode node) {
-        return null;
+    public PropertyDescriptor setIncludedInHashId(boolean onOrOff) {
+        this.includedInHashId = onOrOff;
+        return this;
     }
 
-    public PropertyDescCollection asCollectionProperty() {
-        return null;
+    public boolean isIncludedInHashId() {
+        return includedInHashId;
+    }
+
+    public void setRawProcessor(Function<? super Resource, ? extends Collection<? extends RDFNode>> rawProcessor) {
+        this.rawProcessor = rawProcessor;
+    }
+
+    public Function<? super Resource, ? extends Collection<? extends RDFNode>> getRawProcessor() {
+        return rawProcessor;
     }
 }
