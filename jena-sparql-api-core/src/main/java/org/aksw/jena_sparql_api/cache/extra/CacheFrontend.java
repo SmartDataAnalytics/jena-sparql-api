@@ -1,5 +1,9 @@
 package org.aksw.jena_sparql_api.cache.extra;
 
+import java.util.Iterator;
+
+import org.apache.jena.graph.Triple;
+
 /**
  * @author Claus Stadler
  *         <p/>
@@ -25,11 +29,14 @@ public interface CacheFrontend
     void write(String service, String queryString, Model model);
     void write(String service, Query query, Model model);
 
+    void writeTriples(String service, String queryString, Iterator<Triple> it);
+    void writeTriples(String service, Query query, Iterator<Triple> it);
+
     void write(String service, String queryString, boolean value);
     void write(String service, Query query, boolean value);
 
     CacheResource lookup(String service, String queryString);
     CacheResource lookup(String service, Query query);
-    
+
     boolean isReadOnly();
 }

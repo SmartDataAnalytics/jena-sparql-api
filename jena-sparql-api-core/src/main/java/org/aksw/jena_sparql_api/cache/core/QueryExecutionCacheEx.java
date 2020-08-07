@@ -2,17 +2,19 @@ package org.aksw.jena_sparql_api.
 cache.core;
 
 import java.io.IOException;
+import java.util.Iterator;
 
 import org.aksw.jena_sparql_api.cache.extra.CacheFrontend;
 import org.aksw.jena_sparql_api.cache.extra.CacheResource;
 import org.aksw.jena_sparql_api.core.QueryExecutionDecorator;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import org.apache.jena.graph.Triple;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.util.iterator.NiceIterator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Claus Stadler
@@ -75,52 +77,52 @@ public class QueryExecutionCacheEx
             ResultSet rs = getDecoratee().execSelect();
 
             if(cache.isReadOnly()) {
-            	result = rs;
+                result = rs;
             } else {
-	            try {
-	                logger.trace("Cache write [" + service + "]: " + queryString);
-	                cache.write(service, queryString, rs);
-	
-	            } catch(Exception e) {
-	                // New strategie:
-	                // If something goes wrong, just pass the exception on
-	                // Don't try to return a resource from cache instead
-	
-	                /*
-	                logger.warn("Error communicating with backend", e);
-	
-	                if(resource != null) {
-	                    //logger.trace("Cache hit for " + queryString);
-	                    return resource.asResultSet();
-	                } else {
-	                    throw new RuntimeException(e);
-	                }*/
-	
-	                try {
-	                    getDecoratee().abort();
-	                } catch(Exception x) {
-	                    logger.warn("Error", x);
-	                }
-	
-	                throw new RuntimeException(e);
-	            } finally {
-	                getDecoratee().close();
-	            }
-	
-	            resource = cache.lookup(service, queryString);
-	            if(resource == null) {
-	                throw new RuntimeException("Cache error: Lookup of just written data failed");
-	            }
+                try {
+                    logger.trace("Cache write [" + service + "]: " + queryString);
+                    cache.write(service, queryString, rs);
+
+                } catch(Exception e) {
+                    // New strategie:
+                    // If something goes wrong, just pass the exception on
+                    // Don't try to return a resource from cache instead
+
+                    /*
+                    logger.warn("Error communicating with backend", e);
+
+                    if(resource != null) {
+                        //logger.trace("Cache hit for " + queryString);
+                        return resource.asResultSet();
+                    } else {
+                        throw new RuntimeException(e);
+                    }*/
+
+                    try {
+                        getDecoratee().abort();
+                    } catch(Exception x) {
+                        logger.warn("Error", x);
+                    }
+
+                    throw new RuntimeException(e);
+                } finally {
+                    getDecoratee().close();
+                }
+
+                resource = cache.lookup(service, queryString);
+                if(resource == null) {
+                    throw new RuntimeException("Cache error: Lookup of just written data failed");
+                }
             }
         } else {
-            logger.trace("Cache hit [" + service + "]:" + queryString);   
+            logger.trace("Cache hit [" + service + "]:" + queryString);
         }
 
         if(result == null) {
-        	currentResource = resource;
-        	result = resource.asResultSet();
+            currentResource = resource;
+            result = resource.asResultSet();
         }
-        
+
         return result;
     }
 
@@ -130,6 +132,45 @@ public class QueryExecutionCacheEx
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+
+    public synchronized Iterator<Triple> doCacheTriples() {
+        try {
+            return _doCacheTriples();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public synchronized Iterator<Triple> _doCacheTriples() throws IOException {
+        CacheResource resource = cache.lookup(service, queryString);
+
+        if(needsCaching(resource)) {
+
+            logger.trace("Cache write [" + service + "]: " + queryString);
+
+            Iterator<Triple> it = getDecoratee().execConstructTriples();
+
+            try {
+                cache.writeTriples(service, queryString, it);
+            } catch(Exception e) {
+                throw new RuntimeException(e);
+            } finally {
+                // Attempt to close the iterator - for this to work it must inherit from jena's {@link ClosableIterator}
+                NiceIterator.close(it);
+                getDecoratee().close();
+            }
+
+            resource = cache.lookup(service, queryString);
+            if(resource == null) {
+                throw new RuntimeException("Cache error: Lookup of just written data failed");
+            }
+        } else {
+            logger.trace("Cache hit [" + service + "]:" + queryString);
+        }
+
+        return resource.asIteratorTriples();
     }
 
     public synchronized Model _doCacheModel(Model result, ModelProvider modelProvider) throws IOException {
@@ -236,6 +277,11 @@ public class QueryExecutionCacheEx
      }
 
      @Override
+     public Iterator<Triple> execConstructTriples() {
+         return doCacheTriples();
+    }
+
+     @Override
      public Model execDescribe() {
          return execDescribe(ModelFactory.createDefaultModel());
      }
@@ -260,6 +306,11 @@ public class QueryExecutionCacheEx
      public void close() {
          if(currentResource != null) {
              currentResource.close();
+         }
+
+         QueryExecution dec = getDecoratee();
+         if(dec != null) {
+             dec.close();
          }
 
 //         if(currentCloseAction != null) {

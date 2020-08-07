@@ -3,15 +3,19 @@ package org.aksw.jena_sparql_api.cache.extra;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.SQLException;
+import java.util.Iterator;
 
 import org.aksw.commons.util.StreamUtils;
 import org.aksw.jena_sparql_api.core.ResultSetCloseable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
+import org.apache.jena.graph.Triple;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.query.ResultSetFactory;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.riot.Lang;
+import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.util.iterator.WrappedIterator;
 
 
 /**
@@ -140,6 +144,17 @@ public class CacheResourceCacheEntry
             //throw new RuntimeException(e);
             logger.warn("Error", e);
         }
+    }
+
+
+    @Override
+    public Iterator<Triple> asIteratorTriples() {
+        InputStream in = cacheEntry.getInputStream();
+
+        // The iterator returned by jena closes the input stream when done
+        // Also, it implements ClosableIterator
+        Iterator<Triple> result = RDFDataMgr.createIteratorTriples(in, Lang.NTRIPLES, null);
+        return result;
     }
 
 }

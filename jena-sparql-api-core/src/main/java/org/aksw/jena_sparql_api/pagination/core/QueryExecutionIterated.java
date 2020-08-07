@@ -4,12 +4,11 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.aksw.commons.collections.IClosable;
+import org.aksw.commons.collections.PrefetchIterator;
 import org.aksw.jena_sparql_api.core.QueryExecutionAdapter;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.apache.jena.atlas.io.IndentedWriter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.ResultSet;
@@ -21,6 +20,8 @@ import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.engine.iterator.QueryIteratorBase;
 import org.apache.jena.sparql.engine.iterator.QueryIteratorCloseable;
 import org.apache.jena.sparql.serializer.SerializationContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 
@@ -141,6 +142,38 @@ public class QueryExecutionIterated
     }
 
     @Override
+    public Iterator<Triple> execConstructTriples() {
+        return new PrefetchIterator<Triple>() {
+            QueryExecution current = null;
+
+            @Override
+            protected Iterator<Triple> prefetch() throws Exception {
+                if (current != null) {
+                    current.close();
+                }
+
+                Query query = queryIterator.next();
+                Iterator<Triple> r;
+                if(query != null) {
+                    current = factory.createQueryExecution(query);
+                     r = current.execConstructTriples();
+                     currentCloseAction = () -> close();
+                } else {
+                    r = null;
+                }
+                return r;
+            }
+
+            @Override
+            public void close() {
+                if (current != null) {
+                    current.close();
+                }
+            }
+        };
+    }
+
+    @Override
     public Model execConstruct(Model result) {
         //PaginationQueryIterator state = new PaginationQueryIterator(query, pageSize);
 
@@ -150,12 +183,7 @@ public class QueryExecutionIterated
                 query = queryIterator.next();
                 final QueryExecution current = factory.createQueryExecution(query);
 
-                currentCloseAction = new IClosable() {
-                    @Override
-                    public void close() {
-                        current.close();
-                    }
-                };
+                currentCloseAction = () -> current.close();
 
                 logger.trace("Executing query: " + query);
                 Model tmp = current.execConstruct();
