@@ -56,11 +56,14 @@ import com.google.common.collect.Range;
 public class QueryUtils {
 
     /**
+     * Deprecated: This was submitted as a PR to JENA and accepted / Query.clone now does that
      * Experimental clone that does not de-/serialize the query to string
+     *
      *
      * @param query
      * @return
      */
+    @Deprecated
     public static Query fastClone(Query query) {
         ElementTransform eltXform = new ElementTransformCopyBase2(true);
         ExprTransform exprXform = new ExprTransformApplyElementTransform2(eltXform, true);
