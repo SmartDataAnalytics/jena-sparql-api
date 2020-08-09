@@ -19,17 +19,16 @@ import org.aksw.commons.collections.generator.Generator;
 import org.aksw.commons.collections.multimaps.BiHashMultimap;
 import org.aksw.commons.collections.multimaps.IBiSetMultimap;
 import org.aksw.jena_sparql_api.algebra.analysis.VarInfo;
-import org.aksw.jena_sparql_api.algebra.transform.SubstitutionStrategy;
 import org.aksw.jena_sparql_api.algebra.transform.TransformAddFilterFromExtend;
 import org.aksw.jena_sparql_api.algebra.transform.TransformDeduplicatePatterns;
 import org.aksw.jena_sparql_api.algebra.transform.TransformDistributeJoinOverUnion;
 import org.aksw.jena_sparql_api.algebra.transform.TransformFilterFalseToEmptyTable;
 import org.aksw.jena_sparql_api.algebra.transform.TransformFilterSimplify;
 import org.aksw.jena_sparql_api.algebra.transform.TransformJoinOverLeftJoin;
+import org.aksw.jena_sparql_api.algebra.transform.TransformMergeProject;
 import org.aksw.jena_sparql_api.algebra.transform.TransformPromoteTableEmptyVarPreserving;
 import org.aksw.jena_sparql_api.algebra.transform.TransformPruneEmptyLeftJoin;
 import org.aksw.jena_sparql_api.algebra.transform.TransformPullExtend;
-import org.aksw.jena_sparql_api.algebra.transform.TransformPullFilters;
 import org.aksw.jena_sparql_api.algebra.transform.TransformPullFiltersIfCanMergeBGPs;
 import org.aksw.jena_sparql_api.algebra.transform.TransformPushFiltersIntoBGP;
 import org.aksw.jena_sparql_api.algebra.transform.TransformRedundantFilterRemoval;
@@ -207,6 +206,8 @@ public class AlgebraUtils {
 
                 op = TransformFilterFalseToEmptyTable.transform(op);
                 op = TransformPromoteTableEmptyVarPreserving.transform(op);
+
+                op = TransformMergeProject.transform(op);
 
 //        		op = FixpointIteration.apply(op, x -> {
 //        			x = TransformDistributeJoinOverUnion.transform(x);

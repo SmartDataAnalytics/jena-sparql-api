@@ -219,4 +219,29 @@ public class QueryGenerationUtilsTests {
         );
     }
 
+    @Test
+    public void testCountQueryGenerationFacete() {
+        eval(
+            "SELECT ?s ?p (COUNT(DISTINCT ?o) AS ?c) { ?s ?p ?o } GROUP BY ?s ?p",
+            input -> {
+                Query actual = QueryGenerationUtils.distinct(input);
+                return actual;
+            },
+            "SELECT ?s ?p (COUNT(DISTINCT ?o) AS ?c) { ?s ?p ?o } GROUP BY ?s ?p"
+        );
+    }
+
+    @Test
+    public void testCountQueryGenerationFaceteCount() {
+        eval(
+            "SELECT ?s ?p (COUNT(DISTINCT ?o) AS ?c) { ?s ?p ?o } GROUP BY ?s ?p",
+            input -> {
+                Entry<Var, Query> count = QueryGenerationUtils.createQueryCountCore(input, null, null);
+                return count.getValue();
+            },
+            // "SELECT (COUNT(*) AS ?c_1) { SELECT DISTINCT ?s ?p { ?s ?p ?o } }"
+            "SELECT (COUNT(*) AS ?c_1) { SELECT DISTINCT ?s ?p { ?s ?p ?o } }"
+        );
+    }
+
 }

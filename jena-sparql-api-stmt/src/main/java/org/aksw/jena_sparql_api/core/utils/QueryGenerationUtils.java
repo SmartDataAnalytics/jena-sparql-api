@@ -666,7 +666,19 @@ public class QueryGenerationUtils {
         // Allocate a variable not mentioned in the query
         Var resultVar = QueryUtils.freshVar(query); // Vars.c;
 
-        boolean needsWrapping = !query.getGroupBy().isEmpty() || !query.getAggregators().isEmpty();
+        boolean isDistinct = query.isDistinct();
+        // If the query uses distinct and there is just a single projected variable
+        // then we can transform 'DISTINCT ?s' to 'COUNT(DISTINCT ?s)'.
+        // However, if there is more than 1 variable then we need wrapping in any case
+        int projVarCount = query.getProjectVars().size();
+
+        boolean needsWrapping
+                =  !query.getGroupBy().isEmpty()
+                || !query.getAggregators().isEmpty()
+                || (isDistinct && projVarCount > 1)
+                ;
+
+
         // || query.isDistinct() || query.isReduced();
 
           if(rowLimit != null) {
