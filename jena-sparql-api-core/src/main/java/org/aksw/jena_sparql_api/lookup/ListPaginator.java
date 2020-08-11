@@ -2,7 +2,7 @@ package org.aksw.jena_sparql_api.lookup;
 
 import java.util.List;
 
-import org.aksw.jena_sparql_api.util.collection.RangedSupplier;
+import org.aksw.jena_sparql_api.rx.util.collection.RangedSupplier;
 
 import com.google.common.collect.Range;
 

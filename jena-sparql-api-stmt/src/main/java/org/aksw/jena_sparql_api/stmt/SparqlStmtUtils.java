@@ -20,9 +20,9 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.aksw.jena_sparql_api.backports.syntaxtransform.ExprTransformNodeElement;
-import org.aksw.jena_sparql_api.core.utils.UpdateRequestUtils;
-import org.aksw.jena_sparql_api.core.utils.UpdateUtils;
 import org.aksw.jena_sparql_api.http.HttpExceptionUtils;
+import org.aksw.jena_sparql_api.syntax.UpdateRequestUtils;
+import org.aksw.jena_sparql_api.syntax.UpdateUtils;
 import org.aksw.jena_sparql_api.utils.ElementTransformSubst2;
 import org.aksw.jena_sparql_api.utils.GraphUtils;
 import org.aksw.jena_sparql_api.utils.NodeUtils;

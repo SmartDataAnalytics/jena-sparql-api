@@ -12,13 +12,13 @@ import java.util.stream.Stream;
 
 import org.aksw.commons.util.reflect.ClassUtils;
 import org.aksw.jena_sparql_api.mapper.proxy.TypeDecider;
-import org.aksw.jena_sparql_api.utils.NodeUtils;
 import org.apache.jena.datatypes.RDFDatatype;
 import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.ext.com.google.common.collect.Iterables;
 import org.apache.jena.ext.com.google.common.collect.Sets;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
+import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Literal;
 import org.apache.jena.rdf.model.Model;
@@ -1087,11 +1087,16 @@ public class ResourceUtils {
     }
 
     public static StmtIterator listProperties(Model m, RDFNode s, Property p, boolean isFwd) {
+        // TODO Get rid of this nullUri constant
+        String nullUri = "http://null.null/null";
+        Node nullUriNode = NodeFactory.createURI(nullUri);
+
+
         Resource x = s == null
             ? null
             : s.isResource()
                 ? s.asResource()
-                : m.wrapAsResource(NodeUtils.nullUriNode);
+                : m.wrapAsResource(nullUriNode);
 
 
         StmtIterator result = isFwd

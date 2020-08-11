@@ -14,6 +14,7 @@ import org.aksw.jena_sparql_api.mapper.BindingMapperProjectVar;
 import org.aksw.jena_sparql_api.mapper.BindingMapperQuad;
 import org.aksw.jena_sparql_api.mapper.BindingMapperUtils;
 import org.aksw.jena_sparql_api.mapper.FunctionBindingMapper;
+import org.aksw.jena_sparql_api.syntax.QueryGenerationUtils;
 import org.aksw.jena_sparql_api.utils.CloseableQueryExecution;
 import org.aksw.jena_sparql_api.utils.ExtendedIteratorClosable;
 import org.aksw.jena_sparql_api.utils.IteratorResultSetBinding;

@@ -32,6 +32,11 @@
         </dependency>
 
         <dependency>
+            <groupId>org.aksw.jena-sparql-api</groupId>
+            <artifactId>jena-sparql-api-resource-shape</artifactId>
+        </dependency>
+
+        <dependency>
             <groupId>org.aksw.spring</groupId>
             <artifactId>spring-json-core</artifactId>
         </dependency>

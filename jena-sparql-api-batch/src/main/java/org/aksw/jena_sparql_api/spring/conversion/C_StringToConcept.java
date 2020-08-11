@@ -1,7 +1,7 @@
 package org.aksw.jena_sparql_api.spring.conversion;
 
+import org.aksw.jena_sparql_api.concept.parser.SparqlConceptParser;
 import org.aksw.jena_sparql_api.concepts.Concept;
-import org.aksw.jena_sparql_api.stmt.SparqlConceptParser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.convert.converter.Converter;
 

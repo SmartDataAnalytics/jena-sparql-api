@@ -1,0 +1,24 @@
+rx
+	concepts
+	algebra
+	collections
+	provides SparqlRx and LookupApi (e.g. RangedSupplier; implemented in core)
+
+concepts
+	stmt
+
+stmt
+	utils
+
+
+algebra
+	utils
+	udf
+	concepts
+
+
+core
+	collections?
+	utils
+	concepts
+	rx

@@ -23,6 +23,14 @@
 			<artifactId>jena-sparql-api-collections</artifactId>
 		</dependency>
 
+		<!-- There are is one or two used collection implementations (one is MapFromResource) that make use of SparqlRx -->
+		<!-- Can we get rid of all the rx stuff at this point? -->
+		<dependency>
+			<groupId>org.aksw.jena-sparql-api</groupId>
+			<artifactId>jena-sparql-api-rx</artifactId>
+		</dependency>
+
+
 		<dependency>
 			<groupId>cglib</groupId>
 			<artifactId>cglib-nodep</artifactId>

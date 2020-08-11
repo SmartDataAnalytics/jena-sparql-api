@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import org.aksw.jena_sparql_api.core.ResultSetCloseable;
-import org.aksw.jena_sparql_api.util.collection.RangedSupplierLazyLoadingListCache;
+import org.aksw.jena_sparql_api.rx.util.collection.RangedSupplierLazyLoadingListCache;
 import org.aksw.jena_sparql_api.utils.ResultSetUtils;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.sparql.engine.binding.Binding;

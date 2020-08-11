@@ -9,7 +9,7 @@ import org.aksw.commons.collections.diff.Diff;
 import org.aksw.jena_sparql_api.core.DatasetListener;
 import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.core.UpdateContext;
-import org.aksw.jena_sparql_api.core.utils.UpdateRequestUtils;
+import org.aksw.jena_sparql_api.syntax.UpdateRequestUtils;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;

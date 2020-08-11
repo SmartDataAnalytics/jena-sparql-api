@@ -153,6 +153,16 @@ public class QueryExecutionIterated
                 }
 
                 Query query = queryIterator.next();
+                
+                // Check whether there are any results for the query
+                if(stopIfLimitNotReached) {
+                	// Count the bindings of the query - if there is less
+                }
+                if (stopOnEmptyResult || stopIfLimitNotReached) {
+                	Query clone = query.cloneQuery();
+                	
+                }
+                
                 Iterator<Triple> r;
                 if(query != null) {
                     current = factory.createQueryExecution(query);

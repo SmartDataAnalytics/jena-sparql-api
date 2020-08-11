@@ -9,8 +9,7 @@ import org.aksw.jena_sparql_api.core.DatasetListener;
 import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.core.SparqlServiceReference;
 import org.aksw.jena_sparql_api.core.UpdateContext;
-import org.aksw.jena_sparql_api.core.utils.UpdateRequestUtils;
-
+import org.aksw.jena_sparql_api.syntax.UpdateRequestUtils;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.update.UpdateRequest;
 

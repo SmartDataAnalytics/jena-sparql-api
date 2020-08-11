@@ -1,10 +1,10 @@
 package org.aksw.jena_sparql_api.batch;
 
+import org.aksw.jena_sparql_api.concept.parser.SparqlRelationParser;
+import org.aksw.jena_sparql_api.concept.parser.SparqlRelationParserImpl;
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.stmt.SparqlElementParserImpl;
 import org.aksw.jena_sparql_api.stmt.SparqlQueryParserImpl;
-import org.aksw.jena_sparql_api.stmt.SparqlRelationParser;
-import org.aksw.jena_sparql_api.stmt.SparqlRelationParserImpl;
 import org.junit.Test;
 
 import org.apache.jena.query.Syntax;

@@ -21,6 +21,11 @@
 		<!-- <dependency> <groupId>org.aksw.jena-sparql-api</groupId> <artifactId>jena-sparql-api-mapper-annotations</artifactId> 
 			</dependency> -->
 		<dependency>
+			<groupId>org.apache.jena</groupId>
+			<artifactId>jena-rdfconnection</artifactId>
+		</dependency>
+
+		<dependency>
 			<groupId>org.aksw.jena-sparql-api</groupId>
 			<artifactId>jena-sparql-api-mapper-proxy</artifactId>
 		</dependency>
@@ -36,6 +41,10 @@
 			<artifactId>jena-sparql-api-utils</artifactId>
 		</dependency>
 
+
+		<!-- Needed for query transform in cache -->
+		<!--  removed? -->
+		
 		<dependency>
 			<groupId>org.aksw.jena-sparql-api</groupId>
 			<artifactId>jena-sparql-api-vocabs</artifactId>
@@ -46,13 +55,23 @@
 			</dependency> -->
 
 		<!-- Used in the lookup interfaces -->
+		<!-- concepts draws in sparql-stmt because it uses the sparql parser framework -->
 		<dependency>
-			<groupId>io.reactivex.rxjava3</groupId>
-			<artifactId>rxjava</artifactId>
+			<groupId>org.aksw.jena-sparql-api</groupId>
+			<artifactId>jena-sparql-api-concepts</artifactId>
 		</dependency>
 
-		<!-- <dependency> <groupId>com.github.davidmoten</groupId> <artifactId>rxjava2-extras</artifactId> 
-			</dependency> -->
+		<dependency>
+			<groupId>org.aksw.jena-sparql-api</groupId>
+			<artifactId>jena-sparql-api-rx</artifactId>
+		</dependency>
+
+<!-- 		<dependency> -->
+<!-- 			<groupId>io.reactivex.rxjava3</groupId> -->
+<!-- 			<artifactId>rxjava</artifactId> -->
+<!-- 		</dependency> -->
+
+
 
 		<!-- Jena -->
 		<dependency>
@@ -96,10 +115,10 @@
 		<!-- <artifactId>aksw-commons-util</artifactId> -->
 		<!-- </dependency> -->
 
-<dependency>
-        <groupId>commons-codec</groupId>
-        <artifactId>commons-codec</artifactId>
-</dependency>
+		<dependency>
+			<groupId>commons-codec</groupId>
+			<artifactId>commons-codec</artifactId>
+		</dependency>
 
 
 		<!-- Collections -->

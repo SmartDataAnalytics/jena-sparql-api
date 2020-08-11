@@ -52,6 +52,9 @@
 		<module>jena-sparql-api-views</module>
 
 		<module>jena-sparql-api-concepts</module>
+		<module>jena-sparql-api-path-finding</module>
+		<module>jena-sparql-api-resource-shape</module>
+
 		<module>jena-sparql-api-query-containment</module>
 		<module>jena-sparql-api-cache-h2</module>
 		<module>jena-sparql-api-update</module>
@@ -449,6 +452,12 @@
 
 			<dependency>
 				<groupId>org.aksw.jena-sparql-api</groupId>
+				<artifactId>jena-sparql-api-json</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.aksw.jena-sparql-api</groupId>
 				<artifactId>jena-sparql-api-io-hdt</artifactId>
 				<version>${project.version}</version>
 			</dependency>
@@ -546,6 +555,12 @@
 
 			<dependency>
 				<groupId>org.aksw.jena-sparql-api</groupId>
+				<artifactId>jena-sparql-api-resource-shape</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.aksw.jena-sparql-api</groupId>
 				<artifactId>jena-sparql-api-geo</artifactId>
 				<version>${project.version}</version>
 			</dependency>
@@ -559,6 +574,12 @@
 			<dependency>
 				<groupId>org.aksw.jena-sparql-api</groupId>
 				<artifactId>jena-sparql-api-update</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.aksw.jena-sparql-api</groupId>
+				<artifactId>jena-sparql-api-path-finding</artifactId>
 				<version>${project.version}</version>
 			</dependency>
 

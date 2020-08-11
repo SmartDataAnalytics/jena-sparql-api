@@ -1,6 +1,6 @@
 package org.aksw.jena_sparql_api.stmt;
 
-import org.aksw.jena_sparql_api.core.utils.UpdateRequestUtils;
+import org.aksw.jena_sparql_api.syntax.UpdateRequestUtils;
 import org.apache.jena.query.QueryParseException;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.update.UpdateRequest;

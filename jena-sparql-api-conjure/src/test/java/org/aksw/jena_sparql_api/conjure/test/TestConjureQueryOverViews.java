@@ -7,7 +7,7 @@ import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.DataRefUrl;
 import org.aksw.jena_sparql_api.conjure.dataset.algebra.Op;
 import org.aksw.jena_sparql_api.conjure.dataset.engine.ExecutionUtils;
 import org.aksw.jena_sparql_api.conjure.fluent.ConjureBuilderImpl;
-import org.aksw.jena_sparql_api.rx.SparqlStmtMgr;
+import org.aksw.jena_sparql_api.stmt.SparqlStmtMgr;
 import org.apache.jena.query.Query;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdfconnection.RDFConnection;

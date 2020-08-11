@@ -38,5 +38,9 @@
 	</build>
 
 	<dependencies>
+		<dependency>
+			<groupId>org.apache.jena</groupId>
+			<artifactId>jena-arq</artifactId> <!-- for prefixes we need riot and models -->
+		</dependency>
 	</dependencies>
 </project>
