@@ -38,6 +38,48 @@ import org.apache.jena.sparql.syntax.Template;
 
 public class QueryGenerationUtils {
 
+    /**
+     * A commonly needed query transformation needed for virtuoso: Using
+     * order by with limit and/or offset fails for non-small limits/offsets.
+     *
+     * The solution implemented by this method is to rewrite a query such that a sub-query
+     * does the order by and an outer query applies limit / offset:
+     *
+     *   SELECT { } OFFSET foo ORDER BY bar
+     * becomes
+     *   SELECT * { SELECT { } ORDER BY bar } OFFSET foo
+     */
+    public static Query virtuosoFixForOrderedSlicing(Query query) {
+        long o = query.getOffset();
+        long l = query.getLimit();
+
+        boolean hasLimitOrOffset = o != Query.NOLIMIT || l != Query.NOLIMIT;
+        boolean hasOrderBy = !query.getOrderBy().isEmpty();
+
+        Query result;
+        if(query.isConstructType() || hasLimitOrOffset && hasOrderBy) {
+            Query clone = query.cloneQuery();
+            clone.setQuerySelectType();
+            clone.setOffset(Query.NOLIMIT);
+            clone.setLimit(Query.NOLIMIT);
+
+            result = new Query();
+            result.setQuerySelectType();
+//            result.setPrefixMapping(query.getPrefixMapping());
+            result = QueryUtils.restoreQueryForm(result, query);
+            result.setQueryPattern(new ElementSubQuery(clone));
+            clone.getPrefixMapping().clearNsPrefixMap();
+
+            result.setOffset(o);
+            result.setLimit(l);
+        } else {
+            result = query;
+        }
+
+        return result;
+    }
+
+
     public static Query createQueryQuad(Quad quad) {
         Query query = new Query();
         query.setQuerySelectType();
@@ -568,9 +610,9 @@ public class QueryGenerationUtils {
         boolean modified = false;
 
         // If the query being counted has a group by then check whether it can be transformed
-        // to distinct instead:
-        if (!query.getGroupBy().isEmpty()) {
-
+        // to distinct instead.
+        // Any 'having' expression blocks this transformation
+        if (!query.getGroupBy().isEmpty() && query.getHavingExprs().isEmpty()) {
 
             Set<Set<Var>> distinctVarSets = analyzeDistinctVarSets(query);
 

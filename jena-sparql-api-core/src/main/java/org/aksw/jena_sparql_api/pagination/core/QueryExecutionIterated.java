@@ -4,7 +4,6 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.aksw.commons.collections.IClosable;
-import org.aksw.commons.collections.PrefetchIterator;
 import org.aksw.jena_sparql_api.core.QueryExecutionAdapter;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.apache.jena.atlas.io.IndentedWriter;
@@ -15,11 +14,14 @@ import org.apache.jena.query.ResultSet;
 import org.apache.jena.query.ResultSetFactory;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.StmtIterator;
 import org.apache.jena.sparql.engine.QueryIterator;
 import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.engine.iterator.QueryIteratorBase;
 import org.apache.jena.sparql.engine.iterator.QueryIteratorCloseable;
 import org.apache.jena.sparql.serializer.SerializationContext;
+import org.apache.jena.sparql.util.ModelUtils;
+import org.apache.jena.sparql.util.QueryExecUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -143,28 +145,68 @@ public class QueryExecutionIterated
 
     @Override
     public Iterator<Triple> execConstructTriples() {
-        return new PrefetchIterator<Triple>() {
+        // TODO We need to implement jena's ClosableIterator or org.apache.jena.atlas.lib.Cloeable
+        // to be compatible with jena's closing machinery
+        return new PrefetchIteratorForJena<Triple>() {
             QueryExecution current = null;
+
+            // A query execution created per page to check whether the query pattern yields no bindings
+            // in which case execution can usually abort
+            QueryExecution counter = null;
 
             @Override
             protected Iterator<Triple> prefetch() throws Exception {
+                Iterator<Triple> r;
+
                 if (current != null) {
                     current.close();
                 }
 
-                Query query = queryIterator.next();
-                
-                // Check whether there are any results for the query
-                if(stopIfLimitNotReached) {
-                	// Count the bindings of the query - if there is less
+                Query query = queryIterator.hasNext() ? queryIterator.next() : null;
+
+                    // TODO We could count the result for the query's WHERE pattern
+                    // and if it does not reach the limit we know we are on the last page
+                    // However, this requires counting all items - so just checking for non-empty
+                    // pages is much more efficient
+
+//                  if (stopOnEmptyResult || stopIfLimitNotReached) {
+//                      Query clone = query.cloneQuery();
+  //
+//                      Entry<Var, Query> e = QueryGenerationUtils.createQueryCount(clone);
+//                      QueryExecution countQe = factory.createQueryExecution(e.getValue());
+//                      //ServiceUtils.fetchNumber(countQe, e.getKey()).longValue()
+//                      long count = ServiceUtils.fetchCountQuery(countQe);
+//                  }
+
+                if (query != null && stopOnEmptyResult) {
+                    // Check whether the current query's WHERE pattern is non-empty
+                    // Don't use ASK - it does not support LIMIT / OFFSET
+                    // Just use the original query with a LIMIT 1 and check for a result
+                    Query clone = query.cloneQuery();
+                    clone.setQuerySelectType();
+
+                    // The clone is derived from construct query therefore setting query result set
+                    // cannot conflict with a specific projection / aggregators
+                    clone.setQueryResultStar(true);
+                    clone.setLimit(1);
+
+//                        logger.trace("Checking where construct query has underlying bindings: " + clone);
+
+                    boolean isEmpty;
+                    // FIXME If abort() is invoked on the outer query execution
+                    // we should delegate the call to the one we create here
+                    try(QueryExecution qe = counter = factory.createQueryExecution(clone)) {
+                        ResultSet rs = qe.execSelect();
+                        isEmpty = !rs.hasNext();
+                    }
+                    counter = null;
+
+                    if(isEmpty) {
+                        query = null;
+                    }
                 }
-                if (stopOnEmptyResult || stopIfLimitNotReached) {
-                	Query clone = query.cloneQuery();
-                	
-                }
-                
-                Iterator<Triple> r;
-                if(query != null) {
+
+                if (query != null) {
                     current = factory.createQueryExecution(query);
                      r = current.execConstructTriples();
                      currentCloseAction = () -> close();
@@ -176,39 +218,51 @@ public class QueryExecutionIterated
 
             @Override
             public void close() {
-                if (current != null) {
-                    current.close();
+                try {
+                    if (counter != null) {
+                        counter.close();
+                    }
+                } finally {
+                    if (current != null) {
+                        current.close();
+                    }
                 }
+
             }
         };
     }
 
     @Override
     public Model execConstruct(Model result) {
-        //PaginationQueryIterator state = new PaginationQueryIterator(query, pageSize);
 
-        Query query;
-        try {
-            while(queryIterator.hasNext()) {
-                query = queryIterator.next();
-                final QueryExecution current = factory.createQueryExecution(query);
-
-                currentCloseAction = () -> current.close();
-
-                logger.trace("Executing query: " + query);
-                Model tmp = current.execConstruct();
-                if(tmp.isEmpty() && stopOnEmptyResult) {
-                    break;
-                }
-
-                result.add(tmp);
-                //System.out.println("Added | Size result = " + result.size() + ", tmp = " + tmp.size());
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        Iterator<Triple> it = execConstructTriples();
+        StmtIterator iter = ModelUtils.triplesToStatements(it, result);
+        result.add(iter);
 
         return result;
+
+        //PaginationQueryIterator state = new PaginationQueryIterator(query, pageSize);
+
+//        Query query;
+//        try {
+//            while(queryIterator.hasNext()) {
+//                query = queryIterator.next();
+//                final QueryExecution current = factory.createQueryExecution(query);
+//
+//                currentCloseAction = () -> current.close();
+//
+//                logger.trace("Executing query: " + query);
+//                Model tmp = current.execConstruct();
+//                if(tmp.isEmpty() && stopOnEmptyResult) {
+//                    break;
+//                }
+//
+//                result.add(tmp);
+//                //System.out.println("Added | Size result = " + result.size() + ", tmp = " + tmp.size());
+//            }
+//        } catch (Exception e) {
+//            throw new RuntimeException(e);
+//        }
     }
 
     @Override
