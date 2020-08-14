@@ -1328,6 +1328,7 @@
 				<enabled>true</enabled>
 			</snapshots>
 		</repository>
+<!--
 		<repository>
 			<id>apache-repo-snapshots</id>
 			<url>https://repository.apache.org/content/repositories/snapshots/</url>
@@ -1338,6 +1339,7 @@
 				<enabled>true</enabled>
 			</snapshots>
 		</repository>
+-->
 	</repositories>
 
 </project>
