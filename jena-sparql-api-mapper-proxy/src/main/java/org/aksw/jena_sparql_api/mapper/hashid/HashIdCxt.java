@@ -48,8 +48,8 @@ public interface HashIdCxt {
     boolean isVisited(RDFNode node);
 
 
-    HashCode putHash(RDFNode node, HashCode hashCode);
-    HashCode getHash(RDFNode node);
+    HashCode putHashId(RDFNode node, HashCode hashCode);
+    HashCode getHashId(RDFNode node);
 
 
     /**
@@ -60,7 +60,7 @@ public interface HashIdCxt {
      * @return
      */
     String getHashAsString(HashCode hashCode);
-    String getHashAsString(RDFNode rdfNod);
+    String getHashAsString(RDFNode rdfNode);
 
     // Hash representation is generic, independent of strings and is always computed before applying
     // a string mapping
@@ -68,10 +68,10 @@ public interface HashIdCxt {
     // TODO It may be more flexible to allow for using an RDF model to capture hash codes, strings or other
     // pieces of information. However, then we would have to introduce new custom datatypes, such as
     // "0ab0c"^^eg:hexString
-    String putString(RDFNode node, String id);
-    String getString(RDFNode node);
+    String putStringId(RDFNode node, String id);
+    String getStringId(RDFNode node);
 
     // TODO Consider using ImmutableMap - or even an RDF model?
-    Map<RDFNode, HashCode> getMapping();
-    Map<RDFNode, String> getStringMapping();
+    Map<RDFNode, HashCode> getHashIdMapping();
+    Map<RDFNode, String> getStringIdMapping();
 }

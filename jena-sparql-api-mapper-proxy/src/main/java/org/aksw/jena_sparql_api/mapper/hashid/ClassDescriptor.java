@@ -201,15 +201,15 @@ public class ClassDescriptor {
             // resources requires this kind of handling
             // The alternative would be to register all reachable non-hashid nodes to the cxt
             // and let the outer procedure recurse over it
-            cxt.putHash(node, result);
+            cxt.putHashId(node, result);
             for(BiFunction<? super Resource, ? super HashIdCxt, ? extends String> e : directStringIdProcessors) {
                 resultStr = e.apply(node, cxt);
-                cxt.putString(node, resultStr);
+                cxt.putStringId(node, resultStr);
             }
         } else {
             result = null;
-            if(cxt.getHash(node) == null) {
-                cxt.putHash(node, null);
+            if(cxt.getHashId(node) == null) {
+                cxt.putHashId(node, null);
             }
         }
 
@@ -239,15 +239,15 @@ public class ClassDescriptor {
                     while(!currentEntry.isEmpty()) {
                         HashCode indexHash = hashFn.hashInt(index);
                         RDFNode item = currentEntry.getHead();
-                        HashCode itemHash = cxt.getHash(item);
+                        HashCode itemHash = cxt.getHashId(item);
                         if(itemHash != null) {
                             HashCode entryHash = Hashing.combineOrdered(Arrays.asList(result, indexHash, itemHash));
-                            cxt.putHash(currentEntry, entryHash);
+                            cxt.putHashId(currentEntry, entryHash);
 
                             String entryStr =
                                     (resultStr == null ? "" : resultStr + "_") + cxt.getHashAsString(entryHash);
 
-                            cxt.putString(currentEntry, entryStr);
+                            cxt.putStringId(currentEntry, entryStr);
                         }
 
                         ++index;

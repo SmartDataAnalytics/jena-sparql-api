@@ -55,24 +55,24 @@ public class TestRdfIdGeneration {
         Person bob = m.createResource().as(Person.class);
         bob.setFirstName("Bob").setLastName("Bob").setAge(20);
 
-        System.out.println("Ana: " + MapperProxyUtils.getHashId(ana).getHash(ana));
-        System.out.println("Bob: " + MapperProxyUtils.getHashId(bob).getHash(bob));
+        System.out.println("Ana: " + MapperProxyUtils.getHashId(ana).getHashId(ana));
+        System.out.println("Bob: " + MapperProxyUtils.getHashId(bob).getHashId(bob));
 
         bob.getSkills().add("Semantic Web");
 
         // Turn bob into ana
         bob.setFirstName("Ana").setLastName("Ana").setAge(20);
-        System.out.println("Bob as Ana: " + MapperProxyUtils.getHashId(bob).getHash(bob));
+        System.out.println("Bob as Ana: " + MapperProxyUtils.getHashId(bob).getHashId(bob));
 
 
         Department dep = m.createResource().as(Department.class);
-        System.out.println("dep: " + MapperProxyUtils.getHashId(dep).getHash(dep));
+        System.out.println("dep: " + MapperProxyUtils.getHashId(dep).getHashId(dep));
 
         dep.getMembers().addAll(Arrays.asList(ana, bob));
-        System.out.println("dep: " + MapperProxyUtils.getHashId(dep).getHash(dep));
+        System.out.println("dep: " + MapperProxyUtils.getHashId(dep).getHashId(dep));
 
         dep.getMembers().clear();
-        System.out.println("dep: " + MapperProxyUtils.getHashId(dep).getHash(dep));
+        System.out.println("dep: " + MapperProxyUtils.getHashId(dep).getHashId(dep));
 
         System.out.println("Bob's RDF graph: " + bob);
 

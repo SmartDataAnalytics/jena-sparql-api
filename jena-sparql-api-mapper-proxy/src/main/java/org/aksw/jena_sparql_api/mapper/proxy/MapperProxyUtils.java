@@ -1800,7 +1800,7 @@ public class MapperProxyUtils {
 
         if(directStringIdProcessor == null) {
             directStringIdProcessor = (r, cxt) -> {
-                HashCode hashCode = cxt.getHash(r);
+                HashCode hashCode = cxt.getHashId(r);
                 String part = cxt.getHashAsString(hashCode); //BaseEncoding.base64Url().omitPadding().encode(hashCode.asBytes());
                 String rr = prefix + "-" + part;
                 return rr;
@@ -2046,13 +2046,13 @@ public class MapperProxyUtils {
             getHashIdCore(start, cxt);
         }
 
-        HashCode result = cxt.getHash(root);
+        HashCode result = cxt.getHashId(root);
         return result;
     }
 
     public static HashCode getHashIdCore(RDFNode root, HashIdCxt cxt) {
         HashCode result;
-        Map<RDFNode, HashCode> mapping = cxt.getMapping();
+        Map<RDFNode, HashCode> mapping = cxt.getHashIdMapping();
         // Update: We now allow overriding null with concrete hash; Rationale:
         // A resource may be referneced multiple times. Multiple references with different types and IDs are
         // troublesome, but a reference via a method 'ResourceWithId getFoo' should take precedence over
@@ -2105,7 +2105,7 @@ public class MapperProxyUtils {
             }
         }
 
-        cxt.putHash(root, result);
+        cxt.putHashId(root, result);
 
         return result;
     }
@@ -2164,7 +2164,7 @@ public class MapperProxyUtils {
                     ? Hashing.combineOrdered(contribs)
                     : Hashing.combineUnordered(contribs);
 
-            cxt.putHash(rdfNode, hc);
+            cxt.putHashId(rdfNode, hc);
 
             return hc;
         };

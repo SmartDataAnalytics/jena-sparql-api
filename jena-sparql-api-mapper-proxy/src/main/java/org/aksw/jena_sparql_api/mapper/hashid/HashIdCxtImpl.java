@@ -88,12 +88,12 @@ public class HashIdCxtImpl
 //    }
 
     @Override
-    public HashCode putHash(RDFNode node, HashCode hashCode) {
+    public HashCode putHashId(RDFNode node, HashCode hashCode) {
         return rdfNodeToHashCode.put(node, hashCode);
     }
 
     @Override
-    public HashCode getHash(RDFNode node) {
+    public HashCode getHashId(RDFNode node) {
         return rdfNodeToHashCode.get(node);
     }
 
@@ -108,7 +108,7 @@ public class HashIdCxtImpl
     }
 
     @Override
-    public Map<RDFNode, HashCode> getMapping() {
+    public Map<RDFNode, HashCode> getHashIdMapping() {
         return rdfNodeToHashCode;
     }
 
@@ -119,17 +119,17 @@ public class HashIdCxtImpl
     }
 
     @Override
-    public String getString(RDFNode node) {
+    public String getStringId(RDFNode node) {
         return rdfNodeToString.get(node);
     }
 
     @Override
-    public String putString(RDFNode node, String str) {
+    public String putStringId(RDFNode node, String str) {
         return rdfNodeToString.put(node, str);
     }
 
     @Override
-    public Map<RDFNode, String> getStringMapping() {
+    public Map<RDFNode, String> getStringIdMapping() {
         return rdfNodeToString;
     }
 
@@ -145,7 +145,7 @@ public class HashIdCxtImpl
     // TODO Make it a default method in the interface?
     @Override
     public String getHashAsString(RDFNode rdfNode) {
-        HashCode hashCode = getHash(rdfNode);
+        HashCode hashCode = getHashId(rdfNode);
         String result = hashCode == null ? null : getHashAsString(hashCode);
         return result;
     }
