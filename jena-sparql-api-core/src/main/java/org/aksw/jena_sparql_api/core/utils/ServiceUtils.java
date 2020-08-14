@@ -112,7 +112,7 @@ public class ServiceUtils {
             ResultSet rs = myQe.execSelect();
 
             RDFNode tmp = ResultSetUtils.getNextRDFNode(rs, v);
-            if(tmp.isLiteral()) {
+            if(tmp != null && tmp.isLiteral()) {
                 Object val = tmp.asLiteral().getValue();
                 if(val == null) {
                     result = null;
