@@ -4,6 +4,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFFormat;
@@ -17,6 +18,20 @@ import org.apache.jena.riot.RDFWriterRegistry;
  *
  */
 public class RDFLanguagesEx {
+
+    /**
+     * Returns quad langs first followed by the triple ones.
+     * Returned langs are distinct.
+     *
+     * @return
+     */
+    public static List<Lang> getQuadAndTripleLangs() {
+        List<Lang> result = Stream.concat(getQuadLangs().stream(), getTripleLangs().stream())
+                .distinct()
+                .collect(Collectors.toList());
+
+        return result;
+    }
 
     public static List<Lang> getTripleLangs() {
         List<Lang> result = RDFLanguages.getRegisteredLanguages().stream()

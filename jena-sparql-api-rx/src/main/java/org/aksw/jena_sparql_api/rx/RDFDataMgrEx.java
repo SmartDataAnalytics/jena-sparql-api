@@ -6,7 +6,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.SequenceInputStream;
-import java.util.Collection;
 import java.util.Map.Entry;
 import java.util.Objects;
 
@@ -50,7 +49,7 @@ public class RDFDataMgrEx {
      * @param candidates
      * @return
      */
-    public static TypedInputStream probeLang(InputStream in, Collection<Lang> candidates) {
+    public static TypedInputStream probeLang(InputStream in, Iterable<Lang> candidates) {
         BufferedInputStream bin = new BufferedInputStream(in);
 
         Multimap<Long, Lang> successCountToLang = ArrayListMultimap.create();
@@ -113,7 +112,7 @@ public class RDFDataMgrEx {
      * @param probeLangs
      * @return
      */
-    public static TypedInputStream open(String src, Collection<Lang> probeLangs) {
+    public static TypedInputStream open(String src, Iterable<Lang> probeLangs) {
         Objects.requireNonNull(src);
 
         boolean useStdIn = "-".equals(src);

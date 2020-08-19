@@ -398,6 +398,20 @@ public class RDFDataMgrRx {
         return result;
     }
 
+    public static Flowable<Quad> createFlowableQuads(Callable<TypedInputStream> inSupplier) {
+
+        Flowable<Quad> result = createFlowableFromInputStream(
+                inSupplier,
+                th -> eh -> in -> createIteratorQuads(
+                        in,
+                        RDFLanguages.contentTypeToLang(in.getContentType()),
+                        in.getBaseURI(),
+                        eh,
+                        th));
+
+        return result;
+    }
+
 
     public static Flowable<Triple> createFlowableTriples(Callable<TypedInputStream> inSupplier) {
 
