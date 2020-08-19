@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.SequenceInputStream;
 import java.util.Map.Entry;
+import java.util.stream.StreamSupport;
 import java.util.Objects;
 
 import org.apache.commons.io.input.CloseShieldInputStream;
@@ -14,6 +15,8 @@ import org.apache.jena.atlas.web.ContentType;
 import org.apache.jena.atlas.web.TypedInputStream;
 import org.apache.jena.ext.com.google.common.collect.ArrayListMultimap;
 import org.apache.jena.ext.com.google.common.collect.Multimap;
+import org.apache.jena.ext.com.google.common.collect.Sets;
+import org.apache.jena.ext.com.google.common.collect.Streams;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -125,7 +128,22 @@ public class RDFDataMgrEx {
         } else {
             result = Objects.requireNonNull(RDFDataMgr.open(src), "Could not create input stream from " + src);
 
-            if(result.getMediaType() == null) {
+            // TODO Should we rely on the content type returned by RDFDataMgr? It may be based on e.g. a file extension
+            // rather than the actual content - so we may be fooled here
+            ContentType mediaType = result.getMediaType();
+            if (mediaType != null) {
+                // Check if the detected content type matches the ones we are probing for
+                // If not then unset the content type and probe the content again
+                String mediaTypeStr = mediaType.toHeaderString();
+                boolean mediaTypeInProbeLangs = Streams.stream(probeLangs)
+                        .anyMatch(lang -> RDFLanguagesEx.getAllContentTypes(lang).contains(mediaTypeStr));
+
+                if (!mediaTypeInProbeLangs) {
+                    mediaType = null;
+                }
+            }
+
+            if(mediaType == null) {
                 result = probeLang(result.getInputStream(), probeLangs);
             }
 
