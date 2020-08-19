@@ -59,6 +59,9 @@
 		<module>jena-sparql-api-cache-h2</module>
 		<module>jena-sparql-api-update</module>
 
+		<module>jena-sparql-api-path-finding</module>
+		<module>jena-sparql-api-resource-shape</module>
+
 		<module>jena-sparql-api-data-client</module>
 
 		<module>jena-sparql-api-algebra</module>
