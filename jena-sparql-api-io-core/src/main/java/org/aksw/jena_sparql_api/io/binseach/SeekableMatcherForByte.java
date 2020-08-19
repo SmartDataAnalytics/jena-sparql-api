@@ -2,6 +2,8 @@ package org.aksw.jena_sparql_api.io.binseach;
 
 import java.io.IOException;
 
+import org.aksw.jena_sparql_api.io.deprecated.SeekableMatcher;
+
 public class SeekableMatcherForByte 
 	implements SeekableMatcher
 {

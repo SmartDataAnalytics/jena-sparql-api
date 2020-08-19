@@ -1,7 +1,8 @@
 package org.aksw.jena_sparql_api.io.endpoint;
 
-public interface FileDestination
-	extends Destination
-{
+import java.nio.file.Path;
 
+public interface FileDestination
+    extends Destination
+{
 }

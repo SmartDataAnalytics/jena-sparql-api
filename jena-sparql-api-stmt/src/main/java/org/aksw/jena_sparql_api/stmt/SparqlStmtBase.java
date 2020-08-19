@@ -20,7 +20,7 @@ public abstract class SparqlStmtBase
 
     @Override
     public abstract SparqlStmt clone();
-    
+
     @Override
     public String getOriginalString() {
         return originalString;
@@ -32,6 +32,10 @@ public abstract class SparqlStmtBase
         return parseException;
     }
 
+    @Override
+    public boolean isUnknown() {
+        return false;
+    }
 
     @Override
     public boolean isQuery() {
@@ -87,12 +91,12 @@ public abstract class SparqlStmtBase
 
     @Override
     public String toString() {
-    	String result = parseException == null
-    			? originalString
-    			: "SparqlStmtBase [originalString=" + originalString
+        String result = parseException == null
+                ? originalString
+                : "SparqlStmtBase [originalString=" + originalString
                 + ", parseException=" + parseException + "]";
-    	
-        return result; 
+
+        return result;
     }
 
 

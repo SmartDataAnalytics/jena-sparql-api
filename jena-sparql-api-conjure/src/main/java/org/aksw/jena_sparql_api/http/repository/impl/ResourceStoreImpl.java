@@ -9,6 +9,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Map.Entry;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -41,183 +42,184 @@ import com.github.jsonldjava.shaded.com.google.common.collect.Maps;
 
 
 interface ResourceSourceFile {
-	Resource getResource(Path path);
+    Resource getResource(Path path);
 }
 
 
 class ResourceSourceFileImpl
-	implements ResourceSourceFile 
+    implements ResourceSourceFile
 {
-	@Override
-	public Resource getResource(Path path) {
-		String fileName = path.getFileName().toString();
-		RdfEntityInfo result = ContentTypeUtils.deriveHeadersFromFileExtension(fileName);
-		return result;
-	}
+    @Override
+    public Resource getResource(Path path) {
+        String fileName = path.getFileName().toString();
+        RdfEntityInfo result = ContentTypeUtils.deriveHeadersFromFileExtension(fileName);
+        return result;
+    }
 }
 
 class ResourceUtils {
 
-	/**
-	 * Copies all direct outgoing properties of src to tgt
-	 * 
-	 * @param tgt
-	 * @param src
-	 * @return
-	 */
-	public static Resource copyDirectProperties(Resource tgt, Resource src) {
-		StmtIterator it = src.listProperties();
-		while(it.hasNext()) {
-			Statement stmt = it.next();
+    /**
+     * Copies all direct outgoing properties of src to tgt
+     *
+     * @param tgt
+     * @param src
+     * @return
+     */
+    public static Resource copyDirectProperties(Resource tgt, Resource src) {
+        StmtIterator it = src.listProperties();
+        while(it.hasNext()) {
+            Statement stmt = it.next();
 
-			//RDFNode s = stmt.getSubject();
-			Property p = stmt.getPredicate();
-			RDFNode o = stmt.getObject();
+            //RDFNode s = stmt.getSubject();
+            Property p = stmt.getPredicate();
+            RDFNode o = stmt.getObject();
 
-			tgt.addProperty(p, o);
-		}
-		
-		return tgt;
-	}
+            tgt.addProperty(p, o);
+        }
 
-	
-	public static Resource merge(Collection<Resource> resources) {
-		Model m = ModelFactory.createDefaultModel();
-		Resource result = m.createResource();
-		
-		for(Resource r : resources) {
-			Model n = r.getModel();
-			StmtIterator it = n.listStatements();
-			while(it.hasNext()) {
-				Statement stmt = it.next();
+        return tgt;
+    }
 
-				RDFNode s = stmt.getSubject();
-				Property p = stmt.getPredicate();
-				RDFNode o = stmt.getObject();
-				
-				if(s.equals(r)) { s = result; }
-				if(o.equals(r)) { o = result; }
-				
-				// Should never be not a resource here
+
+    public static Resource merge(Collection<Resource> resources) {
+        Model m = ModelFactory.createDefaultModel();
+        Resource result = m.createResource();
+
+        for(Resource r : resources) {
+            Objects.requireNonNull(r);
+            Model n = r.getModel();
+            StmtIterator it = n.listStatements();
+            while(it.hasNext()) {
+                Statement stmt = it.next();
+
+                RDFNode s = stmt.getSubject();
+                Property p = stmt.getPredicate();
+                RDFNode o = stmt.getObject();
+
+                if(s.equals(r)) { s = result; }
+                if(o.equals(r)) { o = result; }
+
+                // Should never be not a resource here
 //				if(s.isResource()) {
-				m.add(s.asResource(), p, o);
+                m.add(s.asResource(), p, o);
 //				}
-			}
-		}
-		
-		return result;
-	}
+            }
+        }
+
+        return result;
+    }
 }
 
 
 /**
  * ResourceManager for a single folder; does not manage multiple repositories
- * 
+ *
  * @author raven
  *
  */
 public class ResourceStoreImpl
-	implements ResourceStore
+    implements ResourceStore
 {
-	protected String TMP_SUFFIX = ".tmp";
+    protected String TMP_SUFFIX = ".tmp";
 
-	
-	protected Path basePath;
-	
-	protected String CONTENT = "_content";
-	
-	protected ResourceSourceFile resourceSource;
-	protected PathAnnotatorRdf pathAnnotator;
-	protected Function<String, Path> uriToRelPath;
-	
-	private static final Logger logger = LoggerFactory.getLogger(ResourceStore.class);
 
-	/**
-	 * Find a model in the given resource repository or create one it in the given store based on
-	 * the lambda if it does not yet exist
-	 * 
-	 * @param repo
-	 * @param store
-	 * @param uri
-	 * @param preferredOutputFormat
-	 * @param modelSupplier
-	 * @return
-	 * @throws IOException
-	 */
-	public static Entry<RdfHttpEntityFile, Model> requestModel(HttpResourceRepositoryFromFileSystem repo, ResourceStore store, String uri, RDFFormat preferredOutputFormat, Supplier<Model> modelSupplier) throws IOException {
-		Entry<RdfHttpEntityFile, Model> result = getOrCacheEntity(repo, store, uri, new HttpObjectSerializerModel(preferredOutputFormat), modelSupplier);
-		
-		return result;
-	}
+    protected Path basePath;
 
-	
+    protected String CONTENT = "_content";
 
-	/**
-	 * Request an RDF model from the repository based on a given uri (or any string)
-	 * 
-	 * @param repo
-	 * @param store
-	 * @param uri
-	 * @param preferredOutputformat
-	 * @param modelSupplier
-	 * @return
-	 * @throws IOException 
-	 */
-	public static <T> Entry<RdfHttpEntityFile, T> getOrCacheEntity(
-			HttpResourceRepositoryFromFileSystem repo,
-			ResourceStore store,
-			String uri,
-			HttpObjectSerializer<T> serializer,
-			Supplier<T> contentSupplier) throws IOException {
+    protected ResourceSourceFile resourceSource;
+    protected PathAnnotatorRdf pathAnnotator;
+    protected Function<String, Path> uriToRelPath;
 
-		RdfHttpEntityFile entity;
-		T content;
+    private static final Logger logger = LoggerFactory.getLogger(ResourceStore.class);
 
-		HttpUriRequest baseRequest = serializer.createHttpRequest(uri);
+    /**
+     * Find a model in the given resource repository or create one it in the given store based on
+     * the lambda if it does not yet exist
+     *
+     * @param repo
+     * @param store
+     * @param uri
+     * @param preferredOutputFormat
+     * @param modelSupplier
+     * @return
+     * @throws IOException
+     */
+    public static Entry<RdfHttpEntityFile, Model> requestModel(HttpResourceRepositoryFromFileSystem repo, ResourceStore store, String uri, RDFFormat preferredOutputFormat, Supplier<Model> modelSupplier) throws IOException {
+        Entry<RdfHttpEntityFile, Model> result = getOrCacheEntity(repo, store, uri, new HttpObjectSerializerModel(preferredOutputFormat), modelSupplier);
+
+        return result;
+    }
+
+
+
+    /**
+     * Request an RDF model from the repository based on a given uri (or any string)
+     *
+     * @param repo
+     * @param store
+     * @param uri
+     * @param preferredOutputformat
+     * @param modelSupplier
+     * @return
+     * @throws IOException
+     */
+    public static <T> Entry<RdfHttpEntityFile, T> getOrCacheEntity(
+            HttpResourceRepositoryFromFileSystem repo,
+            ResourceStore store,
+            String uri,
+            HttpObjectSerializer<T> serializer,
+            Supplier<T> contentSupplier) throws IOException {
+
+        RdfHttpEntityFile entity;
+        T content;
+
+        HttpUriRequest baseRequest = serializer.createHttpRequest(uri);
 //				RequestBuilder.get(uri)
 //				.setHeader(HttpHeaders.ACCEPT, "application/n-triples")
 //				.setHeader(HttpHeaders.ACCEPT_ENCODING, "identity,bzip2,gzip")
 //				.build();
 
-		HttpRequest effectiveRequest = HttpResourceRepositoryFromFileSystemImpl.expandHttpRequest(baseRequest);
-		logger.info("Expanded HTTP Request: " + effectiveRequest);
-		try {
-			entity = repo.get(effectiveRequest, null);
-		} catch (IOException e1) {
-			throw new RuntimeException(e1);
-		}
+        HttpRequest effectiveRequest = HttpResourceRepositoryFromFileSystemImpl.expandHttpRequest(baseRequest);
+        logger.info("Expanded HTTP Request: " + effectiveRequest);
+        try {
+            entity = repo.get(effectiveRequest, null);
+        } catch (IOException e1) {
+            throw new RuntimeException(e1);
+        }
 
-		if(entity != null) {
-			logger.info("Serving " + uri + " from cache");
-			content = serializer.deserialize(entity);
+        if(entity != null) {
+            logger.info("Serving " + uri + " from cache");
+            content = serializer.deserialize(entity);
 //			String absPath = entity.getAbsolutePath().toString();
 //			model = RDFDataMgr.loadModel(absPath);
-		} else {
-			logger.info("Serving" + uri + " from computation and adding to cache");
+        } else {
+            logger.info("Serving" + uri + " from computation and adding to cache");
 
-			content = contentSupplier.get();
-			entity = serializer.serialize(uri, store, content);
-			
-			boolean sanityCheck = true;
-			// Check whether the written data is readable
-			// Corruption may be caused e.g. by race condiditons
-			if(sanityCheck) {
-				String file = entity.getAbsolutePath().toString();
-				Model sanityCheckModel = RDFDataMgr.loadModel(file);
-				logger.info("Sanity check result: Model has " + sanityCheckModel.size() + " triples");
-			}
-			
-			//RDFLanguages.fi
+            content = contentSupplier.get();
+            entity = serializer.serialize(uri, store, content);
+
+            boolean sanityCheck = true;
+            // Check whether the written data is readable
+            // Corruption may be caused e.g. by race condiditons
+            if(sanityCheck) {
+                String file = entity.getAbsolutePath().toString();
+                Model sanityCheckModel = RDFDataMgr.loadModel(file);
+                logger.info("Sanity check result: Model has " + sanityCheckModel.size() + " triples");
+            }
+
+            //RDFLanguages.fi
 //			RDFFormat effectiveOutFormat;
 //			String fileExt = Iterables.getFirst(preferredOutFormat.getLang().getFileExtensions(), null);
 //			effectiveOutFormat = fileExt == null
 //					? RDFFormat.TURTLE_PRETTY
 //					: preferredOutFormat;
-//			
+//
 //			fileExt = Iterables.getFirst(effectiveOutFormat.getLang().getFileExtensions(), null);
-//			
+//
 //			Objects.requireNonNull(fileExt, "Should not happen");
-//			
+//
 //			model = modelSupplier.get();
 //			java.nio.file.Path tmpFile = Files.createTempFile("data-", fileExt);
 //			try(OutputStream out = Files.newOutputStream(tmpFile, StandardOpenOption.WRITE)) {
@@ -230,207 +232,207 @@ public class ResourceStoreImpl
 //					.setContentType(effectiveOutFormat.getLang().getContentType().getContentType());
 //			entity = store.putWithMove(uri, entityInfo, tmpFile);
 //			HttpResourceRepositoryFromFileSystemImpl.computeHashForEntity(entity, null);
-		}
+        }
 
-		return Maps.immutableEntry(entity, content);		
-	}
-	
-	public ResourceStoreImpl(Path basePath) {
-		this(basePath, UriToPathUtils::resolvePath);
-	}
+        return Maps.immutableEntry(entity, content);
+    }
 
-	public ResourceStoreImpl(Path basePath, Function<String, Path> uriToRelPath) {
-		super();
-		this.basePath = basePath;
-		this.uriToRelPath = uriToRelPath;
+    public ResourceStoreImpl(Path basePath) {
+        this(basePath, UriToPathUtils::resolvePath);
+    }
 
-		this.pathAnnotator = new PathAnnotatorRdfImpl();
-		this.resourceSource = new ResourceSourceFileImpl();
-	}
+    public ResourceStoreImpl(Path basePath, Function<String, Path> uriToRelPath) {
+        super();
+        this.basePath = basePath;
+        this.uriToRelPath = uriToRelPath;
 
-	
-	@Override
-	public Path getAbsolutePath() {
-		return basePath;
-	}
-	
-	public Resource getInfo(Path absPath) {
-		Resource r1 = resourceSource.getResource(absPath);		
-		Resource r2 = pathAnnotator.getRecord(absPath);
-		
-		Resource result = ResourceUtils.merge(Arrays.asList(r1, r2));
-		
-		return result;
-	}
-	
-	public Path fullPath(String uri) {
-		Path relPath = uriToRelPath.apply(uri);		
-		Path result = basePath.resolve(relPath);
+        this.pathAnnotator = new PathAnnotatorRdfImpl();
+        this.resourceSource = new ResourceSourceFileImpl();
+    }
 
-		return result;
-	}
-	
-	public RdfHttpResourceFile get(String uri) {
-		Path fullPath = fullPath(uri);
-		RdfHttpResourceFileImpl result = new RdfHttpResourceFileImpl(this, fullPath);
-		return result;
-	}
-	
-	/**
-	 * Put a given file into an appropriate place in the repository
-	 * using a move operation 
-	 * 
-	 * @param uri
-	 * @param file
-	 * @return
-	 * @throws IOException 
-	 */
-	public RdfHttpEntityFile putWithMove(String uri, RdfEntityInfo metadata, Path file) throws IOException {
-		RdfHttpEntityFile result = allocateEntity(uri, metadata);
-		Path tgtFile = result.getAbsolutePath();
-		Files.createDirectories(tgtFile.getParent());
-		Files.move(file, tgtFile /*, StandardCopyOption.ATOMIC_MOVE */, StandardCopyOption.REPLACE_EXISTING);
-		result.updateInfo(record -> ResourceUtils.copyDirectProperties(record, metadata));
-		
-		return result;
-	}
-	
-	
-	
-	public RdfHttpEntityFile getEntityForPath(Path absEntityPath) {
-		RdfHttpEntityFile result;
 
-		if(absEntityPath.startsWith(basePath)) {
-			
-			String fileName = absEntityPath.getFileName().toString();
-			
-			Path parent = absEntityPath.getParent();
-			String parentFileName = parent.getFileName().toString();
-			
-			if(parentFileName.equals(CONTENT)) {
-				Path resRelFolder = basePath.relativize(parent);
-				
-				Path entityRelFolder = parent.relativize(absEntityPath);
-				//Path resFolder = parent.getParent();
-				RdfHttpResourceFileImpl res = new RdfHttpResourceFileImpl(this, resRelFolder);
-				result = new RdfHttpEntityFileImpl(res, entityRelFolder);	
-			} else {
-				result = null;
-			}
-		} else {
-			result = null;
-		}
-		//Resource cachedInfo = pathAnnotator.getRecord(path);
-		
+    @Override
+    public Path getAbsolutePath() {
+        return basePath;
+    }
+
+    public Resource getInfo(Path absPath) {
+        Resource r1 = resourceSource.getResource(absPath);
+        Resource r2 = pathAnnotator.getRecord(absPath);
+
+        Resource result = ResourceUtils.merge(Arrays.asList(r1, r2));
+
+        return result;
+    }
+
+    public Path fullPath(String uri) {
+        Path relPath = uriToRelPath.apply(uri);
+        Path result = basePath.resolve(relPath);
+
+        return result;
+    }
+
+    public RdfHttpResourceFile get(String uri) {
+        Path fullPath = fullPath(uri);
+        RdfHttpResourceFileImpl result = new RdfHttpResourceFileImpl(this, fullPath);
+        return result;
+    }
+
+    /**
+     * Put a given file into an appropriate place in the repository
+     * using a move operation
+     *
+     * @param uri
+     * @param file
+     * @return
+     * @throws IOException
+     */
+    public RdfHttpEntityFile putWithMove(String uri, RdfEntityInfo metadata, Path file) throws IOException {
+        RdfHttpEntityFile result = allocateEntity(uri, metadata);
+        Path tgtFile = result.getAbsolutePath();
+        Files.createDirectories(tgtFile.getParent());
+        Files.move(file, tgtFile /*, StandardCopyOption.ATOMIC_MOVE */, StandardCopyOption.REPLACE_EXISTING);
+        result.updateInfo(record -> ResourceUtils.copyDirectProperties(record, metadata));
+
+        return result;
+    }
+
+
+
+    public RdfHttpEntityFile getEntityForPath(Path absEntityPath) {
+        RdfHttpEntityFile result;
+
+        if(absEntityPath.startsWith(basePath)) {
+
+            String fileName = absEntityPath.getFileName().toString();
+
+            Path parent = absEntityPath.getParent();
+            String parentFileName = parent.getFileName().toString();
+
+            if(parentFileName.equals(CONTENT)) {
+                Path resRelFolder = basePath.relativize(parent);
+
+                Path entityRelFolder = parent.relativize(absEntityPath);
+                //Path resFolder = parent.getParent();
+                RdfHttpResourceFileImpl res = new RdfHttpResourceFileImpl(this, resRelFolder);
+                result = new RdfHttpEntityFileImpl(res, entityRelFolder);
+            } else {
+                result = null;
+            }
+        } else {
+            result = null;
+        }
+        //Resource cachedInfo = pathAnnotator.getRecord(path);
+
 //		RdfEntityInfo info = ContentTypeUtils.deriveHeadersFromFileExtension(fileName);
 
-		return result;	
-	}
-	
-	
+        return result;
+    }
+
+
 //	EntitySpace getEntitySpace(Path basePath) {
-//		
+//
 //	}
 
-	public RdfHttpResourceFile getResource(String uri) {
-		Path path = uriToRelPath.apply(uri);
-		
-		path = path.resolve(CONTENT);
-		
-		RdfHttpResourceFile result = new RdfHttpResourceFileImpl(this, path);
-		return result;
-	}
-	
-	public Collection<RdfHttpEntityFile> listEntities(Path relContentFolder) {
-		//Path contentFolder = basePath.resolve(CONTENT);
-		
-		Path contentFolder = basePath.resolve(relContentFolder);
-		
-		List<RdfHttpEntityFile> result;
-		
-		try {
-			if(!Files.exists(contentFolder)) {
-				result = Collections.emptyList();
-			} else {
-				try(Stream<Path> stream = Files.list(contentFolder)) {
-					result = stream.filter(file -> pathAnnotator.isAnnotationFor(file).isEmpty())
-							// skip .tmp files
-							.filter(file -> !file.getFileName().toString().endsWith(TMP_SUFFIX))
-							.map(this::getEntityForPath)
-							.collect(Collectors.toList());			
+    public RdfHttpResourceFile getResource(String uri) {
+        Path path = uriToRelPath.apply(uri);
 
-				}
-			}
-		} catch(Exception e) {
-			throw new RuntimeException(e);
-		}
+        path = path.resolve(CONTENT);
 
-		return result;
-	}
+        RdfHttpResourceFile result = new RdfHttpResourceFileImpl(this, path);
+        return result;
+    }
 
-	@Override
-	public boolean contains(Path path) {
-		path = path.toAbsolutePath();
-		
-		boolean result = path.startsWith(basePath);
-		return result;
-	}
+    public Collection<RdfHttpEntityFile> listEntities(Path relContentFolder) {
+        //Path contentFolder = basePath.resolve(CONTENT);
 
-	@Override
-	public Resource getInfo(Path path, String layer) {
-		Resource result = contains(path)
-			? pathAnnotator.getRecord(path)
-			: null;
+        Path contentFolder = basePath.resolve(relContentFolder);
 
-		return result;
-	}
+        List<RdfHttpEntityFile> result;
 
-	@Override
-	public RdfHttpEntityFile allocateEntity(String uri, Resource description) {
+        try {
+            if(!Files.exists(contentFolder)) {
+                result = Collections.emptyList();
+            } else {
+                try(Stream<Path> stream = Files.list(contentFolder)) {
+                    result = stream.filter(file -> pathAnnotator.isAnnotationFor(file).isEmpty())
+                            // skip .tmp files
+                            .filter(file -> !file.getFileName().toString().endsWith(TMP_SUFFIX))
+                            .map(this::getEntityForPath)
+                            .collect(Collectors.toList());
+
+                }
+            }
+        } catch(Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        return result;
+    }
+
+    @Override
+    public boolean contains(Path path) {
+        path = path.toAbsolutePath();
+
+        boolean result = path.startsWith(basePath);
+        return result;
+    }
+
+    @Override
+    public Resource getInfo(Path path, String layer) {
+        Resource result = contains(path)
+            ? pathAnnotator.getRecord(path)
+            : null;
+
+        return result;
+    }
+
+    @Override
+    public RdfHttpEntityFile allocateEntity(String uri, Resource description) {
 //		Path relPath = uriToRelPath.apply(uri);
 //		path = path.resolve(CONTENT);
 
-		RdfHttpResourceFile res = getResource(uri);
-		Path resPath = res.getAbsolutePath();
-		
-		RdfHttpEntityFile result = allocateEntity(resPath, description);
-		return result;
-	}
+        RdfHttpResourceFile res = getResource(uri);
+        Path resPath = res.getAbsolutePath();
 
-	public RdfHttpResourceFile pathToResource(Path baseRelPath) {
-		// TODO Validate the path
-		RdfHttpResourceFile result = new RdfHttpResourceFileImpl(this, baseRelPath);
+        RdfHttpEntityFile result = allocateEntity(resPath, description);
+        return result;
+    }
 
-		return result;
-	}
-	
-	public RdfHttpEntityFile allocateEntity(Path baseRelPath, Resource _info) {
-		
-		RdfEntityInfo info = _info.as(RdfEntityInfo.class);
+    public RdfHttpResourceFile pathToResource(Path baseRelPath) {
+        // TODO Validate the path
+        RdfHttpResourceFile result = new RdfHttpResourceFileImpl(this, baseRelPath);
 
-		String suffix = ContentTypeUtils.toFileExtension(info);
-		//pathToResource(baseRelPath);
-		Path finalRelPath = Paths.get("data" + suffix); 
+        return result;
+    }
 
-		
-		RdfHttpResourceFile res = pathToResource(baseRelPath);
-		
-		
-		RdfHttpEntityFile result = new RdfHttpEntityFileImpl(res, finalRelPath);
-		
-		return result;
-	}
+    public RdfHttpEntityFile allocateEntity(Path baseRelPath, Resource _info) {
+
+        RdfEntityInfo info = _info.as(RdfEntityInfo.class);
+
+        String suffix = ContentTypeUtils.toFileExtension(info);
+        //pathToResource(baseRelPath);
+        Path finalRelPath = Paths.get("data" + suffix);
 
 
-	@Override
-	public void updateInfo(Path path, Consumer<? super Resource> callback) {
-		Resource r = pathAnnotator.getRecord(path);
-		if(r == null) {
-			throw new RuntimeException("Cannot update record of non-existent content file");
-		}
-		
-		callback.accept(r);
-		pathAnnotator.setRecord(path, r);
-	}
+        RdfHttpResourceFile res = pathToResource(baseRelPath);
+
+
+        RdfHttpEntityFile result = new RdfHttpEntityFileImpl(res, finalRelPath);
+
+        return result;
+    }
+
+
+    @Override
+    public void updateInfo(Path path, Consumer<? super Resource> callback) {
+        Resource r = pathAnnotator.getRecord(path);
+        if(r == null) {
+            throw new RuntimeException("Cannot update record of non-existent content file");
+        }
+
+        callback.accept(r);
+        pathAnnotator.setRecord(path, r);
+    }
 
 }

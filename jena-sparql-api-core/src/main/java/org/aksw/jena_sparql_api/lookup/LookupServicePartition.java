@@ -1,22 +1,9 @@
 package org.aksw.jena_sparql_api.lookup;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
-import java.util.concurrent.CompletionService;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorCompletionService;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 
-import com.google.common.collect.Iterables;
-import com.google.common.util.concurrent.MoreExecutors;
-
-import io.reactivex.Flowable;
-import io.reactivex.schedulers.Schedulers;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 
 
 public class LookupServicePartition<K, V>
@@ -45,12 +32,12 @@ public class LookupServicePartition<K, V>
     @Override
     public Flowable<Entry<K, V>> apply(Iterable<K> keys)
     {
-    	return Flowable.fromIterable(keys)
-			.buffer(partitionSize)
-			.parallel(nThreads)
-			.runOn(Schedulers.io())
-			.flatMap(base::apply)
-			.sequential();
+        return Flowable.fromIterable(keys)
+            .buffer(partitionSize)
+            .parallel(nThreads)
+            .runOn(Schedulers.io())
+            .flatMap(base::apply)
+            .sequential();
     }
 
     public static <K, V> LookupServicePartition<K, V> create(LookupService<K, V> base, int partitionSize) {

@@ -1,12 +1,13 @@
 package org.aksw.jena_sparql_api.core;
 
 import org.aksw.jena_sparql_api.core.utils.QueryExecutionUtils;
-import org.aksw.jena_sparql_api.core.utils.QueryGenerationUtils;
+import org.aksw.jena_sparql_api.syntax.QueryGenerationUtils;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.graph.impl.GraphBase;
 import org.apache.jena.query.Query;
 import org.apache.jena.util.iterator.ExtendedIterator;
 
+@Deprecated // Use GraphFromRDFConnection
 public class GraphSparqlService
     extends GraphBase
 {

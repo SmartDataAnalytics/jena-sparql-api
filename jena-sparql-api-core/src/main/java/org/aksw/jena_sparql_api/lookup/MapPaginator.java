@@ -3,7 +3,7 @@ package org.aksw.jena_sparql_api.lookup;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.aksw.jena_sparql_api.util.collection.RangedEntrySupplier;
+import org.aksw.jena_sparql_api.rx.util.collection.RangedEntrySupplier;
 
 import com.google.common.collect.Range;
 

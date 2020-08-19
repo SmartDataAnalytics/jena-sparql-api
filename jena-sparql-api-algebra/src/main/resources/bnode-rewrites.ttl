@@ -83,8 +83,8 @@ fn:unparseBid o:definition [ o:profile p:virtuoso ; o:aliasFor fn:identity ; ] .
 
 # graphdb
 fn:bidOf      o:definition [ o:profile p:graphdb ; o:aliasFor ent:id ; ] .
-fn:parseBid   o:definition [ o:profile p:graphdb ; o:aliasFor fn:str ; ] .
-fn:unparseBid o:definition [ o:profile p:graphdb ; o:aliasFor fn:xsdLong ; ] .
+fn:parseBid   o:definition [ o:profile p:graphdb ; o:aliasFor fn:xsdLong ; ] .
+fn:unparseBid o:definition [ o:profile p:graphdb ; o:aliasFor fn:str ; ] .
 
 
 # Result set post processors
@@ -133,7 +133,7 @@ fn:forceBnodeIri
 # The purpose of fn:skolemizeBnodeLabel is to convert a blank node label into a string that can e
 # used as an IRI in queries
 # So an inverse function is not strictly needed, but it allows for also wrapping Jena's
-# graph's add and find methods to perform the conversion in both directions.  
+# graph's add and find methods to perform the conversion in both directions.
 
 
 fn:prependBnodePrefix

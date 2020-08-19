@@ -5,11 +5,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
+import java.util.Iterator;
 
+import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.riot.writer.NTriplesWriter;
 
 /**
  * @author Claus Stadler
@@ -86,6 +89,24 @@ public class CacheFrontendImpl
         cacheBackend.write(service, queryString, in);
     }
 
+    public void _writeTriples(String service, String queryString, Iterator<Triple> it) throws IOException {
+        PipedInputStream in = new PipedInputStream();
+        final PipedOutputStream out = new PipedOutputStream(in);
+        new Thread(
+          new Runnable(){
+            public void run(){
+                try {
+                    NTriplesWriter.write(out, it);
+                    out.close();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+          }
+        ).start();
+        cacheBackend.write(service, queryString, in);
+    }
+
     @Override
     public void write(String service, Query query, Model model) {
         write(service, query.toString(), model);
@@ -108,31 +129,47 @@ public class CacheFrontendImpl
     }
 
 
-	@Override
-	public void write(String service, String queryString, boolean value) {
-		try {
+    @Override
+    public void write(String service, String queryString, boolean value) {
+        try {
             _write(service, queryString, value);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-		
-	}
-	
-	public void _write(String service, String queryString, final boolean value) throws IOException {
+
+    }
+
+    public void _write(String service, String queryString, final boolean value) throws IOException {
         InputStream in = new ByteArrayInputStream(String.valueOf(value).getBytes());
-	    cacheBackend.write(service, queryString, in);
+        cacheBackend.write(service, queryString, in);
     }
 
 
-	@Override
-	public void write(String service, Query query, boolean value) {
-		write(service, query.toString(), value);
-	}
+    @Override
+    public void write(String service, Query query, boolean value) {
+        write(service, query.toString(), value);
+    }
 
 
-	@Override
-	public boolean isReadOnly() {
-		boolean result = cacheBackend.isReadOnly();
-		return result;
-	}
+    @Override
+    public boolean isReadOnly() {
+        boolean result = cacheBackend.isReadOnly();
+        return result;
+    }
+
+
+    @Override
+    public void writeTriples(String service, String queryString, Iterator<Triple> it) {
+        try {
+            _writeTriples(service, queryString, it);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+
+    @Override
+    public void writeTriples(String service, Query query, Iterator<Triple> it) {
+        writeTriples(service, query.toString(), it);
+    }
 }

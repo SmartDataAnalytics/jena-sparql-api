@@ -4,8 +4,8 @@ import java.util.Map.Entry;
 
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
-import org.aksw.jena_sparql_api.rx.OperatorOrderedGroupBy;
 import org.aksw.jena_sparql_api.rx.SparqlRx;
+import org.aksw.jena_sparql_api.rx.op.OperatorOrderedGroupBy;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
@@ -22,8 +22,8 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Range;
 
-import io.reactivex.Flowable;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Single;
 
 public class MapPaginatorSparqlQuery
     extends MapPaginatorSparqlQueryBase<Node, Table>
@@ -110,13 +110,16 @@ public class MapPaginatorSparqlQuery
       //System.out.println(query);
       //if(true) {throw new RuntimeException(""); }
 
-      
+
 //      Node[] current = {null};
 //      Node[] prior = {null};
 //      PublishProcessor<Node> boundaryIndicator = PublishProcessor.create();
 
       return SparqlRx.execSelectRaw(() -> qef.query(query))
-    		  .lift(new OperatorOrderedGroupBy<Binding, Node, Table>(b -> b.get(attrVar), TableN::new, Table::addBinding));
+              .lift(OperatorOrderedGroupBy.<Binding, Node, Table>create(
+                      b -> b.get(attrVar),
+                      groupKey -> new TableN(),
+                      Table::addBinding));
 //      return ReactiveSparqlUtils.groupByOrdered(
 //    		  ReactiveSparqlUtils.execSelect(() -> qef.createQueryExecution(query)),
 //    		  b -> b.get(attrVar))
@@ -124,11 +127,11 @@ public class MapPaginatorSparqlQuery
 //	    	  Node groupKey = e.getKey();
 //	    	  TableN table = new TableN();
 //	    	  e.getValue().forEach(table::addBinding);
-//	    	  
+//
 //	    	  return Maps.immutableEntry(groupKey, table);
 //	      });
-      
-//      
+
+//
 //      QueryExecution qe = qef.createQueryExecution(query);
 //      //ResultSet rs = qe.execSelect();
 //      ResultSet rs = ServiceUtils.forceExecResultSet(qe, query);

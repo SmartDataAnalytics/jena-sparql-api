@@ -1,0 +1,16 @@
+eg:sysCmdLbzip2
+  a eg:SysCmd ;
+  eg:sysCmd "/usr/bin/lbzip2" ;
+  eg:checkArgs ("--version") ;
+  
+
+# Invocation pattern 
+[]
+  a eg:SysCallEncoding ;
+  eg:cmd eg:sysCmdLbzip2
+  eg:canEncode "bzip2" ;
+  eg:decode false ;
+  eg:priority 500 ;
+  .
+  
+  

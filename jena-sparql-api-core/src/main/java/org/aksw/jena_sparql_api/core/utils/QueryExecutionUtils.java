@@ -14,6 +14,7 @@ import org.aksw.jena_sparql_api.mapper.BindingMapperProjectVar;
 import org.aksw.jena_sparql_api.mapper.BindingMapperQuad;
 import org.aksw.jena_sparql_api.mapper.BindingMapperUtils;
 import org.aksw.jena_sparql_api.mapper.FunctionBindingMapper;
+import org.aksw.jena_sparql_api.syntax.QueryGenerationUtils;
 import org.aksw.jena_sparql_api.utils.CloseableQueryExecution;
 import org.aksw.jena_sparql_api.utils.ExtendedIteratorClosable;
 import org.aksw.jena_sparql_api.utils.IteratorResultSetBinding;
@@ -39,6 +40,8 @@ import org.apache.jena.sparql.expr.aggregate.Aggregator;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementSubQuery;
 import org.apache.jena.util.iterator.ExtendedIterator;
+import org.apache.jena.util.iterator.NiceIterator;
+import org.apache.jena.util.iterator.WrappedIterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -150,6 +153,11 @@ public class QueryExecutionUtils {
      */
     public static ExtendedIterator<Triple> execConstruct(QueryExecutionFactory qef, Query query) {
         QueryExecution qe = qef.createQueryExecution(query);
+
+        return execConstruct(qe, query);
+    }
+
+    public static ExtendedIterator<Triple> execConstruct(QueryExecution qe, Query query) {
         Iterator<Triple> it = qe.execConstructTriples();
 
         ExtendedIteratorClosable<Triple> result = ExtendedIteratorClosable.create(it, () -> { tryClose(it); qe.close();});
@@ -300,16 +308,16 @@ public class QueryExecutionUtils {
         Node result = null;
 
         try(QueryExecution qe = qef.createQueryExecution(query)) {
-	        ResultSet rs = qe.execSelect();
-	
-	        if(rs.hasNext()) {
-	            Binding binding = rs.nextBinding();
-	            result = binding.get(var);
-	        }
-	
-	        if(rs.hasNext()) {
-	            logger.warn("A single result was retrieved, but more results exist - is this intended?");
-	        }
+            ResultSet rs = qe.execSelect();
+
+            if(rs.hasNext()) {
+                Binding binding = rs.nextBinding();
+                result = binding.get(var);
+            }
+
+            if(rs.hasNext()) {
+                logger.warn("A single result was retrieved, but more results exist - is this intended?");
+            }
         }
         return result;
     }
@@ -327,14 +335,14 @@ public class QueryExecutionUtils {
         List<Node> result = new ArrayList<Node>();
 
         try(QueryExecution qe = qef.createQueryExecution(query)) {
-	        ResultSet rs = qe.execSelect();
-	        while(rs.hasNext()) {
-	            //QuerySolutiors.next()
-	            Binding binding = rs.nextBinding();
-	            Node node = binding.get(var);
-	
-	            result.add(node);
-	        }
+            ResultSet rs = qe.execSelect();
+            while(rs.hasNext()) {
+                //QuerySolutiors.next()
+                Binding binding = rs.nextBinding();
+                Node node = binding.get(var);
+
+                result.add(node);
+            }
         }
 
         return result;

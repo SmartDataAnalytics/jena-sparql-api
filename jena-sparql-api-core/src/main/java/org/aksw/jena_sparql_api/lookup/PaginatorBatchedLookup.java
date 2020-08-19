@@ -4,8 +4,8 @@ import java.util.Map.Entry;
 
 import com.google.common.collect.Range;
 
-import io.reactivex.Flowable;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Single;
 
 /**
  * This paginator maps each item through a lookup service by batching the lookup requests
@@ -30,12 +30,12 @@ public class PaginatorBatchedLookup<I, O>
         Flowable<I> baseInStream = base.apply(range);
 
         Flowable<O> result = baseInStream.buffer(batchSize).flatMap(batch -> {
-        	// Map<I, O> map
-        	Flowable<O> r = lookup.apply(batch).map(Entry::getValue);
-        	return r;
+            // Map<I, O> map
+            Flowable<O> r = lookup.apply(batch).map(Entry::getValue);
+            return r;
         });
 
-        
+
 //        Stream<O> result = StreamUtils.mapToBatch(baseInStream, batchSize)
 //            .flatMap(batch -> {
 //                Map<I, O> map = lookup.apply(batch);

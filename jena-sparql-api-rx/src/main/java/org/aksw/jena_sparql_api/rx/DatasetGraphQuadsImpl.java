@@ -18,7 +18,7 @@ public class DatasetGraphQuadsImpl
 	protected QuadTable table;
 
 	public DatasetGraphQuadsImpl() {
-		this(new QuadTableLinkedHashMap());
+		this(new QuadTableFromNestedMaps());
 	}
 	
 	public DatasetGraphQuadsImpl(QuadTable table) {

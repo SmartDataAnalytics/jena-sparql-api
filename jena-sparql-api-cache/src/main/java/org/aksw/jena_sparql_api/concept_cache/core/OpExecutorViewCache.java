@@ -42,6 +42,15 @@ import com.google.common.collect.Range;
 //
 //}
 
+/**
+ * An executor that checks for specially marked SPARQL operations using an
+ * OpService with a service IRI of pattern <view://viewId>.
+ * Execution of such marked operations will be intercepted such that their
+ * result sets will be cached or retrieved from cache
+ *
+ * @author raven
+ *
+ */
 public class OpExecutorViewCache
     extends OpExecutor
 {
@@ -53,7 +62,7 @@ public class OpExecutorViewCache
 
     //Map<Node, StorageEntry> storageMap
     @SuppressWarnings("unchecked")
-	protected OpExecutorViewCache(ExecutionContext execCxt) {
+    protected OpExecutorViewCache(ExecutionContext execCxt) {
         super(execCxt);
         //this.serviceToQef = serviceToQef;
         this.storageMap = (Map<Node, StorageEntry>) execCxt.getContext().get(STORAGE_MAP);

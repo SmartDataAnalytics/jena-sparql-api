@@ -8,7 +8,7 @@ import org.apache.jena.query.QueryExecution;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.apache.jena.sparql.engine.binding.Binding;
 
-import io.reactivex.Flowable;
+import io.reactivex.rxjava3.core.Flowable;
 
 public class PaginatorQueryBinding
     extends PaginatorQueryBase<Binding>
@@ -20,7 +20,7 @@ public class PaginatorQueryBinding
 
     @Override
     protected Flowable<Binding> obtainResultIterator(Supplier<QueryExecution> qeSupplier) {
-    	Flowable<Binding> result = SparqlRx.execSelectRaw(qeSupplier);
+        Flowable<Binding> result = SparqlRx.execSelectRaw(qeSupplier);
 
 //        ResultSet rs = qe.execSelect();
 //        Iterator<Binding> result = new IteratorResultSetBinding(rs);

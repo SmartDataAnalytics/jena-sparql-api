@@ -21,7 +21,7 @@ import javax.ws.rs.core.StreamingOutput;
 import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.core.SparqlServiceFactory;
 import org.aksw.jena_sparql_api.core.UpdateExecutionFactory;
-import org.aksw.jena_sparql_api.core.utils.UpdateRequestUtils;
+import org.aksw.jena_sparql_api.syntax.UpdateRequestUtils;
 import org.aksw.jena_sparql_api.web.utils.AuthenticatorUtils;
 import org.aksw.jena_sparql_api.web.utils.ThreadUtils;
 import org.apache.http.auth.UsernamePasswordCredentials;

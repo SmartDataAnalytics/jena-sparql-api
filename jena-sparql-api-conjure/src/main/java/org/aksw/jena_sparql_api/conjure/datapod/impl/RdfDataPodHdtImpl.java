@@ -14,70 +14,70 @@ import org.rdfhdt.hdt.hdt.HDT;
 import org.rdfhdt.hdtjena.HDTGraph;
 
 public class RdfDataPodHdtImpl
-	implements RdfDataPodHdt
+    implements RdfDataPodHdt
 {
-	/**
-	 * Reference to HDT resources
-	 * 
-	 * TODO Put the HDT *and* the HDTGraph into a common object,
-	 * so that if the HDTGraph only needs to be initialized once for
-	 * any number of requests
-	 */
-	protected Reference<HDT> hdtRef;
-	protected boolean isHeaderPod;  
+    /**
+     * Reference to HDT resources
+     *
+     * TODO Put the HDT *and* the HDTGraph into a common object,
+     * so that if the HDTGraph only needs to be initialized once for
+     * any number of requests
+     */
+    protected Reference<HDT> hdtRef;
+    protected boolean isHeaderPod;
 
 
-	public RdfDataPodHdtImpl(Reference<HDT> hdtRef, boolean isHeaderPod) {
-		super();
-		this.hdtRef = hdtRef;
-		this.isHeaderPod = isHeaderPod;
-	}
+    public RdfDataPodHdtImpl(Reference<HDT> hdtRef, boolean isHeaderPod) {
+        super();
+        this.hdtRef = hdtRef;
+        this.isHeaderPod = isHeaderPod;
+    }
 
-	@Override
-	public boolean isMutable() {
-		return false;
-	}
+    @Override
+    public boolean isMutable() {
+        return false;
+    }
 
-	@Override
-	public void close() throws Exception {
-		hdtRef.close();
-	}
+    @Override
+    public void close() throws Exception {
+        hdtRef.close();
+    }
 
-	@Override
-	public RDFConnection openConnection() {
-		HDT hdt = hdtRef.get();
+    @Override
+    public RDFConnection openConnection() {
+        HDT hdt = hdtRef.get();
 
-		Graph graph;
-		if(isHeaderPod) {
-			graph = new HDTHeaderGraph(hdt);
-		} else {
-			graph = new HDTGraph(hdt);
-			
-			// TODO Evaluate to what extend this fix is useful
-			// A conclusion might be, that the input data itself should be fixed
-			// instead of us attempting a workaround here
-			boolean enableNQuadsFix = true;
-			if(enableNQuadsFix) {
-				graph = GraphUtils.wrapGraphWithNQuadsFix(graph);
-				graph = GraphUtils.wrapWithValidation(graph);
-			}
-		}
+        Graph graph;
+        if(isHeaderPod) {
+            graph = new HDTHeaderGraph(hdt);
+        } else {
+            graph = new HDTGraph(hdt);
 
-		Model model = ModelFactory.createModelForGraph(graph);
+            // TODO Evaluate to what extend this fix is useful
+            // A conclusion might be, that the input data itself should be fixed
+            // instead of us attempting a workaround here
+            boolean enableNQuadsFix = true;
+            if(enableNQuadsFix) {
+                graph = GraphUtils.wrapGraphWithNQuadsFix(graph);
+                graph = GraphUtils.wrapWithValidation(graph);
+            }
+        }
 
-		RDFConnection result = RDFConnectionFactory.connect(DatasetFactory.wrap(model));
-		return result;
+        Model model = ModelFactory.createModelForGraph(graph);
 
-	}
+        RDFConnection result = RDFConnectionFactory.connect(DatasetFactory.wrap(model));
+        return result;
 
-	@Override
-	public RdfDataPod headerPod() {
-		Reference<HDT> freshRef = hdtRef.aquire(this);
-		if(isHeaderPod) {
-			throw new RuntimeException("Cannot get header of a header");
-		} else {
-			return new RdfDataPodHdtImpl(freshRef, true);
-		}
-		//return this; // or null ? or a pod with an empty model?
-	}
+    }
+
+    @Override
+    public RdfDataPod headerPod() {
+        Reference<HDT> freshRef = hdtRef.acquire(this);
+        if(isHeaderPod) {
+            throw new RuntimeException("Cannot get header of a header");
+        } else {
+            return new RdfDataPodHdtImpl(freshRef, true);
+        }
+        //return this; // or null ? or a pod with an empty model?
+    }
 }

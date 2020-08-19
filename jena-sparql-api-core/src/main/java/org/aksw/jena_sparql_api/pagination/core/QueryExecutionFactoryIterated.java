@@ -20,19 +20,25 @@ public class QueryExecutionFactoryIterated
 {
     private QueryExecutionFactory decoratee;
     private QueryTransformer queryTransformer;
-    private boolean breakOnEmptyResult;
+    private boolean stopOnEmptyResult;
+    private boolean stopIfLimitNotReached;
 
-    public QueryExecutionFactoryIterated(QueryExecutionFactory decoratee, QueryTransformer queryTransformer, boolean breakOnEmptyResult) {
+    public QueryExecutionFactoryIterated(
+            QueryExecutionFactory decoratee,
+            QueryTransformer queryTransformer,
+            boolean breakOnEmptyResult,
+            boolean stopIfLimitNotReached) {
         this.decoratee = decoratee;
         this.queryTransformer = queryTransformer;
-        this.breakOnEmptyResult = breakOnEmptyResult;
+        this.stopOnEmptyResult = breakOnEmptyResult;
+        this.stopIfLimitNotReached = stopIfLimitNotReached;
     }
 
     @Override
     public QueryExecution createQueryExecution(Query query) {
         Iterator<Query> queryIterator = queryTransformer.transform(query);
 
-        return new QueryExecutionIterated(query, decoratee, queryIterator, breakOnEmptyResult);
+        return new QueryExecutionIterated(query, decoratee, queryIterator, stopOnEmptyResult, stopIfLimitNotReached);
     }
 
 

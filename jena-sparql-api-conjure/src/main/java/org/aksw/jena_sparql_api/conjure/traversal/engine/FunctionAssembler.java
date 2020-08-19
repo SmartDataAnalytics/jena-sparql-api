@@ -21,43 +21,43 @@ import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.path.Path;
 import org.apache.jena.sparql.path.PathParser;
 
-import io.reactivex.Flowable;
+import io.reactivex.rxjava3.core.Flowable;
 
 public class FunctionAssembler
-	implements OpTraversalVisitor<Function<RDFNode, Set<RDFNode>>>
+    implements OpTraversalVisitor<Function<RDFNode, Set<RDFNode>>>
 {
-	
-	public static Set<RDFNode> execPath(RDFConnection conn, RDFNode start, Path path) {
-		Query query = new Query();
-		query.setQuerySelectType();
-		query.getProject().add(Vars.s);
-		query.setDistinct(true);
-		query.setQueryPattern(ElementUtils.createElementPath(start.asNode(), path, Vars.o));
-		Model model = start.getModel();
-		
-		
-		Flowable<QuerySolution> flowable = conn == null
-				? SparqlRx.execSelect(() -> QueryExecutionFactory.create(query, model))
-				: SparqlRx.execSelect(conn, query);
-		
-		Set<RDFNode> result = flowable
-				.map(qs -> qs.get(Vars.o.getName()))
-				.toList().map(LinkedHashSet::new)
-				.blockingGet();
-		
-		return result;
-	}
-	
-	@Override
-	public Function<RDFNode, Set<RDFNode>> visit(OpPropertyPath op) {
-		String str = op.getPropertyPath();
-		Path path = PathParser.parse(str, PrefixMapping.Standard);
 
-		return rdfNode -> execPath(null, rdfNode, path);
-	}
+    public static Set<RDFNode> execPath(RDFConnection conn, RDFNode start, Path path) {
+        Query query = new Query();
+        query.setQuerySelectType();
+        query.getProject().add(Vars.s);
+        query.setDistinct(true);
+        query.setQueryPattern(ElementUtils.createElementPath(start.asNode(), path, Vars.o));
+        Model model = start.getModel();
 
-	@Override
-	public Function<RDFNode, Set<RDFNode>> visit(OpTraversalSelf op) {
-		return rdfNode -> Collections.singleton(rdfNode);
-	}
+
+        Flowable<QuerySolution> flowable = conn == null
+                ? SparqlRx.execSelect(() -> QueryExecutionFactory.create(query, model))
+                : SparqlRx.execSelect(conn, query);
+
+        Set<RDFNode> result = flowable
+                .map(qs -> qs.get(Vars.o.getName()))
+                .toList().map(LinkedHashSet::new)
+                .blockingGet();
+
+        return result;
+    }
+
+    @Override
+    public Function<RDFNode, Set<RDFNode>> visit(OpPropertyPath op) {
+        String str = op.getPropertyPath();
+        Path path = PathParser.parse(str, PrefixMapping.Standard);
+
+        return rdfNode -> execPath(null, rdfNode, path);
+    }
+
+    @Override
+    public Function<RDFNode, Set<RDFNode>> visit(OpTraversalSelf op) {
+        return rdfNode -> Collections.singleton(rdfNode);
+    }
 }

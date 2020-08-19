@@ -1,8 +1,10 @@
 package org.aksw.jena_sparql_api.cache.extra;
 
 
-import org.aksw.commons.collections.IClosable;
+import java.util.Iterator;
 
+import org.aksw.commons.collections.IClosable;
+import org.apache.jena.graph.Triple;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.rdf.model.Model;
 
@@ -24,6 +26,9 @@ public interface CacheResource
     //InputStream open();
 
     Model asModel(Model result);
+    Iterator<Triple> asIteratorTriples();
+    //Iterator<Quad> asIteratorQuads();
+
     ResultSet asResultSet();
     boolean asBoolean();
 }

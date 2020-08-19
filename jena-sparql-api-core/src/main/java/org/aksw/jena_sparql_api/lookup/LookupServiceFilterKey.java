@@ -7,7 +7,7 @@ import java.util.stream.Collectors;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Streams;
 
-import io.reactivex.Flowable;
+import io.reactivex.rxjava3.core.Flowable;
 
 public class LookupServiceFilterKey<K, V>
     implements LookupService<K, V>
@@ -22,9 +22,9 @@ public class LookupServiceFilterKey<K, V>
 
     @Override
     public Flowable<Entry<K, V>> apply(Iterable<K> t) {
-    	List<K> keys = Streams.stream(t)
-    			.filter(key -> filter.test(key))
-    			.collect(Collectors.toList());
+        List<K> keys = Streams.stream(t)
+                .filter(key -> filter.test(key))
+                .collect(Collectors.toList());
 
         return delegate.apply(keys);
     }

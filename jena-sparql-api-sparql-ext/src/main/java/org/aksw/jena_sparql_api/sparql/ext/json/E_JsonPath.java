@@ -56,10 +56,10 @@ public class E_JsonPath
 //    }
 
     public static Node jsonToNode(Object o) {
-    	Gson gson = new Gson();
-    	RDFDatatype dtype = TypeMapper.getInstance().getTypeByClass(JsonElement.class);
-    	Node result = jsonToNode(o, gson, dtype);
-    	return result;
+        Gson gson = new Gson();
+        RDFDatatype dtype = TypeMapper.getInstance().getTypeByClass(JsonElement.class);
+        Node result = jsonToNode(o, gson, dtype);
+        return result;
     }
     public static Node jsonToNode(Object o, Gson gson, RDFDatatype jsonDatatype) {
         boolean isPrimitive = o instanceof Boolean || o instanceof Number || o instanceof String;
@@ -68,7 +68,7 @@ public class E_JsonPath
         if(o == null) {
             result = null;
         } else if(isPrimitive) {
-        	RDFDatatype dtype = TypeMapper.getInstance().getTypeByValue(o);
+            RDFDatatype dtype = TypeMapper.getInstance().getTypeByValue(o);
             result = NodeFactory.createLiteralByValue(o, dtype);
         } else if(o instanceof JsonElement) {
             JsonElement e = (JsonElement)o;
@@ -95,7 +95,7 @@ public class E_JsonPath
             Object o = gson.fromJson(e, Object.class); //JsonTransformerUtils.toJavaObject(p);
 
             if(o != null) {
-            	RDFDatatype dtype = TypeMapper.getInstance().getTypeByValue(o);
+                RDFDatatype dtype = TypeMapper.getInstance().getTypeByValue(o);
                 result = NodeFactory.createLiteralByValue(o, dtype);
             } else {
                 throw new RuntimeException("Datatype not supported " + e);
@@ -140,7 +140,7 @@ public class E_JsonPath
             try {
                 // If parsing the JSON fails, we return nothing, yet we log an error
                 Object o = JsonPath.read(tmp, queryStr);
-                
+
                 Node node = jsonToNode(o, gson, jsonDatatype);
                 result = NodeValue.makeNode(node);
             } catch(Exception e) {
@@ -151,7 +151,7 @@ public class E_JsonPath
             }
 
         } else {
-        	NodeValue.raise(new ExprTypeException("Invalid arguments to json path"));
+            NodeValue.raise(new ExprTypeException("Invalid arguments to json path"));
             result = null; //NodeValue.nvNothing;
         }
 

@@ -1,15 +1,12 @@
 package org.aksw.jena_sparql_api.lookup;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import org.apache.jena.ext.com.google.common.collect.Maps;
 
-import io.reactivex.Flowable;
+import io.reactivex.rxjava3.core.Flowable;
 
 
 public class LookupServiceTransformValue<K, W, V>
@@ -25,8 +22,8 @@ public class LookupServiceTransformValue<K, W, V>
 
     @Override
     public Flowable<Entry<K, W>> apply(Iterable<K> keys) {
-    	Flowable<Entry<K, V>> tmp = base.apply(keys);
-    	Flowable<Entry<K, W>> result = tmp.map(e-> Maps.immutableEntry(e.getKey(), fn.apply(e.getKey(), e.getValue())));
+        Flowable<Entry<K, V>> tmp = base.apply(keys);
+        Flowable<Entry<K, W>> result = tmp.map(e-> Maps.immutableEntry(e.getKey(), fn.apply(e.getKey(), e.getValue())));
 
 //        Map<K, W> result = tmp.entrySet().stream()
 //                .collect(Collectors.toMap(

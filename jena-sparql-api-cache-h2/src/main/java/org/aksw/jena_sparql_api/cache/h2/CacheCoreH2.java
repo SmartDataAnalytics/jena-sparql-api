@@ -19,9 +19,7 @@ import org.aksw.jena_sparql_api.cache.extra.CacheBackend;
 import org.aksw.jena_sparql_api.cache.extra.CacheCore;
 import org.aksw.jena_sparql_api.cache.extra.CacheCoreExCompressor;
 import org.aksw.jena_sparql_api.cache.extra.CacheEntry;
-import org.aksw.jena_sparql_api.cache.extra.CacheEntryBase;
 import org.aksw.jena_sparql_api.cache.extra.CacheEntryImpl;
-import org.aksw.jena_sparql_api.cache.extra.InputStreamProviderResultSetBlob;
 import org.aksw.jena_sparql_api.cache.extra.SqlDaoBase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,7 +44,7 @@ public class CacheCoreH2
     private static final Logger logger = LoggerFactory.getLogger(CacheCoreH2.class);
 
     private boolean validateHash = true;
-    
+
     private String defaultService = "";
 
     @Override
@@ -76,15 +74,15 @@ public class CacheCoreH2
     }
 
 
-	private String databaseDirectory = "cache";
-	private String databaseName = "extraction";
-	private boolean autoServerMode = true;
+    private String databaseDirectory = "cache";
+    private String databaseName = "extraction";
+    private boolean autoServerMode = true;
 
-	// specifies after how many milli seconds a cached result becomes invalid
-	private long lifespan = 1 * 24 * 60 * 60 * 1000; // 1 day
+    // specifies after how many milli seconds a cached result becomes invalid
+    private long lifespan = 1 * 24 * 60 * 60 * 1000; // 1 day
 
 
-	private Connection conn;
+    private Connection conn;
 
 
     public static CacheCoreH2 create(String dbName)
@@ -136,8 +134,8 @@ public class CacheCoreH2
         return create(true, "cache/sparql", dbName, lifespan, useCompression);
     }
 
-    
-	public CacheCoreH2(Connection conn, long lifespan)
+
+    public CacheCoreH2(Connection conn, long lifespan)
             throws SQLException
     {
         super(Arrays.asList(Query.values()));
@@ -288,10 +286,10 @@ public class CacheCoreH2
         return service + queryString;
     }
 
-	@Override
-	public boolean isReadOnly() {
-		// TODO Auto-generated method stub
-		return false;
-	}
+    @Override
+    public boolean isReadOnly() {
+        // TODO Auto-generated method stub
+        return false;
+    }
 
 }

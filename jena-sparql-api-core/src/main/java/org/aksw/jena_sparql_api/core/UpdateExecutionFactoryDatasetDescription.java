@@ -1,7 +1,6 @@
 package org.aksw.jena_sparql_api.core;
 
-import org.aksw.jena_sparql_api.core.utils.UpdateRequestUtils;
-
+import org.aksw.jena_sparql_api.syntax.UpdateRequestUtils;
 import org.apache.jena.sparql.core.DatasetDescription;
 import org.apache.jena.update.UpdateProcessor;
 import org.apache.jena.update.UpdateRequest;

@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.aksw.jena_sparql_api.algebra.utils.FixpointIteration;
-import org.aksw.jena_sparql_api.rx.RDFDataMgrEx;
+import org.aksw.jena_sparql_api.stmt.SparqlStmtMgr;
 import org.aksw.jena_sparql_api.user_defined_function.UserDefinedFunctionResource;
 import org.aksw.jena_sparql_api.user_defined_function.UserDefinedFunctions;
 import org.aksw.jena_sparql_api.utils.Vars;
@@ -23,34 +23,34 @@ import org.apache.jena.sparql.function.user.ExprTransformExpand;
 import org.apache.jena.sparql.function.user.UserDefinedFunctionDefinition;
 
 public class MainUdfTest2 {
-	public static void main(String[] args) {
-		Model model = RDFDataMgr.loadModel("bnode-rewrites.ttl");
-		RDFDataMgrEx.execSparql(model, "udf-inferences.sparql");
+    public static void main(String[] args) {
+        Model model = RDFDataMgr.loadModel("bnode-rewrites.ttl");
+        SparqlStmtMgr.execSparql(model, "udf-inferences.sparql");
 
-		RDFDataMgr.write(System.out, model, RDFFormat.TURTLE_PRETTY);
+        RDFDataMgr.write(System.out, model, RDFFormat.TURTLE_PRETTY);
 
-		Set<String> profiles = new HashSet<>(Arrays.asList("http://ns.aksw.org/profile/jena"));
-		Map<String, UserDefinedFunctionDefinition> map = UserDefinedFunctions.load(model, profiles);
-		UserDefinedFunctions.registerAll(map);
+        Set<String> profiles = new HashSet<>(Arrays.asList("http://ns.aksw.org/profile/jena"));
+        Map<String, UserDefinedFunctionDefinition> map = UserDefinedFunctions.load(model, profiles);
+        UserDefinedFunctions.registerAll(map);
 
-		Expr e = new E_Function("http://ns.aksw.org/function/decodeBnodeIri", new ExprList(new ExprVar(Vars.x)));
-		ExprTransform xform = new ExprTransformExpand(map);
-		e = FixpointIteration.apply(100, e, x -> ExprTransformer.transform(xform, x));
+        Expr e = new E_Function("http://ns.aksw.org/function/decodeBnodeIri", new ExprList(new ExprVar(Vars.x)));
+        ExprTransform xform = new ExprTransformExpand(map);
+        e = FixpointIteration.apply(100, e, x -> ExprTransformer.transform(xform, x));
 
 
-		System.out.println("INVERSES: " + model.createResource("http://ns.aksw.org/function/skolemizeBnodeLabel")
-			.as(UserDefinedFunctionResource.class)
-			.getDefinitions().iterator().next()
-			.getInverses()
-			.iterator().next()
-			.getFunction()
-			.getDefinitions().iterator().next()
-			.getExpr()
+        System.out.println("INVERSES: " + model.createResource("http://ns.aksw.org/function/skolemizeBnodeLabel")
+            .as(UserDefinedFunctionResource.class)
+            .getDefinitions().iterator().next()
+            .getInverses()
+            .iterator().next()
+            .getFunction()
+            .getDefinitions().iterator().next()
+            .getExpr()
         );
 
 //		NodeValue x = ExprTransformVirtualBnodeUris.eval("http://ns.aksw.org/function/str", NodeValue.makeInteger(666));
-		System.out.println(e);
-		
+        System.out.println(e);
+
 //		System.out.println(model.size());
-	}
+    }
 }

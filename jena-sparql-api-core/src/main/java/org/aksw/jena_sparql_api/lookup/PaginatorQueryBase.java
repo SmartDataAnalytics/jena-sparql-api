@@ -10,8 +10,8 @@ import org.apache.jena.rdfconnection.SparqlQueryConnection;
 
 import com.google.common.collect.Range;
 
-import io.reactivex.Flowable;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Single;
 
 public abstract class PaginatorQueryBase<T>
     implements ListPaginator<T>
@@ -49,7 +49,7 @@ public abstract class PaginatorQueryBase<T>
 
     @Override
     public Single<Range<Long>> fetchCount(Long itemLimit, Long rowLimit) {
-    	Single<Range<Long>> result = SparqlRx.fetchCountQuery(qef, query, itemLimit, rowLimit);
+        Single<Range<Long>> result = SparqlRx.fetchCountQuery(qef, query, itemLimit, rowLimit);
         //Range<Long> result = ServiceUtils.fetchCountQuery(qef, query, itemLimit, rowLimit);
         return result;
     }
