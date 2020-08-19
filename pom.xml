@@ -52,8 +52,6 @@
 		<module>jena-sparql-api-views</module>
 
 		<module>jena-sparql-api-concepts</module>
-		<module>jena-sparql-api-path-finding</module>
-		<module>jena-sparql-api-resource-shape</module>
 
 		<module>jena-sparql-api-query-containment</module>
 		<module>jena-sparql-api-cache-h2</module>
