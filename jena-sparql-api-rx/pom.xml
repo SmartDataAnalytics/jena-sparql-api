@@ -17,6 +17,13 @@
 	</parent>
 
 	<dependencies>
+<!-- 		<dependency> -->
+<!-- 			<groupId>org.apache.jena</groupId> -->
+<!-- 			<artifactId>jena-dboe-storage</artifactId> -->
+<!-- 			<version>3.15.0</version> -->
+<!-- 		</dependency> -->
+
+
 		<dependency>
 			<groupId>org.aksw.jena-sparql-api</groupId>
 			<artifactId>jena-sparql-api-concepts</artifactId>
@@ -27,22 +34,18 @@
 			<artifactId>jena-sparql-api-collections</artifactId>
 		</dependency>
 
-<!-- 		<dependency> -->
-<!-- 			<groupId>com.google.guava</groupId> -->
-<!-- 			<artifactId>guava</artifactId> -->
-<!-- 		</dependency> -->
+		<!-- <dependency> -->
+		<!-- <groupId>com.google.guava</groupId> -->
+		<!-- <artifactId>guava</artifactId> -->
+		<!-- </dependency> -->
 
 		<dependency>
 			<groupId>io.reactivex.rxjava3</groupId>
 			<artifactId>rxjava</artifactId>
 		</dependency>
 
-<!--
-		<dependency>
-			<groupId>com.github.davidmoten</groupId>
-			<artifactId>rxjava2-extras</artifactId>
-		</dependency>
--->
+		<!-- <dependency> <groupId>com.github.davidmoten</groupId> <artifactId>rxjava2-extras</artifactId> 
+			</dependency> -->
 
 
 
