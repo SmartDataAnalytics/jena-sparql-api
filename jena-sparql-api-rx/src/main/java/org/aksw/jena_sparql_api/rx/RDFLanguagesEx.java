@@ -11,6 +11,7 @@ import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.riot.RDFLanguages;
 import org.apache.jena.riot.RDFWriterRegistry;
+import org.apache.jena.riot.resultset.ResultSetReaderRegistry;
 
 /**
  * Convenience methods related to Jena's {@link RDFLanguages} class.
@@ -29,6 +30,14 @@ public class RDFLanguagesEx {
     public static List<Lang> getQuadAndTripleLangs() {
         List<Lang> result = Stream.concat(getQuadLangs().stream(), getTripleLangs().stream())
                 .distinct()
+                .collect(Collectors.toList());
+
+        return result;
+    }
+
+    public static List<Lang> getResultSetLangs() {
+        List<Lang> result = RDFLanguages.getRegisteredLanguages().stream()
+                .filter(ResultSetReaderRegistry::isRegistered)
                 .collect(Collectors.toList());
 
         return result;

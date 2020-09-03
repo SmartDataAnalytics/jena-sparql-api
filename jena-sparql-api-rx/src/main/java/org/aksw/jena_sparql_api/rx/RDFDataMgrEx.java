@@ -22,6 +22,7 @@ import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.riot.RDFLanguages;
+import org.apache.jena.riot.resultset.ResultSetReaderRegistry;
 import org.apache.jena.shared.PrefixMapping;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,7 +30,8 @@ import org.slf4j.LoggerFactory;
 import io.reactivex.rxjava3.core.Flowable;
 
 /**
- * Extensions to load models from .sparql files
+ * Extensions to help open an InputStream of unknown content using probing against languages registered to the Jena riot system.
+ * This includes languages based on triples, quads and result sets. Support for further types may be added in the future.
  *
  * @author Claus Stadler, Dec 18, 2018
  *
@@ -71,10 +73,12 @@ public class RDFDataMgrEx {
             bin.mark(1 * 1024 * 1024 * 1024);
             //bin.mark(Integer.MAX_VALUE >> 1);
             Flowable<?> flow;
-            if(RDFLanguages.isQuads(cand)) {
+            if (RDFLanguages.isQuads(cand)) {
                 flow = RDFDataMgrRx.createFlowableQuads(() -> wbin, cand, null);
-            } else if(RDFLanguages.isTriples(cand)) {
+            } else if (RDFLanguages.isTriples(cand)) {
                 flow = RDFDataMgrRx.createFlowableTriples(() -> wbin, cand, null);
+            } else if (ResultSetReaderRegistry.isRegistered(cand)) {
+                flow = RDFDataMgrRx.createFlowableBindings(() -> wbin, cand);
             } else {
                 logger.warn("Skipping probing of unknown Lang: " + cand);
                 continue;

@@ -13,6 +13,7 @@ import org.apache.jena.query.ARQ;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryFactory;
 import org.apache.jena.query.Syntax;
+import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.ARQConstants;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.Substitute;
@@ -248,6 +249,11 @@ public class QueryFlowOps
 
     public static Predicate<Binding> createFilter(ExecutionContext execCxt, String exprStr) {
         Expr expr = ExprUtils.parse(exprStr);
+        return createFilter(execCxt, expr);
+    }
+
+    public static Predicate<Binding> createFilter(ExecutionContext execCxt, String exprStr, PrefixMapping pm) {
+        Expr expr = ExprUtils.parse(exprStr, pm);
         return createFilter(execCxt, expr);
     }
 

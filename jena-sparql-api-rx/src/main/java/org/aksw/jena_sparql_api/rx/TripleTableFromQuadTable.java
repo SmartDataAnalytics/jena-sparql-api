@@ -17,7 +17,7 @@ import org.apache.jena.sparql.core.mem.TripleTable;
  * Used to create a simple insert-order-preserving Dataset view with
  * proper prefix-mapping support using
  *
- * QuadTable quadTable = new QuadTableLinkedHashMap();
+ * QuadTable quadTable = new QuadTableFromNestedMaps();
  * new DatasetGraphInMemory(quadTable, new TripleTableFromQuadTable(quadTable));
  *
  *

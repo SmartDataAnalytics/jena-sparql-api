@@ -174,32 +174,40 @@ public class SparqlRx {
 //		}
 //	}
 
-    public static <T> Flowable<T> execSelect(Supplier<QueryExecution> qes, Function<? super ResultSet, ? extends T> next) {
-        Flowable<T> result = Flowable.generate(
-                () -> {
-                    QueryExecution qe = qes.get();
-                    return new SimpleEntry<QueryExecution, ResultSet>(qe, null);
-                },
-                (state, emitter) -> {
-                    ResultSet rs = state.getValue();
-                    if(rs == null) {
-//                        System.out.println("STARTED NEW RESULT SET");
-                        rs = state.getKey().execSelect();
-                        state.setValue(rs);
-                    }
+    public static <T> Flowable<T> execSelect(Supplier<QueryExecution> qes, Function<? super ResultSet, T> next) {
+        Flowable<T> result = RDFDataMgrRx.createFlowableFromResource(
+                qes::get,
+                QueryExecution::execSelect,
+                ResultSet::hasNext,
+                next,
+                QueryExecution::close
+            );
 
-                    if(rs.hasNext()) {
-                        T value = next.apply(rs);
-                        emitter.onNext(value);
-                    } else {
-                        emitter.onComplete();
-                    }
-                },
-                state -> {
-                    QueryExecution qe = state.getKey();
-                    // Note consuming the result set may also already close the qe
-                    qe.close();
-                });
+//        Flowable<T> result = Flowable.generate(
+//                () -> {
+//                    QueryExecution qe = qes.get();
+//                    return new SimpleEntry<QueryExecution, ResultSet>(qe, null);
+//                },
+//                (state, emitter) -> {
+//                    ResultSet rs = state.getValue();
+//                    if(rs == null) {
+////                        System.out.println("STARTED NEW RESULT SET");
+//                        rs = state.getKey().execSelect();
+//                        state.setValue(rs);
+//                    }
+//
+//                    if(rs.hasNext()) {
+//                        T value = next.apply(rs);
+//                        emitter.onNext(value);
+//                    } else {
+//                        emitter.onComplete();
+//                    }
+//                },
+//                state -> {
+//                    QueryExecution qe = state.getKey();
+//                    // Note consuming the result set may also already close the qe
+//                    qe.close();
+//                });
 
 //        Flowable<T> result = Flowable.create(emitter -> {
 //            QueryExecution qe = qes.get();
