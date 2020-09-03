@@ -156,6 +156,8 @@ public class RDFDataMgrRx {
      * data on the input stream indefinitely and allows for thread handling
      *
      * Creates an iterator over parsing of quads
+     * Upgrades triples to quads with graph set to Quad.defaultGraphNodeGenerated if lang refers to a triple language
+     *
      * @param input Input Stream
      * @param lang Language
      * @param baseIRI Base IRI
@@ -168,7 +170,7 @@ public class RDFDataMgrRx {
             int bufferSize, boolean fair, int pollTimeout, int maxPolls,
             UncaughtExceptionHandler eh,
             Consumer<Thread> th) {
-            //Consumer<Thread> threadHandler) {
+
         // Special case N-Quads, because the RIOT reader has a pull interface
         if ( RDFLanguages.sameLang(RDFLanguages.NQUADS, lang) ) {
             return new IteratorResourceClosing<>(
@@ -177,9 +179,17 @@ public class RDFDataMgrRx {
         }
         // Otherwise, we have to spin up a thread to deal with it
         final PipedRDFIterator<Quad> it = new PipedRDFIterator<>(bufferSize, fair, pollTimeout, maxPolls);
-        final PipedQuadsStream out = new PipedQuadsStream(it);
 
-        Thread t = new Thread(()-> {
+        // Upgrade triples to quads; this happens if quads are requested from a triple lang
+        final PipedQuadsStream out = new PipedQuadsStream(it) {
+            @Override
+            public void triple(Triple triple) {
+                Quad q = new Quad(Quad.defaultGraphNodeGenerated, triple);
+                quad(q);
+            }
+        };
+
+        Thread t = new Thread(() -> {
             try {
                 // Invoke start on the sink so that the consumer knows the producer thread
                 // It appears otherwise the producer thread can get interrupted before
@@ -809,13 +819,13 @@ public class RDFDataMgrRx {
 //        return ds -> RDFDataMgr.write(out, ds, format);
 //    }
 
-    public static FlowableTransformer<? super Dataset, Throwable> createDatasetWriter(OutputStream out, RDFFormat format) {
+    public static FlowableTransformer<? super Dataset, Throwable> createWriterDataset(OutputStream out, RDFFormat format) {
         return upstream -> upstream
             .buffer(1)
-            .compose(RDFDataMgrRx.createDatasetBatchWriter(out, format));
+            .compose(RDFDataMgrRx.createBatchWriterDataset(out, format));
     }
 
-    public static <C extends Collection<? extends Dataset>> FlowableTransformer<C, Throwable> createDatasetBatchWriter(OutputStream out, RDFFormat format) {
+    public static <C extends Collection<? extends Dataset>> FlowableTransformer<C, Throwable> createBatchWriterDataset(OutputStream out, RDFFormat format) {
         QuadEncoderDistinguish encoder = new QuadEncoderDistinguish();
         Lang lang = format.getLang();
         boolean isLangTriples = RDFLanguages.isTriples(lang);
@@ -844,24 +854,57 @@ public class RDFDataMgrRx {
                 .onErrorReturn(t -> t);
     }
 
+
     /**
-     *  Does not close the stream
      *
-     *  Deprecated use .createDatasetBatchWriter()
+     * @param <C>
+     * @param out
+     * @param format Only NQuads is currently supported
+     * @return
+     */
+    public static <C extends Collection<Quad>> FlowableTransformer<C, Throwable> createBatchWriterQuads(OutputStream out, RDFFormat format) {
+        if (!Lang.NQUADS.equals(format.getLang())) {
+            throw new IllegalArgumentException("Only nquads based formats are currently supported");
+        }
+
+        return upstream -> upstream
+                .flatMapMaybe(batch -> {
+                    RDFDataMgr.writeQuads(out, batch.iterator());
+                    out.flush();
+                    return Maybe.<Throwable>empty();
+                })
+                .onErrorReturn(t -> t);
+    }
+
+    public static void writeQuads(Flowable<Quad> flowable, OutputStream out, RDFFormat format) throws IOException {
+
+        Flowable<Throwable> tmp = flowable
+            .buffer(128)
+            .compose(RDFDataMgrRx.createBatchWriterQuads(out, format));
+
+        Throwable e = tmp.singleElement().blockingGet();
+        if(e != null) {
+            throw new IOException(e);
+        }
+    }
+
+    /**
+     *  Does not close the output stream
+     *
+     *  Note that you can use .createDatasetBatchWriter()
      *  ....blockingForEach(createDatasetBatchWriter())
      *
      *  This does not break the chain and gives freedom over the choice of forEach type (non-/blocking)
      */
-    @Deprecated
-    public static void writeDatasets(Flowable<Dataset> flowable, OutputStream out, RDFFormat format) throws Exception {
+    public static void writeDatasets(Flowable<Dataset> flowable, OutputStream out, RDFFormat format) throws IOException {
 
       Flowable<Throwable> tmp = flowable
           .buffer(1)
-          .compose(RDFDataMgrRx.createDatasetBatchWriter(out, format));
+          .compose(RDFDataMgrRx.createBatchWriterDataset(out, format));
 
       Throwable e = tmp.singleElement().blockingGet();
       if(e != null) {
-          throw new RuntimeException(e);
+          throw new IOException(e);
       }
 
 if(false) {
