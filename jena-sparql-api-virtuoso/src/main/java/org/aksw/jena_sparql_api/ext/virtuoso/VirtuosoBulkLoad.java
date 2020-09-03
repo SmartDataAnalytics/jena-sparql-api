@@ -105,6 +105,7 @@ public class VirtuosoBulkLoad {
                     RDFDataMgr.write(out, graph, Lang.NTRIPLES);
                 });
 
+            out.flush();
             logger.debug("Done writing to file: " + file.getAbsolutePath());
         }
     }
@@ -126,9 +127,9 @@ public class VirtuosoBulkLoad {
             file.delete();
         }
     }
-    
-    
-	
+
+
+
     public static void graphGroupCreate(Connection conn, String iri, int quiet) throws SQLException {
         try(PreparedStatement stmt = conn.prepareStatement("DB.DBA.RDF_GRAPH_GROUP_CREATE(?, ?)")) {
             stmt.setString(1, iri);
@@ -158,7 +159,7 @@ public class VirtuosoBulkLoad {
             //logger.debug("Done executing ld_dir()");
         }
     }
-    
+
     public static void graphGroupDel(Connection conn, String group, String member) throws SQLException {
         try(PreparedStatement stmt = conn.prepareStatement("DB.DBA.RDF_GRAPH_GROUP_DEL(?, ?)")) {
             stmt.setString(1, group);

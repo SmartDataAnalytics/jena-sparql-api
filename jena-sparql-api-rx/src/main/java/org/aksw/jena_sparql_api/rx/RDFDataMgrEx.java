@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.SequenceInputStream;
 import java.util.Map.Entry;
-import java.util.stream.StreamSupport;
 import java.util.Objects;
 
 import org.apache.commons.io.input.CloseShieldInputStream;
@@ -15,7 +14,6 @@ import org.apache.jena.atlas.web.ContentType;
 import org.apache.jena.atlas.web.TypedInputStream;
 import org.apache.jena.ext.com.google.common.collect.ArrayListMultimap;
 import org.apache.jena.ext.com.google.common.collect.Multimap;
-import org.apache.jena.ext.com.google.common.collect.Sets;
 import org.apache.jena.ext.com.google.common.collect.Streams;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.rdf.model.Model;
@@ -39,6 +37,10 @@ import io.reactivex.rxjava3.core.Flowable;
 public class RDFDataMgrEx {
     private static final Logger logger = LoggerFactory.getLogger(RDFDataMgrEx.class);
 
+    public static TypedInputStream probeLang(InputStream in, Iterable<Lang> candidates) {
+        return probeLang(in, candidates, true);
+    }
+
     /**
      * Probe the content of the input stream against a given set of candidate languages.
      * Wraps the input stream as a BufferedInputStream and can thus also probe on STDIN.
@@ -50,9 +52,11 @@ public class RDFDataMgrEx {
      *
      * @param in
      * @param candidates
+     * @param tryAllCandidates If true do not accept the first successful candidate; instead try all candidates and pick the one that yields most data
+     *
      * @return
      */
-    public static TypedInputStream probeLang(InputStream in, Iterable<Lang> candidates) {
+    public static TypedInputStream probeLang(InputStream in, Iterable<Lang> candidates, boolean tryAllCandidates) {
         BufferedInputStream bin = new BufferedInputStream(in);
 
         Multimap<Long, Lang> successCountToLang = ArrayListMultimap.create();
@@ -92,6 +96,10 @@ public class RDFDataMgrEx {
                 } catch (IOException x) {
                     throw new RuntimeException(x);
                 }
+            }
+
+            if (!tryAllCandidates) {
+                break;
             }
         }
 
