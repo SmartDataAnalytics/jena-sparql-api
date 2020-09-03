@@ -290,12 +290,9 @@ class QuadTableCoreImpl
 
 
 /**
- * A simple QuadTable implementation for use case insert order sensitivity
+ * A simple QuadTable implementation for use cases where insert order sensitivity
  * is more important than performance.
  * This implementation uses nested LinkedHashMaps and therefore does not preserve insert order but it is sensitive to it
- *
- * Beginning and committing a WRITE transaction performs a full copy of the data and
- * should therefore be used sparsely.
  *
  * @author Claus Stadler, Oct 30, 2018
  *
