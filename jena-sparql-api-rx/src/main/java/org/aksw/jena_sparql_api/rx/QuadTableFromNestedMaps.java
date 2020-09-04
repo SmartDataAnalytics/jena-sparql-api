@@ -327,7 +327,7 @@ public class QuadTableFromNestedMaps
 
     @Override
     public void clear() {
-        TxnState txnState = local.get();
+        TxnState txnState = local().get();
         txnState.diff.master.find(Node.ANY, Node.ANY, Node.ANY, Node.ANY)
             .forEach(txnState.diff.deletions::add);
     }
@@ -352,7 +352,7 @@ public class QuadTableFromNestedMaps
             txnState = new TxnState();
             txnState.mode = readWrite;
             txnState.diff = new QuadTableCoreDiff(master.get(), newQuadStore(), newQuadStore());
-            local.set(txnState);
+            local().set(txnState);
         } else {
             ReadWrite current = txnState.mode;
             if (current != readWrite) {

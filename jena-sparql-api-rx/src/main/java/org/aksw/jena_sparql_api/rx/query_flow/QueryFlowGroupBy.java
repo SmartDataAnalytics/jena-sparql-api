@@ -9,13 +9,13 @@ import org.apache.jena.ext.com.google.common.collect.MultimapBuilder;
 import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.core.VarExprList;
-import org.apache.jena.sparql.engine.ExecutionContext;
 import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.engine.binding.BindingFactory;
 import org.apache.jena.sparql.engine.binding.BindingMap;
 import org.apache.jena.sparql.expr.ExprAggregator;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.expr.aggregate.Accumulator;
+import org.apache.jena.sparql.function.FunctionEnv;
 
 import io.reactivex.rxjava3.core.FlowableEmitter;
 import io.reactivex.rxjava3.core.FlowableTransformer;
@@ -35,7 +35,7 @@ public class QueryFlowGroupBy
 
     public QueryFlowGroupBy(
             FlowableEmitter<Binding> emitter,
-            ExecutionContext execCxt,
+            FunctionEnv execCxt,
             VarExprList groupVarExpr,
             List<ExprAggregator> aggregators
             ) {
@@ -137,11 +137,11 @@ public class QueryFlowGroupBy
         // return results.iterator();
     }
 
-    static private Binding genKey(VarExprList vars, Binding binding, ExecutionContext execCxt) {
+    static private Binding genKey(VarExprList vars, Binding binding, FunctionEnv execCxt) {
         return copyProject(vars, binding, execCxt);
     }
 
-    static private Binding copyProject(VarExprList vars, Binding binding, ExecutionContext execCxt) {
+    static private Binding copyProject(VarExprList vars, Binding binding, FunctionEnv execCxt) {
         // No group vars (implicit or explicit) => working on whole result set.
         // Still need a BindingMap to assign to later.
         BindingMap x = BindingFactory.create();
@@ -157,7 +157,7 @@ public class QueryFlowGroupBy
 
 
     public static FlowableTransformer<Binding, Binding> createTransformer(
-            ExecutionContext execCxt,
+            FunctionEnv execCxt,
             VarExprList groupVarExpr,
             List<ExprAggregator> aggregators) {
         return RxUtils.createTransformer(emitter ->

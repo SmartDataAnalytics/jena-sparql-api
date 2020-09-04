@@ -1,6 +1,6 @@
 package org.aksw.jena_sparql_api.rx.query_flow;
 
-import org.apache.jena.sparql.engine.ExecutionContext;
+import org.apache.jena.sparql.function.FunctionEnv;
 
 import io.reactivex.rxjava3.core.FlowableEmitter;
 
@@ -14,9 +14,9 @@ import io.reactivex.rxjava3.core.FlowableEmitter;
 public abstract class QueryFlowBase<T>
     extends FlowBase<T>
 {
-    protected ExecutionContext execCxt;
+    protected FunctionEnv execCxt;
 
-    public QueryFlowBase(FlowableEmitter<T> emitter, ExecutionContext execCxt) {
+    public QueryFlowBase(FlowableEmitter<T> emitter, FunctionEnv execCxt) {
         super(emitter);
         this.execCxt = execCxt;
     }

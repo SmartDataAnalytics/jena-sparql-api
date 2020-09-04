@@ -3,10 +3,10 @@ package org.aksw.jena_sparql_api.rx.query_flow;
 import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.core.VarExprList;
-import org.apache.jena.sparql.engine.ExecutionContext;
 import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.engine.binding.BindingFactory;
 import org.apache.jena.sparql.engine.binding.BindingMap;
+import org.apache.jena.sparql.function.FunctionEnv;
 
 import io.reactivex.rxjava3.annotations.NonNull;
 import io.reactivex.rxjava3.core.FlowableEmitter;
@@ -24,7 +24,7 @@ public class QueryFlowAssign
 {
     protected VarExprList exprs;
 
-    public QueryFlowAssign(FlowableEmitter<Binding> emitter, ExecutionContext execCxt, VarExprList exprs) {
+    public QueryFlowAssign(FlowableEmitter<Binding> emitter, FunctionEnv execCxt, VarExprList exprs) {
         super(emitter, execCxt);
         this.exprs = exprs;
     }
@@ -51,7 +51,7 @@ public class QueryFlowAssign
 
 
     public static FlowableTransformer<Binding, Binding> createTransformer(
-            ExecutionContext execCxt,
+            FunctionEnv execCxt,
             VarExprList exprs) {
         return RxUtils.createTransformer(emitter -> new QueryFlowAssign(emitter, execCxt, exprs));
     }

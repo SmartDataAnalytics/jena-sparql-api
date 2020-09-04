@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api.rx;
 
+import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -11,7 +12,9 @@ import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.riot.RDFLanguages;
 import org.apache.jena.riot.RDFWriterRegistry;
+import org.apache.jena.riot.resultset.ResultSetLang;
 import org.apache.jena.riot.resultset.ResultSetReaderRegistry;
+import org.apache.jena.riot.resultset.ResultSetWriterRegistry;
 
 /**
  * Convenience methods related to Jena's {@link RDFLanguages} class.
@@ -35,9 +38,42 @@ public class RDFLanguagesEx {
         return result;
     }
 
+//    public static <T> void makeLast(Collection<T> collection, Collection<? extends T> items) {
+//        for (T item : items) {
+//            if (collection.contains(item)) {
+//                collection.remove(item);
+//                collection.add(item);
+//            }
+//        }
+//    }
+
     public static List<Lang> getResultSetLangs() {
         List<Lang> result = RDFLanguages.getRegisteredLanguages().stream()
                 .filter(ResultSetReaderRegistry::isRegistered)
+                .collect(Collectors.toList());
+
+
+        // Sort the last resort languages last
+//        List<Lang> lastResort = Arrays.asList(ResultSetLang.SPARQLResultSetText, ResultSetLang.SPARQLResultSetTSV);
+//        makeLast(result, lastResort);
+
+        return result;
+    }
+
+    /**
+     * Return the languages available for writing result sets out.
+     * For some reason at least in Jena 3.15.0 the text format is not
+     * explicitly registered in the writer registry although it can be used - this seems to be a small bug so
+     *
+     *
+     *
+     */
+    public static List<Lang> getResultSetFormats() {
+        List<Lang> result = Stream.concat(
+                    RDFLanguages.getRegisteredLanguages().stream(),
+                    Stream.of(ResultSetLang.SPARQLResultSetText)
+                ).distinct()
+                .filter(ResultSetWriterRegistry::isRegistered)
                 .collect(Collectors.toList());
 
         return result;
@@ -89,6 +125,7 @@ public class RDFLanguagesEx {
         return result;
     }
 
+
     /**
      * Simple helper to check whether any of a lang's labels match a given one.
      * Returns the first match
@@ -102,6 +139,12 @@ public class RDFLanguagesEx {
             .anyMatch(name -> name.equalsIgnoreCase(label));
     }
 
+    public static boolean matchesFileExtension(Lang lang, String label) {
+        return lang.getFileExtensions().stream()
+            .anyMatch(name -> name.equalsIgnoreCase(label));
+    }
+
+
     /**
      * Find the first RDFFormat that matches a given label
      *
@@ -109,7 +152,13 @@ public class RDFLanguagesEx {
      * @return
      */
     public static RDFFormat findRdfFormat(String label) {
-        RDFFormat outFormat = RDFWriterRegistry.registered().stream()
+        RDFFormat outFormat = findRdfFormat(label, RDFWriterRegistry.registered());
+        return outFormat;
+    }
+
+
+    public static RDFFormat findRdfFormat(String label, Collection<RDFFormat> probeFormats) {
+        RDFFormat outFormat = probeFormats.stream()
                 .filter(fmt -> fmt.toString().equalsIgnoreCase(label) || matchesLang(fmt.getLang(), label))
                 .findFirst()
                 .orElseThrow(() -> new RuntimeException("No RDF format found for label " + label));
@@ -117,6 +166,20 @@ public class RDFLanguagesEx {
         return outFormat;
     }
 
+
+    public static Lang findLang(String label) {
+        Lang result = findLang(label, RDFLanguages.getRegisteredLanguages());
+        return result;
+    }
+
+    public static Lang findLang(String label, Collection<Lang> probeLangs) {
+        Lang result = probeLangs.stream()
+                .filter(lang -> matchesLang(lang, label) || matchesFileExtension(lang, label))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("No lang found for label " + label));
+
+        return result;
+    }
 
 
 //	public static RDFFormat findLang(String label) {

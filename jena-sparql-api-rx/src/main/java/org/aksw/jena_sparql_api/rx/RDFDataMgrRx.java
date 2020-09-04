@@ -159,18 +159,27 @@ public class RDFDataMgrRx {
         Flowable<T> result = Flowable.generate(
                 () -> {
                     R in = resourceSupplier.call();
-                    I it = resourceToIterator.apply(in);
-                    return new SimpleEntry<>(in, it);
+                    return new SimpleEntry<R, I>(in, null);
                 },
                 (state, emitter) -> {
                     I it = state.getValue();
 
-                    boolean hasMore = hasNext.apply(it);
-                    if (hasMore) {
-                        T value = next.apply(it);
-                        emitter.onNext(value);
-                    } else {
-                        emitter.onComplete();
+                    try {
+                        if (it == null) {
+                            R in = state.getKey();
+                            it = resourceToIterator.apply(in);
+                            state.setValue(it);
+                        }
+
+                        boolean hasMore = hasNext.apply(it);
+                        if (hasMore) {
+                            T value = next.apply(it);
+                            emitter.onNext(value);
+                        } else {
+                            emitter.onComplete();
+                        }
+                    } catch (Exception e) {
+                        emitter.onError(e);
                     }
                 },
                 state -> {

@@ -3,9 +3,9 @@ package org.aksw.jena_sparql_api.rx.query_flow;
 import java.util.Collection;
 
 import org.apache.jena.sparql.core.Var;
-import org.apache.jena.sparql.engine.ExecutionContext;
 import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.engine.binding.BindingProject;
+import org.apache.jena.sparql.function.FunctionEnv;
 
 import io.reactivex.rxjava3.annotations.NonNull;
 import io.reactivex.rxjava3.core.FlowableEmitter;
@@ -23,7 +23,7 @@ public class QueryFlowProject
 {
     protected Collection<Var> vars;
 
-    public QueryFlowProject(FlowableEmitter<Binding> emitter, ExecutionContext execCxt, Collection<Var> vars) {
+    public QueryFlowProject(FlowableEmitter<Binding> emitter, FunctionEnv execCxt, Collection<Var> vars) {
         super(emitter, execCxt);
         this.vars = vars;
     }
@@ -35,7 +35,7 @@ public class QueryFlowProject
     }
 
     public static FlowableTransformer<Binding, Binding> createTransformer(
-            ExecutionContext execCxt,
+            FunctionEnv execCxt,
             Collection<Var> vars) {
         return RxUtils.createTransformer(emitter -> new QueryFlowProject(emitter, execCxt, vars));
     }
