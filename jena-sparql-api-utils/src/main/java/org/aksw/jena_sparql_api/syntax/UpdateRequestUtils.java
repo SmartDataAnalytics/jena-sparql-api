@@ -9,10 +9,14 @@ import java.util.function.Function;
 import org.aksw.commons.collections.diff.Diff;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.PrefixUtils;
+import org.aksw.jena_sparql_api.utils.SetFromDatasetGraph;
 import org.aksw.jena_sparql_api.utils.SetFromGraph;
 import org.aksw.jena_sparql_api.utils.transform.NodeTransformCollectNodes;
+import org.apache.jena.ext.com.google.common.collect.Iterables;
+import org.apache.jena.ext.com.google.common.collect.Lists;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
+import org.apache.jena.query.Dataset;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.algebra.Op;
@@ -32,43 +36,41 @@ import org.apache.jena.update.Update;
 import org.apache.jena.update.UpdateFactory;
 import org.apache.jena.update.UpdateRequest;
 
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
 
 public class UpdateRequestUtils {
 
 
     public static UpdateRequest optimizePrefixes(UpdateRequest updateRequest) {
-    	optimizePrefixes(updateRequest, null);
-    	return updateRequest;
+        optimizePrefixes(updateRequest, null);
+        return updateRequest;
     }
 
     /**
      * In-place optimize an update request's prefixes to only used prefixes
      * The global prefix map may be null.
-     * 
+     *
      * @param query
      * @param pm
      * @return
      */
     public static UpdateRequest optimizePrefixes(UpdateRequest updateRequest, PrefixMapping globalPm) {
-    	PrefixMapping usedPrefixes = UpdateRequestUtils.usedPrefixes(updateRequest, globalPm);
-    	updateRequest.setPrefixMapping(usedPrefixes);
-    	return updateRequest;
+        PrefixMapping usedPrefixes = UpdateRequestUtils.usedPrefixes(updateRequest, globalPm);
+        updateRequest.setPrefixMapping(usedPrefixes);
+        return updateRequest;
     }
 
-    
+
     public static PrefixMapping usedPrefixes(UpdateRequest updateRequest, PrefixMapping global) {
-    	PrefixMapping local = updateRequest.getPrefixMapping();
-    	PrefixMapping pm = global == null ? local : new PrefixMapping2(global, local);
-    	PrefixMapping result = usedReferencePrefixes(updateRequest, pm);
-        return result;	
+        PrefixMapping local = updateRequest.getPrefixMapping();
+        PrefixMapping pm = global == null ? local : new PrefixMapping2(global, local);
+        PrefixMapping result = usedReferencePrefixes(updateRequest, pm);
+        return result;
     }
-	
+
     /**
      * Determine used prefixes within the given prefix mapping.
      * The update request's own prefixes are ignored.
-     * 
+     *
      * @param query
      * @param pm
      * @return
@@ -82,14 +84,14 @@ public class UpdateRequestUtils {
         PrefixMapping result = PrefixUtils.usedPrefixes(pm, nodes);
         return result;
     }
-    
-    public static UpdateRequest applyNodeTransform(UpdateRequest updateRequest, NodeTransform nodeTransform) {
-		UpdateRequest result = UpdateRequestUtils.copyTransform(updateRequest, update -> {
-			Update r = UpdateUtils.applyNodeTransform(update, nodeTransform);
-			return r;
-		});
 
-		return result;
+    public static UpdateRequest applyNodeTransform(UpdateRequest updateRequest, NodeTransform nodeTransform) {
+        UpdateRequest result = UpdateRequestUtils.copyTransform(updateRequest, update -> {
+            Update r = UpdateUtils.applyNodeTransform(update, nodeTransform);
+            return r;
+        });
+
+        return result;
     }
 
 //    public static PrefixMapping usedPrefixes(UpdateRequest updateRequest) {
@@ -117,23 +119,23 @@ public class UpdateRequestUtils {
 //        return result;
 //    }
 
-	public static UpdateRequest applyTransformElt(UpdateRequest updateRequest, Function<? super Element, ? extends Element> transform) {
-		UpdateRequest result = UpdateRequestUtils.copyTransform(updateRequest, update -> {
-			Update r = UpdateUtils.applyElementTransform(update, transform);
-			return r;
-		});
+    public static UpdateRequest applyTransformElt(UpdateRequest updateRequest, Function<? super Element, ? extends Element> transform) {
+        UpdateRequest result = UpdateRequestUtils.copyTransform(updateRequest, update -> {
+            Update r = UpdateUtils.applyElementTransform(update, transform);
+            return r;
+        });
 
-		return result;
-	}
+        return result;
+    }
 
-	public static UpdateRequest applyOpTransform(UpdateRequest updateRequest, Function<? super Op, ? extends Op> transform) {
-		UpdateRequest result = UpdateRequestUtils.copyTransform(updateRequest, update -> {
-			Update r = UpdateUtils.applyOpTransform(update, transform);
-			return r;
-		});
+    public static UpdateRequest applyOpTransform(UpdateRequest updateRequest, Function<? super Op, ? extends Op> transform) {
+        UpdateRequest result = UpdateRequestUtils.copyTransform(updateRequest, update -> {
+            Update r = UpdateUtils.applyOpTransform(update, transform);
+            return r;
+        });
 
-		return result;
-	}
+        return result;
+    }
 
     /**
      * Append operations from src to tgt
@@ -147,10 +149,10 @@ public class UpdateRequestUtils {
     }
 
     public static UpdateRequest clone(UpdateRequest request) {
-    	UpdateRequest result = copyTransform(request, UpdateUtils::clone);
-    	return result;
+        UpdateRequest result = copyTransform(request, UpdateUtils::clone);
+        return result;
     }
-    
+
 //    	UpdateRequest result = new UpdateRequest();
 //        result.setBaseURI(request.getBaseURI());
 //        result.setPrefixMapping(request.getPrefixMapping());
@@ -170,23 +172,23 @@ public class UpdateRequestUtils {
         result.setResolver(request.getResolver());
 
         for(Update update : request.getOperations()) {
-        	Update newUpdate = updateTransform.apply(update);
-        	if(newUpdate != null) {
+            Update newUpdate = updateTransform.apply(update);
+            if(newUpdate != null) {
             //Update clone = UpdateUtils.clone(update);
-        		result.add(newUpdate);
-        	}
+                result.add(newUpdate);
+            }
         }
         return result;
     }
-    
+
     public static UpdateRequest copyWithIri(UpdateRequest updateRequest, String withIri, boolean substituteDefaultGraph) {
-    	UpdateRequest result = copyTransform(updateRequest, update -> UpdateUtils.copyWithIri(update, withIri, substituteDefaultGraph));
-    	return result;
+        UpdateRequest result = copyTransform(updateRequest, update -> UpdateUtils.copyWithIri(update, withIri, substituteDefaultGraph));
+        return result;
     }
 
     public static UpdateRequest copyWithIri(UpdateRequest updateRequest, Node withIri, boolean substituteDefaultGraph) {
-    	UpdateRequest result = copyTransform(updateRequest, update -> UpdateUtils.copyWithIri(update, withIri, substituteDefaultGraph));
-    	return result;
+        UpdateRequest result = copyTransform(updateRequest, update -> UpdateUtils.copyWithIri(update, withIri, substituteDefaultGraph));
+        return result;
     }
 
     public static void applyWithIri(UpdateRequest updateRequest, String withIri) {
@@ -240,8 +242,17 @@ public class UpdateRequestUtils {
         Set<Triple> _a = added == null ? Collections.<Triple>emptySet() : SetFromGraph.wrap(added.getGraph());
         Set<Triple> _r = removed == null ? Collections.<Triple>emptySet() :  SetFromGraph.wrap(removed.getGraph());
 
-        Iterable<Quad> a = Iterables.transform(_a, FN_QuadFromTriple.fnDefaultGraphNodeGenerated);
-        Iterable<Quad> r = Iterables.transform(_r, FN_QuadFromTriple.fnDefaultGraphNodeGenerated);
+        Iterable<Quad> a = Iterables.transform(_a, t -> new Quad(Quad.defaultGraphIRI, t));
+        Iterable<Quad> r = Iterables.transform(_r, t -> new Quad(Quad.defaultGraphIRI, t));
+
+        UpdateRequest result = createUpdateRequest(a, r);
+        return result;
+    }
+
+    public static UpdateRequest createUpdateRequest(Dataset added, Dataset removed)
+    {
+        Iterable<Quad> a = added == null ? Collections.emptySet() : SetFromDatasetGraph.wrap(added.asDatasetGraph());
+        Iterable<Quad> r = removed == null ? Collections.emptySet() :  SetFromDatasetGraph.wrap(removed.asDatasetGraph());
 
         UpdateRequest result = createUpdateRequest(a, r);
         return result;

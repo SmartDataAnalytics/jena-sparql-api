@@ -9,8 +9,8 @@ import org.apache.jena.sparql.core.Quad;
 
 public class DatasetGraphDiffUtils {
 	public static Diff<Set<Quad>> wrapDatasetGraph(Diff<? extends DatasetGraph> diff) {
-		SetDatasetGraph added = new SetDatasetGraph(diff.getAdded());
-		SetDatasetGraph removed = new SetDatasetGraph(diff.getRemoved());
+		SetFromDatasetGraph added = new SetFromDatasetGraph(diff.getAdded());
+		SetFromDatasetGraph removed = new SetFromDatasetGraph(diff.getRemoved());
 
 		Diff<Set<Quad>> result = Diff.<Set<Quad>>create(added, removed);
 		return result;

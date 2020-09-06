@@ -17,11 +17,11 @@
 	</parent>
 
 	<dependencies>
-<!-- 		<dependency> -->
-<!-- 			<groupId>org.apache.jena</groupId> -->
-<!-- 			<artifactId>jena-dboe-storage</artifactId> -->
-<!-- 			<version>3.15.0</version> -->
-<!-- 		</dependency> -->
+		<dependency>
+			<groupId>org.apache.jena</groupId>
+			<artifactId>jena-dboe-storage</artifactId>
+			<version>3.15.0</version>
+		</dependency>
 
 
 		<dependency>

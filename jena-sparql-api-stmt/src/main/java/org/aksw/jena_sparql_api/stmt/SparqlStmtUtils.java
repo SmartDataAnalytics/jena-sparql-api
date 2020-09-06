@@ -16,6 +16,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -421,7 +422,7 @@ public class SparqlStmtUtils {
      *                Allows for use of insert-order preserving dataset implementations.
      * @return
      */
-    public static Sink<Quad> createSink(RDFFormat format, OutputStream out, PrefixMapping pm, Dataset dataset) {
+    public static Sink<Quad> createSinkQuads(RDFFormat format, OutputStream out, PrefixMapping pm, Supplier<Dataset> datasetSupp) {
         boolean useStreaming = format == null ||
                 Arrays.asList(Lang.NTRIPLES, Lang.NQUADS).contains(format.getLang());
 
@@ -429,8 +430,7 @@ public class SparqlStmtUtils {
         if(useStreaming) {
             result = new SinkQuadOutput(out, null, null);
         } else {
-            // Dataset ds = DatasetFactory.create();
-            // Dataset ds = DatasetFactory.wrap(new Datasetgraphquadsim
+            Dataset dataset = datasetSupp.get();
             SinkQuadsToDataset core = new SinkQuadsToDataset(false, dataset.asDatasetGraph());
 
             return new Sink<Quad>() {
@@ -472,7 +472,6 @@ public class SparqlStmtUtils {
 
         return result;
     }
-
 
     public static void output(
             SPARQLResultEx rr,
