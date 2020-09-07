@@ -7,6 +7,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.aksw.commons.collections.CollectionUtils;
 import org.apache.jena.atlas.web.ContentType;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFFormat;
@@ -69,10 +70,7 @@ public class RDFLanguagesEx {
      *
      */
     public static List<Lang> getResultSetFormats() {
-        List<Lang> result = Stream.concat(
-                    RDFLanguages.getRegisteredLanguages().stream(),
-                    Stream.of(ResultSetLang.SPARQLResultSetText)
-                ).distinct()
+        List<Lang> result = RDFLanguages.getRegisteredLanguages().stream()
                 .filter(ResultSetWriterRegistry::isRegistered)
                 .collect(Collectors.toList());
 

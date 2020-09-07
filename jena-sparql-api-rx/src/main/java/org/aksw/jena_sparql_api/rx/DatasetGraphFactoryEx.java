@@ -17,17 +17,17 @@ import org.apache.jena.sparql.core.TransactionalLock;
 
 public interface DatasetGraphFactoryEx {
     public static DatasetGraph createInsertOrderPreservingDatasetGraph() {
-        return createInsertOrderPreservingDataset(false, false);
+        return createInsertOrderPreservingDatasetGraph(false, false);
     }
 
-    public static DatasetGraph createInsertOrderPreservingDataset(boolean strictQuads, boolean strictTriples) {
-        Supplier<TripleTableCore> tripleTableSupplier = strictTriples
+    public static DatasetGraph createInsertOrderPreservingDatasetGraph(boolean strictOrderOnQuads, boolean strictOrderOnTriples) {
+        Supplier<TripleTableCore> tripleTableSupplier = strictOrderOnTriples
                 ? () -> new TripleTableWithInsertOrderPreservation(new TripleTableCoreFromNestedMapsImpl())
                 : () -> new TripleTableCoreFromNestedMapsImpl();
 
         QuadTableCore quadTable = new QuadTableCoreFromMapOfTripleTable(tripleTableSupplier);
 
-        if (strictQuads) {
+        if (strictOrderOnQuads) {
             quadTable = new QuadTableWithInsertOrderPreservation(quadTable);
         }
 

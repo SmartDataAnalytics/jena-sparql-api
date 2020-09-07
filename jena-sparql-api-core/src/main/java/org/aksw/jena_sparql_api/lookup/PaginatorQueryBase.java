@@ -1,6 +1,6 @@
 package org.aksw.jena_sparql_api.lookup;
 
-import java.util.function.Supplier;
+import java.util.concurrent.Callable;
 
 import org.aksw.jena_sparql_api.rx.SparqlRx;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
@@ -19,7 +19,7 @@ public abstract class PaginatorQueryBase<T>
     protected SparqlQueryConnection qef;
     protected Query query;
 
-    protected abstract Flowable<T> obtainResultIterator(Supplier<QueryExecution> qe);
+    protected abstract Flowable<T> obtainResultIterator(Callable<QueryExecution> qe);
 
 
     public PaginatorQueryBase(SparqlQueryConnection qef, Query query) {

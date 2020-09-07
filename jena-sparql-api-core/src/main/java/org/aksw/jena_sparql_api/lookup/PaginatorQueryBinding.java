@@ -1,6 +1,6 @@
 package org.aksw.jena_sparql_api.lookup;
 
-import java.util.function.Supplier;
+import java.util.concurrent.Callable;
 
 import org.aksw.jena_sparql_api.rx.SparqlRx;
 import org.apache.jena.query.Query;
@@ -19,7 +19,7 @@ public class PaginatorQueryBinding
     }
 
     @Override
-    protected Flowable<Binding> obtainResultIterator(Supplier<QueryExecution> qeSupplier) {
+    protected Flowable<Binding> obtainResultIterator(Callable<QueryExecution> qeSupplier) {
         Flowable<Binding> result = SparqlRx.execSelectRaw(qeSupplier);
 
 //        ResultSet rs = qe.execSelect();

@@ -8,8 +8,12 @@ import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
@@ -64,6 +68,7 @@ import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.core.Prologue;
 import org.apache.jena.sparql.core.Quad;
+import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.ExprTransform;
 import org.apache.jena.sparql.graph.NodeTransform;
 import org.apache.jena.sparql.lang.arq.ParseException;
@@ -92,6 +97,32 @@ public class SparqlStmtUtils {
             .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
 
         return result;
+    }
+
+    /**
+     * For the given collection of SparqlStmts yield the set of used projection vars
+     * in select queries
+     *
+     * This can be used to compose a union result set from multiple separate queries
+     *
+     * @param stmts
+     * @return
+     */
+    public static List<Var> getUnionProjectVars(Collection<? extends SparqlStmt> stmts) {
+        List<Query> selectQueries = stmts.stream()
+                .filter(SparqlStmt::isQuery)
+                .map(SparqlStmt::getQuery)
+                .filter(Query::isSelectType)
+                .collect(Collectors.toList());
+
+        // Create the union of variables used in select queries
+        Set<Var> result = new LinkedHashSet<>();
+        for(Query query : selectQueries) {
+            List<Var> varContrib = query.getProjectVars();
+            result.addAll(varContrib);
+        }
+
+        return new ArrayList<>(result);
     }
 
     /**
