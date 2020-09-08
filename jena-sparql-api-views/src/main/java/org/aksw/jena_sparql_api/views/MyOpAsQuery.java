@@ -49,6 +49,7 @@ import org.apache.jena.sparql.algebra.op.OpDistinct;
 import org.apache.jena.sparql.algebra.op.OpExt;
 import org.apache.jena.sparql.algebra.op.OpExtend;
 import org.apache.jena.sparql.algebra.op.OpFilter;
+import org.apache.jena.sparql.algebra.op.OpFind;
 import org.apache.jena.sparql.algebra.op.OpGraph;
 import org.apache.jena.sparql.algebra.op.OpGroup;
 import org.apache.jena.sparql.algebra.op.OpJoin;
@@ -691,9 +692,11 @@ public class MyOpAsQuery
         @Override
         public void visit(OpQuadBlock op) {
             throw new RuntimeException("Not implemented");
-            //op.
-            // TODO Auto-generated method stub
+        }
 
+        @Override
+        public void visit(OpFind opFind) {
+            throw new RuntimeException("Not implemented");
         }
     }
 
