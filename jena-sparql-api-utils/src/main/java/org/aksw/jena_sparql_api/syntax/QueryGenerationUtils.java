@@ -183,11 +183,11 @@ public class QueryGenerationUtils {
      *
      * @param query
      * @param partitionVars
-     * @param itemLimit
      * @param rowLimit
+     * @param itemLimit
      * @return
      */
-    public static Entry<Var, Query> createQueryCountPartition(Query query, Collection<Var> partitionVars, Long rowLimit, Long itemLimit) {
+    public static Entry<Var, Query> createQueryCountPartition(Query query, Collection<Var> partitionVars, Long itemLimit, Long rowLimit) {
         if(partitionVars != null && partitionVars.isEmpty()) {
             throw new IllegalArgumentException("Empty collection of variables for which to count bindings not permitted.");
         }
@@ -231,12 +231,12 @@ public class QueryGenerationUtils {
 
         }
 
-        Entry<Var, Query> result = createQueryCountCore(clone, rowLimit, itemLimit);
+        Entry<Var, Query> result = createQueryCountCore(clone, itemLimit, rowLimit);
         return result;
     }
 
-    public static Entry<Var, Query> createQueryCount(Query query, Long rowLimit, Long itemLimit) {
-        Entry<Var, Query> result = createQueryCountPartition(query, null, rowLimit, itemLimit);
+    public static Entry<Var, Query> createQueryCount(Query query, Long itemLimit, Long rowLimit) {
+        Entry<Var, Query> result = createQueryCountPartition(query, null, itemLimit, rowLimit);
         return result;
     }
 
