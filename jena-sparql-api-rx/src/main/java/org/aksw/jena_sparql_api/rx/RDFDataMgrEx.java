@@ -23,6 +23,7 @@ import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.riot.RDFLanguages;
+import org.apache.jena.riot.RDFParser;
 import org.apache.jena.riot.resultset.ResultSetReaderRegistry;
 import org.apache.jena.shared.PrefixMapping;
 import org.slf4j.Logger;
@@ -42,6 +43,27 @@ public class RDFDataMgrEx {
 
     public static boolean isStdIn(String filenameOrIri) {
         return "-".equals(filenameOrIri);
+    }
+
+    /**
+     * Map a TypedInputStream's media type to a Lang
+     *
+     * @param tin
+     * @return
+     */
+    public static Lang getLang(TypedInputStream tin) {
+        ContentType ct = tin.getMediaType();
+        Lang result = RDFLanguages.contentTypeToLang(ct);
+        return result;
+    }
+
+    public static void read(Model model, TypedInputStream tin) {
+        Lang lang = getLang(tin);
+        RDFParser.create()
+            .forceLang(lang)
+            .source(tin.getInputStream())
+            .base(tin.getBaseURI())
+            .parse(model);
     }
 
     /**

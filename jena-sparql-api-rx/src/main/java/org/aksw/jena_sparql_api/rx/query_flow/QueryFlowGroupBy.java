@@ -17,6 +17,7 @@ import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.expr.aggregate.Accumulator;
 import org.apache.jena.sparql.function.FunctionEnv;
 
+import io.reactivex.rxjava3.core.BackpressureStrategy;
 import io.reactivex.rxjava3.core.FlowableEmitter;
 import io.reactivex.rxjava3.core.FlowableTransformer;
 
@@ -161,7 +162,7 @@ public class QueryFlowGroupBy
             VarExprList groupVarExpr,
             List<ExprAggregator> aggregators) {
         return RxUtils.createTransformer(emitter ->
-            new QueryFlowGroupBy(emitter, execCxt, groupVarExpr, aggregators));
+            new QueryFlowGroupBy(emitter, execCxt, groupVarExpr, aggregators), BackpressureStrategy.BUFFER);
     }
 
 

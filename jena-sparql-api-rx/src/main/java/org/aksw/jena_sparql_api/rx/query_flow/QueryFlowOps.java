@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api.rx.query_flow;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -27,6 +28,7 @@ import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.engine.binding.BindingComparator;
 import org.apache.jena.sparql.engine.binding.BindingFactory;
 import org.apache.jena.sparql.engine.binding.BindingMap;
+import org.apache.jena.sparql.engine.binding.BindingProject;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprAggregator;
 import org.apache.jena.sparql.expr.ExprLib;
@@ -276,6 +278,33 @@ public class QueryFlowOps
         return createFilter(expr, execCxt);
     }
 
+    public static FlowableTransformer<Binding, Binding> createAssign(
+            VarExprList exprs,
+            FunctionEnv execCxt) {
+        return upstream -> upstream.map(binding -> QueryFlowAssign.assign(binding, exprs, execCxt));
+    }
+
+
+    public static FlowableTransformer<Binding, Binding> createProject(
+            Collection<Var> vars,
+            FunctionEnv execCxt) {
+        return upstream -> upstream.map(binding -> new BindingProject(vars, binding));
+    }
+
+    public static <T> FlowableTransformer<T, T> createSlice(Long offset, Long limit) {
+        return upstream -> {
+            if (offset != null && offset != Query.NOLIMIT) {
+                upstream = upstream.skip(offset);
+            }
+
+            if (limit != null && limit != Query.NOLIMIT) {
+                upstream = upstream.take(limit);
+            }
+
+            return upstream;
+        };
+    }
+
     /**
      * Create a transformer that implements a group by operation based on the query
      * thereby ignoring its query pattern. Instead of executing a query pattern,
@@ -331,7 +360,7 @@ public class QueryFlowOps
             }
 
             if (finalVel != null) {
-                r = r.compose(QueryFlowAssign.createTransformer(execCxt, finalVel));
+                r = r.compose(createAssign(finalVel, execCxt));
             }
 
             if (!newScs.isEmpty()) {
@@ -339,8 +368,10 @@ public class QueryFlowOps
             }
 
             if (finalVel != null) {
-                r = r.compose(QueryFlowProject.createTransformer(execCxt, finalVel.getVars()));
+                r = r.compose(createProject(finalVel.getVars(), execCxt));
             }
+
+            r = r.compose(createSlice(query.getOffset(), query.getLimit()));
 
             return r;
         };

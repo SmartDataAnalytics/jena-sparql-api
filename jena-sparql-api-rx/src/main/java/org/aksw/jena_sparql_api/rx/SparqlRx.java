@@ -24,6 +24,7 @@ import org.aksw.jena_sparql_api.syntax.QueryGenerationUtils;
 import org.aksw.jena_sparql_api.utils.IteratorResultSetBinding;
 import org.aksw.jena_sparql_api.utils.QuadPatternUtils;
 import org.aksw.jena_sparql_api.utils.VarUtils;
+import org.apache.jena.atlas.json.JsonObject;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
@@ -52,8 +53,6 @@ import org.slf4j.LoggerFactory;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Range;
-import com.google.gson.Gson;
-import com.google.gson.JsonElement;
 
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.FlowableEmitter;
@@ -272,19 +271,19 @@ public class SparqlRx {
     }
 
 
-    public static Flowable<JsonElement> execJsonItems(SparqlQueryConnection conn, Query query) {
+    public static Flowable<JsonObject> execJsonItems(SparqlQueryConnection conn, Query query) {
         return execJsonItems(() -> conn.query(query));
     }
 
-    public static Flowable<JsonElement> execJsonItems(Callable<QueryExecution> qes) {
-        Gson gson = new Gson();
-        Flowable<JsonElement> result = RDFDataMgrRx.createFlowableFromResource(
+    public static Flowable<JsonObject> execJsonItems(Callable<QueryExecution> qes) {
+        // Gson gson = new Gson();
+        Flowable<JsonObject> result = RDFDataMgrRx.createFlowableFromResource(
                 qes::call,
                 QueryExecution::execJsonItems,
                 Iterator::hasNext,
                 Iterator::next,
                 QueryExecution::close
-            ).map(obj -> gson.fromJson(Objects.toString(obj), JsonElement.class));
+            ); //.map(obj -> gson.fromJson(Objects.toString(obj), JsonElement.class));
         return result;
     }
 //    public static Flowable<Triple> execConstructTriples(Callable<QueryExecution> qes) {

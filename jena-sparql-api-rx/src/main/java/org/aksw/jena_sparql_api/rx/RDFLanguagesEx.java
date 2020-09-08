@@ -48,6 +48,23 @@ public class RDFLanguagesEx {
 //        }
 //    }
 
+    /**
+     * Util function that filters out result set langs that are not suitable for probing
+     * For example CSV accepts nearly any kind of input
+     *
+     * @return
+     */
+    public static List<Lang> getResultSetProbeLangs() {
+        List<Lang> result = RDFLanguagesEx.getResultSetLangs();
+        result.remove(ResultSetLang.SPARQLResultSetCSV);
+        return result;
+    }
+
+    /**
+     * Get all registered result set languages
+     *
+     * @return
+     */
     public static List<Lang> getResultSetLangs() {
         List<Lang> result = RDFLanguages.getRegisteredLanguages().stream()
                 .filter(ResultSetReaderRegistry::isRegistered)
