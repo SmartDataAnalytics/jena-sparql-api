@@ -7,6 +7,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.nio.file.Path;
+import java.util.AbstractMap.SimpleEntry;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -29,7 +30,9 @@ import org.aksw.jena_sparql_api.utils.DatasetUtils;
 import org.aksw.jena_sparql_api.utils.QuadPatternUtils;
 import org.aksw.jena_sparql_api.utils.QuadUtils;
 import org.apache.jena.atlas.iterator.IteratorResourceClosing;
+import org.apache.jena.atlas.web.ContentType;
 import org.apache.jena.atlas.web.TypedInputStream;
+import org.apache.jena.ext.com.google.common.base.Predicate;
 import org.apache.jena.ext.com.google.common.collect.Sets;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.GraphUtil;
@@ -38,6 +41,7 @@ import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
+import org.apache.jena.query.ResultSet;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.riot.Lang;
@@ -45,6 +49,7 @@ import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.riot.RDFLanguages;
 import org.apache.jena.riot.RDFParser;
+import org.apache.jena.riot.ResultSetMgr;
 import org.apache.jena.riot.RiotException;
 import org.apache.jena.riot.RiotParseException;
 import org.apache.jena.riot.lang.PipedQuadsStream;
@@ -57,6 +62,7 @@ import org.apache.jena.riot.system.RiotLib;
 import org.apache.jena.riot.system.StreamRDF;
 import org.apache.jena.riot.system.SyntaxLabels;
 import org.apache.jena.sparql.core.Quad;
+import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.util.Context;
 
 // import com.github.davidmoten.rx2.flowable.Transformers;
@@ -75,6 +81,115 @@ import io.reactivex.rxjava3.core.Maybe;
 public class RDFDataMgrRx {
     public static Flowable<Triple> createFlowableTriples(String filenameOrURI, Lang lang, String baseIRI) {
         return createFlowableTriples(() -> RDFDataMgr.open(filenameOrURI), lang, baseIRI);
+    }
+
+
+    /**
+     * Create a Flowable for a SPARQL result set backed by a file
+     *
+     * @param filenameOrURI
+     * @param lang
+     * @return
+     */
+    public static Flowable<Binding> createFlowableBindings(String filenameOrURI, Lang lang) {
+        return createFlowableBindings(() -> RDFDataMgr.open(filenameOrURI), lang);
+    }
+
+    /**
+     * Create a Flowable for a SPARQL result set backed by an supplier of input streams
+     *
+     * @param filenameOrURI
+     * @param lang
+     * @return
+     */
+    public static Flowable<Binding> createFlowableBindings(Callable<InputStream> inSupp, Lang lang) {
+        return createFlowableBindings(() -> {
+            ContentType ct = lang.getContentType();
+            InputStream in = inSupp.call();
+            return new TypedInputStream(in, ct);
+        });
+    }
+
+
+    /**
+     * Create a Flowable for a SPARQL result set backed by a supplier of TypedInputStream
+     *
+     * @param filenameOrURI
+     * @param lang
+     * @return
+     */
+    public static Flowable<Binding> createFlowableBindings(Callable<TypedInputStream> inSupp) {
+        Flowable<Binding> result = createFlowableFromResource(
+                inSupp,
+                in -> {
+                    Lang lang = RDFLanguages.contentTypeToLang(in.getContentType());
+                    ResultSet rs = ResultSetMgr.read(in.getInputStream(), lang);
+                    return rs;
+                },
+                ResultSet::hasNext,
+                ResultSet::nextBinding,
+                in -> { try { in.close(); } catch (Exception e) { throw new RuntimeException(e); } }
+            );
+
+        return result;
+    }
+
+
+    /**
+     * Generic helper to create a Flowable by mapping some resource such as in InputStream or
+     * a QueryExecution to an iterable such as an ResultSet
+     *
+     * @param <R>
+     * @param <I>
+     * @param <T>
+     * @param resourceSupplier
+     * @param resourceToIterator
+     * @param hasNext
+     * @param next
+     * @param closeResource
+     * @return
+     */
+    public static <R, I, T> Flowable<T> createFlowableFromResource(
+            Callable<R> resourceSupplier,
+            Function<? super R, I> resourceToIterator,
+            Predicate<? super I> hasNext,
+            Function<? super I, T> next,
+            Consumer<? super R> closeResource) {
+
+        Flowable<T> result = Flowable.generate(
+                () -> {
+                    R in = resourceSupplier.call();
+                    return new SimpleEntry<R, I>(in, null);
+                },
+                (state, emitter) -> {
+                    I it = state.getValue();
+
+                    try {
+                        if (it == null) {
+                            R in = state.getKey();
+                            it = resourceToIterator.apply(in);
+                            state.setValue(it);
+                        }
+
+                        boolean hasMore = hasNext.apply(it);
+                        if (hasMore) {
+                            T value = next.apply(it);
+                            emitter.onNext(value);
+                        } else {
+                            emitter.onComplete();
+                        }
+                    } catch (Exception e) {
+                        emitter.onError(e);
+                    }
+                },
+                state -> {
+                    R in = state.getKey();
+                    if (in != null) {
+                        closeResource.accept(in);
+                    }
+                });
+
+        return result;
     }
 
     public static Flowable<Triple> createFlowableTriples(Callable<InputStream> inSupplier, Lang lang, String baseIRI) {
@@ -439,6 +554,8 @@ public class RDFDataMgrRx {
 
 
     /**
+     * Helper class to track resources involved in RDF parsing
+     *
      *
      * @author raven
      *

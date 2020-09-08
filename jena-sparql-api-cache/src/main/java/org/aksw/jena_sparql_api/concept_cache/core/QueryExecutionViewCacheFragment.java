@@ -5,8 +5,8 @@ import java.util.Set;
 
 import org.aksw.jena_sparql_api.algebra.utils.ProjectedQuadFilterPattern;
 import org.aksw.jena_sparql_api.concept_cache.dirty.SparqlViewMatcherQfpc;
-import org.aksw.jena_sparql_api.core.QueryExecutionAdapter;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
+import org.aksw.jena_sparql_api.utils.query_execution.QueryExecutionAdapter;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.ResultSet;

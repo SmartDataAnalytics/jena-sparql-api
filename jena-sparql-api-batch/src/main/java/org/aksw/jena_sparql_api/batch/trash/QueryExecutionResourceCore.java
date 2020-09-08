@@ -6,7 +6,7 @@ import java.util.List;
 
 import org.aksw.jena_sparql_api.batch.step.F_QuadToBinding;
 import org.aksw.jena_sparql_api.batch.step.F_TripleToQuad;
-import org.aksw.jena_sparql_api.core.QueryExecutionAdapter;
+import org.aksw.jena_sparql_api.utils.query_execution.QueryExecutionAdapter;
 import org.apache.jena.atlas.web.TypedInputStream;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.ResultSet;

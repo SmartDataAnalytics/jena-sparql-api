@@ -3,6 +3,7 @@ package org.aksw.jena_sparql_api.rx;
 import java.util.Collections;
 import java.util.Iterator;
 
+import org.aksw.jena_sparql_api.dboe.QuadTableFromNestedMaps;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.ReadWrite;

@@ -9,6 +9,7 @@ import java.io.SequenceInputStream;
 import java.util.Map.Entry;
 import java.util.Objects;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.CloseShieldInputStream;
 import org.apache.jena.atlas.web.ContentType;
 import org.apache.jena.atlas.web.TypedInputStream;
@@ -22,6 +23,8 @@ import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.riot.RDFLanguages;
+import org.apache.jena.riot.RDFParser;
+import org.apache.jena.riot.resultset.ResultSetReaderRegistry;
 import org.apache.jena.shared.PrefixMapping;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,13 +32,75 @@ import org.slf4j.LoggerFactory;
 import io.reactivex.rxjava3.core.Flowable;
 
 /**
- * Extensions to load models from .sparql files
+ * Extensions to help open an InputStream of unknown content using probing against languages registered to the Jena riot system.
+ * This includes languages based on triples, quads and result sets. Support for further types may be added in the future.
  *
  * @author Claus Stadler, Dec 18, 2018
  *
  */
 public class RDFDataMgrEx {
     private static final Logger logger = LoggerFactory.getLogger(RDFDataMgrEx.class);
+
+    public static boolean isStdIn(String filenameOrIri) {
+        return "-".equals(filenameOrIri);
+    }
+
+    /**
+     * Map a TypedInputStream's media type to a Lang
+     *
+     * @param tin
+     * @return
+     */
+    public static Lang getLang(TypedInputStream tin) {
+        ContentType ct = tin.getMediaType();
+        Lang result = RDFLanguages.contentTypeToLang(ct);
+        return result;
+    }
+
+    public static void read(Model model, TypedInputStream tin) {
+        Lang lang = getLang(tin);
+        RDFParser.create()
+            .forceLang(lang)
+            .source(tin.getInputStream())
+            .base(tin.getBaseURI())
+            .parse(model);
+    }
+
+    /**
+     * Return a TypedInputStream whose underlying InputStream supports marks
+     * If the original one already supports it it is returned as is.
+     *
+     * @param tin
+     * @return
+     */
+    public static TypedInputStream forceBuffered(TypedInputStream tin) {
+        TypedInputStream result = tin.markSupported()
+                ? tin
+                : wrapInputStream(new BufferedInputStream(tin.getInputStream()), tin);
+
+        return result;
+    }
+
+    public static InputStream forceBuffered(InputStream in) {
+        InputStream result = in.markSupported()
+                ? in
+                : new BufferedInputStream(in);
+
+        return result;
+    }
+
+    /**
+     * Wrap an InputStream as a TypedInputStream based on the attributes of the latter
+     *
+     * @param in
+     * @param proto
+     * @return
+     */
+    public static TypedInputStream wrapInputStream(InputStream in, TypedInputStream proto) {
+        TypedInputStream result = new TypedInputStream(in, proto.getMediaType(), proto.getBaseURI());
+
+        return result;
+    }
 
     public static TypedInputStream probeLang(InputStream in, Iterable<Lang> candidates) {
         return probeLang(in, candidates, true);
@@ -57,24 +122,30 @@ public class RDFDataMgrEx {
      * @return
      */
     public static TypedInputStream probeLang(InputStream in, Iterable<Lang> candidates, boolean tryAllCandidates) {
-        BufferedInputStream bin = new BufferedInputStream(in);
+        if (!in.markSupported()) {
+            throw new IllegalArgumentException("Language probing requires an input stream with mark support");
+        }
+
+//        BufferedInputStream bin = new BufferedInputStream(in);
 
         Multimap<Long, Lang> successCountToLang = ArrayListMultimap.create();
         for(Lang cand : candidates) {
             @SuppressWarnings("resource")
-            CloseShieldInputStream wbin = new CloseShieldInputStream(bin);
+            CloseShieldInputStream wbin = new CloseShieldInputStream(in);
 
             // Here we rely on the VM/JDK not allocating the buffer right away but only
             // using this as the max buffer size
             // 1GB should be safe enough even for cases with huge literals such as for
             // large spatial geometries (I encountered some around ~50MB)
-            bin.mark(1 * 1024 * 1024 * 1024);
+            in.mark(1 * 1024 * 1024 * 1024);
             //bin.mark(Integer.MAX_VALUE >> 1);
             Flowable<?> flow;
-            if(RDFLanguages.isQuads(cand)) {
+            if (RDFLanguages.isQuads(cand)) {
                 flow = RDFDataMgrRx.createFlowableQuads(() -> wbin, cand, null);
-            } else if(RDFLanguages.isTriples(cand)) {
+            } else if (RDFLanguages.isTriples(cand)) {
                 flow = RDFDataMgrRx.createFlowableTriples(() -> wbin, cand, null);
+            } else if (ResultSetReaderRegistry.isRegistered(cand)) {
+                flow = RDFDataMgrRx.createFlowableBindings(() -> wbin, cand);
             } else {
                 logger.warn("Skipping probing of unknown Lang: " + cand);
                 continue;
@@ -89,10 +160,11 @@ public class RDFDataMgrEx {
 
                 logger.debug("Number of items parsed by content type probing for " + cand + ": " + count);
             } catch(Exception e) {
+//                logger.debug("Failed to probe with format " + cand, e);
                 continue;
             } finally {
                 try {
-                    bin.reset();
+                    in.reset();
                 } catch (IOException x) {
                     throw new RuntimeException(x);
                 }
@@ -109,11 +181,24 @@ public class RDFDataMgrEx {
             .orElse(null);
 
         ContentType bestContentType = bestCand == null ? null : bestCand.getValue().getContentType();
-        TypedInputStream result = new TypedInputStream(bin, bestContentType);
+        TypedInputStream result = new TypedInputStream(in, bestContentType);
 
         return result;
     }
 
+
+    public static void peek(InputStream in) {
+        in.mark(1 * 1024 * 1024 * 1024);
+
+        try {
+            System.err.println("GOT:");
+            System.err.println(IOUtils.toString(in));
+            System.err.println("DONE");
+            in.reset();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     /**
      * Attempts to open the given src and probe for the content type
@@ -126,13 +211,13 @@ public class RDFDataMgrEx {
     public static TypedInputStream open(String src, Iterable<Lang> probeLangs) {
         Objects.requireNonNull(src);
 
-        boolean useStdIn = "-".equals(src);
+        boolean useStdIn = isStdIn(src);
 
         TypedInputStream result;
         if(useStdIn) {
             // Use the close shield to prevent closing stdin on .close()
             // TODO Investigate if this is redundant; RDFDataMgr might already do it
-            result = probeLang(new CloseShieldInputStream(System.in), probeLangs);
+            result = probeLang(new BufferedInputStream(System.in), probeLangs);
         } else {
             result = Objects.requireNonNull(RDFDataMgr.open(src), "Could not create input stream from " + src);
 
@@ -152,7 +237,7 @@ public class RDFDataMgrEx {
             }
 
             if(mediaType == null) {
-                result = probeLang(result.getInputStream(), probeLangs);
+                result = probeLang(forceBuffered(result.getInputStream()), probeLangs);
             }
 
         }

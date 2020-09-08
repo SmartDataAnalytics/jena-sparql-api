@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.core;
+package org.aksw.jena_sparql_api.utils.query_execution;
 
 import java.util.Iterator;
 import java.util.concurrent.TimeUnit;
@@ -27,26 +27,26 @@ import org.apache.jena.sparql.util.Context;
 public class QueryExecutionAdapter
     implements QueryExecution
 {
-    protected QueryExecutionTimeoutHelper timeoutHelper = new QueryExecutionTimeoutHelper(this);
+//    protected QueryExecutionTimeoutHelper timeoutHelper = new QueryExecutionTimeoutHelper(this);
 
-	@Override
-	public void setInitialBinding(Binding binding) {
-        throw new RuntimeException("Not Implemented.");
-	}
+    @Override
+    public void setInitialBinding(Binding binding) {
+        throw new UnsupportedOperationException("Not Implemented.");
+    }
 
     @Override
     public void setInitialBinding(QuerySolution binding) {
-        throw new RuntimeException("Not Implemented.");
+        throw new UnsupportedOperationException("Not Implemented.");
     }
 
     @Override
     public Dataset getDataset() {
-        throw new RuntimeException("Not Implemented.");
+        return null;
     }
 
     @Override
     public Context getContext() {
-        throw new RuntimeException("Not Implemented.");
+        return null;
     }
 
     /**
@@ -55,37 +55,37 @@ public class QueryExecutionAdapter
      */
     @Override
     public Query getQuery() {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        return null;
     }
 
     @Override
     public ResultSet execSelect() {
-        throw new RuntimeException("Not Implemented.");
+        throw new UnsupportedOperationException("Not Implemented.");
     }
 
     @Override
     public Model execConstruct() {
-        throw new RuntimeException("Not Implemented.");
+        throw new UnsupportedOperationException("Not Implemented.");
     }
 
     @Override
     public Model execConstruct(Model model) {
-        throw new RuntimeException("Not Implemented.");
+        throw new UnsupportedOperationException("Not Implemented.");
     }
 
     @Override
     public Model execDescribe() {
-        throw new RuntimeException("Not Implemented.");
+        throw new UnsupportedOperationException("Not Implemented.");
     }
 
     @Override
     public Model execDescribe(Model model) {
-        throw new RuntimeException("Not Implemented.");
+        throw new UnsupportedOperationException("Not Implemented.");
     }
 
     @Override
     public boolean execAsk() {
-        throw new RuntimeException("Not Implemented.");
+        throw new UnsupportedOperationException("Not Implemented.");
     }
 
     @Override
@@ -98,71 +98,76 @@ public class QueryExecutionAdapter
 
     @Override
     public void setTimeout(long timeout, TimeUnit timeoutUnits) {
-        timeoutHelper.setTimeout(timeout, timeoutUnits);
+        throw new UnsupportedOperationException("Not Implemented.");
+//        timeoutHelper.setTimeout(timeout, timeoutUnits);
     }
 
     @Override
     public void setTimeout(long timeout) {
-        timeoutHelper.setTimeout(timeout);
+        throw new UnsupportedOperationException("Not Implemented.");
+//        timeoutHelper.setTimeout(timeout);
     }
 
     @Override
     public void setTimeout(long timeout1, TimeUnit timeUnit1, long timeout2, TimeUnit timeUnit2) {
-        timeoutHelper.setTimeout(timeout1, timeUnit1, timeout2, timeUnit2);
+        throw new UnsupportedOperationException("Not Implemented.");
+
+//        timeoutHelper.setTimeout(timeout1, timeUnit1, timeout2, timeUnit2);
     }
 
     @Override
     public void setTimeout(long timeout1, long timeout2) {
-        timeoutHelper.setTimeout(timeout1, timeout2);
+        throw new UnsupportedOperationException("Not Implemented.");
+//        timeoutHelper.setTimeout(timeout1, timeout2);
     }
 
     @Override
     public Iterator<Triple> execConstructTriples() {
-        throw new RuntimeException("Not Implemented.");
+        throw new UnsupportedOperationException("Not Implemented.");
     }
 
     @Override
     public Iterator<Triple> execDescribeTriples() {
-        throw new RuntimeException("Not Implemented.");
+        throw new UnsupportedOperationException("Not Implemented.");
     }
 
     @Override
     public long getTimeout1() {
-        throw new RuntimeException("Not Implemented.");
+        throw new UnsupportedOperationException("Not Implemented.");
     }
 
     @Override
     public long getTimeout2() {
-        throw new RuntimeException("Not Implemented.");
+        throw new UnsupportedOperationException("Not Implemented.");
     }
 
     @Override
     public boolean isClosed() {
-        throw new RuntimeException("Not Implemented.");
+        throw new UnsupportedOperationException("Not Implemented.");
     }
 
     @Override
     public Dataset execConstructDataset() {
-        throw new RuntimeException("Not Implemented.");
+        throw new UnsupportedOperationException("Not Implemented.");
     }
 
     @Override
     public Dataset execConstructDataset(Dataset arg0) {
-        throw new RuntimeException("Not Implemented.");
+        throw new UnsupportedOperationException("Not Implemented.");
     }
 
     @Override
     public Iterator<Quad> execConstructQuads() {
-        throw new RuntimeException("Not Implemented.");
+        throw new UnsupportedOperationException("Not Implemented.");
     }
 
-	@Override
-	public JsonArray execJson() {
-        throw new RuntimeException("Not Implemented.");
-	}
+    @Override
+    public JsonArray execJson() {
+        throw new UnsupportedOperationException("Not Implemented.");
+    }
 
-	@Override
-	public Iterator<JsonObject> execJsonItems() {
-        throw new RuntimeException("Not Implemented.");
-	}
+    @Override
+    public Iterator<JsonObject> execJsonItems() {
+        throw new UnsupportedOperationException("Not Implemented.");
+    }
 }

@@ -9,10 +9,11 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 import org.aksw.commons.collections.SetUtils;
 import org.aksw.jena_sparql_api.concepts.Concept;
@@ -23,6 +24,7 @@ import org.aksw.jena_sparql_api.syntax.QueryGenerationUtils;
 import org.aksw.jena_sparql_api.utils.IteratorResultSetBinding;
 import org.aksw.jena_sparql_api.utils.QuadPatternUtils;
 import org.aksw.jena_sparql_api.utils.VarUtils;
+import org.apache.jena.atlas.json.JsonObject;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
@@ -37,6 +39,7 @@ import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.apache.jena.sparql.algebra.Table;
 import org.apache.jena.sparql.algebra.table.TableData;
+import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.engine.binding.BindingHashMap;
@@ -47,12 +50,10 @@ import org.apache.jena.sparql.syntax.Template;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.base.Objects;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Range;
 
-import io.reactivex.rxjava3.core.BackpressureStrategy;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.FlowableEmitter;
 import io.reactivex.rxjava3.core.Single;
@@ -79,10 +80,14 @@ public class SparqlRx {
      * @param queryConnSupp
      * @return
      */
-    public static Flowable<Binding> execSelectRaw(Query query, Supplier<? extends SparqlQueryConnection> queryConnSupp) {
+    public static Flowable<Binding> execSelectRaw(Callable<? extends SparqlQueryConnection> queryConnSupp, Query query) {
         // FIXME Close the connection; tie it to the query execution
         // Queryexecution qe = new QueryExecution();
-        return SparqlRx.execSelectRaw(() -> queryConnSupp.get().query(query));
+        return SparqlRx.execSelectRaw(() -> queryConnSupp.call().query(query));
+    }
+
+    public static Flowable<Binding> execSelectRaw(SparqlQueryConnection queryConn, Query query) {
+        return SparqlRx.execSelectRaw(() -> queryConn.query(query));
     }
 
     public static <K, X> Flowable<Entry<K, List<X>>> groupByOrdered(
@@ -96,7 +101,7 @@ public class SparqlRx {
              .doOnComplete(boundaryIndicator::onComplete)
              .doOnNext(item -> {
                     K groupKey = getGroupKey.apply(item);
-                    boolean isEqual = Objects.equal(current, groupKey);
+                    boolean isEqual = Objects.equals(current, groupKey);
 
                     prior[0] = current[0];
                     if(prior[0] == null) {
@@ -174,32 +179,40 @@ public class SparqlRx {
 //		}
 //	}
 
-    public static <T> Flowable<T> execSelect(Supplier<QueryExecution> qes, Function<? super ResultSet, ? extends T> next) {
-        Flowable<T> result = Flowable.generate(
-                () -> {
-                    QueryExecution qe = qes.get();
-                    return new SimpleEntry<QueryExecution, ResultSet>(qe, null);
-                },
-                (state, emitter) -> {
-                    ResultSet rs = state.getValue();
-                    if(rs == null) {
-//                        System.out.println("STARTED NEW RESULT SET");
-                        rs = state.getKey().execSelect();
-                        state.setValue(rs);
-                    }
+    public static <T> Flowable<T> execSelect(Callable<QueryExecution> qes, Function<? super ResultSet, T> next) {
+        Flowable<T> result = RDFDataMgrRx.createFlowableFromResource(
+                qes::call,
+                QueryExecution::execSelect,
+                ResultSet::hasNext,
+                next,
+                QueryExecution::close
+            );
 
-                    if(rs.hasNext()) {
-                        T value = next.apply(rs);
-                        emitter.onNext(value);
-                    } else {
-                        emitter.onComplete();
-                    }
-                },
-                state -> {
-                    QueryExecution qe = state.getKey();
-                    // Note consuming the result set may also already close the qe
-                    qe.close();
-                });
+//        Flowable<T> result = Flowable.generate(
+//                () -> {
+//                    QueryExecution qe = qes.get();
+//                    return new SimpleEntry<QueryExecution, ResultSet>(qe, null);
+//                },
+//                (state, emitter) -> {
+//                    ResultSet rs = state.getValue();
+//                    if(rs == null) {
+////                        System.out.println("STARTED NEW RESULT SET");
+//                        rs = state.getKey().execSelect();
+//                        state.setValue(rs);
+//                    }
+//
+//                    if(rs.hasNext()) {
+//                        T value = next.apply(rs);
+//                        emitter.onNext(value);
+//                    } else {
+//                        emitter.onComplete();
+//                    }
+//                },
+//                state -> {
+//                    QueryExecution qe = state.getKey();
+//                    // Note consuming the result set may also already close the qe
+//                    qe.close();
+//                });
 
 //        Flowable<T> result = Flowable.create(emitter -> {
 //            QueryExecution qe = qes.get();
@@ -210,11 +223,11 @@ public class SparqlRx {
         return result;
     }
 
-    public static Flowable<Binding> execSelectRaw(Supplier<QueryExecution> qes) {
+    public static Flowable<Binding> execSelectRaw(Callable<QueryExecution> qes) {
         return execSelect(qes, ResultSet::nextBinding);
     }
 
-    public static Flowable<QuerySolution> execSelect(Supplier<QueryExecution> qes) {
+    public static Flowable<QuerySolution> execSelect(Callable<QueryExecution> qes) {
         return execSelect(qes, ResultSet::next);
     }
 
@@ -226,15 +239,62 @@ public class SparqlRx {
         return execSelect(() -> conn.query(query), ResultSet::next);
     }
 
-    public static Flowable<Triple> execConstructTriples(Supplier<QueryExecution> qes) {
-        Flowable<Triple> result = Flowable.create(emitter -> {
-            QueryExecution qe = qes.get();
-            processExecConstructTriples(emitter, qe);
-            //new Thread(() -> process(emitter, qe)).start();
-        }, BackpressureStrategy.BUFFER);
 
+    public static Flowable<Triple> execConstructTriples(SparqlQueryConnection conn, Query query) {
+        return execConstructTriples(() -> conn.query(query));
+    }
+
+    public static Flowable<Triple> execConstructTriples(Callable<QueryExecution> qes) {
+        Flowable<Triple> result = RDFDataMgrRx.createFlowableFromResource(
+                qes::call,
+                QueryExecution::execConstructTriples,
+                Iterator::hasNext,
+                Iterator::next,
+                QueryExecution::close
+            );
         return result;
     }
+
+    public static Flowable<Quad> execConstructQuads(SparqlQueryConnection conn, Query query) {
+        return execConstructQuads(() -> conn.query(query));
+    }
+
+    public static Flowable<Quad> execConstructQuads(Callable<QueryExecution> qes) {
+        Flowable<Quad> result = RDFDataMgrRx.createFlowableFromResource(
+                qes::call,
+                QueryExecution::execConstructQuads,
+                Iterator::hasNext,
+                Iterator::next,
+                QueryExecution::close
+            );
+        return result;
+    }
+
+
+    public static Flowable<JsonObject> execJsonItems(SparqlQueryConnection conn, Query query) {
+        return execJsonItems(() -> conn.query(query));
+    }
+
+    public static Flowable<JsonObject> execJsonItems(Callable<QueryExecution> qes) {
+        // Gson gson = new Gson();
+        Flowable<JsonObject> result = RDFDataMgrRx.createFlowableFromResource(
+                qes::call,
+                QueryExecution::execJsonItems,
+                Iterator::hasNext,
+                Iterator::next,
+                QueryExecution::close
+            ); //.map(obj -> gson.fromJson(Objects.toString(obj), JsonElement.class));
+        return result;
+    }
+//    public static Flowable<Triple> execConstructTriples(Callable<QueryExecution> qes) {
+//        Flowable<Triple> result = Flowable.create(emitter -> {
+//            QueryExecution qe = qes.call();
+//            processExecConstructTriples(emitter, qe);
+//            //new Thread(() -> process(emitter, qe)).start();
+//        }, BackpressureStrategy.BUFFER);
+//
+//        return result;
+//    }
 
     public static Entry<List<Var>, Flowable<Binding>> mapToFlowable(ResultSet rs) {
         Iterator<Binding> it = new IteratorResultSetBinding(rs);
@@ -626,13 +686,13 @@ public class SparqlRx {
     }
 
 
-    public static <T extends RDFNode> Flowable<T> execConcept(Supplier<QueryExecution> qeSupp, Var var, Class<T> clazz) {
+    public static <T extends RDFNode> Flowable<T> execConcept(Callable<QueryExecution> qeSupp, Var var, Class<T> clazz) {
         return execConcept(qeSupp, var)
             .map(rdfNode -> rdfNode.as(clazz));
     }
 
 
-    public static Flowable<RDFNode> execConcept(Supplier<QueryExecution> qeSupp, Var var) {
+    public static Flowable<RDFNode> execConcept(Callable<QueryExecution> qeSupp, Var var) {
         String varName = var.getName();
 
         return SparqlRx.execSelect(qeSupp)

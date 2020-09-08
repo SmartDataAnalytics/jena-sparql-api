@@ -1,15 +1,15 @@
 package org.aksw.jena_sparql_api.rx.query_flow;
 
+import java.util.function.Function;
+
 import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.core.VarExprList;
-import org.apache.jena.sparql.engine.ExecutionContext;
 import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.engine.binding.BindingFactory;
 import org.apache.jena.sparql.engine.binding.BindingMap;
+import org.apache.jena.sparql.function.FunctionEnv;
 
-import io.reactivex.rxjava3.annotations.NonNull;
-import io.reactivex.rxjava3.core.FlowableEmitter;
 import io.reactivex.rxjava3.core.FlowableTransformer;
 
 /**
@@ -20,17 +20,23 @@ import io.reactivex.rxjava3.core.FlowableTransformer;
  *
  */
 public class QueryFlowAssign
-    extends QueryFlowBase<Binding>
+//    extends QueryFlowBase<Binding>
 {
-    protected VarExprList exprs;
+//    protected VarExprList exprs;
+//
+//    public QueryFlowAssign(FlowableEmitter<Binding> emitter, FunctionEnv execCxt, VarExprList exprs) {
+//        super(emitter, execCxt);
+//        this.exprs = exprs;
+//    }
+//
+//    @Override
+//    public void onNext(@NonNull Binding binding) {
+//
+//        emitter.onNext(b);
+//    }
+//
 
-    public QueryFlowAssign(FlowableEmitter<Binding> emitter, ExecutionContext execCxt, VarExprList exprs) {
-        super(emitter, execCxt);
-        this.exprs = exprs;
-    }
-
-    @Override
-    public void onNext(@NonNull Binding binding) {
+    public static Binding assign(Binding binding, VarExprList exprs, FunctionEnv execCxt) {
         BindingMap b = BindingFactory.create(binding);
         for (Var v : exprs.getVars()) {
             Node n = exprs.get(v, b, execCxt);
@@ -46,14 +52,11 @@ public class QueryFlowAssign
                 }
             }
         }
-        emitter.onNext(b);
+        return b;
     }
 
-
-    public static FlowableTransformer<Binding, Binding> createTransformer(
-            ExecutionContext execCxt,
-            VarExprList exprs) {
-        return RxUtils.createTransformer(emitter -> new QueryFlowAssign(emitter, execCxt, exprs));
+    public static Function<Binding, Binding> createMapper(VarExprList exprs, FunctionEnv execCxt) {
+        return binding -> assign(binding, exprs, execCxt);
     }
 
 }

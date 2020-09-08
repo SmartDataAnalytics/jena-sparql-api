@@ -4,8 +4,8 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.aksw.commons.collections.IClosable;
-import org.aksw.jena_sparql_api.core.QueryExecutionAdapter;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
+import org.aksw.jena_sparql_api.utils.query_execution.QueryExecutionAdapter;
 import org.apache.jena.atlas.io.IndentedWriter;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query;

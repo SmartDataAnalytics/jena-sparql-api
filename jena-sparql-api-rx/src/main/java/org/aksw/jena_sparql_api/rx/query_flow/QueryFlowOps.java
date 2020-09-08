@@ -1,10 +1,13 @@
 package org.aksw.jena_sparql_api.rx.query_flow;
 
+import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
@@ -12,7 +15,9 @@ import org.apache.jena.graph.Triple;
 import org.apache.jena.query.ARQ;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryFactory;
+import org.apache.jena.query.SortCondition;
 import org.apache.jena.query.Syntax;
+import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.ARQConstants;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.Substitute;
@@ -20,11 +25,15 @@ import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.core.VarExprList;
 import org.apache.jena.sparql.engine.ExecutionContext;
 import org.apache.jena.sparql.engine.binding.Binding;
+import org.apache.jena.sparql.engine.binding.BindingComparator;
 import org.apache.jena.sparql.engine.binding.BindingFactory;
 import org.apache.jena.sparql.engine.binding.BindingMap;
+import org.apache.jena.sparql.engine.binding.BindingProject;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprAggregator;
 import org.apache.jena.sparql.expr.ExprLib;
+import org.apache.jena.sparql.expr.ExprList;
+import org.apache.jena.sparql.function.FunctionEnv;
 import org.apache.jena.sparql.modify.TemplateLib;
 import org.apache.jena.sparql.syntax.Template;
 import org.apache.jena.sparql.util.Context;
@@ -242,13 +251,58 @@ public class QueryFlowOps
      * @param expr
      * @return
      */
-    public static Predicate<Binding> createFilter(ExecutionContext execCxt, Expr expr) {
+    public static Predicate<Binding> createFilter(Expr expr, FunctionEnv execCxt) {
         return binding -> expr.isSatisfied(binding, execCxt);
     }
 
-    public static Predicate<Binding> createFilter(ExecutionContext execCxt, String exprStr) {
+    public static Predicate<Binding> createFilter(ExprList exprs, FunctionEnv execCxt) {
+        return binding -> {
+            boolean r = true;
+            for (Expr expr : exprs) {
+                r = expr.isSatisfied(binding, execCxt);
+                if (!r) {
+                    break;
+                }
+            }
+            return r;
+        };
+    }
+
+    public static Predicate<Binding> createFilter(String exprStr, FunctionEnv execCxt) {
         Expr expr = ExprUtils.parse(exprStr);
-        return createFilter(execCxt, expr);
+        return createFilter(expr, execCxt);
+    }
+
+    public static Predicate<Binding> createFilter(String exprStr, PrefixMapping pm, FunctionEnv execCxt) {
+        Expr expr = ExprUtils.parse(exprStr, pm);
+        return createFilter(expr, execCxt);
+    }
+
+    public static FlowableTransformer<Binding, Binding> createAssign(
+            VarExprList exprs,
+            FunctionEnv execCxt) {
+        return upstream -> upstream.map(binding -> QueryFlowAssign.assign(binding, exprs, execCxt));
+    }
+
+
+    public static FlowableTransformer<Binding, Binding> createProject(
+            Collection<Var> vars,
+            FunctionEnv execCxt) {
+        return upstream -> upstream.map(binding -> new BindingProject(vars, binding));
+    }
+
+    public static <T> FlowableTransformer<T, T> createSlice(Long offset, Long limit) {
+        return upstream -> {
+            if (offset != null && offset != Query.NOLIMIT) {
+                upstream = upstream.skip(offset);
+            }
+
+            if (limit != null && limit != Query.NOLIMIT) {
+                upstream = upstream.take(limit);
+            }
+
+            return upstream;
+        };
     }
 
     /**
@@ -263,7 +317,7 @@ public class QueryFlowOps
      * @param execCxt
      * @return
      */
-    public static FlowableTransformer<Binding, Binding> createTransformForGroupBy(Query query, ExecutionContext execCxt) {
+    public static FlowableTransformer<Binding, Binding> createTransformForGroupBy(Query query, FunctionEnv execCxt) {
         VarExprList groupVarExpr = query.getGroupBy();
         List<ExprAggregator> aggregators = query.getAggregators();
 
@@ -271,33 +325,67 @@ public class QueryFlowOps
         VarExprList rawProj = query.getProject();
 
 
-        VarExprList exprs = new VarExprList();
-        for (Var v : rawProj.getVars() )
-        {
-            Expr e = rawProj.getExpr(v) ;
-            if ( e != null )
+        VarExprList vel = null;
+        if (!query.isQueryResultStar()) {
+            vel = new VarExprList();
+            for (Var v : rawProj.getVars() )
             {
-                Expr e2 = ExprLib.replaceAggregateByVariable(e) ;
-                exprs.add(v, e2) ;
-            } else {
-                exprs.add(v);
+                Expr e = rawProj.getExpr(v) ;
+                if ( e != null )
+                {
+                    Expr e2 = ExprLib.replaceAggregateByVariable(e) ;
+                    vel.add(v, e2) ;
+                } else {
+                    vel.add(v);
+                }
+                // Include in project
+                // vars.add(v) ;
             }
-            // Include in project
-            // vars.add(v) ;
         }
+
+        VarExprList finalVel = vel;
+
+        List<SortCondition> newScs = query.getOrderBy() == null ? Collections.emptyList() : query.getOrderBy().stream()
+                .map(sc -> new SortCondition(ExprLib.replaceAggregateByVariable(sc.getExpression()), sc.getDirection()))
+                .collect(Collectors.toList());
 
 //        Op op = Algebra.compile(query);
 //        System.out.println(op);
 
-        FlowableTransformer<Binding, Binding> result = upstream -> upstream
-                // Do not apply group by if there are no aggregators
-                .compose(x -> aggregators.isEmpty() ? x : QueryFlowGroupBy.createTransformer(execCxt, groupVarExpr, aggregators).apply(x))
-                .compose(QueryFlowAssign.createTransformer(execCxt, exprs))
-                .compose(QueryFlowProject.createTransformer(execCxt, exprs.getVars()));
+        FlowableTransformer<Binding, Binding> result = upstream -> {
+            Flowable<Binding> r = upstream;
 
+            if (!aggregators.isEmpty()) {
+                r = r.compose(QueryFlowGroupBy.createTransformer(execCxt, groupVarExpr, aggregators));
+            }
+
+            if (finalVel != null) {
+                r = r.compose(createAssign(finalVel, execCxt));
+            }
+
+            if (!newScs.isEmpty()) {
+                r = r.compose(createOrderBy(newScs));
+            }
+
+            if (finalVel != null) {
+                r = r.compose(createProject(finalVel.getVars(), execCxt));
+            }
+
+            r = r.compose(createSlice(query.getOffset(), query.getLimit()));
+
+            return r;
+        };
         return result;
     }
 
+
+    public static FlowableTransformer<Binding, Binding> createOrderBy(List<SortCondition> sortConditions) {
+        Comparator<Binding> bindingCmp = new BindingComparator(sortConditions);
+
+        return sortConditions.isEmpty()
+                ? upstream -> upstream
+                : upstream -> upstream.sorted(bindingCmp);
+    }
 
 
 }

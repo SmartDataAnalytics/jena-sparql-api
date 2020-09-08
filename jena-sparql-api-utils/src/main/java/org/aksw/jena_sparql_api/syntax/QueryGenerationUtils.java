@@ -54,7 +54,7 @@ public class QueryGenerationUtils {
         long l = query.getLimit();
 
         boolean hasLimitOrOffset = o != Query.NOLIMIT || l != Query.NOLIMIT;
-        boolean hasOrderBy = !query.getOrderBy().isEmpty();
+        boolean hasOrderBy = query.hasOrderBy();
 
         Query result;
         if(query.isConstructType() || hasLimitOrOffset && hasOrderBy) {
