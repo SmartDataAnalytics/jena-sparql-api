@@ -2,9 +2,11 @@ package org.aksw.jena_sparql_api.syntax;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 
 import org.aksw.commons.collections.SetUtils;
@@ -34,6 +36,7 @@ import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementNamedGraph;
 import org.apache.jena.sparql.syntax.ElementSubQuery;
 import org.apache.jena.sparql.syntax.ElementTriplesBlock;
+import org.apache.jena.sparql.syntax.PatternVars;
 import org.apache.jena.sparql.syntax.Template;
 
 public class QueryGenerationUtils {
@@ -180,8 +183,8 @@ public class QueryGenerationUtils {
      *
      * @param query
      * @param partitionVars
-     * @param itemLimit
      * @param rowLimit
+     * @param itemLimit
      * @return
      */
     public static Entry<Var, Query> createQueryCountPartition(Query query, Collection<Var> partitionVars, Long itemLimit, Long rowLimit) {
@@ -606,18 +609,28 @@ public class QueryGenerationUtils {
         return optimizeGroupByToDistinct(query, false);
     }
 
-    public static boolean optimizeGroupByToDistinct(Query query, boolean discardNonGroupByProjection) {
+    /**
+     * SELECT ?v1 ?n { } GROUP BY ?v1 ?vn ===> SELECT DISTINCT ?v1 ?vN { }
+     *
+     * If discardAggregators then the resulting query becomes one with the same number of bindings using distinct:
+     * SELECT ?v COUNT(DISTINCT ?o) {} GROUP BY ?v ===> SELECT DISTINCT ?v {}
+     *
+     * @param query
+     * @param discardAggregators Discard all aggregators if applicable. The result is a query with the same number of bindings.
+     * @return true iff the query was modified
+     */
+    public static boolean optimizeGroupByToDistinct(Query query, boolean discardAggregators) {
         boolean modified = false;
 
         // If the query being counted has a group by then check whether it can be transformed
         // to distinct instead.
         // Any 'having' expression blocks this transformation
-        if (!query.getGroupBy().isEmpty() && query.getHavingExprs().isEmpty()) {
+        if (query.hasGroupBy() && !query.hasHaving()) {
 
             Set<Set<Var>> distinctVarSets = analyzeDistinctVarSets(query);
 
             // if (!distinctVarSets.isEmpty() && discardNonGroupByProjection) {
-            if (discardNonGroupByProjection) {
+            if (discardAggregators) {
                 Set<Expr> groupByExprs = VarExprListUtils.invert(query.getGroupBy()).keySet();
 
                 // Discard all variables from the projection that do not match the group keys
@@ -691,14 +704,69 @@ public class QueryGenerationUtils {
         return modified;
     }
 
-    public static Entry<Var, Query> createQueryCountCore(Query query, Long itemLimit, Long rowLimit) {
+    /**
+     * Test whether the queries distinguished variables are the same as those of SELECT * { ... }
+     * Example:
+     * SELECT * { ?s a ?t } is effectively the same as SELECT ?t ?s { ?s a ?t }
+     * Variable order does not matter
+     *
+     * @return
+     */
+    public static boolean isEffectiveQueryResultStar(Query query) {
+        boolean result;
+        if (query.isQueryResultStar()) {
+            result = true;
+        } else {
+            Set<Var> projectVars = new HashSet<>(query.getProjectVars());
+            Element elt = query.getQueryPattern();
+            Set<Var> patternVars = elt == null ? Collections.emptySet() : new HashSet<>(PatternVars .vars(query.getQueryPattern()));
+            result = Sets.symmetricDifference(projectVars, patternVars).isEmpty();
+        }
+
+        return result;
+    }
+
+    public static Entry<Var, Query> createQueryCountCore(Query rawQuery, Long itemLimit, Long rowLimit) {
+        // Allocate a variable for the resulting count that is not mentioned in the query
+        Var resultVar = QueryUtils.freshVar(rawQuery); // Vars.c;
+
+        Query query = createQueryCountCore(resultVar, rawQuery, itemLimit, rowLimit);
+
+        return Maps.immutableEntry(resultVar, query);
+    }
+
+    /**
+     * Transform a SELECT query such that it yields the count of matching solution bindings within the given constraints
+     *
+     * The rowLimit parameter only affects query that make use of DISTINCT: It adds this limit to the graph pattern
+     * such that the query pattern on which the distinct runs is limited to the given number of bindings.
+     *
+     * It does not make sense to use for queries with group by because that would alter the result
+     *
+     *
+     * SELECT COUNT(*) {
+     *   SELECT DISTINCT originalProjection {
+     *     SELECT * {
+     *       originalGraphPattern
+     *     } LIMIT rowLimit
+     *   } OFFSET originalOffset LIMIT min(originalLimit, itemLimit)
+     * }
+     *
+     * @param resultVar The output variable (COUNT(...) AS ?resultVar)
+     * @param rawQuery
+     * @param itemLimit Number of bindings to consider returned by the given select query
+     * @param rowLimit Number of rows to consider within the query's graph pattern
+     * @return
+     */
+    public static Query createQueryCountCore(Var resultVar, Query rawQuery, Long itemLimit, Long rowLimit) {
         // SELECT proj {} GROUP BY exprs -> SELECT DISTINCT proj' {}
 
+        Objects.requireNonNull(resultVar, "resultVar must not be null");
+        Objects.requireNonNull(rawQuery, "query must not be null");
+
+        Query query = rawQuery.cloneQuery();
+
         optimizeGroupByToDistinct(query, true);
-
-
-        // Allocate a variable not mentioned in the query
-        Var resultVar = QueryUtils.freshVar(query); // Vars.c;
 
         boolean isDistinct = query.isDistinct();
         // If the query uses distinct and there is just a single projected variable
@@ -706,31 +774,46 @@ public class QueryGenerationUtils {
         // However, if there is more than 1 variable then we need wrapping in any case
         int projVarCount = query.getProjectVars().size();
 
-        boolean needsWrapping
-                =  !query.getGroupBy().isEmpty()
-                || !query.getAggregators().isEmpty()
-                || (isDistinct && projVarCount > 1)
+        boolean isEffectiveQueryResultStar = isEffectiveQueryResultStar(query);
+
+        boolean needsWrappingByFeatures
+                =  query.hasGroupBy()
+                || query.hasAggregators()
+                || query.hasHaving()
+                || query.hasValues()
                 ;
+
+
+        boolean needsWrapping
+                = needsWrappingByFeatures
+                || (isDistinct && projVarCount > 1 && !isEffectiveQueryResultStar )
+                ;
+
+        if(rowLimit != null && isDistinct && !needsWrappingByFeatures) {
+            Element elt = query.getQueryPattern();
+            Query subQuery = new Query();
+            subQuery.setQuerySelectType();
+            subQuery.setQueryResultStar(true);
+            subQuery.setQueryPattern(elt);
+            subQuery.setLimit(rowLimit);
+
+            query.setQueryPattern(new ElementSubQuery(subQuery));
+        }
 
 
         // || query.isDistinct() || query.isReduced();
 
-          if(rowLimit != null) {
-              long queryLimit = query.getLimit();
-              long effectiveRowLimit = queryLimit == Query.NOLIMIT
-                      ? rowLimit
-                      : Math.min(queryLimit, rowLimit);
-
-              query.setDistinct(false);
-              query.setLimit(effectiveRowLimit);
-
-              query = QueryGenerationUtils.wrapAsSubQuery(query);
-              query.setDistinct(true);
-              needsWrapping = true;
-          }
-
           if(itemLimit != null) {
-              query.setLimit(itemLimit);
+              long queryLimit = query.getLimit();
+              long effectiveItemLimit = queryLimit == Query.NOLIMIT
+                      ? itemLimit
+                      : Math.min(queryLimit, itemLimit);
+
+//              query.setDistinct(false);
+              query.setLimit(effectiveItemLimit);
+
+//              query = QueryGenerationUtils.wrapAsSubQuery(query);
+//              query.setDistinct(isDistinct);
               needsWrapping = true;
           }
 
@@ -749,7 +832,7 @@ public class QueryGenerationUtils {
             }
         }
 
-        boolean useCountDistinct = !needsWrapping && query.isDistinct() && (query.isQueryResultStar() || singleResultVar != null);
+        boolean useCountDistinct = !needsWrapping && query.isDistinct() && (isEffectiveQueryResultStar || singleResultVar != null);
         // TODO If there is only a single result variable (without mapping to an expr)
         // we can also use count distinct
 
@@ -780,7 +863,7 @@ public class QueryGenerationUtils {
 
         result.setQueryPattern(queryPattern);
 
-        return Maps.immutableEntry(resultVar, result);
+        return result;
     }
 
 //    public static Query createQueryCount(Query query, Var outputVar, Long itemLimit, Long rowLimit) {

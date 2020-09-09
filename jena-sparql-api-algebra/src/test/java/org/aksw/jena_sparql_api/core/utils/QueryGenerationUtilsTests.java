@@ -213,10 +213,10 @@ public class QueryGenerationUtilsTests {
         eval(
             "SELECT (?s AS ?x) (COUNT(DISTINCT ?p) AS ?y) { ?s ?p ?o } GROUP BY ?s LIMIT 10",
             input -> {
-                Entry<Var, Query> count = QueryGenerationUtils.createQueryCountCore(input, 3l, 7l);
+                Entry<Var, Query> count = QueryGenerationUtils.createQueryCountCore(input, 7l, 3l);
                 return count.getValue();
             },
-            "SELECT (COUNT(*) AS ?c_1) { SELECT DISTINCT * { SELECT (?s AS ?x) { ?s ?p ?o } LIMIT 7 } LIMIT 3 }"
+            "SELECT (COUNT(*) AS ?c_1) { SELECT DISTINCT (?s AS ?x) { SELECT * { ?s ?p ?o } LIMIT 3 } LIMIT 7 }"
         );
     }
 
@@ -242,6 +242,67 @@ public class QueryGenerationUtilsTests {
             },
             // "SELECT (COUNT(*) AS ?c_1) { SELECT DISTINCT ?s ?p { ?s ?p ?o } }"
             "SELECT (COUNT(*) AS ?c_1) { SELECT DISTINCT ?s ?p { ?s ?p ?o } }"
+        );
+    }
+
+
+    @Test
+    public void testCountQueryGenerationWithLimit() {
+        eval(
+            "SELECT * { ?s ?p ?o } LIMIT 10 OFFSET 3",
+            input -> {
+                Entry<Var, Query> count = QueryGenerationUtils.createQueryCountCore(input, 5l, null);
+                return count.getValue();
+            },
+            "SELECT (COUNT(*) AS ?c_1) { SELECT * { ?s ?p ?o } LIMIT 5 OFFSET 3 }"
+        );
+    }
+
+    /**
+     * The limit for distinct result rows should be ignored because the query does not use distinct
+     *
+     */
+    @Test
+    public void testCountQueryGenerationWithLimit2() {
+        eval(
+            "SELECT * { ?s ?p ?o } LIMIT 10 OFFSET 3",
+            input -> {
+                Entry<Var, Query> count = QueryGenerationUtils.createQueryCountCore(input, 5l, 4l);
+                return count.getValue();
+            },
+            "SELECT (COUNT(*) AS ?c_1) { SELECT * { ?s ?p ?o } LIMIT 5 OFFSET 3 }"
+        );
+    }
+
+    /**
+     * The query uses distinct so the distinctLimit (=4) must be included in the rewritten query
+     *
+     */
+    @Test
+    public void testCountQueryGenerationWithLimit3() {
+        eval(
+            "SELECT DISTINCT * { ?s ?p ?o } LIMIT 10 OFFSET 3",
+            input -> {
+                Entry<Var, Query> count = QueryGenerationUtils.createQueryCountCore(input, 5l, 4l);
+                return count.getValue();
+            },
+            "SELECT (COUNT(*) AS ?c_1) { SELECT DISTINCT * { SELECT * { ?s ?p ?o } LIMIT 4 } OFFSET 3 LIMIT 5 }"
+        );
+    }
+
+    /**
+     * The query uses distinct so the distinctLimit (=4) must be included in the rewritten query
+     *
+     */
+    @Test
+    public void testCountQueryGenerationForLsqBug() {
+        eval(
+            "SELECT * { ?s a ?o . ?o ?p ?o2 } LIMIT 100",
+            input -> {
+                Entry<Var, Query> count = QueryGenerationUtils.createQueryCountCore(input, 1000l, null);
+                return count.getValue();
+            },
+            "SELECT (COUNT(*) AS ?c_1) { SELECT * { ?s a ?o . ?o ?p ?o2  } LIMIT 100 }"
         );
     }
 

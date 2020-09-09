@@ -283,7 +283,7 @@ public class ConceptUtils {
         return result;
     }
 
-
+    // FIMXE Consolidate with QueryGenerationUtils.createQuryCount
     public static Query createQueryCount(Concept concept, Var outputVar, Long itemLimit, Long rowLimit) {
         Query subQuery = createQueryList(concept);
 

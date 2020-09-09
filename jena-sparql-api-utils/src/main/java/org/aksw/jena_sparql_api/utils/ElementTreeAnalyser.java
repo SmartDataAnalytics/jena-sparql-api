@@ -15,6 +15,7 @@ import org.apache.jena.sparql.syntax.ElementData;
 import org.apache.jena.sparql.syntax.ElementDataset;
 import org.apache.jena.sparql.syntax.ElementExists;
 import org.apache.jena.sparql.syntax.ElementFilter;
+import org.apache.jena.sparql.syntax.ElementFind;
 import org.apache.jena.sparql.syntax.ElementGroup;
 import org.apache.jena.sparql.syntax.ElementMinus;
 import org.apache.jena.sparql.syntax.ElementNamedGraph;
@@ -32,7 +33,7 @@ import org.apache.jena.sparql.syntax.ElementVisitor;
 /**
  * <p>Utility class that walks the Elements of an ARQ query tree and
  * collects information that is later used to build an SQL query.</p>
- * 
+ *
  * <p>The class provides a different view on the tree of Element
  * instances. In this view, the nodes are ElementTreeAnalyser
  * instances, and the structure of the tree differs in several
@@ -51,7 +52,7 @@ import org.apache.jena.sparql.syntax.ElementVisitor;
  *   and graphNames are to be matched against the list of graph names,
  *   regardless of triples therein.</li>
  * </ul>
- *   
+ *
  * @author Richard Cyganiak (richard@cyganiak.de)
  * @version $Id$
  */
@@ -66,16 +67,16 @@ public class ElementTreeAnalyser implements ElementVisitor {
     private List<ElementTreeAnalyser> optionals = new ArrayList<ElementTreeAnalyser>();   // ElementAnalysers
     private List<ElementTreeAnalyser> unions = new ArrayList<ElementTreeAnalyser>();      // Lists of ElementAnalysers
     private List<Expr> filterExprs = new ArrayList<Expr>();     // Constraints
-    
+
     public ElementTreeAnalyser(Element element) {
         this(element, Quad.defaultGraphNodeGenerated);
     }
-    
+
     public ElementTreeAnalyser(Element element, Node defaultGraphName) {
         this.defaultGraphName = defaultGraphName;
         element.visit(this);
     }
-    
+
     public boolean isEmpty() {
         return isEmpty;
     }
@@ -83,35 +84,35 @@ public class ElementTreeAnalyser implements ElementVisitor {
     public boolean canBind() {
         return canBind;
     }
-    
+
     public boolean mustMatchTriple() {
         return mustMatchTriple;
     }
-    
+
     public List<Quad> getQuads() {
         return quads;
     }
-    
+
     public List<ElementTreeAnalyser> getOptionals() {
         return optionals;
     }
-    
+
     public List<Node> getGraphNames() {
         return graphNames;
     }
-    
+
     public List<ElementTreeAnalyser> getUnions() {
         return unions;
     }
-        
+
 //    public List graphNames() {
 //        return graphNames;
 //    }
-    
+
     public List<ElementTreeAnalyser> optionals() {
         return optionals;
     }
-    
+
     public List<ElementTreeAnalyser> unions() {
         return unions;
     }
@@ -119,10 +120,10 @@ public class ElementTreeAnalyser implements ElementVisitor {
     public List<Expr> getFilterExprs() {
         return filterExprs;
     }
-    
+
     public void visit(ElementTriplesBlock el) {
         for(Triple t : el.getPattern().getList()) {
-        
+
             isEmpty = false;
             if (t.getSubject().isVariable()
                     || t.getPredicate().isVariable()
@@ -131,7 +132,7 @@ public class ElementTreeAnalyser implements ElementVisitor {
             }
             if (defaultGraphName == null) {
                 Quad quad = new Quad(defaultGraphName, t);
-                
+
                 quads.add(quad);
             } else {
                 quads.add(new Quad(defaultGraphName, t));
@@ -147,7 +148,7 @@ public class ElementTreeAnalyser implements ElementVisitor {
 
     public void visit(ElementUnion el) {
         List<Element> elements = el.getElements();
-        
+
         if (elements.size() == 1) {
             elements.get(0).visit(this);
             return;
@@ -156,7 +157,7 @@ public class ElementTreeAnalyser implements ElementVisitor {
         List<ElementTreeAnalyser> union = new ArrayList<ElementTreeAnalyser>();
         boolean allMustMatchTriple = true;
         boolean anyMustMatchTriple = false;
-        
+
         for(Element element : el.getElements()) {
             ElementTreeAnalyser analyser = new ElementTreeAnalyser(element, defaultGraphName);
             if (analyser.isEmpty()) {
@@ -200,15 +201,15 @@ public class ElementTreeAnalyser implements ElementVisitor {
     public void visit(ElementNamedGraph el) {
         isEmpty = false;
         ElementTreeAnalyser analyser = new ElementTreeAnalyser(el.getElement(), el.getGraphNameNode());
-        
+
         if (!analyser.mustMatchTriple()) {
             graphNames.add(el.getGraphNameNode());
         }
         if (el.getGraphNameNode().isVariable() || analyser.canBind()) {
             canBind = true;
         }
-        
-        
+
+
         for(Quad quad : analyser.getQuads()) {
             quads.add(new Quad(el.getGraphNameNode(), quad.asTriple()));
         }
@@ -219,7 +220,7 @@ public class ElementTreeAnalyser implements ElementVisitor {
         filterExprs.addAll(analyser.getFilterExprs());
     }
 
-    
+
     private void recurse(List<Element> elements) {
         for(Element element : elements) {
             element.visit(this);
@@ -228,17 +229,17 @@ public class ElementTreeAnalyser implements ElementVisitor {
 
     @Override
     public void visit(ElementPathBlock el) {
-        
+
         // TODO Paths not handled yet
-        
+
         List<TriplePath> triplePaths = el.getPattern().getList();
         for(TriplePath triplePath : triplePaths) {
             Triple triple = triplePath.asTriple();
             Quad quad = new Quad(defaultGraphName, triple);
             quads.add(quad);
         }
-        
-        
+
+
         //throw new RuntimeException("Not implemented");
     }
 
@@ -289,6 +290,11 @@ public class ElementTreeAnalyser implements ElementVisitor {
 
     @Override
     public void visit(ElementSubQuery el) {
+        throw new RuntimeException("Not implemented");
+    }
+
+    @Override
+    public void visit(ElementFind el) {
         throw new RuntimeException("Not implemented");
     }
 }

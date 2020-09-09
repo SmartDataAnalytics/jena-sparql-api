@@ -16,6 +16,7 @@ import io.reactivex.rxjava3.core.FlowableEmitter;
 import io.reactivex.rxjava3.core.FlowableOnSubscribe;
 import io.reactivex.rxjava3.core.FlowableSubscriber;
 import io.reactivex.rxjava3.core.FlowableTransformer;
+import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Scheduler;
 import io.reactivex.rxjava3.core.Scheduler.Worker;
 import io.reactivex.rxjava3.disposables.Disposable;
@@ -344,5 +345,27 @@ public class RxUtils {
 
             return result;
         };
+    }
+
+    /**
+     * Consume a flow by mapping it to empty maybes as long as there is no error.
+     * On error emit a maybe that hold the occurred exception.
+     * Uses blockingGet on the single result
+     *
+     *
+     *
+     * @param flowable
+     */
+    public static void consume(Flowable<?> flowable) {
+        Flowable<Throwable> tmp = flowable
+                .flatMapMaybe(batch -> {
+                    return Maybe.<Throwable>empty();
+                })
+                .onErrorReturn(t -> t);
+
+        Throwable e = tmp.singleElement().blockingGet();
+        if(e != null) {
+            throw new RuntimeException(e);
+        }
     }
 }

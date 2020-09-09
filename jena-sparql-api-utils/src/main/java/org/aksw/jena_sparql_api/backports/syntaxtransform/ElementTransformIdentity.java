@@ -21,6 +21,7 @@ package org.aksw.jena_sparql_api.backports.syntaxtransform;
 import java.util.List ;
 
 import org.apache.jena.graph.Node ;
+import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query ;
 import org.apache.jena.sparql.core.Var ;
 import org.apache.jena.sparql.expr.Expr ;
@@ -31,6 +32,7 @@ import org.apache.jena.sparql.syntax.ElementData;
 import org.apache.jena.sparql.syntax.ElementDataset;
 import org.apache.jena.sparql.syntax.ElementExists;
 import org.apache.jena.sparql.syntax.ElementFilter;
+import org.apache.jena.sparql.syntax.ElementFind;
 import org.apache.jena.sparql.syntax.ElementGroup;
 import org.apache.jena.sparql.syntax.ElementMinus;
 import org.apache.jena.sparql.syntax.ElementNamedGraph;
@@ -55,7 +57,7 @@ public final class ElementTransformIdentity implements ElementTransform
     public ElementTransformIdentity() {}
     private static ElementTransformIdentity singleton = new ElementTransformIdentity() ;
     public static ElementTransform get() { return singleton ; }
-    
+
     @Override
     public Element transform(ElementTriplesBlock el) { return el ; }
     @Override
@@ -88,5 +90,15 @@ public final class ElementTransformIdentity implements ElementTransform
     public Element transform(ElementService el, Node service, Element subElt) { return el ; }
     @Override
     public Element transform(ElementSubQuery el, Query query) { return el ; }
+
+    @Override
+    public Element transform(ElementFind el, Var v, Triple triple2) {
+        return el;
+    }
+
+    @Override
+    public Triple transform(Triple triple) {
+        return triple;
+    }
 }
 

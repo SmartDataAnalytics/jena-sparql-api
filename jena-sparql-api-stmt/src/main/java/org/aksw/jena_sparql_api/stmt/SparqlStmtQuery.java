@@ -34,7 +34,7 @@ public class SparqlStmtQuery
     @Override
     public SparqlStmtQuery clone() {
         Query clone = query != null
-                ? QueryUtils.fastClone(query)//query.cloneQuery()
+                ? query.cloneQuery()
                 : null;
 
         return new SparqlStmtQuery(clone, originalString, parseException);

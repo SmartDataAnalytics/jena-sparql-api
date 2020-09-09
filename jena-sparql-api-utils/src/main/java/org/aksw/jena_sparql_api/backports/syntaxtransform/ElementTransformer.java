@@ -24,6 +24,7 @@ import java.util.List ;
 
 import org.apache.jena.atlas.logging.Log ;
 import org.apache.jena.graph.Node;
+import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.Expr;
@@ -38,6 +39,7 @@ import org.apache.jena.sparql.syntax.ElementData;
 import org.apache.jena.sparql.syntax.ElementDataset;
 import org.apache.jena.sparql.syntax.ElementExists;
 import org.apache.jena.sparql.syntax.ElementFilter;
+import org.apache.jena.sparql.syntax.ElementFind;
 import org.apache.jena.sparql.syntax.ElementGroup;
 import org.apache.jena.sparql.syntax.ElementMinus;
 import org.apache.jena.sparql.syntax.ElementNamedGraph;
@@ -53,6 +55,7 @@ import org.apache.jena.sparql.syntax.ElementVisitorBase;
 import org.apache.jena.sparql.syntax.ElementWalker;
 import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransform;
 import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransformCopyBase;
+import org.apache.jena.sparql.syntax.syntaxtransform.TransformElementLib;
 
 // TODO Part of this class is by now part of ApplyElementTransformVisitor ~ Claus 2019-06-06
 
@@ -139,9 +142,9 @@ public class ElementTransformer {
         public ApplyTransformVisitor(ElementTransform transform, ExprTransform exprTransform) {
             if ( transform == null )
                 transform = ElementTransformIdentity.get() ;
-            
+
             if ( exprTransform == null )
-            	exprTransform = new ExprTransformCopy();
+                exprTransform = new ExprTransformCopy();
 
             this.transform = transform ;
             this.exprTransform = exprTransform ;
@@ -321,6 +324,15 @@ public class ElementTransformer {
             if ( expr == null || exprTransform == null )
                 return expr ;
             return ExprTransformer.transform(exprTransform, expr) ;
+        }
+
+        @Override
+        public void visit(ElementFind el) {
+            Var v = el.getVar() ;
+            Var v1 = TransformElementLib.applyVar(v, exprTransform) ;
+            Triple t1 = transform.transform(el.getTriple());
+            Element el2 = transform.transform(el, v1, t1);
+            push(el2) ;
         }
     }
 }
