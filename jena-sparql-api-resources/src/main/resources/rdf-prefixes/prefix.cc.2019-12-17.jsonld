@@ -1555,7 +1555,6 @@
         "lw": "http://linkedwidgets.org/ontologies/",
         "wikibase": "http://wikiba.se/ontology#",
         "religion": "http://rdf.muninn-project.org/ontologies/religion#",
-        "latitude": "https://www.w3.org/2006/vcard/ns#latitude#",
         "affymetrix": "http://bio2rdf.org/affymetrix_vocabulary:",
         "oae": "http://www.ics.forth.gr/isl/oae/core#",
         "bnf": "http://www.w3.org/2000/10/swap/grammar/bnf#",

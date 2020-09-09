@@ -963,7 +963,6 @@
 @prefix nndsr: <http://semanticdiet.com/schema/usda/nndsr/> .
 @prefix rdfg:  <http://www.w3.org/2004/03/trix/rdfg-1/> .
 @prefix sophcy: <http://sweetontology.net/phenCycle/> .
-@prefix latitude: <https://www.w3.org/2006/vcard/ns#latitude#> .
 @prefix rdfp:  <https://w3id.org/rdfp/> .
 @prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix iab:   <https://www.iab.com/guidelines/taxonomy/> .
