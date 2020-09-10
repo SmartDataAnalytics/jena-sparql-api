@@ -165,10 +165,23 @@ public class SeekableFromBlock
 
 
     // Replace end with the concept of a fwd horizon
+    // We would have to read the block fully if we wanted to position at the end
     @Override
     public void posToEnd() throws IOException {
         // pos = maxPos;
         throw new UnsupportedOperationException();
+//        try {
+//            currentBlockRef.close();
+//            currentBlockRef = startBlockRef.acquire(null);
+//            currentBlock = currentBlockRef.get();
+//            currentSeekable = currentBlock.newChannel();
+//            currentSeekable.posToEnd();
+//            actualPos = exposedStartPos;
+//        } catch (Exception e) {
+//            throw new RuntimeException(e);
+//        }
+//        actualPos = maxPos;
+
     }
 
 

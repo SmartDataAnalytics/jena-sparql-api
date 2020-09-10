@@ -17,5 +17,12 @@ public interface BlockSource {
 //	ByteBuffer lastContent();
 
 //	ByteBuffer getChannelForPos(long pos) throws IOException;
+
+    /**
+     * Return the number of valid positions within blocks can be searched
+     *
+     * @return
+     * @throws IOException
+     */
     long size() throws IOException;
 }
