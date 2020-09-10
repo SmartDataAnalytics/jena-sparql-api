@@ -237,7 +237,7 @@ public class PageNavigator
                 displacement = 0;
             }
 
-            // updateRelCache(page);
+            updateRelCache(page);
 
             absMinIndexInPage = displacement + relMinIndexInPage;
             absMaxIndexInPage = displacement + relMaxIndexInPage;
@@ -490,7 +490,7 @@ public class PageNavigator
                 tgtPage = page - 1;
                 tgtIndex = pageSize - (relMinIndexInPage - prevIndex);
             } else {
-                long p = getPos() + delta;
+                long p = getPos() - delta;
                 tgtPage = getPageForPos(p);
                 tgtIndex = getIndexForPos(p);
             }

@@ -28,6 +28,9 @@ public class ReverseCharSequenceFromSeekable
 
     @Override
     public char charAt(int index) {
+//        if(index == 16777673) {
+//            System.err.println("DEBUG POiNT");
+//        }
         try {
             int p = offset + index;
             seekable.prevPos(p);

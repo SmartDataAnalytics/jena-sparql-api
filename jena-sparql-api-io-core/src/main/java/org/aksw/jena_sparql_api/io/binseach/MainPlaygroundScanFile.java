@@ -443,7 +443,7 @@ public class MainPlaygroundScanFile {
 //			PageManager pageManager = PageManagerForFileChannel.create(fileChannel,  128 * 1024 * 1024);
 //			PageManager pageManager = new PageManagerForByteBuffer(ByteBuffer.wrap(str.getBytes()));
 
-            long size = pageManager.size();
+            long size = pageManager.getEndPos();
             //long size = fileChannel.size();
             int numChunks = 4; //32;
             boolean fwd = true;

@@ -157,13 +157,13 @@ public class TestBinSearchBz2 {
 
 
 //    @Test
-//    public void testLocalBinSearch() throws IOException, Exception {
-//        try(BinarySearcher bs = BlockSources.createBinarySearcherText(Paths.get("/home/raven/tmp/sorttest/dnb-all_lds_20200213.sorted.nt"))) {
-//            try (InputStream in = bs.search("<https://d-nb.info/1017454930>")) {
-//                System.out.println("Output: " + IOUtils.toString(in, StandardCharsets.UTF_8));
-//            }
-//        }
-//    }
+    public void testLocalBinSearch() throws IOException, Exception {
+        try(BinarySearcher bs = BlockSources.createBinarySearcherBz2(Paths.get("/home/raven/tmp/sorttest/dnb-all_lds_20200213.sorted.nt.bz2"))) {
+            try (InputStream in = bs.search("<https://d-nb.info/1017454930>")) {
+                System.out.println("Output: " + IOUtils.toString(in, StandardCharsets.UTF_8));
+            }
+        }
+    }
 
 }
 

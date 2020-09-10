@@ -18,6 +18,7 @@ public class SeekableSourceFromPageManager
     @Override
     public Seekable get(long pos) {
         PageNavigator result = new PageNavigator(pageManager);
+
         result.setPos(pos);
         return result;
     }
