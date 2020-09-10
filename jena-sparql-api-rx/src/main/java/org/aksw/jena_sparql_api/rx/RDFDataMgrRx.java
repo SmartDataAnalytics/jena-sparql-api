@@ -501,14 +501,15 @@ public class RDFDataMgrRx {
 
     public static Flowable<Dataset> createFlowableDatasets(Callable<TypedInputStream> inSupplier) {
 
-        Flowable<Dataset> result = createFlowableFromInputStream(
-                inSupplier,
-                th -> eh -> in -> createIteratorQuads(
-                        in,
-                        RDFLanguages.contentTypeToLang(in.getContentType()),
-                        in.getBaseURI(),
-                        eh,
-                        th))
+//        Flowable<Dataset> result = createFlowableFromInputStream(
+//                inSupplier,
+//                th -> eh -> in -> createIteratorQuads(
+//                        in,
+//                        RDFLanguages.contentTypeToLang(in.getContentType()),
+//                        in.getBaseURI(),
+//                        eh,
+//                        th))
+        Flowable<Dataset> result = createFlowableQuads(inSupplier)
                 .compose(DatasetGraphOpsRx.datasetsFromConsecutiveQuads(
                         Quad::getGraph,
                         DatasetGraphFactoryEx::createInsertOrderPreservingDatasetGraph))
@@ -773,7 +774,8 @@ public class RDFDataMgrRx {
     public static class QuadEncoderDistinguish {
         protected Set<Node> priorGraphs = Collections.emptySet();
 
-        public synchronized Dataset encode(Dataset dataset) {
+        // Do we need synchronized? Processing should happen in order anyway!
+        public Dataset encode(Dataset dataset) {
             Set<Node> now = Sets.newHashSet(dataset.asDatasetGraph().listGraphNodes());
             List<Quad> quads = Lists.newArrayList(dataset.asDatasetGraph().find());
 

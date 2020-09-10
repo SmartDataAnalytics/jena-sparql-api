@@ -7,6 +7,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 import org.reactivestreams.Subscription;
 
@@ -28,6 +29,11 @@ public class RxUtils {
      * A 'poison' is an object that serves as an end marker on blocking queues
      */
     public static final Object POISON = new Object();
+
+    @SuppressWarnings("unchecked")
+    public static <T> T poison() {
+        return (T)POISON;
+    }
 
     public static Map<String, AtomicInteger> nameMap = new ConcurrentHashMap<>();
 
@@ -225,12 +231,12 @@ public class RxUtils {
 
     }
 
-    public static <T> Flowable<T> fromBlockingQueue(BlockingQueue<T> queue) {
+    public static <T> Flowable<T> fromBlockingQueue(BlockingQueue<T> queue, Predicate<? super T> isPoison) {
         return Flowable.generate(
                 () -> queue,
                 (q, e) -> {
                     T item = q.take();
-                    if(item == POISON) {
+                    if (isPoison.test(item)) {
                         e.onComplete();
                     } else {
                         e.onNext(item);
@@ -358,9 +364,8 @@ public class RxUtils {
      */
     public static void consume(Flowable<?> flowable) {
         Flowable<Throwable> tmp = flowable
-                .concatMapMaybe(batch -> {
-                    return Maybe.<Throwable>empty();
-                })
+                //.mapOptional(x -> Optional.<Throwable>empty())
+                .concatMapMaybe(x -> Maybe.<Throwable>empty())
                 .onErrorReturn(t -> t);
 
         Throwable e = tmp.singleElement().blockingGet();
