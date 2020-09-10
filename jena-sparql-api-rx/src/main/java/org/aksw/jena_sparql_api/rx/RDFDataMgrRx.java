@@ -952,7 +952,7 @@ public class RDFDataMgrRx {
         // TODO Prevent emitting of redundant prefix mappings
 
         return upstream -> upstream
-                .flatMapMaybe(batch -> {
+                .concatMapMaybe(batch -> {
                     for(Dataset item : batch) {
                         Dataset encoded = encoder.encode(item);
 
@@ -987,7 +987,7 @@ public class RDFDataMgrRx {
         }
 
         return upstream -> upstream
-                .flatMapMaybe(batch -> {
+                .concatMapMaybe(batch -> {
                     RDFDataMgr.writeQuads(out, batch.iterator());
                     out.flush();
                     return Maybe.<Throwable>empty();

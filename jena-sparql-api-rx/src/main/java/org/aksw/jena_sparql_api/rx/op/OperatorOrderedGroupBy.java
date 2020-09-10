@@ -157,7 +157,7 @@ public final class OperatorOrderedGroupBy<T, K, V>
         @Override
         public void onComplete() {
             if(currentAcc != null) {
-                System.out.println("EMITTED ITEM ON COMPLETE");
+                // System.out.println("EMITTED ITEM ON COMPLETE");
                 downstream.onNext(Maps.immutableEntry(currentKey, currentAcc));
             }
 
