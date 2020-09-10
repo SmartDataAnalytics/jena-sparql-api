@@ -33,19 +33,20 @@ public interface PageManager
      *
      * @return
      */
-    long size();
+    long getEndPos();
 
 
     /**
      * Retrieve the number of available pages
      *
      */
-    default long getPageCount() {
-        long endPos = getPageCount();
+    default long size() {
+        long endPos = getEndPos();
         int pageSize = getPageSize();
-        long result = endPos / pageSize;
+        long result = endPos / pageSize + 1 - (endPos % pageSize == 0 ? 1 : 0);
         return result;
     }
+
 
     default Reference<? extends Page> contentAtOrBefore(long pos, boolean inclusive) throws IOException {
         Reference<? extends Page> result = inclusive
@@ -62,13 +63,13 @@ public interface PageManager
     }
 
     default boolean hasBlockAfter(long pos) throws IOException {
-        long pageCount = getPageCount();
+        long pageCount = size();
         boolean result = pos >= -1 && pos < pageCount;
         return result;
     }
 
     default boolean hasBlockBefore(long pos) throws IOException {
-        long pageCount = getPageCount();
+        long pageCount = size();
         boolean result = pos == pageCount || pos > 0;
         return result;
 
@@ -80,7 +81,7 @@ public interface PageManager
      */
     default long getSizeOfBlock(long pos) throws IOException {
         int pageSize = getPageSize();
-        long lastIndex = getPageCount() - 1;
+        long lastIndex = size() - 1;
 
         long endPos = size();
 

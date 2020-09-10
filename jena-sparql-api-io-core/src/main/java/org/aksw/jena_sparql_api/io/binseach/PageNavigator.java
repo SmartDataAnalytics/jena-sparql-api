@@ -59,7 +59,7 @@ public class PageNavigator
     protected int maxIndex;
 
     public PageNavigator(PageManager pageManager) {
-        this(pageManager, 0, pageManager.size());
+        this(pageManager, 0, pageManager.getEndPos());
     }
 
 
@@ -108,7 +108,7 @@ public class PageNavigator
             throw new IndexOutOfBoundsException("min pos must not exceed max " + minPos + " " + maxPos);
         }
 
-        long endPos = pageManager.size();
+        long endPos = pageManager.getEndPos();
         minPos = Math.min(minPos, endPos);
         maxPos = Math.min(maxPos, endPos);
 

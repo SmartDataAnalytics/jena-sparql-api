@@ -129,9 +129,9 @@ public class PageManagerWrapper
     public int getPageSize() {
         return virtPageSize;
     }
+
     @Override
-    public long size() {
-        long result = delegate.size();
-        return result;
+    public long getEndPos() {
+        return delegate.getEndPos();
     }
 }

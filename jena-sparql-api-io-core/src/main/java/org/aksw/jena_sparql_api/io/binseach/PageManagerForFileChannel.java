@@ -79,11 +79,6 @@ public class PageManagerForFileChannel
         return result;
     }
 
-    @Override
-    public long size() {
-        return channelSize;
-    }
-
     public synchronized Reference<Page> getRefForPage(long page) throws IOException {
         long start = page * pageSize;
         long end = Math.min(channelSize, start + pageSize);
@@ -121,5 +116,10 @@ public class PageManagerForFileChannel
                 : parentRef.acquire("Secondary ref to page " + page);
 
         return result;
+    }
+
+    @Override
+    public long getEndPos() {
+        return channelSize;
     }
 }

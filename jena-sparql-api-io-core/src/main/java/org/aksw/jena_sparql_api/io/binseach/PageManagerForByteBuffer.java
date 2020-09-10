@@ -1,6 +1,5 @@
 package org.aksw.jena_sparql_api.io.binseach;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
 
 import org.aksw.jena_sparql_api.io.common.Reference;
@@ -37,7 +36,7 @@ public class PageManagerForByteBuffer
     }
 
     @Override
-    public long size() {
+    public long getEndPos() {
         return staticBuffer.remaining();
     }
 }
