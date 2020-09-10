@@ -115,6 +115,10 @@ public final class OperatorOrderedGroupBy<T, K, V>
 
         @Override
         public void onNext(T item) {
+            if (pending.get() == 0) {
+                System.out.println("PENDING IS ZERO");
+//                throw new RuntimeException("Received item without any pending requests");
+            }
             currentKey = getGroupKey.apply(item);
 
             if(currentAcc == null) {
@@ -123,12 +127,12 @@ public final class OperatorOrderedGroupBy<T, K, V>
                 currentAcc = accCtor.apply(currentKey);
 
                 Objects.requireNonNull(currentAcc, "Got null for an accumulator");
-            } else if(!groupKeyCompare.apply(priorKey, currentKey)) {//if(!Objects.equals(priorKey, currentKey)) {
+            } else if(!groupKeyCompare.apply(priorKey, currentKey)) {
 
                 Entry<K, V> e = Maps.immutableEntry(priorKey, currentAcc);
 //                System.out.println("Passing on " + e);
-                downstream.onNext(e);
                 pending.decrementAndGet();
+                downstream.onNext(e);
 
                 currentAcc = accCtor.apply(currentKey);
             }

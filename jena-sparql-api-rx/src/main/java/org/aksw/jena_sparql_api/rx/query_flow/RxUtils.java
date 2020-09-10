@@ -358,7 +358,7 @@ public class RxUtils {
      */
     public static void consume(Flowable<?> flowable) {
         Flowable<Throwable> tmp = flowable
-                .flatMapMaybe(batch -> {
+                .concatMapMaybe(batch -> {
                     return Maybe.<Throwable>empty();
                 })
                 .onErrorReturn(t -> t);

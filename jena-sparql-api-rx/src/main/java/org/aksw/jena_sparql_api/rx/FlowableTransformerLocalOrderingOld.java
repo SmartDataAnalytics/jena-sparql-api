@@ -20,6 +20,8 @@ import io.reactivex.rxjava3.core.FlowableSubscriber;
 import io.reactivex.rxjava3.core.FlowableTransformer;
 
 /**
+ * USE OperatorLocalOrder
+ *
  * A subscriber that performs local ordering of the items by their sequence id.
  * Local ordering means, that ordering is accomplished in a streaming fashion
  * without the need of a global view of *all* items.
@@ -45,11 +47,11 @@ import io.reactivex.rxjava3.core.FlowableTransformer;
  * @param <T>
  * @param <S>
  */
-public class FlowableTransformerLocalOrdering<T, S>
+public class FlowableTransformerLocalOrderingOld<T, S>
     //implements Subscriber<T>
     implements Emitter<T>
 {
-    private static final Logger logger = LoggerFactory.getLogger(FlowableTransformerLocalOrdering.class);
+    private static final Logger logger = LoggerFactory.getLogger(FlowableTransformerLocalOrderingOld.class);
 
     protected FlowableEmitter<? super T> delegate; //Consumer<? super T> delegate;
 
@@ -68,7 +70,7 @@ public class FlowableTransformerLocalOrdering<T, S>
     protected NavigableMap<S, T> seqIdToValue;
 
 
-    public FlowableTransformerLocalOrdering(
+    public FlowableTransformerLocalOrderingOld(
             S expectedSeqId,
             Function<? super S, ? extends S> incrementSeqId,
             BiFunction<? super S, ? super S, ? extends Number> distanceFn,
@@ -198,11 +200,11 @@ public class FlowableTransformerLocalOrdering<T, S>
 
 
     public static <T> Emitter<T> forLong(long initiallyExpectedId, Function<? super T, ? extends Long> extractSeqId, FlowableEmitter<? super T> delegate) {
-        return new FlowableTransformerLocalOrdering<T, Long>(initiallyExpectedId, id -> Long.valueOf(id.longValue() + 1l), (a, b) -> a - b, extractSeqId, delegate);
+        return new FlowableTransformerLocalOrderingOld<T, Long>(initiallyExpectedId, id -> Long.valueOf(id.longValue() + 1l), (a, b) -> a - b, extractSeqId, delegate);
     }
 
-    public static <T, S extends Comparable<S>> FlowableTransformerLocalOrdering<T, S> wrap(S initiallyExpectedId, Function<? super S, ? extends S> incrementSeqId, BiFunction<? super S, ? super S, ? extends Number> distanceFn, Function<? super T, ? extends S> extractSeqId, FlowableEmitter<? super T> delegate) {
-        return new FlowableTransformerLocalOrdering<T, S>(initiallyExpectedId, incrementSeqId, distanceFn, extractSeqId, delegate);
+    public static <T, S extends Comparable<S>> FlowableTransformerLocalOrderingOld<T, S> wrap(S initiallyExpectedId, Function<? super S, ? extends S> incrementSeqId, BiFunction<? super S, ? super S, ? extends Number> distanceFn, Function<? super T, ? extends S> extractSeqId, FlowableEmitter<? super T> delegate) {
+        return new FlowableTransformerLocalOrderingOld<T, S>(initiallyExpectedId, incrementSeqId, distanceFn, extractSeqId, delegate);
     }
 
     public static <T, S extends Comparable<S>> FlowableTransformer<T, T> transformer(S initiallyExpectedId, Function<? super S, ? extends S> incrementSeqId, BiFunction<? super S, ? super S, ? extends Number> distanceFn, Function<? super T, ? extends S> extractSeqId) {
@@ -212,7 +214,7 @@ public class FlowableTransformerLocalOrdering<T, S>
 
                 @Override
                 public void subscribe(FlowableEmitter<T> e) throws Exception {
-                    FlowableTransformerLocalOrdering<T, S> tmp = wrap(
+                    FlowableTransformerLocalOrderingOld<T, S> tmp = wrap(
                             initiallyExpectedId,
                             incrementSeqId,
                             distanceFn,
