@@ -24,7 +24,7 @@ public class SeekableSourceFromPageManager
 
 	@Override
 	public long size() {
-		long result = pageManager.getEndPos();
+		long result = pageManager.size();
 		return result;
 	}
 

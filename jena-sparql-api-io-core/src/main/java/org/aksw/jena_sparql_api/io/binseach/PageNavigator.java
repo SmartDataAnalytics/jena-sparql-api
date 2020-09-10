@@ -39,7 +39,7 @@ public class PageNavigator
      * Initialization happens in getBufferForPage()
      */
 
-    protected Reference<Page> pageObj = null;
+    protected Reference<? extends Page> pageObj = null;
 
     protected ByteBuffer pageBuffer = null;
     protected int displacement;
@@ -59,7 +59,7 @@ public class PageNavigator
     protected int maxIndex;
 
     public PageNavigator(PageManager pageManager) {
-        this(pageManager, 0, pageManager.getEndPos());
+        this(pageManager, 0, pageManager.size());
     }
 
 
@@ -108,7 +108,7 @@ public class PageNavigator
             throw new IndexOutOfBoundsException("min pos must not exceed max " + minPos + " " + maxPos);
         }
 
-        long endPos = pageManager.getEndPos();
+        long endPos = pageManager.size();
         minPos = Math.min(minPos, endPos);
         maxPos = Math.min(maxPos, endPos);
 

@@ -80,7 +80,7 @@ public class PageManagerForFileChannel
     }
 
     @Override
-    public long getEndPos() {
+    public long size() {
         return channelSize;
     }
 

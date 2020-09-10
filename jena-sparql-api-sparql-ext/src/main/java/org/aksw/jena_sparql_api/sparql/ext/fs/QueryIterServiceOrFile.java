@@ -13,6 +13,8 @@ import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 
 import org.aksw.jena_sparql_api.io.binseach.BinarySearchOnSortedFile;
+import org.aksw.jena_sparql_api.io.binseach.BinarySearcher;
+import org.aksw.jena_sparql_api.io.binseach.BlockSources;
 import org.aksw.jena_sparql_api.io.binseach.GraphFromPrefixMatcher;
 import org.aksw.jena_sparql_api.io.binseach.GraphFromSubjectCache;
 import org.aksw.jena_sparql_api.rx.GraphOpsRx;
@@ -141,13 +143,18 @@ public class QueryIterServiceOrFile extends QueryIterService {
 
             boolean specialProcessingApplied = false;
 
-            String binSearchVal = params.get("binsearch");
-            if("true".equalsIgnoreCase(binSearchVal)) {
+            boolean useBinSearch = params.containsKey("binsearch");
+            String binSearchVal = params.getOrDefault("binsearch", "");
+            if(useBinSearch || "true".equalsIgnoreCase(binSearchVal)) {
                 specialProcessingApplied = true;
 
                 // Model generation wrapped as a flowable for resource management
                 Flowable<Binding> bindingFlow = Flowable.generate(() -> {
-                    Graph graph = new GraphFromPrefixMatcher(BinarySearchOnSortedFile.create(path));
+                    BinarySearcher binarySearcher = path.getFileName().endsWith("bz2")
+                        ? BlockSources.createBinarySearcherBz2(path)
+                        : BlockSources.createBinarySearcherText(path);
+
+                    Graph graph = new GraphFromPrefixMatcher(binarySearcher);
                     GraphFromSubjectCache subjectCacheGraph = new GraphFromSubjectCache(graph);
                     Model model = ModelFactory.createModelForGraph(subjectCacheGraph);
                     QueryExecution qe = QueryExecutionFactory.create(query, model);
