@@ -98,9 +98,10 @@ public class QueryIterServiceOrFile extends QueryIterService {
                     URI effectiveUri = new URI(uriStr.replaceAll("\\?.*", ""));
 
                     path = Paths.get(effectiveUri);
-                    boolean fileExists = Files.exists(path);
+//                    boolean fileExists = Files.exists(path);
 
-                    result = fileExists ? Maps.immutableEntry(path, params) : null;
+                    // result = fileExists ? Maps.immutableEntry(path, params) : null;
+                    return Maps.immutableEntry(path, params);
                 } catch (URISyntaxException e) {
                     //throw new RuntimeException(e);
                     // Nothing todo; we simply return null if we fail
@@ -150,7 +151,7 @@ public class QueryIterServiceOrFile extends QueryIterService {
 
                 // Model generation wrapped as a flowable for resource management
                 Flowable<Binding> bindingFlow = Flowable.generate(() -> {
-                    BinarySearcher binarySearcher = path.getFileName().endsWith("bz2")
+                    BinarySearcher binarySearcher = path.getFileName().toString().toLowerCase().endsWith(".bz2")
                         ? BlockSources.createBinarySearcherBz2(path)
                         : BlockSources.createBinarySearcherText(path);
 
