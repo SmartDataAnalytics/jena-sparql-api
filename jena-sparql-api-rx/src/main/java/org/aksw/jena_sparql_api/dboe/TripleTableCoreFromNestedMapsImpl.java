@@ -6,12 +6,10 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 import org.aksw.jena_sparql_api.dboe.QuadTableCoreFromNestedMapsImpl.MapSupplier;
-import org.apache.jena.ext.com.google.common.collect.ForwardingMap;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 
 public class TripleTableCoreFromNestedMapsImpl
-    extends ForwardingMap<Node, Map<Node, Map<Node, Triple>>>
     implements TripleTableCore
 {
     protected Map<Node, Map<Node, Map<Node, Triple>>> store;
@@ -27,11 +25,6 @@ public class TripleTableCoreFromNestedMapsImpl
 
         // Initialize
         store = mapSupplier.newMap();
-    }
-
-    @Override
-    protected Map<Node, Map<Node, Map<Node, Triple>>> delegate() {
-        return store;
     }
 
     @Override
@@ -123,6 +116,8 @@ public class TripleTableCoreFromNestedMapsImpl
             if(pm.isEmpty()) { store.remove(triple.getSubject()); }
         }
     }
+
+
 
 //  public static Map<Node, Map<Node, Map<Node, Map<Node, Triple>>>> copy(
 //  Stream<Triple> stream,
