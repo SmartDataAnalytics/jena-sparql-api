@@ -38,6 +38,7 @@ import org.apache.jena.sparql.graph.NodeTransformLib;
 import org.apache.jena.sparql.modify.request.QuadAcc;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementFilter;
+import org.apache.jena.sparql.syntax.ElementGroup;
 import org.apache.jena.sparql.syntax.ElementNamedGraph;
 import org.apache.jena.sparql.syntax.ElementSubQuery;
 import org.apache.jena.sparql.syntax.ElementVisitorBase;
@@ -691,7 +692,12 @@ public class QueryUtils {
         if (pattern == null)
             return null;
         Query query = new Query();
-        query.setQueryPattern(pattern);
+
+        Element cleanElement = pattern instanceof ElementGroup || pattern instanceof ElementSubQuery
+                ? pattern
+                : ElementUtils.createElementGroup(pattern);
+
+        query.setQueryPattern(cleanElement);
         query.setQuerySelectType();
 
         if (resultVar == null) {
