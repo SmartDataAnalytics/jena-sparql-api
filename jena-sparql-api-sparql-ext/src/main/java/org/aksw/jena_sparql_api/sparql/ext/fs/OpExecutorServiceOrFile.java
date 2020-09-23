@@ -8,12 +8,12 @@ import org.apache.jena.sparql.engine.main.OpExecutor;
 public class OpExecutorServiceOrFile
     extends OpExecutor
 {
-    protected OpExecutorServiceOrFile(ExecutionContext execCxt) {
+    public OpExecutorServiceOrFile(ExecutionContext execCxt) {
         super(execCxt);
     }
 
     @Override
-    protected QueryIterator execute(OpService opService, QueryIterator input) {
+    public QueryIterator execute(OpService opService, QueryIterator input) {
         return new QueryIterServiceOrFile(input, opService, execCxt);
     }
 }

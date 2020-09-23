@@ -197,6 +197,9 @@ public class QueryGenerationUtils {
         Query clone = query.cloneQuery();
 
         if(clone.isConstructType()) {
+            // Try to count the distinct number of template instantiations - i.e.
+            // the number of distinct bindings involving the variables
+            // mentioned in the template
             Template template = clone.getConstructTemplate();
             Set<Var> vars = partitionVars == null
                     ? QuadPatternUtils.getVarsMentioned(template.getQuads())
@@ -204,9 +207,10 @@ public class QueryGenerationUtils {
 
             clone.setQuerySelectType();
 
-            // TODO Vars may be empty, in case we deal with a partitioned query
             if(vars.isEmpty()) {
                 //query.setQueryResultStar(true);
+                // TODO The distinct number of template instantiations if there is no var in a template is
+                // at most 1
                 throw new RuntimeException("Variables required for counting");
             } else {
                 clone.setQueryResultStar(false);
