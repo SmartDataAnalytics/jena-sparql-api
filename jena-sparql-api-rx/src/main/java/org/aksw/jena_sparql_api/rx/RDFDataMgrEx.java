@@ -16,6 +16,7 @@ import org.apache.jena.atlas.web.TypedInputStream;
 import org.apache.jena.ext.com.google.common.collect.ArrayListMultimap;
 import org.apache.jena.ext.com.google.common.collect.Multimap;
 import org.apache.jena.ext.com.google.common.collect.Streams;
+import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -26,6 +27,7 @@ import org.apache.jena.riot.RDFLanguages;
 import org.apache.jena.riot.RDFParser;
 import org.apache.jena.riot.resultset.ResultSetReaderRegistry;
 import org.apache.jena.shared.PrefixMapping;
+import org.apache.jena.sparql.core.Quad;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -217,6 +219,9 @@ public class RDFDataMgrEx {
         if(useStdIn) {
             // Use the close shield to prevent closing stdin on .close()
             // TODO Investigate if this is redundant; RDFDataMgr might already do it
+
+            // FIXME Does not work for encoded streams; for those we would have to go through
+            // Jena's StreamManager
             result = probeLang(new BufferedInputStream(System.in), probeLangs);
         } else {
             result = Objects.requireNonNull(RDFDataMgr.open(src), "Could not create input stream from " + src);
@@ -245,6 +250,19 @@ public class RDFDataMgrEx {
         return result;
     }
 
+
+    public static RDFIterator<Triple> createIteratorTriples(PrefixMapping prefixMapping, InputStream in, Lang lang) {
+        InputStream combined = prependWithPrefixes(in, prefixMapping);
+        RDFIterator<Triple> it = RDFDataMgrRx.createIteratorTriples(combined, lang, null, (thread, throwable) -> {}, thread -> {});
+        return it;
+    }
+
+
+    public static RDFIterator<Quad> createIteratorQuads(PrefixMapping prefixMapping, InputStream in, Lang lang) {
+        InputStream combined = prependWithPrefixes(in, prefixMapping);
+        RDFIterator<Quad> it = RDFDataMgrRx.createIteratorQuads(combined, lang, null, (thread, throwable) -> {}, thread -> {});
+        return it;
+    }
 
     public static Dataset parseTrigAgainstDataset(Dataset dataset, PrefixMapping prefixMapping, InputStream in) {
         // Add namespaces from the spec
