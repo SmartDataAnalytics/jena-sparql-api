@@ -293,7 +293,7 @@ public class RDFDataMgrRx {
                 input), baseIRI);
         }
         // Otherwise, we have to spin up a thread to deal with it
-        final PipedRDFIterator<Quad> it = new PipedRDFIterator<>(bufferSize, fair, pollTimeout, maxPolls);
+        final RDFIteratorFromPipedRDFIterator<Quad> it = new RDFIteratorFromPipedRDFIterator<>(bufferSize, fair, pollTimeout, maxPolls);
 
         // Upgrade triples to quads; this happens if quads are requested from a triple lang
         final PipedQuadsStream out = new PipedQuadsStream(it) {
@@ -319,7 +319,7 @@ public class RDFDataMgrRx {
         });
         th.accept(t);
         t.start();
-        return new RDFIteratorFromPipedRDFIterator<Quad>(it);
+        return it;
     }
 
 
@@ -351,7 +351,7 @@ public class RDFDataMgrRx {
                 input), baseIRI);
         }
         // Otherwise, we have to spin up a thread to deal with it
-        final PipedRDFIterator<Triple> it = new PipedRDFIterator<>(bufferSize, fair, pollTimeout, maxPolls);
+        final RDFIteratorFromPipedRDFIterator<Triple> it = new RDFIteratorFromPipedRDFIterator<>(bufferSize, fair, pollTimeout, maxPolls);
         final PipedTriplesStream out = new PipedTriplesStream(it);
 
         Thread t = new Thread(()-> {
@@ -369,7 +369,7 @@ public class RDFDataMgrRx {
         });
         th.accept(t);
         t.start();
-        return new RDFIteratorFromPipedRDFIterator<Triple>(it);
+        return it;
     }
 
     public static void parseFromInputStream(StreamRDF destination, InputStream in, String baseUri, Lang lang, Context context) {

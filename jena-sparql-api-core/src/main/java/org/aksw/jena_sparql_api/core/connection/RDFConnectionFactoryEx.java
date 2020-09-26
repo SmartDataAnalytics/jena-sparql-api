@@ -1,11 +1,11 @@
-package org.aksw.jena_sparql_api.core;
+package org.aksw.jena_sparql_api.core.connection;
 
 import java.lang.reflect.Field;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import org.aksw.jena_sparql_api.core.connection.QueryExecutionFactorySparqlQueryConnection;
-import org.aksw.jena_sparql_api.core.connection.SparqlQueryConnectionJsa;
+import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
+import org.aksw.jena_sparql_api.core.SparqlServiceReference;
 import org.aksw.jena_sparql_api.stmt.SparqlStmt;
 import org.aksw.jena_sparql_api.utils.Symbols;
 import org.apache.jena.query.Dataset;

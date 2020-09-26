@@ -1,6 +1,6 @@
 package org.aksw.jena_sparql_api.core.plugin;
 
-import org.aksw.jena_sparql_api.core.RDFConnectionMetaData;
+import org.aksw.jena_sparql_api.core.connection.RDFConnectionMetaData;
 import org.aksw.jena_sparql_api.mapper.proxy.JenaPluginUtils;
 import org.apache.jena.enhanced.Personality;
 import org.apache.jena.rdf.model.RDFNode;

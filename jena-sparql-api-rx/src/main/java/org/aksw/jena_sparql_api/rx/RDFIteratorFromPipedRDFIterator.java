@@ -1,45 +1,34 @@
 package org.aksw.jena_sparql_api.rx;
 
 import org.apache.jena.riot.lang.PipedRDFIterator;
-import org.apache.jena.riot.system.PrefixMap;
 
 public class RDFIteratorFromPipedRDFIterator<T>
+    extends PipedRDFIterator<T>
     implements RDFIterator<T>
 {
-    protected PipedRDFIterator<T> delegate;
+    /** A dirty flag for prefixes */
+    protected boolean prefixesChanged = false;
 
-    public RDFIteratorFromPipedRDFIterator(PipedRDFIterator<T> delegate) {
-        super();
-        this.delegate = delegate;
+    public RDFIteratorFromPipedRDFIterator(int bufferSize, boolean fair, int pollTimeout, int maxPolls) {
+        super(bufferSize, fair, pollTimeout, maxPolls);
     }
 
     @Override
-    public void close() {
-        delegate.close();
+    protected void prefix(String prefix, String iri) {
+        super.prefix(prefix, iri);
+        prefixesChanged = true;
     }
 
-    @Override
-    public boolean hasNext() {
-        return delegate.hasNext();
-    }
-
-    @Override
-    public T next() {
-        return delegate.next();
-    }
-
-    @Override
-    public PrefixMap getPrefixes() {
-        return delegate.getPrefixes();
-    }
-
-    @Override
-    public String getBaseIri() {
-        return delegate.getBaseIri();
-    }
-
+    /**
+     * Returns the status of the dirty flag for prefixes and resets it to false.
+     * Hence, should this method return true at a future invocation there has been a change since
+     * the last invocation
+     *
+     */
     @Override
     public boolean prefixesChanged() {
-        return false;
+        boolean result = prefixesChanged;
+        prefixesChanged = false;
+        return result;
     }
 }

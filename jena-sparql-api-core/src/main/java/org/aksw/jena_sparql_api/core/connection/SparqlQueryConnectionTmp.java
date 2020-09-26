@@ -45,8 +45,8 @@ public interface SparqlQueryConnectionTmp
         if ( ! query.isSelectType() )
             throw new JenaConnectionException("Query is not a SELECT query");
 
-        Txn.executeRead(this, ()->{
-            try ( QueryExecution qExec = query(query) ) {
+        Txn.executeRead(this, ()-> {
+            try (QueryExecution qExec = query(query) ) {
                 ResultSet rs = qExec.execSelect();
                 resultSetAction.accept(rs);
             }
@@ -155,8 +155,8 @@ public interface SparqlQueryConnectionTmp
     public default QueryExecution query(String queryString) {
         return query(QueryFactory.create(queryString));
     }
-    
-//    
+
+//
 //	@Override
 //	public default void querySelect(String query, Consumer<QuerySolution> rowAction) {
 //		this.queryResultSet(query, rs -> {

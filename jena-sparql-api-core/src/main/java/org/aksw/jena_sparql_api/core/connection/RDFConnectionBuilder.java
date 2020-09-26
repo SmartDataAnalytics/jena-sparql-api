@@ -2,7 +2,6 @@ package org.aksw.jena_sparql_api.core.connection;
 
 import java.util.function.Function;
 
-import org.aksw.jena_sparql_api.core.RDFConnectionFactoryEx;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.query.Query;
