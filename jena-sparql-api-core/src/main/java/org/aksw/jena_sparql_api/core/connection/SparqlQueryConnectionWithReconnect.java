@@ -96,7 +96,7 @@ public class SparqlQueryConnectionWithReconnect
     }
 
 
-    protected boolean isRecoverableException(Throwable t) {
+    protected boolean isConnectionProblemException(Throwable t) {
         return ExceptionUtilsAksw.isConnectionRefusedException(t)
                 || ExceptionUtilsAksw.isUnknownHostException(t);
     }
@@ -148,25 +148,29 @@ public class SparqlQueryConnectionWithReconnect
     }
 
 
-    protected void runRecovery(Exception e) {
-        if (isRecoverableException(e)) {
-            try {
-                healthCheckBuilder.get()
-                    .setAction(() -> tryRecovery())
-                    .addFatalCondition(ex -> !isRecoverableException(ex))
-                    .build()
-                    .run();
-            } catch (Exception mostRecentHealthCheckException) {
-                isLost = true;
-                throw new ConnectionLostException("connection lost", mostRecentHealthCheckException);
-            }
-
-            throw new ConnectionReestablishedException("connection re-established", e);
-
-        } else {
-            isLost = true;
-            throw new ConnectionLostException("connection lost", e);
+    protected void testForConnectionProblem(Exception e) {
+        if (isConnectionProblemException(e)) {
+            handleConnectionProblem(e);
         }
+        else {
+            // Assume a 'normal' query exception
+            throw new RuntimeException(e);
+        }
+    }
+
+    protected void handleConnectionProblem(Exception e) {
+        try {
+            healthCheckBuilder.get()
+                .setAction(() -> tryRecovery())
+                .addFatalCondition(ex -> !isConnectionProblemException(ex))
+                .build()
+                .run();
+        } catch (Exception mostRecentHealthCheckException) {
+            isLost = true;
+            throw new ConnectionLostException("connection lost", mostRecentHealthCheckException);
+        }
+
+        throw new ConnectionReestablishedException("connection re-established", e);
     }
 
 
@@ -188,7 +192,7 @@ public class SparqlQueryConnectionWithReconnect
 
         @Override
         protected void onException(Exception e) {
-            runRecovery(e);
+            testForConnectionProblem(e);
         }
     }
 
