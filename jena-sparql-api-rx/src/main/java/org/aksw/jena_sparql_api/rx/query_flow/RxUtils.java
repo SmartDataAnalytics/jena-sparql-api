@@ -3,6 +3,7 @@ package org.aksw.jena_sparql_api.rx.query_flow;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -10,6 +11,8 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 import org.reactivestreams.Subscription;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import io.reactivex.rxjava3.core.BackpressureStrategy;
 import io.reactivex.rxjava3.core.Flowable;
@@ -25,6 +28,27 @@ import io.reactivex.rxjava3.internal.fuseable.SimpleQueue;
 import io.reactivex.rxjava3.internal.queue.SpscArrayQueue;
 
 public class RxUtils {
+    private static final Logger logger = LoggerFactory.getLogger(RxUtils.class);
+
+    /**
+     * If something goes wrong when running the wrapped action
+     * then log an error return an empty maybe
+     *
+     * @param action A callable encapsulating some action
+     * @return A maybe with the action's return value or empty
+     */
+   public static <T> Maybe<T> safeMaybe(Callable<T> action) {
+       Maybe<T> result;
+       try {
+           T value = action.call();
+           result = Maybe.just(value);
+       } catch (Exception e) {
+           logger.warn("An exception occurred; trying to continue", e);
+           result = Maybe.empty();
+       }
+       return result;
+   }
+
     /**
      * A 'poison' is an object that serves as an end marker on blocking queues
      */
