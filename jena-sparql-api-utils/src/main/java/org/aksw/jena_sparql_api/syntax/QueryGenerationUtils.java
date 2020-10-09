@@ -807,17 +807,16 @@ public class QueryGenerationUtils {
 
         // || query.isDistinct() || query.isReduced();
 
-          if(itemLimit != null) {
-              long queryLimit = query.getLimit();
-              long effectiveItemLimit = queryLimit == Query.NOLIMIT
-                      ? itemLimit
-                      : Math.min(queryLimit, itemLimit);
+        long tmpItemLimit = itemLimit == null ? Query.NOLIMIT : itemLimit;
+        long queryLimit = query.getLimit();
+        long effectiveLimit = queryLimit == Query.NOLIMIT
+                ? tmpItemLimit
+                : tmpItemLimit == Query.NOLIMIT
+                    ? queryLimit
+                    : Math.min(queryLimit, itemLimit);
 
-//              query.setDistinct(false);
-              query.setLimit(effectiveItemLimit);
-
-//              query = QueryGenerationUtils.wrapAsSubQuery(query);
-//              query.setDistinct(isDistinct);
+        if(effectiveLimit != Query.NOLIMIT) {
+              query.setLimit(effectiveLimit);
               needsWrapping = true;
           }
 

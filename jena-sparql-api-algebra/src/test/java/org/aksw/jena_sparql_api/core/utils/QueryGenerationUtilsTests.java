@@ -304,6 +304,18 @@ public class QueryGenerationUtilsTests {
         );
     }
 
+    @Test
+    public void testCountQueryGenerationForLimitBug() {
+        eval(
+            "SELECT * { ?s ?p ?o } LIMIT 100 OFFSET 5",
+            input -> {
+                Entry<Var, Query> count = QueryGenerationUtils.createQueryCountCore(input, 50l, null);
+                return count.getValue();
+            },
+            "SELECT (COUNT(*) AS ?c_1) { SELECT * { ?s ?p ?o } LIMIT 50 OFFSET 5 }"
+        );
+    }
+
     /**
      * Queries only with constants caused an exception in the rewrite stating that there need to be
      * variables
