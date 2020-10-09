@@ -47,7 +47,7 @@ import java.lang.annotation.RetentionPolicy;
  * </pre>
  *
  *
- * Using {@code @HashId} on class level allows giving post-processing all obtained hashes
+ * Using {@code @HashId} on class level allows post-processing all obtained hashes
  * with a hash based on the class. By default it is derived from the class name.
  * The following example demonstrates that even if .getId() of A and B yield the same hash,
  * the final hash will be combined with the hash of A and B respectively:

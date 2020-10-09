@@ -23,14 +23,19 @@ import org.slf4j.LoggerFactory;
  *
  * If a query fails due to a connection loss then attempts ares made to establish a new connection.
  * If an attempt is successful then a ConnectionReestablishedException is raised which indicates that the
- * connection would be ready to accept workloads again.
+ * query failed but the connection would be ready to accept workloads again.
  *
  * The main benefit of this class that it removes the need of passing a {@link java.sql.DataSource}-like object to
  * client methods that operate on a single connection. It also takes care of the resource management such
  * as closing the connections used for probing.
  * The client methods can catch the
- * ConnectionReestablishedException and act accordingly (such as by replaying some queries or moving on
- * the the next workload).
+ * {@link ConnectionReestablishedException} and {@link ConnectionLostException} and act accordingly
+ * such as by replaying some queries or moving on the the next workload.
+ *
+ * This class is thread safe: In case of a connection problem, the health check runner is started by one
+ * of the threads that requested a query execution. All other threads are blocked while the health check is running
+ * and fire the appropriate exception once it finishes.
+ *
  *
  * @author raven
  *
@@ -44,10 +49,26 @@ public class SparqlQueryConnectionWithReconnect
     protected Callable<SparqlQueryConnection> dataConnectionSupplier;
     protected Callable<SparqlQueryConnection> probeConnectionSupplier;
 
-    protected Query healthCheckQuery = QueryFactory.create("SELECT * { ?s <http://www.example.org/rdf/type> <http://www.example.org/rdf/Resource> }");
+    protected Query healthCheckQuery = QueryFactory.create(
+            "SELECT * { ?s <http://www.example.org/rdf/type> <http://www.example.org/rdf/Resource> }");
+
     protected Supplier<HealthcheckRunner.Builder> healthCheckBuilder;
 
-    protected boolean isLost = false;
+    /** True indicates that a recovery process was started which eventually failed */
+    // protected boolean isLost = false;
+    protected transient Exception connectionLostCause = null;
+
+    /**
+     * Number of times the healthcheck runner was invoked in an attempt to reconnect.
+     * Not to be confused with the number of reconnect attempts made by a single healthcheck run.
+     * This value is used as 'timestamp' when multiple requests are waiting for the connection
+     * to become available again
+     */
+    protected transient int reconnectAttemptCount = 0;
+
+    public boolean isConnectionLost() {
+        return connectionLostCause != null;
+    }
 
     public SparqlQueryConnectionWithReconnect(
             Callable<SparqlQueryConnection> dataConnectionSupplier,
@@ -61,6 +82,10 @@ public class SparqlQueryConnectionWithReconnect
         this.healthCheckBuilder = healthCheckBuilder;
     }
 
+
+    public int getReconnectAttemptCount() {
+        return reconnectAttemptCount;
+    }
 
     /** Immediately obtain a connection from the supplier */
     public static SparqlQueryConnectionWithReconnect create(
@@ -84,11 +109,15 @@ public class SparqlQueryConnectionWithReconnect
         return activeDelegate;
     }
 
+    protected void checkForConnectionLoss() {
+        if (connectionLostCause != null) {
+            throw new ConnectionLostException("connection lost", connectionLostCause);
+        }
+    }
+
     @Override
     public QueryExecution query(Query query) {
-        if (isLost) {
-            throw new ConnectionLostException("conneection lost");
-        }
+        checkForConnectionLoss();
 
         QueryExecution core = activeDelegate.query(query);
         QueryExecution wrapped = new QueryExecutionWithReconnect(core);
@@ -118,7 +147,7 @@ public class SparqlQueryConnectionWithReconnect
      *
      * @throws Exception
      */
-    protected synchronized void tryRecovery() throws Exception {
+    protected void tryRecovery() throws Exception {
         forceCloseActiveConn();
 
         boolean reuseProbeConn = probeConnectionSupplier == dataConnectionSupplier;
@@ -148,29 +177,37 @@ public class SparqlQueryConnectionWithReconnect
     }
 
 
-    protected void testForConnectionProblem(Exception e) {
+    protected void testForConnectionProblem(Exception e, int timestamp) {
         if (isConnectionProblemException(e)) {
-            handleConnectionProblem(e);
+            handleConnectionProblem(e, timestamp);
         }
         else {
-            // Assume a 'normal' query exception
+            // Assume a 'normal' query exception, i.e. there is no problem
+            // with the connection itself
             throw new RuntimeException(e);
         }
     }
 
-    protected void handleConnectionProblem(Exception e) {
-        try {
-            healthCheckBuilder.get()
-                .setAction(() -> tryRecovery())
-                .addFatalCondition(ex -> !isConnectionProblemException(ex))
-                .build()
-                .run();
-        } catch (Exception mostRecentHealthCheckException) {
-            isLost = true;
-            throw new ConnectionLostException("connection lost", mostRecentHealthCheckException);
+    protected synchronized void handleConnectionProblem(Exception e, int timestamp) {
+        if (connectionLostCause == null && reconnectAttemptCount == timestamp) {
+            try {
+                healthCheckBuilder.get()
+                    .setAction(() -> tryRecovery())
+                    .addFatalCondition(ex -> !isConnectionProblemException(ex))
+                    .build()
+                    .run();
+            } catch (Exception mostRecentHealthCheckException) {
+                connectionLostCause = mostRecentHealthCheckException;
+            }
+            ++reconnectAttemptCount;
         }
 
-        throw new ConnectionReestablishedException("connection re-established", e);
+
+        if (connectionLostCause != null) {
+            throw new ConnectionLostException("connection lost", connectionLostCause);
+        } else {
+            throw new ConnectionReestablishedException("connection re-established", e);
+        }
     }
 
 
@@ -185,14 +222,14 @@ public class SparqlQueryConnectionWithReconnect
         protected void beforeExec() {
             super.beforeExec();
 
-            if (isLost) {
-                throw new ConnectionLostException("connection lost");
-            }
+            checkForConnectionLoss();
         }
 
         @Override
         protected void onException(Exception e) {
-            testForConnectionProblem(e);
+            int timestamp = getReconnectAttemptCount();
+
+            testForConnectionProblem(e, timestamp);
         }
     }
 
