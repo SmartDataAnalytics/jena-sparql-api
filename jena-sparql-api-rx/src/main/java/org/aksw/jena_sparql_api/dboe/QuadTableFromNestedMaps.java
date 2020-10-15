@@ -5,7 +5,10 @@ import java.util.stream.Stream;
 
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.ReadWrite;
+import org.apache.jena.query.TxnType;
 import org.apache.jena.sparql.core.Quad;
+import org.apache.jena.sparql.core.Transactional;
+import org.apache.jena.sparql.core.Transactional.Promote;
 import org.apache.jena.sparql.core.mem.QuadTable;
 
 
@@ -18,7 +21,7 @@ import org.apache.jena.sparql.core.mem.QuadTable;
  *
  */
 public class QuadTableFromNestedMaps
-    implements QuadTable
+    implements QuadTable, Transactional
 {
     public static class TxnState {
         ReadWrite mode;
@@ -108,6 +111,38 @@ public class QuadTableFromNestedMaps
         // QuadTableCore allows to yield quads in the default graph - but the contract of QuadTable forbids it!
         return local().get().diff.listGraphNodes()
                 .filter(node -> !Quad.isDefaultGraph(node));
+    }
+
+    @Override
+    public void begin(TxnType type) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean promote(Promote mode) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public ReadWrite transactionMode() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public TxnType transactionType() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean isInTransaction() {
+        TxnState txnState = local().get();
+        boolean result = txnState != null;
+        return result;
+    }
+
+    @Override
+    public void abort() {
+        throw new UnsupportedOperationException();
     }
 
 }
