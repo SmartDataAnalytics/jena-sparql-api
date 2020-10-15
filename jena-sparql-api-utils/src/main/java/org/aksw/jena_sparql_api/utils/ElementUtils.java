@@ -58,65 +58,65 @@ public class ElementUtils {
 //
 //        return result;
 //    }
-	
-	
-	public static Element applyOpTransform(Element elt, Function<? super Op, ? extends Op> transform) {
-		Op beforeOp = Algebra.compile(elt);
-		Op afterOp = transform.apply(beforeOp);
-		Query query = OpAsQuery.asQuery(afterOp);
-		Element r = query.getQueryPattern();
-		return r;
-	}
-	
-	// PatternVars only returns visible vars, this returns all mentioned vars
-	public static Set<Var> getVarsMentioned(Element e) {
-		NodeTransformCollectNodes tmp = new NodeTransformCollectNodes();
+
+
+    public static Element applyOpTransform(Element elt, Function<? super Op, ? extends Op> transform) {
+        Op beforeOp = Algebra.compile(elt);
+        Op afterOp = transform.apply(beforeOp);
+        Query query = OpAsQuery.asQuery(afterOp);
+        Element r = query.getQueryPattern();
+        return r;
+    }
+
+    // PatternVars only returns visible vars, this returns all mentioned vars
+    public static Set<Var> getVarsMentioned(Element e) {
+        NodeTransformCollectNodes tmp = new NodeTransformCollectNodes();
         ElementUtils.applyNodeTransform(e, tmp);
 
-		Set<Node> nodes = tmp.getNodes();
-		Set<Var> result = nodes.stream()
-				.filter(Node::isVariable)
-				.map(n -> (Var)n)
-				.collect(Collectors.toSet());
+        Set<Node> nodes = tmp.getNodes();
+        Set<Var> result = nodes.stream()
+                .filter(Node::isVariable)
+                .map(n -> (Var)n)
+                .collect(Collectors.toSet());
 
-		return result;
-	}
-	
-	
-	public static ElementTriplesBlock createElementTriple(Triple ... triples) {
-		return createElementTriple(Arrays.asList(triples));
-	}
+        return result;
+    }
 
-	public static ElementTriplesBlock createElementTriple(Iterable<Triple> triples) {
-		BasicPattern bgp = new BasicPattern();
-		triples.forEach(bgp::add);
-		ElementTriplesBlock result = new ElementTriplesBlock(bgp);
-		return result;
-	}
 
-	public static ElementTriplesBlock createElementTriple(Node s, Node p, Node o) {
-		return createElement(new Triple(s, p, o));
-	}
-	
-	
+    public static ElementTriplesBlock createElementTriple(Triple ... triples) {
+        return createElementTriple(Arrays.asList(triples));
+    }
 
-	public static ElementPathBlock createElementPath(Node s, Path p, Node o) {
-		ElementPathBlock result = createElementPath(new TriplePath(s, p, o));
-		return result;
-	}
+    public static ElementTriplesBlock createElementTriple(Iterable<Triple> triples) {
+        BasicPattern bgp = new BasicPattern();
+        triples.forEach(bgp::add);
+        ElementTriplesBlock result = new ElementTriplesBlock(bgp);
+        return result;
+    }
 
-	public static ElementPathBlock createElementPath(TriplePath ... tps) {
-		ElementPathBlock result = createElementPath(Arrays.asList(tps));
-		return result;
-	}
+    public static ElementTriplesBlock createElementTriple(Node s, Node p, Node o) {
+        return createElement(new Triple(s, p, o));
+    }
 
-	public static ElementPathBlock createElementPath(Iterable<TriplePath> it) {
-		ElementPathBlock result = new ElementPathBlock();
-		for(TriplePath tp : it) {
-			result.addTriple(tp);
-		}
-		return result;
-	}
+
+
+    public static ElementPathBlock createElementPath(Node s, Path p, Node o) {
+        ElementPathBlock result = createElementPath(new TriplePath(s, p, o));
+        return result;
+    }
+
+    public static ElementPathBlock createElementPath(TriplePath ... tps) {
+        ElementPathBlock result = createElementPath(Arrays.asList(tps));
+        return result;
+    }
+
+    public static ElementPathBlock createElementPath(Iterable<TriplePath> it) {
+        ElementPathBlock result = new ElementPathBlock();
+        for(TriplePath tp : it) {
+            result.addTriple(tp);
+        }
+        return result;
+    }
 
     public static ElementTriplesBlock createElement(Triple triple) {
         BasicPattern bgp = new BasicPattern();
@@ -244,10 +244,10 @@ public class ElementUtils {
     }
 
     public static Element unionIfNeeded(Element ... elements) {
-    	Element result = unionIfNeeded(Arrays.asList(elements));
-    	return result;
+        Element result = unionIfNeeded(Arrays.asList(elements));
+        return result;
     }
-    
+
     public static Element unionIfNeeded(Collection<Element> elements) {
         Element result;
         if(elements.size() == 1) {
@@ -305,7 +305,7 @@ public class ElementUtils {
 //    }
 
     public static Element applyNodeTransform(Element element, NodeTransform nodeTransform) {
-    	return applyNodeTransformBackport(element, nodeTransform);
+        return applyNodeTransformBackport(element, nodeTransform);
     }
 
     public static Element applyNodeTransformJena(Element element, NodeTransform nodeTransform) {
@@ -315,18 +315,19 @@ public class ElementUtils {
         //Element result = ElementTransformer.transform(element, elementTransform, exprTransform);
 //      Element result = org.aksw.jena_sparql_api.backports.syntaxtransform.ElementTransformer.transform(element, elementTransform, exprTransform);
         Element result = org.apache.jena.sparql.syntax.syntaxtransform.ElementTransformer.transform(element, elementTransform, exprTransform);
-        
+
         return result;
     }
 
-    // TODO As long as ApplyElementTransformVistitor cannot change the behavior to simply substitute variables - istead of doing 'SELECT (?x AS ?y)', this method is still needed...
+    // TODO As long as ApplyElementTransformVistitor cannot change the behavior to simply substitute variables -
+    // - instead of doing 'SELECT (?x AS ?y)', this method is still needed...
     @Deprecated // Use TransformElementLib.transform instead
     public static Element applyNodeTransformBackport(Element element, NodeTransform nodeTransform) {
         ElementTransform elementTransform = new ElementTransformSubst2(nodeTransform);//new ElementTransformSubst2(nodeTransform);
         ExprTransform exprTransform = new ExprTransformNodeElement(nodeTransform, elementTransform);
 
         Element result = org.aksw.jena_sparql_api.backports.syntaxtransform.ElementTransformer.transform(element, elementTransform, exprTransform);
-        
+
         return result;
     }
 
@@ -341,7 +342,7 @@ public class ElementUtils {
         } else {
             target.addElement(source);
         }
-        
+
         return target;
     }
 

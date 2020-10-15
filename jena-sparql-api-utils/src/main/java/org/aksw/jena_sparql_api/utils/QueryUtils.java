@@ -50,6 +50,7 @@ import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransformCopyBase;
 import org.apache.jena.sparql.util.ExprUtils;
 import org.apache.jena.sparql.util.PrefixMapping2;
 
+import com.google.common.collect.BoundType;
 import com.google.common.collect.DiscreteDomain;
 import com.google.common.collect.Range;
 
@@ -534,6 +535,30 @@ public class QueryUtils {
         return result;
     }
 
+
+    /**
+     * Transform a range w.r.t. a discrete domain such that any existing bound is closed.
+     *
+     * @param <T>
+     * @param range
+     * @param domain
+     * @return
+     */
+    public static <T extends Comparable<T>> Range<T> makeClosed(Range<T> range, DiscreteDomain<T> domain) {
+        T lower = closedLowerEndpointOrNull(range, domain);
+        T upper = closedUpperEndpointOrNull(range, domain);
+
+        Range<T> result = lower == null
+                ? upper == null
+                    ? Range.all()
+                    : Range.atMost(upper)
+                : upper == null
+                    ? Range.atLeast(lower)
+                    : Range.closed(lower, upper);
+
+        return result;
+    }
+
     /**
      * Limit the query to the given range, relative to its own given range
      *
@@ -587,10 +612,33 @@ public class QueryUtils {
 
     //public static LimitAndOffset rangeToLimitAndOffset(Range<Long> range)
 
-    public static long rangeToOffset(Range<Long> range) {
-        long result = range == null || !range.hasLowerBound() ? 0 : range.lowerEndpoint();
+    public static <T extends Comparable<T>> T closedLowerEndpointOrNull(Range<T> range, DiscreteDomain<T> domain) {
+        T result = !range.hasLowerBound()
+                ? null
+                : range.lowerBoundType().equals(BoundType.CLOSED)
+                    ? range.lowerEndpoint()
+                    : domain.next(range.lowerEndpoint());
 
-        result = result == 0 ? Query.NOLIMIT : result;
+        return result;
+    }
+
+    public static <T extends Comparable<T>> T closedUpperEndpointOrNull(Range<T> range, DiscreteDomain<T> domain) {
+        T result = !range.hasUpperBound()
+                ? null
+                : range.lowerBoundType().equals(BoundType.CLOSED)
+                    ? range.upperEndpoint()
+                    : domain.previous(range.upperEndpoint());
+
+        return result;
+    }
+
+
+    public static long rangeToOffset(Range<Long> range) {
+        Long tmp = range == null
+                ? null
+                : closedLowerEndpointOrNull(range, DiscreteDomain.longs());
+
+        long result = tmp == null || tmp == 0 ? Query.NOLIMIT : tmp;
         return result;
     }
 
@@ -600,7 +648,7 @@ public class QueryUtils {
      * @return
      */
     public static long rangeToLimit(Range<Long> range) {
-        range = range == null ? null : range.canonical(DiscreteDomain.longs());
+        range = range == null ? null : makeClosed(range, DiscreteDomain.longs());
 
         long result = range == null || !range.hasUpperBound()
             ? Query.NOLIMIT
@@ -626,7 +674,18 @@ public class QueryUtils {
         return result;
     }
 
-    public static Range<Long> subRange(Range<Long> parent, Range<Long> child) {
+    /**
+     * Returns the absolute range for a child range relative to a parent range
+     * Assumes that both ranges have a lower endpoint
+     *
+     * @param _parent
+     * @param _child
+     * @return
+     */
+    public static Range<Long> subRange(Range<Long> _parent, Range<Long> _child) {
+        Range<Long> parent = makeClosed(_parent, DiscreteDomain.longs());
+        Range<Long> child = makeClosed(_child, DiscreteDomain.longs());
+
         long newMin = parent.lowerEndpoint() + child.lowerEndpoint();
 
         Long newMax = (parent.hasUpperBound()
