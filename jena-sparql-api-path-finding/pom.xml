@@ -27,6 +27,12 @@
 			<artifactId>jena-jgrapht-bindings</artifactId>
 		</dependency>
 
+		<!-- Override the arq version from the jgrapht-bindings -->
+		<dependency>
+			<groupId>org.apache.jena</groupId>
+			<artifactId>jena-arq</artifactId>
+		</dependency>
+
 		<dependency>
 			<groupId>org.aksw.jena-sparql-api</groupId>
 			<artifactId>jena-sparql-api-core</artifactId>
