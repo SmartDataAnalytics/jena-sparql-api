@@ -19,6 +19,12 @@ public interface UnaryRelation
     }
 
 
+    /**
+     * Test whether this relation is isomorphic to
+     * {@code ?s WHERE { ?s ?p ?o }}
+     *
+     * @return
+     */
     default boolean isSubjectConcept() {
         return ConceptUtils.isSubjectConcept(this);
     }

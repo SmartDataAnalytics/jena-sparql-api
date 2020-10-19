@@ -23,18 +23,20 @@ import com.google.common.collect.Sets;
  * @author raven Mar 7, 2018
  *
  */
-public interface Relation {
+public interface Relation
+    extends HasElement
+{
 
     /**
-     * Return the distinguished variables of the relation
+     * Return the distinguished variables of the relation.
+     * The returned list is should be duplicate-free.
+     * The variables are NOT required to occur in the relation's element.
      *
-     * @return
+     * @return A list of variables
      */
     List<Var> getVars();
 
-    // Set<Var> getFixedVars();
 
-    Element getElement();
 
     /**
      * Return the set of mentioned variables without the distinguished ones
