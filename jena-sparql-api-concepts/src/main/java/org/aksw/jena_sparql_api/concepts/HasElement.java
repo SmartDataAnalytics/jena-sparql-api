@@ -18,8 +18,9 @@ import org.apache.jena.sparql.syntax.ElementSubQuery;
  *
  */
 public interface HasElement {
+
     /**
-     *
+     * Return the element held by the implementation of this interface
      *
      * @return
      */

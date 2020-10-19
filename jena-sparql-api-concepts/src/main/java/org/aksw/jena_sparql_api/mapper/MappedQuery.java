@@ -23,7 +23,7 @@ public class MappedQuery<T> {
     }
 
     public static <T> MappedQuery<T> create(Query query, Var partitionVar, Agg<T> agg) {
-        MappedQuery<T> result = new MappedQuery<T>(new PartitionedQuery1(query, partitionVar), agg);
+        MappedQuery<T> result = new MappedQuery<T>(new PartitionedQuery1Impl(query, partitionVar), agg);
         return result;
     }
 
