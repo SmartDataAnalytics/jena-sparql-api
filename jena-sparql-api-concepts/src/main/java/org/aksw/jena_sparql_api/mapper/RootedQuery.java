@@ -1,6 +1,7 @@
 package org.aksw.jena_sparql_api.mapper;
 
 import org.apache.jena.graph.Node;
+import org.apache.jena.rdf.model.Resource;
 
 /**
  * A wrapper for a partitioned query where a single node of
@@ -60,5 +61,6 @@ public interface RootedQuery {
      * @return
      */
     Node getRootNode();
-    PartitionedQuery getPartitionedQuery();
+    // PartitionedQuery getPartitionedQuery();
+    ObjectQuery getObjectQuery();
 }

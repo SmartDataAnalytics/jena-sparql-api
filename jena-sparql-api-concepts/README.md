@@ -2,12 +2,12 @@
 
 This module contains:
 
-* SPARQL Fragments API: Enables vastly simplified construction and combination of SPARQL graph patterns. Supports constructing JOIN and FILTER operations, and most notably takes care of correct variable renaming.
-  * Main classes are: `Relation` (and subclasses UnaryRelation, BinaryRelation, TernaryRelation)
+* SPARQL Relation Pattern API: Enables vastly simplified construction and combination of SPARQL graph patterns. Supports constructing JOIN and FILTER operations, and most notably takes care of correct variable renaming.
+  * The Main classes are: `Relation` (and subclasses UnaryRelation, BinaryRelation, TernaryRelation)
   * A *Concept* is a pair of a graph pattern and a variable thereof - so its essentially a sparql query with exactly 1 result columns
 * Concept Path Finder: Finds simple paths of RDF properties between a given start and end concepts.
 
-Note: At present, things are named Relation, but Fragment might be a better choice.
+A note on naming: For brevity we refer to relation patterns simply as relations as this is what they describe.
 
 ```java
 // Create the set ?s, where ?s is a person:

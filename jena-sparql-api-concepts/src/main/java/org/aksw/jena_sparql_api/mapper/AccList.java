@@ -5,12 +5,13 @@ import java.util.List;
 
 import org.apache.jena.sparql.engine.binding.Binding;
 
+
 /**
  * An accumulator similar to that of Jena, however it uses a generic for the
  * value.
- * 
+ *
  * @author raven
- * 
+ *
  * @param <T>
  */
 public class AccList<T> implements Acc<List<T>> {

@@ -24,7 +24,8 @@ public class RootedQueryFromPartitionedQuery1
     }
 
     @Override
-    public PartitionedQuery getPartitionedQuery() {
-        return partitionedQuery1;
+    public ObjectQuery getObjectQuery() {
+        // TODO Have the object query wrapper delegate every call to partitionedQuery.getQuery()
+        return new ObjectQueryFromQuery(partitionedQuery1.getQuery());
     }
 }

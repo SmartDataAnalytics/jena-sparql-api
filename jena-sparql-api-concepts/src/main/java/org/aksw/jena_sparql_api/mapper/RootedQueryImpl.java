@@ -6,12 +6,12 @@ public class RootedQueryImpl
     implements RootedQuery
 {
     protected Node rootNode;
-    protected PartitionedQuery partitionedQuery;
+    protected ObjectQuery objectQuery;
 
-    public RootedQueryImpl(Node rootNode, PartitionedQuery partitionedQuery) {
+    public RootedQueryImpl(Node rootNode, ObjectQuery objectQuery) {
         super();
         this.rootNode = rootNode;
-        this.partitionedQuery = partitionedQuery;
+        this.objectQuery = objectQuery;
     }
 
     @Override
@@ -20,7 +20,7 @@ public class RootedQueryImpl
     }
 
     @Override
-    public PartitionedQuery getPartitionedQuery() {
-        return partitionedQuery;
+    public ObjectQuery getObjectQuery() {
+        return objectQuery;
     }
 }
