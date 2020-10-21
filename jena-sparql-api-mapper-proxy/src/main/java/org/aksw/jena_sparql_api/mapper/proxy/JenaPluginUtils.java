@@ -25,6 +25,7 @@ import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.impl.ResourceImpl;
 import org.apache.jena.shared.PrefixMapping;
+import org.apache.jena.shared.impl.PrefixMappingImpl;
 import org.apache.jena.sys.JenaSystem;
 import org.apache.jena.util.ResourceUtils;
 import org.slf4j.Logger;
@@ -40,8 +41,15 @@ public class JenaPluginUtils {
     }
 
     /**
-     *  If you get an exception on typeDecider such as java.lang.NullPointerException
-     *  ensure to call JenaSystem.init() before calling methods on this class
+     * The type decider can
+     * <ul>
+     * 	 <li>decide for a given RDFNode whether a certain class can act as a view for it</li>
+     *   <li>for a given view write out those triples to an RDFNode such that the type decider
+     *   will consider the original view as applicable</li>
+     * </ul>
+     *
+     * If you get an exception on typeDecider such as java.lang.NullPointerException
+     * ensure to call JenaSystem.init() before calling methods on this class
      */
     protected static TypeDeciderImpl typeDecider;
 
@@ -156,7 +164,7 @@ public class JenaPluginUtils {
         for(ClassInfo classInfo : classInfos) {
             Class<?> clazz = classInfo.load();
 
-            registerResourceClass(clazz, p, pm);
+            registerResourceClass(clazz, p, pm, true);
         }
     }
 
@@ -183,13 +191,28 @@ public class JenaPluginUtils {
         }
     }
 
+    public static Implementation createImplementation(Class<?> clazz, PrefixMapping pm, boolean lazy) {
+        Implementation result;
+        if (lazy) {
+            // Better clone the prefix mapping as the provided may have changed
+            // by the time we actually perform the init
+            PrefixMapping clone = new PrefixMappingImpl();
+            clone.setNsPrefixes(pm);
+            result = new ImplementationLazy(() -> createImplementation(clazz, pm), clazz);
+        } else {
+            result = createImplementation(clazz, pm);
+        }
+
+        return result;
+    }
+
     public static Implementation createImplementation(Class<?> clazz, PrefixMapping pm) {
         @SuppressWarnings("unchecked")
         Class<? extends Resource> cls = (Class<? extends Resource>)clazz;
 
         TypeDecider typeDecider = getTypeDecider();
 
-        logger.debug("Registering " + clazz);
+        logger.debug("Creating implementation for " + clazz);
         BiFunction<Node, EnhGraph, ? extends Resource> proxyFactory =
                 MapperProxyUtils.createProxyFactory(cls, pm, typeDecider);
 
@@ -209,6 +232,11 @@ public class JenaPluginUtils {
     }
 
     public static void registerResourceClass(Class<?> clazz, Personality<RDFNode> p, PrefixMapping pm) {
+        registerResourceClass(clazz, p, pm, false);
+    }
+
+    public static void registerResourceClass(Class<?> clazz, Personality<RDFNode> p, PrefixMapping pm, boolean lazy) {
+
         if(Resource.class.isAssignableFrom(clazz)) {
             boolean supportsProxying = supportsProxying(clazz);
             if(supportsProxying) {
@@ -225,7 +253,7 @@ public class JenaPluginUtils {
                 List<Class<?>> effectiveTypes = new ArrayList<>(Arrays.asList(superTypes));
                 //effectiveTypes.add(clazz);
 
-                Implementation impl = createImplementation(clazz, pm);
+                Implementation impl = createImplementation(clazz, pm, lazy);
 
                 for(Class<?> type : effectiveTypes) {
                     if(!type.isAssignableFrom(clazz)) {
@@ -234,6 +262,7 @@ public class JenaPluginUtils {
                         @SuppressWarnings("unchecked")
                         Class<? extends Resource> cls = (Class<? extends Resource>)type;
 
+                        logger.debug("Registering " + clazz);
                         p.add(cls, impl);
                     }
                 }
