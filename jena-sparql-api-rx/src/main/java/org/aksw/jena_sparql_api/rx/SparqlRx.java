@@ -604,6 +604,20 @@ public class SparqlRx {
     }
 
 
+    /**
+     * Return a SELECT query from the given query where
+     * - it is ensured that all primaryKeyVars are part of the projection (if they aren't already)
+     * - distinct is applied in preparation to instantiation of construct templates (where duplicates can be ignored)
+     * - if sortRowsByPartitionVar is true then result bindings are sorted by the primary key vars
+     *   so that bindings that belong together are consecutive
+     * - In case of a construct template without variables variable free is handled
+     *
+     *
+     * @param q
+     * @param primaryKeyVars
+     * @param sortRowsByPartitionVar
+     * @return
+     */
     public static Query preprocessQueryForPartition(Query q, List<Var> primaryKeyVars, boolean sortRowsByPartitionVar) {
 
         Template template = q.getConstructTemplate();

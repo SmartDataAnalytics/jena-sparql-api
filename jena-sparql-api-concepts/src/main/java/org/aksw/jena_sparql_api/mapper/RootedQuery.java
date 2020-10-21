@@ -49,13 +49,11 @@ public interface RootedQuery {
     /**
      * The designated root node. The following rules apply:
      * <ul>
-     *   <li>If {@code getPartitionedQuery().getTemplate()} is non-empty
+     *   <li>If {@code getObjectQuery().getTemplate()} is non-empty
      *       then the root node should be mentioned in the template.</li>
      *
      *   <li>In case the template is empty then the root node should be a variable
-     *       should occur in {@code getPartitionedQuery().getElement()}.
-     *       Furthermore, if in this case the query is partitioned by a single variable, then the root
-     *       node should match than one.</li>
+     *       that occurs in {@code getObjectQuery().getRelation().getElement()}.</li>
      * </ul>
      *
      * @return
