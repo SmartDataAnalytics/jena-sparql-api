@@ -53,7 +53,9 @@ public interface RootedQuery {
      *       then the root node should be mentioned in the template.</li>
      *
      *   <li>In case the template is empty then the root node should be a variable
-     *       that occurs in {@code getObjectQuery().getRelation().getElement()}.</li>
+     *       that occurs in {@code getObjectQuery().getRelation().getElement()}.
+     *       Furthermore, if in this case the query is partitioned by a single variable then the root
+     *       node should match that one.</li>
      * </ul>
      *
      * @return
