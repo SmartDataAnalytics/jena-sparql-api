@@ -540,6 +540,7 @@ public class PartitionedQueryRx {
             subSelect.addGroupBy(partitionVar);
         }
 
+
         for (int i = 0; i < partitionOrderBy.size(); ++i) {
             SortCondition sc = partitionOrderBy.get(i);
             Var scv = sortKeyVars.get(i);
@@ -550,7 +551,35 @@ public class PartitionedQueryRx {
             Expr rawExpr = sc.getExpression();
             Expr expr = ExprTransformer.transform(new ExprTransformAllocAggregate(subSelect), rawExpr);
             subSelect.addResultVar(scv, expr);
+
+            subSelect.addOrderBy(new SortCondition(expr, sc.getDirection()));
         }
+
+
+        // Limit / offset have to be placed on the inner query
+        boolean hasSlice = result.hasLimit() || result.hasOffset();
+        if (hasSlice) {
+            boolean useWrapper = false;
+
+            if (useWrapper) {
+                Query sliceWrapper = new Query();
+                sliceWrapper.setQuerySelectType();
+                sliceWrapper.setQueryResultStar(true);
+                sliceWrapper.setQueryPattern(new ElementSubQuery(subSelect));
+                result.setQueryPattern(new ElementSubQuery(sliceWrapper));
+                subSelect = sliceWrapper;
+            }
+
+            subSelect.setLimit(result.getLimit());
+            subSelect.setOffset(result.getOffset());
+
+            result.setLimit(Query.NOLIMIT);
+            result.setOffset(Query.NOLIMIT);
+
+        }
+
+
+
 
         ElementGroup newPattern = ElementUtils.createElementGroup(new ElementSubQuery(subSelect));
         ElementUtils.copyElements(newPattern, basePattern);
@@ -568,13 +597,6 @@ public class PartitionedQueryRx {
             partitionScs.add(new SortCondition(scv, sc.getDirection()));
         }
         prependToOrderBy(result, partitionScs);
-
-        // Limit / offset have to be placed on the inner query
-        subSelect.setLimit(result.getLimit());
-        subSelect.setOffset(result.getOffset());
-
-        result.setLimit(Query.NOLIMIT);
-        result.setOffset(Query.NOLIMIT);
 
         return result;
     }
