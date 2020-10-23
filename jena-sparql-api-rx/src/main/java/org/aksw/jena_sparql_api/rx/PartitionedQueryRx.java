@@ -494,6 +494,21 @@ public class PartitionedQueryRx {
             List<SortCondition> partitionOrderBy,
             Generator<Var> varGenerator) {
 
+        Query result = partitionOrderBy == null || partitionOrderBy.isEmpty()
+                ? preprocessQueryForPartitionWithoutOrder(baseQuery, partitionVars, requiredVars, true)
+                : preprocessQueryForPartitionWithOrder(baseQuery, partitionVars, requiredVars, partitionOrderBy, varGenerator);
+
+        return result;
+    }
+
+
+    public static Query preprocessQueryForPartitionWithOrder(
+            Query baseQuery,
+            List<Var> partitionVars,
+            Set<Var> requiredVars,
+            List<SortCondition> partitionOrderBy,
+            Generator<Var> varGenerator) {
+
         Query result = preprocessQueryForPartitionWithoutOrder(
                 baseQuery,
                 partitionVars,
@@ -548,10 +563,6 @@ public class PartitionedQueryRx {
             partitionScs.add(new SortCondition(scv, sc.getDirection()));
         }
         prependToOrderBy(result, partitionScs);
-
-
-
-        System.out.println(result);
 
         return result;
     }
