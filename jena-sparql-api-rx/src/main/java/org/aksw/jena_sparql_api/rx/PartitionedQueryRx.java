@@ -494,22 +494,27 @@ public class PartitionedQueryRx {
             List<SortCondition> partitionOrderBy,
             Generator<Var> varGenerator) {
 
-        Query result = partitionOrderBy == null || partitionOrderBy.isEmpty()
-                ? preprocessQueryForPartitionWithoutOrder(baseQuery, partitionVars, requiredVars, true)
-                : preprocessQueryForPartitionWithOrder(baseQuery, partitionVars, requiredVars, partitionOrderBy, varGenerator);
+        boolean needsSubSelect = !(partitionOrderBy == null || partitionOrderBy.isEmpty())
+                || baseQuery.hasLimit()
+                || baseQuery.hasOffset();
 
+        Query result = needsSubSelect
+                ? preprocessQueryForPartitionWithSubSelect(baseQuery, partitionVars, requiredVars, partitionOrderBy, varGenerator)
+                : preprocessQueryForPartitionWithoutSubSelect(baseQuery, partitionVars, requiredVars, true);
+
+        System.err.println(result);
         return result;
     }
 
 
-    public static Query preprocessQueryForPartitionWithOrder(
+    public static Query preprocessQueryForPartitionWithSubSelect(
             Query baseQuery,
             List<Var> partitionVars,
             Set<Var> requiredVars,
             List<SortCondition> partitionOrderBy,
             Generator<Var> varGenerator) {
 
-        Query result = preprocessQueryForPartitionWithoutOrder(
+        Query result = preprocessQueryForPartitionWithoutSubSelect(
                 baseQuery,
                 partitionVars,
                 requiredVars,
@@ -564,6 +569,13 @@ public class PartitionedQueryRx {
         }
         prependToOrderBy(result, partitionScs);
 
+        // Limit / offset have to be placed on the inner query
+        subSelect.setLimit(result.getLimit());
+        subSelect.setOffset(result.getOffset());
+
+        result.setLimit(Query.NOLIMIT);
+        result.setOffset(Query.NOLIMIT);
+
         return result;
     }
 
@@ -576,7 +588,7 @@ public class PartitionedQueryRx {
      * @param sortRowsByPartitionVars
      * @return
      */
-    public static Query preprocessQueryForPartitionWithoutOrder(
+    public static Query preprocessQueryForPartitionWithoutSubSelect(
             Query baseQuery,
             List<Var> partitionVars,
             Set<Var> requiredVars,
