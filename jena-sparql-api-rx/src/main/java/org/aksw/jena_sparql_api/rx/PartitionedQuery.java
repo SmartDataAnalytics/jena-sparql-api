@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
+import org.apache.jena.query.SortCondition;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.ExprList;
 
@@ -40,8 +41,10 @@ public interface PartitionedQuery {
 
     List<Var> getPartitionVars();
 
-    Node getRootNode();
+    List<SortCondition> getPartitionOrderBy();
 
+
+    Node getRootNode();
     void setRootNode(Node rootVar);
 
     default void setRootNode(String rootVarName) {

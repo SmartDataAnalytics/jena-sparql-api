@@ -1,7 +1,7 @@
 package org.aksw.jena_sparql_api.rx;
 
+import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -14,12 +14,16 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.aksw.commons.collections.SetUtils;
+import org.aksw.commons.collections.generator.Generator;
 import org.aksw.jena_sparql_api.mapper.Accumulator;
 import org.aksw.jena_sparql_api.mapper.Aggregator;
 import org.aksw.jena_sparql_api.rx.AggObjectGraph.AccObjectGraph;
 import org.aksw.jena_sparql_api.rx.op.OperatorOrderedGroupBy;
+import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.QuadPatternUtils;
+import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.aksw.jena_sparql_api.utils.VarExprListUtils;
+import org.aksw.jena_sparql_api.utils.VarGeneratorBlacklist;
 import org.apache.jena.ext.com.google.common.collect.Iterables;
 import org.apache.jena.ext.com.google.common.collect.Maps;
 import org.apache.jena.ext.com.google.common.collect.Sets;
@@ -40,10 +44,14 @@ import org.apache.jena.sparql.core.VarExprList;
 import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprList;
+import org.apache.jena.sparql.expr.ExprTransformer;
 import org.apache.jena.sparql.expr.ExprVar;
 import org.apache.jena.sparql.expr.ExprVars;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.graph.GraphFactory;
+import org.apache.jena.sparql.syntax.Element;
+import org.apache.jena.sparql.syntax.ElementGroup;
+import org.apache.jena.sparql.syntax.ElementSubQuery;
 import org.apache.jena.sparql.syntax.PatternVars;
 import org.apache.jena.sparql.syntax.Template;
 import org.apache.jena.sparql.util.ExprUtils;
@@ -150,14 +158,15 @@ public class PartitionedQueryRx {
         Map<Node, ExprList> idMapping = queryEx.getIdMapping();
 
         List<Var> partitionVars = queryEx.getPartitionVars();
+        List<SortCondition> partitionOrderBy = queryEx.getPartitionOrderBy();
 
         Set<Var> essentialProjectVars = getEssentialProjectVars(
                 template, queryEx.getIdMapping());
 
         Node rootNode = queryEx.getRootNode();
-        Function<Binding, Node> bindingToRootNodeInst = rootNode == null
-                ? null
-                : createKeyFunction(rootNode, idMapping, exprListEval);
+//        Function<Binding, Node> bindingToRootNodeInst = rootNode == null
+//                ? null
+//                : createKeyFunction(rootNode, idMapping, exprListEval);
 
         Set<Node> trackedTemplateNodes = rootNode == null
                 ? Collections.emptySet()
@@ -165,11 +174,15 @@ public class PartitionedQueryRx {
 
         Query standardQuery = queryEx.toStandardQuery();
 
+        Set<Var> blacklist = QueryUtils.mentionedVars(standardQuery);
+        Generator<Var> varGen = VarGeneratorBlacklist.create("sortKey", blacklist);
+
         Query selectQuery = preprocessQueryForPartition(
                 standardQuery,
                 partitionVars,
                 essentialProjectVars,
-                true);
+                partitionOrderBy,
+                varGen);
 
         Function<Table, AccObjectGraph> tableToGraph = createTableToGraphMapper(
                 template,
@@ -462,21 +475,99 @@ public class PartitionedQueryRx {
 
     /**
      * Return a SELECT query from the given query where
-     * - it is ensured that all primaryKeyVars are part of the projection (if they aren't already)
+     * - it is ensured that all partitionVars are part of the projection (if they aren't already)
      * - distinct is applied in preparation to instantiation of construct templates (where duplicates can be ignored)
      * - if sortRowsByPartitionVar is true then result bindings are sorted by the primary key vars
      *   so that bindings that belong together are consecutive
      * - In case of a construct template without variables variable free is handled
      *
-     *
-     * @param q
-     * @param primaryKeyVars
+     * @param baseQuery
+     * @param partitionVars
+     * @param requiredVars The variables that need to be projected in the resulting query
      * @param sortRowsByPartitionVar
      * @return
      */
     public static Query preprocessQueryForPartition(
             Query baseQuery,
-            List<Var> primaryKeyVars,
+            List<Var> partitionVars,
+            Set<Var> requiredVars,
+            List<SortCondition> partitionOrderBy,
+            Generator<Var> varGenerator) {
+
+        Query result = preprocessQueryForPartitionWithoutOrder(
+                baseQuery,
+                partitionVars,
+                requiredVars,
+                true);
+
+        partitionOrderBy = partitionOrderBy == null
+                ? Collections.emptyList()
+                : partitionOrderBy;
+
+        // Allocate variables for each sort condition
+        List<Var> sortKeyVars = partitionOrderBy.stream()
+                .map(x -> varGenerator.next())
+                .collect(Collectors.toList());
+
+        Element basePattern = result.getQueryPattern();
+
+        Query subSelect = new Query();
+        subSelect.setQuerySelectType();
+        subSelect.setQueryPattern(basePattern);
+
+        for (Var partitionVar : partitionVars) {
+            subSelect.addResultVar(partitionVar);
+            subSelect.addGroupBy(partitionVar);
+        }
+
+        for (int i = 0; i < partitionOrderBy.size(); ++i) {
+            SortCondition sc = partitionOrderBy.get(i);
+            Var scv = sortKeyVars.get(i);
+
+            // TODO The sort condition will contain an aggregate function
+            // that must be allocated on the query
+            //subSelect.allocAggregate(agg)
+            Expr rawExpr = sc.getExpression();
+            Expr expr = ExprTransformer.transform(new ExprTransformAllocAggregate(subSelect), rawExpr);
+            subSelect.addResultVar(scv, expr);
+        }
+
+        ElementGroup newPattern = ElementUtils.createElementGroup(new ElementSubQuery(subSelect));
+        ElementUtils.copyElements(newPattern, basePattern);
+
+        // Update the query pattern
+        result.setQueryPattern(newPattern);
+
+
+        // Prepend the sort conditions
+        List<SortCondition> partitionScs = new ArrayList<>();
+        for (int i = 0; i < partitionOrderBy.size(); ++i) {
+            SortCondition sc = partitionOrderBy.get(i);
+            Var scv = sortKeyVars.get(i);
+
+            partitionScs.add(new SortCondition(scv, sc.getDirection()));
+        }
+        prependToOrderBy(result, partitionScs);
+
+
+
+        System.out.println(result);
+
+        return result;
+    }
+
+
+    /**
+     *
+     * @param baseQuery
+     * @param partitionVars
+     * @param requiredVars
+     * @param sortRowsByPartitionVars
+     * @return
+     */
+    public static Query preprocessQueryForPartitionWithoutOrder(
+            Query baseQuery,
+            List<Var> partitionVars,
             Set<Var> requiredVars,
             boolean sortRowsByPartitionVars) {
 
@@ -486,7 +577,7 @@ public class PartitionedQueryRx {
 
         VarExprList project = selectQuery.getProject();
 
-        VarExprListUtils.addAbsentVars(project, primaryKeyVars);
+        VarExprListUtils.addAbsentVars(project, partitionVars);
         VarExprListUtils.addAbsentVars(project, requiredVars);
 
         // Handle the corner case where no variables are requested
@@ -506,7 +597,7 @@ public class PartitionedQueryRx {
         selectQuery.setDistinct(true);
 
         if (sortRowsByPartitionVars) {
-            List<SortCondition> newSortConditions = createSortConditionsFromVars(primaryKeyVars, Query.ORDER_DEFAULT);
+            List<SortCondition> newSortConditions = createSortConditionsFromVars(partitionVars, Query.ORDER_DEFAULT);
             prependToOrderBy(selectQuery, newSortConditions);
         }
 
