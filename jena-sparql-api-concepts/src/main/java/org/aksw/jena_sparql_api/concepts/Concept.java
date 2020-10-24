@@ -30,7 +30,7 @@ import org.apache.jena.sparql.syntax.ElementTriplesBlock;
  *
  */
 public class Concept
-	implements UnaryRelation
+    implements UnaryRelation
 {
     private Element element;//List<Element> elements;
     private Var var;
@@ -52,6 +52,9 @@ public class Concept
     /**
      * Util method to parse strings that use a pipe as a separator between variable and sparql string
      * ?s | ?s a ex:Airport
+     *
+     * FIXME This syntax should be replaced with standard SPARQL SELECT where SELECT is omitted:
+     *       [SELECT] ?s { ?s a ex:Airport }
      *
      * @param str
      * @return
@@ -128,7 +131,7 @@ public class Concept
 
         return result;
     }
-    
+
     public static Element parseElement(String elementStr, PrefixMapping prefixMapping) {
         String tmp = elementStr.trim();
         boolean isEnclosed = tmp.startsWith("{") && tmp.endsWith("}");
@@ -141,7 +144,7 @@ public class Concept
 
         Query query = new Query();
         if(prefixMapping != null) {
-        	query.setPrefixMapping(prefixMapping);
+            query.setPrefixMapping(prefixMapping);
         }
         // TODO Make parser configurable
         SPARQLParser parser = new ParserSPARQL11();

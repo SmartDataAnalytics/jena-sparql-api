@@ -16,12 +16,12 @@ import org.apache.jena.sparql.engine.binding.Binding;
  * @author raven
  *
  */
-public class GraphPartitionWithRoots {
+public class GraphPartitionWithEntities {
     protected Binding binding;
     protected Graph graph;
     protected Set<Node> roots;
 
-    public GraphPartitionWithRoots(Binding binding, Graph graph, Set<Node> roots) {
+    public GraphPartitionWithEntities(Binding binding, Graph graph, Set<Node> roots) {
         super();
         this.binding = binding;
         this.graph = graph;

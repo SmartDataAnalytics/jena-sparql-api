@@ -32,16 +32,17 @@ public class TestPartitionedQueryRx {
                 .create(DefaultPrefixes.prefixes)
                 .apply(queryStr);
 
-        PartitionedQueryImpl rootedQuery = new PartitionedQueryImpl(standardQuery);
+        EntityQueryImpl rootedQuery = new EntityQueryImpl();
+        rootedQuery.setPartitionSelectorQuery(standardQuery);
 
         Var rootNode = Var.alloc("pub");
-        rootedQuery.setRootNode(rootNode);
+        rootedQuery.getDirectGraphPartition().setEntityNode(rootNode);
         rootedQuery.getPartitionVars().add(rootNode);
 
         Dataset ds = RDFDataMgr.loadDataset("https://raw.githubusercontent.com/Aklakan/aklakans-devblog/master/2020-10-20-rdflist/src/main/resources/publications.ttl");
 
         try (RDFConnection conn = RDFConnectionFactory.connect(ds)) {
-            List<RDFNode> rdfNodes = PartitionedQueryRx.execConstructRooted(conn, rootedQuery).toList().blockingGet();
+            List<RDFNode> rdfNodes = EntityQueryRx.execConstructRooted(conn, rootedQuery).toList().blockingGet();
 
             for (RDFNode rdfNode : rdfNodes) {
                 System.out.println("Got node: " + rdfNode + ": vvv");

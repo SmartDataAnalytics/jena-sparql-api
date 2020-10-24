@@ -1,13 +1,11 @@
 package org.aksw.jena_sparql_api.rx;
 
 import java.util.List;
-import java.util.Map;
 
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.SortCondition;
 import org.apache.jena.sparql.core.Var;
-import org.apache.jena.sparql.expr.ExprList;
 
 
 /**
@@ -28,26 +26,35 @@ import org.apache.jena.sparql.expr.ExprList;
  * @author raven
  *
  */
-public interface PartitionedQuery {
+public interface EntityQuery {
     /**
      * Return the underlying SPARQL 1.1 query for which
      * the extensions in this model are defined
      *
      * @return
      */
-    Query toStandardQuery();
+//    List<GraphPartition> getGraphPartitions();
 
-    Map<Node, ExprList> getIdMapping();
+    GraphPartitionBase getDirectGraphPartition();
 
+    /**
+     * The select query that specifies the set of entities,
+     * and their order
+     *
+     * The number and order of the projection variables must
+     * match that of the graph partitions and vice versa
+     *
+     * @return
+     */
+    Query getPartitionSelectorQuery();
+    void setPartitionSelectorQuery(Query query);
+
+
+    /**
+     * The variables of the base select query by which to partition
+     *
+     * @return
+     */
     List<Var> getPartitionVars();
-
     List<SortCondition> getPartitionOrderBy();
-
-
-    Node getRootNode();
-    void setRootNode(Node rootVar);
-
-    default void setRootNode(String rootVarName) {
-        setRootNode(Var.alloc(rootVarName));
-    }
 }

@@ -67,6 +67,19 @@ public interface Relation
         return result;
     }
 
+    /**
+     * Rename the variables of the relation to the given variables
+     * In case of clashes, prior variables will be replaced with fresh ones.
+     * Delegates ot {@link RelationUtils#rename(Relation, List)}.
+     *
+     * @param r
+     * @param targetVars
+     * @return
+     */
+    default Relation rename(List<Var> targetVars) {
+        return RelationUtils.rename(this, targetVars);
+    }
+
     default UnaryRelation toUnaryRelation() {
         List<Var> vars = getVars();
         UnaryRelation result;
@@ -209,6 +222,8 @@ public interface Relation
     default List<Element> getElements() {
         return ElementUtils.toElementList(getElement());
     }
+
+
 
 //	public static TernaryRelation from(Triple t) {
 //		new TernaryRelationImpl(ElementUtils.createElement(t), t.getSubject(), t.getPredicate(), t.getObject())

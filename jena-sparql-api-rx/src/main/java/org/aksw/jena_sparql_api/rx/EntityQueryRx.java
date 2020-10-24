@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api.rx;
 
+import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashSet;
@@ -7,10 +8,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Random;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
 import org.aksw.commons.collections.SetUtils;
@@ -28,10 +31,14 @@ import org.apache.jena.ext.com.google.common.collect.Iterables;
 import org.apache.jena.ext.com.google.common.collect.Maps;
 import org.apache.jena.ext.com.google.common.collect.Sets;
 import org.apache.jena.ext.com.google.common.collect.Streams;
+import org.apache.jena.ext.com.google.common.hash.Hashing;
+import org.apache.jena.ext.com.google.common.io.BaseEncoding;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
+import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query;
+import org.apache.jena.query.ResultSet;
 import org.apache.jena.query.SortCondition;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -39,9 +46,11 @@ import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.apache.jena.sparql.algebra.Table;
 import org.apache.jena.sparql.algebra.TableFactory;
+import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.core.VarExprList;
 import org.apache.jena.sparql.engine.binding.Binding;
+import org.apache.jena.sparql.engine.binding.BindingFactory;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprList;
 import org.apache.jena.sparql.expr.ExprTransformer;
@@ -56,33 +65,34 @@ import org.apache.jena.sparql.syntax.PatternVars;
 import org.apache.jena.sparql.syntax.Template;
 import org.apache.jena.sparql.util.ExprUtils;
 import org.apache.jena.sparql.util.ModelUtils;
+import org.apache.jena.util.iterator.ExtendedIterator;
 
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.FlowableTransformer;
 
 /**
- * Methods for the execution of {@link PartitionedQuery}s.O
+ * Methods for the execution of {@link EntityQuery}s
  *
  * @author raven
  *
  */
-public class PartitionedQueryRx {
+public class EntityQueryRx {
 
     /** Execute a partitioned query.
-     * See {@link #execConstructRooted(SparqlQueryConnection, PartitionedQuery, Supplier, ExprListEval)} */
-    public static Flowable<RDFNode> execConstructRooted(SparqlQueryConnection conn, PartitionedQuery query) {
+     * See {@link #execConstructEntities(SparqlQueryConnection, EntityQuery, Supplier, ExprListEval)} */
+    public static Flowable<RDFNode> execConstructRooted(SparqlQueryConnection conn, EntityQuery query) {
         return execConstructRooted(
                 conn, query,
                 GraphFactory::createDefaultGraph);
     }
 
     /** Execute a partitioned query.
-     * See {@link #execConstructRooted(SparqlQueryConnection, PartitionedQuery, Supplier, ExprListEval)} */
-    public static Flowable<RDFNode> execConstructRooted(SparqlQueryConnection conn, PartitionedQuery query,
+     * See {@link #execConstructEntities(SparqlQueryConnection, EntityQuery, Supplier, ExprListEval)} */
+    public static Flowable<RDFNode> execConstructRooted(SparqlQueryConnection conn, EntityQuery query,
             Supplier<Graph> graphSupplier) {
-        return execConstructRooted(
+        return execConstructEntities(
                 conn, query,
-                GraphFactory::createDefaultGraph, PartitionedQueryRx::defaultEvalToNode);
+                GraphFactory::createDefaultGraph, EntityQueryRx::defaultEvalToNode);
     }
 
     /**
@@ -98,9 +108,9 @@ public class PartitionedQueryRx {
      */
     public static Flowable<Entry<Binding, Table>> execSelectPartitioned(
             SparqlQueryConnection conn,
-            PartitionedQuery query) {
+            EntityQuery query) {
 
-        Query standardQuery = query.toStandardQuery();
+        Query standardQuery = query.getPartitionSelectorQuery();
 
         return execSelectPartitioned(conn, standardQuery, query.getPartitionVars());
     }
@@ -148,38 +158,46 @@ public class PartitionedQueryRx {
      * @param exprListEval
      * @return
      */
-    public static Flowable<GraphPartitionWithRoots> execConstructPartitioned(
+    public static Flowable<GraphPartitionWithEntities> execConstructPartitioned(
             SparqlQueryConnection conn,
-            PartitionedQuery queryEx,
+            EntityQuery queryEx,
             Supplier<Graph> graphSupplier,
             ExprListEval exprListEval) {
 
-        Template template = queryEx.toStandardQuery().getConstructTemplate();
-        Map<Node, ExprList> idMapping = queryEx.getIdMapping();
+        GraphPartitionBase directGraphPartition = queryEx.getDirectGraphPartition();
+
+        Query standardQuery = queryEx.getPartitionSelectorQuery();
+        Template template = standardQuery.getConstructTemplate();
+        Map<Node, ExprList> idMapping = directGraphPartition.getBnodeIdMapping();
+
 
         List<Var> partitionVars = queryEx.getPartitionVars();
         List<SortCondition> partitionOrderBy = queryEx.getPartitionOrderBy();
 
-        Set<Var> essentialProjectVars = getEssentialProjectVars(
-                template, queryEx.getIdMapping());
 
-        Node rootNode = queryEx.getRootNode();
+        Set<Var> essentialProjectVars = getEssentialProjectVars(
+                template, idMapping);
+
+        Node rootNode = directGraphPartition.getEntityNode();
 //        Function<Binding, Node> bindingToRootNodeInst = rootNode == null
 //                ? null
 //                : createKeyFunction(rootNode, idMapping, exprListEval);
+
+//        List<Var> entityVars = getEntityVars(rootNode, idMapping);
 
         Set<Node> trackedTemplateNodes = rootNode == null
                 ? Collections.emptySet()
                 : Collections.singleton(rootNode);
 
-        Query standardQuery = queryEx.toStandardQuery();
-
         Set<Var> blacklist = QueryUtils.mentionedVars(standardQuery);
         Generator<Var> varGen = VarGeneratorBlacklist.create("sortKey", blacklist);
+
+        Element attributeElement = standardQuery.getQueryPattern();
 
         Query selectQuery = preprocessQueryForPartition(
                 standardQuery,
                 partitionVars,
+                attributeElement,
                 essentialProjectVars,
                 partitionOrderBy,
                 varGen);
@@ -191,29 +209,49 @@ public class PartitionedQueryRx {
                 exprListEval,
                 graphSupplier);
 
-        Flowable<GraphPartitionWithRoots> result = execSelectPartitioned(
+
+//        Model entitySortModel = ModelFactory.createDefaultModel();
+
+        Flowable<GraphPartitionWithEntities> result = execSelectPartitioned(
                 conn, selectQuery, partitionVars)
+                /*
+                // This map operation sorts the entities based on the ORDER BY sort conditions
+                // but this is not really useful; it e.g cannot be used to sort a publication's set of authors
                 .map(keyAndTable -> {
+                    // Sort the bindings in the table by the sort condition on the entity
+
+                    // SELECT ?entityVars { } GROUP BY ?entityVars ORDER BY sort conditions VALUES table
                     Binding key = keyAndTable.getKey();
                     Table table = keyAndTable.getValue();
 
-                    // TODO We need to reuse the blank node map used to instantiate the graph
+                    Query entitySort = new Query();
+                    entitySort.setQuerySelectType();
+                    entitySort.setQueryPattern(new ElementData(
+                            table.getVars(),
+                            Lists.newArrayList(table.rows())));
+
+                    Generator<Var> entityVarGen = VarGeneratorBlacklist.create("entitySortKey", blacklist);
+
+                    entitySort = preprocessQueryForPartitionWithSubSelect(entitySort, entityVars, essentialProjectVars, entityOrderBy, entityVarGen);
+
+                    System.out.println(entitySort);
+                    Table newTable;
+                    try (QueryExecution qe = QueryExecutionFactory.create(entitySort, entitySortModel)) {
+                        newTable = resultSetToTable(qe.execSelect());
+                    }
+
+                    return Maps.immutableEntry(key, newTable);
+                })
+                */
+                .map(keyAndTable -> {
+                    Binding partitionKey = keyAndTable.getKey();
+                    Table table = keyAndTable.getValue();
+
                     AccObjectGraph acc = tableToGraph.apply(table);
                     Graph graph = acc.getValue();
-                    Set<Node> rootNodes =  acc.getTrackedNodes(rootNode);
+                    Set<Node> entities =  acc.getTrackedNodes(rootNode);
 
-//                    Set<Node> trackedNodes = acc.getTrackedNodes(rootNode);
-//                    if (bindingToRootNodeInst != null) {
-//
-//                        Iterator<Binding> it = table.rows();
-//                        while (it.hasNext()) {
-//                            Binding binding = it.next();
-//                            Node inst = bindingToRootNodeInst.apply(binding);
-//                            rootNodes.add(inst);
-//                        }
-//                    }
-
-                    GraphPartitionWithRoots r = new GraphPartitionWithRoots(key, graph, rootNodes);
+                    GraphPartitionWithEntities r = new GraphPartitionWithEntities(partitionKey, graph, entities);
                     return r;
                 });
 
@@ -221,12 +259,23 @@ public class PartitionedQueryRx {
     }
 
 
+    public static Table resultSetToTable(ResultSet rs) {
+        List<Var> vars = Var.varList(rs.getResultVars());
+        Table result = TableFactory.create(vars);
+        while (rs.hasNext()) {
+            Binding b = BindingFactory.copy(rs.nextBinding());
+            result.addBinding(b);
+        }
+
+        return result;
+    }
+
 
     /**
      * Execute a CONSTRUCT query w.r.t. partitions. For every partition a graph fragment is constructed
      * based on bindings that fell into the partition.
      * In addition, designate all values in that partition that were bound to the node referred to by
-     * {@link PartitionedQuery#getRootNode()} as 'roots' of that partition.
+     * {@link EntityQuery#getEntityNode()} as 'roots' of that partition.
      * Roots serve as designated starting points for traversal of the graph fragment.
      * Each root is returned as as separate {@link RDFNode} instance that holds a reference
      * to that partition's graph.
@@ -237,9 +286,9 @@ public class PartitionedQueryRx {
      * @param exprListEval
      * @return
      */
-    public static Flowable<RDFNode> execConstructRooted(
+    public static Flowable<RDFNode> execConstructEntities(
             SparqlQueryConnection conn,
-            PartitionedQuery queryEx,
+            EntityQuery queryEx,
             Supplier<Graph> graphSupplier,
             ExprListEval exprListEval) {
 
@@ -253,6 +302,55 @@ public class PartitionedQueryRx {
                     }));
 
         return result;
+    }
+
+    public static Flowable<Quad> execConstructEntitiesNg(
+            SparqlQueryConnection conn,
+            EntityQuery queryEx) {
+        return execConstructEntitiesNg(conn, queryEx, GraphFactory::createDefaultGraph, EntityQueryRx::defaultEvalToNode);
+    }
+
+    /**
+     * Stream the result of an entity query as named graphs
+     *
+     *
+     * @return
+     */
+    public static Flowable<Quad> execConstructEntitiesNg(
+            SparqlQueryConnection conn,
+            EntityQuery queryEx,
+            Supplier<Graph> graphSupplier,
+            ExprListEval exprListEval) {
+
+        Random random = new Random();
+
+        String namedGraphHash = BaseEncoding.base64Url().encode(
+                Hashing.sha256().hashLong(random.nextLong()).asBytes());
+
+        Node hasEntity = NodeFactory.createURI("http://sparql.org/hasEntity");
+
+        return execConstructPartitioned(conn, queryEx, graphSupplier, exprListEval)
+            .zipWith(LongStream.iterate(0, i -> i + 1)::iterator, SimpleEntry::new)
+                .flatMap(graphPartitionAndIndex -> {
+                    long index = graphPartitionAndIndex.getValue();
+                    GraphPartitionWithEntities graphPartition = graphPartitionAndIndex.getKey();
+
+                    Node ngIri = NodeFactory.createURI("urn:sparql-partition:" + namedGraphHash + "-" + index);
+
+                    List<Quad> quads = new ArrayList<>();
+                    for (Node entityNode : graphPartition.getRoots()) {
+                        Quad q = new Quad(ngIri, ngIri, hasEntity, entityNode);
+
+                        quads.add(q);
+                        ExtendedIterator<Triple> it = graphPartition.getGraph().find();
+                        while (it.hasNext()) {
+                            Quad quad = new Quad(ngIri, it.next());
+                            quads.add(quad);
+                        }
+                    }
+
+                    return Flowable.fromIterable(quads);
+                });
     }
 
     /**
@@ -279,7 +377,7 @@ public class PartitionedQueryRx {
 
 
     /**
-     * Based on the information present in {@link PartitionedQuery} return a function that
+     * Based on the information present in {@link EntityQuery} return a function that
      * deterministically yields the same node (possibly a blank node) when passing equivalent bindings
      * to it.
      *
@@ -313,6 +411,33 @@ public class PartitionedQueryRx {
         return result;
     }
 
+
+    public static List<Var> getEntityVars(
+            Node root,
+            Map<Node, ExprList> idMapping) {
+
+        List<Var> result;
+        if (root.isVariable()) {
+            Var rootVar = (Var)root;
+            result = Collections.singletonList(rootVar);
+        } else if (root.isBlank()) {
+            // The root node must be mapped to ids
+            // TODO Currently the limitation is that the mapping must be a list of vars rather than arbitrary expressions
+            ExprList el = idMapping.get(root);
+            Objects.requireNonNull(el, "blank node as the root must be mapped to id-generating expressions");
+
+            Set<Var> vars = new LinkedHashSet<>();
+            ExprVars.varsMentioned(vars, el);
+
+            result = new ArrayList<>(vars);
+        } else {
+            // Case where the root node is a constant;
+            // unlikely to be useful but handled for completeness
+            result = Collections.emptyList();
+        }
+
+        return result;
+    }
 
     /**
      * Create an aggregator whose accumulators accumulate graphs from Bindings
@@ -412,6 +537,16 @@ public class PartitionedQueryRx {
 //        return getEssentialProjectVars(query.getConstructTemplate(), query.getIdMapping());
 //    }
 
+
+//    public static List<Var> getExprListVars(ExprList exprs) {
+//        Set<Var> result = new LinkedHashSet<Var>();
+//        for (Expr exprs : idMapping.values()) {
+//            ExprVars.varsMentioned(result, exprs);
+//        }
+//
+//        return new ArrayList<>(result);
+//    }
+
     public static Set<Var> getEssentialProjectVars(Template template, Map<Node, ExprList> idMapping) {
         Set<Var> result = new LinkedHashSet<>();
 
@@ -473,23 +608,10 @@ public class PartitionedQueryRx {
     }
 
 
-    /**
-     * Return a SELECT query from the given query where
-     * - it is ensured that all partitionVars are part of the projection (if they aren't already)
-     * - distinct is applied in preparation to instantiation of construct templates (where duplicates can be ignored)
-     * - if sortRowsByPartitionVar is true then result bindings are sorted by the primary key vars
-     *   so that bindings that belong together are consecutive
-     * - In case of a construct template without variables variable free is handled
-     *
-     * @param baseQuery
-     * @param partitionVars
-     * @param requiredVars The variables that need to be projected in the resulting query
-     * @param sortRowsByPartitionVar
-     * @return
-     */
     public static Query preprocessQueryForPartition(
             Query baseQuery,
             List<Var> partitionVars,
+            Element attributeElement,
             Set<Var> requiredVars,
             List<SortCondition> partitionOrderBy,
             Generator<Var> varGenerator) {
@@ -499,8 +621,8 @@ public class PartitionedQueryRx {
                 || baseQuery.hasOffset();
 
         Query result = needsSubSelect
-                ? preprocessQueryForPartitionWithSubSelect(baseQuery, partitionVars, requiredVars, partitionOrderBy, varGenerator)
-                : preprocessQueryForPartitionWithoutSubSelect(baseQuery, partitionVars, requiredVars, true);
+                ? preprocessQueryForPartitionWithSubSelect(baseQuery, partitionVars, attributeElement, requiredVars, partitionOrderBy, varGenerator)
+                : preprocessQueryForPartitionWithoutSubSelect(baseQuery, partitionVars, attributeElement, requiredVars, true);
 
         System.err.println(result);
         return result;
@@ -508,15 +630,17 @@ public class PartitionedQueryRx {
 
 
     public static Query preprocessQueryForPartitionWithSubSelect(
-            Query baseQuery,
+            Query entityQuery,
             List<Var> partitionVars,
+            Element attributeElement,
             Set<Var> requiredVars,
             List<SortCondition> partitionOrderBy,
             Generator<Var> varGenerator) {
 
         Query result = preprocessQueryForPartitionWithoutSubSelect(
-                baseQuery,
+                entityQuery,
                 partitionVars,
+                attributeElement,
                 requiredVars,
                 true);
 
@@ -603,16 +727,23 @@ public class PartitionedQueryRx {
 
 
     /**
+     * Return a SELECT query from the given query where
+     * - it is ensured that all partitionVars are part of the projection (if they aren't already)
+     * - distinct is applied in preparation to instantiation of construct templates (where duplicates can be ignored)
+     * - if sortRowsByPartitionVar is true then result bindings are sorted by the primary key vars
+     *   so that bindings that belong together are consecutive
+     * - In case of a construct template without variables variable free is handled
      *
      * @param baseQuery
      * @param partitionVars
-     * @param requiredVars
-     * @param sortRowsByPartitionVars
+     * @param requiredVars The variables that need to be projected in the resulting query
+     * @param sortRowsByPartitionVar
      * @return
      */
     public static Query preprocessQueryForPartitionWithoutSubSelect(
             Query baseQuery,
             List<Var> partitionVars,
+            Element attributeElement, // attribute element is assumed to be aligned with baseQueryat this point
             Set<Var> requiredVars,
             boolean sortRowsByPartitionVars) {
 
@@ -830,4 +961,15 @@ public class PartitionedQueryRx {
 //
 //public static Query appendToProject(Query query, VarExprList vel) {
 //
+//}
+
+//Set<Node> trackedNodes = acc.getTrackedNodes(rootNode);
+//if (bindingToRootNodeInst != null) {
+//
+//  Iterator<Binding> it = table.rows();
+//  while (it.hasNext()) {
+//      Binding binding = it.next();
+//      Node inst = bindingToRootNodeInst.apply(binding);
+//      rootNodes.add(inst);
+//  }
 //}
