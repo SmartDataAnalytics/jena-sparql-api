@@ -100,6 +100,36 @@ import io.reactivex.rxjava3.core.FlowableTransformer;
  */
 public class EntityQueryRx {
 
+    public static Flowable<RDFNode> execConstructEntities(
+            SparqlQueryConnection conn,
+            EntityQueryImpl query) {
+
+        return execConstructEntities(
+                conn, query,
+                GraphFactory::createDefaultGraph);
+    }
+
+    public static Flowable<RDFNode> execConstructEntities(
+            SparqlQueryConnection conn,
+            EntityQueryImpl query,
+            Supplier<Graph> graphSupplier) {
+
+        return execConstructEntities(
+                conn, query,
+                GraphFactory::createDefaultGraph, EntityQueryRx::defaultEvalToNode);
+    }
+
+    public static Flowable<RDFNode> execConstructEntities(
+            SparqlQueryConnection conn,
+            EntityQueryImpl queryEx,
+            Supplier<Graph> graphSupplier,
+            ExprListEval exprListEval) {
+
+        EntityQueryBasic basicEntityQuery = assembleEntityAndAttributeParts(queryEx);
+        return execConstructEntities(conn, basicEntityQuery, graphSupplier, exprListEval);
+    }
+
+
 
     public static Flowable<Quad> execConstructEntitiesNg(
             SparqlQueryConnection conn,
@@ -211,6 +241,29 @@ public class EntityQueryRx {
             result.getAuxiliaryGraphPartitions().add(newJoin);
         }
 
+        // TODO Get rid of code duplication
+
+        for (GraphPartitionJoin join : query.getOptionalJoins()) {
+
+            EntityGraphFragment egm = join.getEntityGraphFragment();
+
+            Set<Var> targetVars = ElementUtils.getVarsMentioned(egm.getElement());
+            List<Var> targetJoinVars = egm.getPartitionVars();
+
+            // Create a var mapping that joins on the partition vars without
+            // causing a clash on any other var
+            Map<Var, Var> varMap = VarUtils.createJoinVarMap(
+                    sourceVars, targetVars, sourceJoinVars, targetJoinVars, varGen);
+
+            // Add any newly allocated variables in the varMap to the source vars for the next iteration
+            // as to prevent accidental joins on the already encountered variables
+            sourceVars.addAll(varMap.values());
+
+            NodeTransform nodeTransform = new NodeTransformRenameMap(varMap);
+            GraphPartitionJoin newJoin = join.applyNodeTransform(nodeTransform);
+
+            result.getOptionalJoins().add(newJoin);
+        }
         return result;
     }
 
