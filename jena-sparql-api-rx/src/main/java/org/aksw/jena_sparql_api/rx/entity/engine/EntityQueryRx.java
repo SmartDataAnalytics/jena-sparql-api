@@ -628,18 +628,6 @@ public class EntityQueryRx {
     }
 
 
-    public static Table resultSetToTable(ResultSet rs) {
-        List<Var> vars = Var.varList(rs.getResultVars());
-        Table result = TableFactory.create(vars);
-        while (rs.hasNext()) {
-            Binding b = BindingFactory.copy(rs.nextBinding());
-            result.addBinding(b);
-        }
-
-        return result;
-    }
-
-
     /**
      * Execute a CONSTRUCT query w.r.t. partitions. For every partition a graph fragment is constructed
      * based on bindings that fell into the partition.

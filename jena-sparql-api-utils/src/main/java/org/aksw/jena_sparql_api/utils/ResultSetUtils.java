@@ -19,9 +19,12 @@ import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.query.ResultSetFactory;
 import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.sparql.algebra.Table;
+import org.apache.jena.sparql.algebra.TableFactory;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.QueryIterator;
 import org.apache.jena.sparql.engine.binding.Binding;
+import org.apache.jena.sparql.engine.binding.BindingFactory;
 import org.apache.jena.sparql.engine.iterator.QueryIterPlainWrapper;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.util.iterator.ExtendedIterator;
@@ -35,6 +38,19 @@ import com.google.common.collect.Multisets;
 
 
 public class ResultSetUtils {
+
+    /** Materialize a {@link ResultSet} into a {@link Table} */
+    public static Table resultSetToTable(ResultSet rs) {
+        List<Var> vars = Var.varList(rs.getResultVars());
+        Table result = TableFactory.create(vars);
+        while (rs.hasNext()) {
+            Binding b = BindingFactory.copy(rs.nextBinding());
+            result.addBinding(b);
+        }
+
+        return result;
+    }
+
 
     public static Multiset<QuerySolution> toMultisetQs(ResultSet rs) {
         Multiset<QuerySolution> result = HashMultiset.create();
