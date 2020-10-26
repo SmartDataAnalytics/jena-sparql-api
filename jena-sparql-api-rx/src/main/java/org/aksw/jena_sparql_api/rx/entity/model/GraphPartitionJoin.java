@@ -12,23 +12,23 @@ public class GraphPartitionJoin
     protected EntityGraphFragment entityGraphFragment;
 
     protected List<Var> parentJoinVars; // if null the join will occur on the parent's partition vars
-    protected boolean isOptional;
+//    protected boolean isOptional;
     protected String lazyFetchGroupName;
 
     protected List<GraphPartitionJoin> subJoins;
 
-    public GraphPartitionJoin(boolean isOptional, EntityGraphFragment entityGraphFragment) {
-        this(isOptional, entityGraphFragment, null, null, null);
+    public GraphPartitionJoin(EntityGraphFragment entityGraphFragment) {
+        this(entityGraphFragment, null, null, null);
     }
 
-    public GraphPartitionJoin(boolean isOptional, EntityGraphFragment entityGraphFragment,
+    public GraphPartitionJoin(EntityGraphFragment entityGraphFragment,
             List<Var> parentJoinVars, String lazyFetchGroup, List< GraphPartitionJoin> subJoins) {
         super();
         this.entityGraphFragment = entityGraphFragment;
         this.parentJoinVars = parentJoinVars;
         this.lazyFetchGroupName = lazyFetchGroup;
         this.subJoins = subJoins;
-        this.isOptional = isOptional;
+//        this.isOptional = isOptional;
     }
 
 //    public static GraphPartitionJoin create(Query query, List<Var> partitionVars, Node entityNode) {
@@ -61,7 +61,7 @@ public class GraphPartitionJoin
 
 
         GraphPartitionJoin result = new GraphPartitionJoin(
-                isOptional,
+//                isOptional,
                 entityGraphFragment.applyNodeTransform(nodeTransform),
                 parentJoinVars,
                 lazyFetchGroupName,
@@ -83,12 +83,12 @@ public class GraphPartitionJoin
         return subJoins;
     }
 
-    public boolean isOptional() {
-        return isOptional;
-    }
-
-    public void setOptional(boolean isOptional) {
-        this.isOptional = isOptional;
-    }
+//    public boolean isOptional() {
+//        return isOptional;
+//    }
+//
+//    public void setOptional(boolean isOptional) {
+//        this.isOptional = isOptional;
+//    }
 }
 

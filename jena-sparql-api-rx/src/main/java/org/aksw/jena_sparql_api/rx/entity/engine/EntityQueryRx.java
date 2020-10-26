@@ -305,11 +305,11 @@ public class EntityQueryRx {
 //        }
 
         GraphPartitionJoin join = Iterables.getFirst(query.getAuxiliaryGraphPartitions(),
-                new GraphPartitionJoin(false,
+                new GraphPartitionJoin(
                         EntityGraphFragment.empty(query.getBaseQuery().getPartitionVars())));
 
         GraphPartitionJoin optional = Iterables.getFirst(query.getOptionalJoins(),
-                new GraphPartitionJoin(true,
+                new GraphPartitionJoin(
                         EntityGraphFragment.empty(query.getBaseQuery().getPartitionVars())));
 
         EntityQueryBasic result = new EntityQueryBasic();
@@ -353,16 +353,19 @@ public class EntityQueryRx {
             List<Element> elts = ElementUtils.toElementList(join.getEntityGraphFragment().getElement());
             Element elt = ElementUtils.groupIfNeeded(elts);
             String lfgn = join.getLazyFetchGroupName();
-            if (join.isOptional()) {
-                rawOptionalFetchGroups.put(lfgn, join);
-            } else {
-                // Make the element join with the partition variables
-                combinedFilter.add(elt);
+            // Make the element join with the partition variables
+            combinedFilter.add(elt);
 
-                rawFetchGroups.put(lfgn, join);
-            }
-
+            rawFetchGroups.put(lfgn, join);
         }
+
+        for (GraphPartitionJoin join : query.getOptionalJoins()) {
+            List<Element> elts = ElementUtils.toElementList(join.getEntityGraphFragment().getElement());
+            Element elt = ElementUtils.groupIfNeeded(elts);
+            String lfgn = join.getLazyFetchGroupName();
+            rawOptionalFetchGroups.put(lfgn, join);
+        }
+
 
         Collection<GraphPartitionJoin> fetchGroups = new ArrayList<>();
         for (Entry<String, Collection<GraphPartitionJoin>> e : rawFetchGroups.asMap().entrySet()) {
@@ -442,7 +445,7 @@ public class EntityQueryRx {
 
         List<Var> parentJoinVars = null; // TODO Handle in the future
         List<GraphPartitionJoin> subJoins = null;
-        GraphPartitionJoin result = new GraphPartitionJoin(isOptional, newFragment, parentJoinVars, groupName, subJoins);
+        GraphPartitionJoin result = new GraphPartitionJoin(newFragment, parentJoinVars, groupName, subJoins);
         return result;
     }
 

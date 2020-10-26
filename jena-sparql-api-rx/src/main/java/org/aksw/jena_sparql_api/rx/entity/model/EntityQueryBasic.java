@@ -66,7 +66,7 @@ public class EntityQueryBasic {
 
     @Override
     public String toString() {
-        return baseQuery + "\n" + attributeFragment;
+        return baseQuery + "\n" + attributeFragment + "\n" + optionalAttributeFragment;
     }
 
     /**
