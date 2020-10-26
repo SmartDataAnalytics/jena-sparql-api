@@ -7,6 +7,7 @@ import org.aksw.jena_sparql_api.stmt.SparqlPrologueParser;
 import org.aksw.jena_sparql_api.stmt.SparqlPrologueParserImpl;
 import org.aksw.jena_sparql_api.stmt.SparqlQueryParser;
 import org.aksw.jena_sparql_api.stmt.SparqlQueryParserImpl;
+import org.aksw.jena_sparql_api.stmt.SparqlQueryParserWrapperSelectShortForm;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query;
@@ -60,11 +61,40 @@ public class Concept
      * @return
      */
     public static Concept parse(String str) {
-        Concept result = parse(str, null);
+        return parse(str, null);
+    }
+
+    public static Concept createFromQuery(Query query) {
+        if (!query.isSelectType()) {
+            throw new RuntimeException("Query must be of select type");
+        }
+
+        if (query.getProjectVars().size() != 1) {
+            throw new RuntimeException("Query must have exactly 1 result variable");
+        }
+
+        Var var = query.getProjectVars().get(0);
+
+        // FIXME Check for aggregators and such
+
+        Concept result = new Concept(query.getQueryPattern(), var);
         return result;
     }
 
+
     public static Concept parse(String str, PrefixMapping pm) {
+        pm = pm == null ?  PrefixMapping.Extended : pm;
+
+        SparqlQueryParser parser = SparqlQueryParserWrapperSelectShortForm.wrap(
+                SparqlQueryParserImpl.create(Syntax.syntaxARQ, new Prologue(pm)));
+
+        Query query = parser.apply(str);
+
+        Concept result = createFromQuery(query);
+        return result;
+    }
+
+    public static Concept parseOld(String str, PrefixMapping pm) {
         String[] splits = str.split("\\|", 2);
         if(splits.length != 2) {
             throw new RuntimeException("Invalid string: " + str);

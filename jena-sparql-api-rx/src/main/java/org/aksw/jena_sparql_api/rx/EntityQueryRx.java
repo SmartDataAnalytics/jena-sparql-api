@@ -2,6 +2,7 @@ package org.aksw.jena_sparql_api.rx;
 
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -23,12 +24,17 @@ import org.aksw.jena_sparql_api.mapper.Aggregator;
 import org.aksw.jena_sparql_api.rx.AggObjectGraph.AccObjectGraph;
 import org.aksw.jena_sparql_api.rx.op.OperatorOrderedGroupBy;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
+import org.aksw.jena_sparql_api.utils.NodeTransformRenameMap;
 import org.aksw.jena_sparql_api.utils.QuadPatternUtils;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.aksw.jena_sparql_api.utils.VarExprListUtils;
 import org.aksw.jena_sparql_api.utils.VarGeneratorBlacklist;
+import org.aksw.jena_sparql_api.utils.VarGeneratorImpl2;
+import org.aksw.jena_sparql_api.utils.VarUtils;
 import org.apache.jena.ext.com.google.common.collect.Iterables;
 import org.apache.jena.ext.com.google.common.collect.Maps;
+import org.apache.jena.ext.com.google.common.collect.Multimap;
+import org.apache.jena.ext.com.google.common.collect.MultimapBuilder;
 import org.apache.jena.ext.com.google.common.collect.Sets;
 import org.apache.jena.ext.com.google.common.collect.Streams;
 import org.apache.jena.ext.com.google.common.hash.Hashing;
@@ -46,6 +52,7 @@ import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.apache.jena.sparql.algebra.Table;
 import org.apache.jena.sparql.algebra.TableFactory;
+import org.apache.jena.sparql.core.BasicPattern;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.core.VarExprList;
@@ -58,8 +65,10 @@ import org.apache.jena.sparql.expr.ExprVar;
 import org.apache.jena.sparql.expr.ExprVars;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.graph.GraphFactory;
+import org.apache.jena.sparql.graph.NodeTransform;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementGroup;
+import org.apache.jena.sparql.syntax.ElementOptional;
 import org.apache.jena.sparql.syntax.ElementSubQuery;
 import org.apache.jena.sparql.syntax.PatternVars;
 import org.apache.jena.sparql.syntax.Template;
@@ -71,7 +80,7 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.FlowableTransformer;
 
 /**
- * Methods for the execution of {@link EntityQuery}s
+ * Methods for the execution of {@link EntityQueryBasic}s
  *
  * @author raven
  *
@@ -79,16 +88,16 @@ import io.reactivex.rxjava3.core.FlowableTransformer;
 public class EntityQueryRx {
 
     /** Execute a partitioned query.
-     * See {@link #execConstructEntities(SparqlQueryConnection, EntityQuery, Supplier, ExprListEval)} */
-    public static Flowable<RDFNode> execConstructRooted(SparqlQueryConnection conn, EntityQuery query) {
+     * See {@link #execConstructEntities(SparqlQueryConnection, EntityQueryBasic, Supplier, ExprListEval)} */
+    public static Flowable<RDFNode> execConstructRooted(SparqlQueryConnection conn, EntityQueryBasic query) {
         return execConstructRooted(
                 conn, query,
                 GraphFactory::createDefaultGraph);
     }
 
     /** Execute a partitioned query.
-     * See {@link #execConstructEntities(SparqlQueryConnection, EntityQuery, Supplier, ExprListEval)} */
-    public static Flowable<RDFNode> execConstructRooted(SparqlQueryConnection conn, EntityQuery query,
+     * See {@link #execConstructEntities(SparqlQueryConnection, EntityQueryBasic, Supplier, ExprListEval)} */
+    public static Flowable<RDFNode> execConstructRooted(SparqlQueryConnection conn, EntityQueryBasic query,
             Supplier<Graph> graphSupplier) {
         return execConstructEntities(
                 conn, query,
@@ -106,13 +115,235 @@ public class EntityQueryRx {
      * @param query
      * @return A flowable of pairs of key bindings and tables
      */
-    public static Flowable<Entry<Binding, Table>> execSelectPartitioned(
-            SparqlQueryConnection conn,
-            EntityQuery query) {
+//    public static Flowable<Entry<Binding, Table>> execSelectPartitioned(
+//            SparqlQueryConnection conn,
+//            EntityQueryBasic query) {
+//
+//        Query standardQuery = query.getPartitionSelectorQuery();
+//
+//        return execSelectPartitioned(conn, standardQuery, query.getPartitionVars());
+//    }
 
-        Query standardQuery = query.getPartitionSelectorQuery();
+    /**
+     * Create a transformed copy of the query where all variables that
+     * need to join have the same name whereas variables that are not
+     * supposed to join have been remapped
+     *
+     *
+     * @param query
+     * @return
+     */
+    public static EntityQueryImpl alignVariables(EntityQueryImpl query) {
+        EntityQueryImpl result = new EntityQueryImpl();
+        result.setBaseQuery(query.getBaseQuery());
 
-        return execSelectPartitioned(conn, standardQuery, query.getPartitionVars());
+        Set<Var> sourceVars = QueryUtils.mentionedVars(result.getBaseQuery().getStandardQuery());
+        List<Var> sourceJoinVars = result.getBaseQuery().getPartitionVars();
+
+        Generator<Var> varGen = VarGeneratorImpl2.create();
+
+        for (GraphPartitionJoin join : query.getAuxiliaryGraphPartitions()) {
+
+            EntityGraphFragment egm = join.getEntityGraphFragment();
+
+            Set<Var> targetVars = ElementUtils.getVarsMentioned(egm.getElement());
+            List<Var> targetJoinVars = egm.getPartitionVars();
+
+            // Create a var mapping that joins on the partition vars without
+            // causing a clash on any other var
+            Map<Var, Var> varMap = VarUtils.createJoinVarMap(
+                    sourceVars, targetVars, sourceJoinVars, targetJoinVars, varGen);
+
+            // Add any newly allocated variables in the varMap to the source vars for the next iteration
+            // as to prevent accidental joins on the already encountered variables
+            sourceVars.addAll(varMap.values());
+
+            NodeTransform nodeTransform = new NodeTransformRenameMap(varMap);
+            GraphPartitionJoin newJoin = join.applyNodeTransform(nodeTransform);
+
+            result.getAuxiliaryGraphPartitions().add(newJoin);
+        }
+
+        return result;
+    }
+
+    public static EntityQueryBasic assembleEntityAndAttributeParts(EntityQueryImpl queryRaw) {
+
+        EntityQueryImpl queryTmp = alignVariables(queryRaw);
+        EntityQueryImpl query = mergeFetchGroups(queryTmp);
+
+//        Query baseQuery = query.getBaseQuery().getStandardQuery();
+//        List<Var> partitionVars = query.getBaseQuery().getPartitionVars();
+
+//        List<SortCondition> partitionOrderBy = queryRaw.getBaseQuery().getPartitionOrderBy();
+
+//        boolean needsSubSelect = !(partitionOrderBy == null || partitionOrderBy.isEmpty())
+//                || baseQuery.hasLimit()
+//                || baseQuery.hasOffset();
+
+//        List<Element> combinedFilter = new ArrayList<>();
+//        //List<Element> combinedAttributes = new ArrayList<>();
+//        combinedFilter.add(baseQuery.getQueryPattern());
+//
+//        for (GraphPartitionJoin gp : query.getAuxiliaryGraphPartitions()) {
+//            Element elt = gp.getEntityGraphFragment().getElement();
+//            if (!(elt instanceof ElementOptional)) {
+//                // Make the element join with the partition variables
+//                combinedFilter.add(elt);
+//            }
+//        }
+//
+//        System.out.println("Filter " + combinedFilter);
+//
+//
+//        for (GraphPartitionJoin gp : query.getAuxiliaryGraphPartitions()) {
+//            String lfgn = gp.getLazyFetchGroupName();
+////            System.out.println("Fetch group: " + lfgn);
+////            System.out.println("CONSTRUCT " + gp.getEntityTemplate().getTemplate().getBGP());
+////            System.out.println("WHERE " + gp.getElement());
+//            System.out.println("----");
+//        }
+
+        GraphPartitionJoin join = Iterables.getFirst(query.getAuxiliaryGraphPartitions(), null);
+        GraphPartitionJoin optional = Iterables.getFirst(query.getOptionalJoins(), null);
+
+        EntityGraphFragment graphFragment = join.getEntityGraphFragment();
+
+        EntityQueryBasic result = new EntityQueryBasic();
+        result.setBaseQuery(queryRaw.getBaseQuery());
+        result.setAttributeFragment(graphFragment);
+        result.setOptionalAttributeFragment(optional.getEntityGraphFragment());
+
+
+        System.out.println(result);
+        System.out.println("---");
+
+//        if (true) throw new RuntimeException("implement me");
+
+        return result;
+    }
+
+
+    /**
+     * Merges all graph partitions with the same fetch group name into a single
+     * graph partition.
+     *
+     * @param queryRaw
+     * @return
+     */
+    public static EntityQueryImpl mergeFetchGroups(EntityQueryImpl query) {
+
+        Query baseQuery = query.getBaseQuery().getStandardQuery();
+        List<Var> partitionVars = query.getBaseQuery().getPartitionVars();
+
+        // First group all graph partitions by name
+        // Then merge their templates and patterns into a single one
+        Multimap<String, GraphPartitionJoin> rawFetchGroups = MultimapBuilder.hashKeys().arrayListValues().build();
+        Multimap<String, GraphPartitionJoin> rawOptionalFetchGroups = MultimapBuilder.hashKeys().arrayListValues().build();
+
+        // todo add the direct graph partition to the fetch group if a subSelect is needed
+        // query.getDirectGraphPartition()
+
+
+        List<Element> combinedFilter = new ArrayList<>();
+        //List<Element> combinedAttributes = new ArrayList<>();
+        combinedFilter.add(baseQuery.getQueryPattern());
+
+        for (GraphPartitionJoin join : query.getAuxiliaryGraphPartitions()) {
+            List<Element> elts = ElementUtils.toElementList(join.getEntityGraphFragment().getElement());
+            Element elt = ElementUtils.groupIfNeeded(elts);
+            String lfgn = join.getLazyFetchGroupName();
+            if (join.isOptional()) {
+                rawOptionalFetchGroups.put(lfgn, join);
+            } else {
+                // Make the element join with the partition variables
+                combinedFilter.add(elt);
+
+                rawFetchGroups.put(lfgn, join);
+            }
+
+        }
+
+        Collection<GraphPartitionJoin> fetchGroups = new ArrayList<>();
+        for (Entry<String, Collection<GraphPartitionJoin>> e : rawFetchGroups.asMap().entrySet()) {
+            String groupName = e.getKey();
+            if (e.getValue().isEmpty()) {
+                continue;
+            }
+            GraphPartitionJoin newGp = merge(groupName, partitionVars, e.getValue(), false);
+            fetchGroups.add(newGp);
+        }
+
+        Collection<GraphPartitionJoin> optionalFetchGroups = new ArrayList<>();
+        for (Entry<String, Collection<GraphPartitionJoin>> e : rawOptionalFetchGroups.asMap().entrySet()) {
+            String groupName = e.getKey();
+            if (e.getValue().isEmpty()) {
+                continue;
+            }
+
+            GraphPartitionJoin newGp = merge(groupName, partitionVars, e.getValue(), true);
+            optionalFetchGroups.add(newGp);
+        }
+
+
+        EntityQueryImpl result = new EntityQueryImpl();
+        result.setBaseQuery(query.getBaseQuery());
+        result.getAuxiliaryGraphPartitions().addAll(fetchGroups);
+        result.getOptionalJoins().addAll(optionalFetchGroups);
+
+        return result;
+    }
+
+
+    public static GraphPartitionJoin merge(
+            String groupName,
+            List<Var> partitionVars,
+            Collection<? extends GraphPartitionJoin> gps,
+            boolean isOptional) {
+
+        Element newElement = ElementUtils.groupIfNeeded(gps.stream()
+                .map(GraphPartitionJoin::getEntityGraphFragment)
+                .map(EntityGraphFragment::getElement)
+                .map(ElementUtils::toElementList)
+                .map(list -> isOptional
+                        ? Collections.singletonList(new ElementOptional(ElementUtils.groupIfNeeded(list)))
+                        : list)
+                .flatMap(Collection::stream)
+                .collect(Collectors.toList()));
+
+        BasicPattern bgp = new BasicPattern();
+        gps.stream()
+                .map(gp -> gp.getEntityGraphFragment().getEntityTemplate().getTemplate().getBGP())
+                .forEach(bgp::addAll);
+        Template newTemplate = new Template(bgp);
+
+        List<Node> newEntityNodes = gps.stream()
+            .map(GraphPartitionJoin::getEntityGraphFragment)
+            .map(EntityGraphFragment::getEntityTemplate)
+            .map(EntityTemplate::getEntityNodes)
+            .flatMap(Collection::stream)
+            .distinct()
+            .collect(Collectors.toList());
+
+        Map<Node, ExprList> newBnodeIdMapping = gps.stream()
+                .map(GraphPartitionJoin::getEntityGraphFragment)
+                .map(EntityGraphFragment::getEntityTemplate)
+                .map(EntityTemplate::getBnodeIdMapping)
+                .map(Map::entrySet)
+                .flatMap(Collection::stream)
+                .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+
+
+        EntityTemplate newEntityTemplate = new EntityTemplateImpl(
+                newEntityNodes, newTemplate, newBnodeIdMapping);
+
+        EntityGraphFragment newFragment = new EntityGraphFragment(partitionVars, newEntityTemplate, newElement);
+
+
+        List<Var> parentJoinVars = null; // TODO Handle in the future
+        List<GraphPartitionJoin> subJoins = null;
+        GraphPartitionJoin result = new GraphPartitionJoin(isOptional, newFragment, parentJoinVars, groupName, subJoins);
+        return result;
     }
 
     /**
@@ -149,6 +380,18 @@ public class EntityQueryRx {
         return result;
     }
 
+
+    public static Flowable<GraphPartitionWithEntities> execConstructPartitioned(
+            SparqlQueryConnection conn,
+            EntityQueryImpl queryEx,
+            Supplier<Graph> graphSupplier,
+            ExprListEval exprListEval) {
+
+        EntityQueryBasic assembledQuery = assembleEntityAndAttributeParts(queryEx);
+
+        return execConstructPartitionedOld(conn, assembledQuery, graphSupplier, exprListEval);
+    }
+
     /**
      * Execute a CONSTRUCT query using partitions.
      *
@@ -158,49 +401,126 @@ public class EntityQueryRx {
      * @param exprListEval
      * @return
      */
-    public static Flowable<GraphPartitionWithEntities> execConstructPartitioned(
+    public static Flowable<GraphPartitionWithEntities> execConstructPartitionedOld(
             SparqlQueryConnection conn,
-            EntityQuery queryEx,
+            EntityQueryBasic queryEx,
             Supplier<Graph> graphSupplier,
             ExprListEval exprListEval) {
 
-        GraphPartitionBase directGraphPartition = queryEx.getDirectGraphPartition();
+        EntityBaseQuery baseQuery = queryEx.getBaseQuery();
 
-        Query standardQuery = queryEx.getPartitionSelectorQuery();
-        Template template = standardQuery.getConstructTemplate();
-        Map<Node, ExprList> idMapping = directGraphPartition.getBnodeIdMapping();
+        EntityTemplate directTemplate = baseQuery.getEntityTemplate();
+        EntityTemplate attributeTemplate = queryEx.getAttributeFragment().getEntityTemplate();
+        EntityTemplate optionalTemplate = queryEx.getOptionalAttributeFragment().getEntityTemplate();
+
+        // Combine the direct and attribute templates
+//        Map<Var, Var> varMap = VarUtils.createJoinVarMap(
+//                sourceVars, targetVars, sourceJoinVars, targetJoinVars, varGen);
 
 
-        List<Var> partitionVars = queryEx.getPartitionVars();
-        List<SortCondition> partitionOrderBy = queryEx.getPartitionOrderBy();
+        EntityTemplate effectiveTemplate = EntityTemplate.merge(
+                directTemplate,
+                attributeTemplate,
+                optionalTemplate);
+
+        Query standardQuery = baseQuery.getStandardQuery();
+
+        // FIXME Check whether this needs subquery wrapping
+        Element filterElement = standardQuery.getQueryPattern();
+
+
+        //Template template = standardQuery.getConstructTemplate();
+        Template template = effectiveTemplate.getTemplate();
+        Map<Node, ExprList> idMapping = directTemplate.getBnodeIdMapping();
+
+
+        List<Var> partitionVars = baseQuery.getPartitionVars();
+        List<SortCondition> partitionOrderBy = baseQuery.getPartitionOrderBy();
 
 
         Set<Var> essentialProjectVars = getEssentialProjectVars(
                 template, idMapping);
 
-        Node rootNode = directGraphPartition.getEntityNode();
 //        Function<Binding, Node> bindingToRootNodeInst = rootNode == null
 //                ? null
 //                : createKeyFunction(rootNode, idMapping, exprListEval);
 
 //        List<Var> entityVars = getEntityVars(rootNode, idMapping);
 
-        Set<Node> trackedTemplateNodes = rootNode == null
-                ? Collections.emptySet()
-                : Collections.singleton(rootNode);
+        Set<Node> trackedTemplateNodes = new LinkedHashSet<>(effectiveTemplate.getEntityNodes());
 
         Set<Var> blacklist = QueryUtils.mentionedVars(standardQuery);
         Generator<Var> varGen = VarGeneratorBlacklist.create("sortKey", blacklist);
 
-        Element attributeElement = standardQuery.getQueryPattern();
 
-        Query selectQuery = preprocessQueryForPartition(
-                standardQuery,
-                partitionVars,
-                attributeElement,
-                essentialProjectVars,
-                partitionOrderBy,
-                varGen);
+        // If direct template is non-empty then extend the attribute element with the selector
+        // (in order to expose the seletors variables as attributes)
+
+        // conversely, if the attribute element is non-optional then add it to the selector
+
+
+        Element attributeElement = queryEx.getAttributeFragment().getElement(); //standardQuery.getQueryPattern();
+        Element optionalAttributeElement = queryEx.getOptionalAttributeFragment().getElement();
+
+        boolean needsSubSelect = !(partitionOrderBy == null || partitionOrderBy.isEmpty())
+                || standardQuery.hasLimit()
+                || standardQuery.hasOffset();
+
+        // If there is no need for a subselect then just combine filter and attribute
+
+        List<Element> filterElts = ElementUtils.toElementList(filterElement);
+        List<Element> attrElts = ElementUtils.toElementList(attributeElement);
+        List<Element> optAttrElts = ElementUtils.toElementList(optionalAttributeElement);
+
+        Element effectiveFilter = filterElement;
+        Element effectiveAttribute = attributeElement;
+
+        Query selectQuery;
+        if (!needsSubSelect) {
+            effectiveFilter = ElementUtils.groupIfNeeded(Iterables.concat(
+                    filterElts, attrElts, optAttrElts));
+            effectiveAttribute = null;
+
+            standardQuery.setQueryPattern(effectiveFilter);
+
+            selectQuery = preprocessQueryForPartitionWithoutSubSelect(
+                    standardQuery,
+                    partitionVars,
+//                    attributeElement,
+                    essentialProjectVars,
+                    true);
+                    //partitionOrderBy,
+                    //true);
+
+        } else {
+            effectiveFilter = ElementUtils.groupIfNeeded(Iterables.concat(filterElts, attrElts));
+
+            if (!directTemplate.getTemplate().getTriples().isEmpty()) {
+                effectiveAttribute = ElementUtils.groupIfNeeded(Iterables.concat(filterElts, attrElts, optAttrElts));
+            } else {
+                effectiveAttribute = ElementUtils.groupIfNeeded(Iterables.concat(attrElts, optAttrElts));
+            }
+
+            standardQuery.setQueryPattern(effectiveFilter);
+
+            selectQuery = preprocessQueryForPartitionWithSubSelect(
+                    standardQuery,
+                    partitionVars,
+                    effectiveAttribute,
+                    essentialProjectVars,
+                    partitionOrderBy,
+                    varGen);
+        }
+
+        System.err.println(selectQuery);
+
+//        selectQuery = preprocessQueryForPartition(
+//                standardQuery,
+//                partitionVars,
+//                attributeElement,
+//                essentialProjectVars,
+//                partitionOrderBy,
+//                varGen);
 
         Function<Table, AccObjectGraph> tableToGraph = createTableToGraphMapper(
                 template,
@@ -249,7 +569,9 @@ public class EntityQueryRx {
 
                     AccObjectGraph acc = tableToGraph.apply(table);
                     Graph graph = acc.getValue();
-                    Set<Node> entities =  acc.getTrackedNodes(rootNode);
+                    Set<Node> entities = trackedTemplateNodes.stream().map(rootNode -> acc.getTrackedNodes(rootNode))
+                            .flatMap(Collection::stream)
+                            .collect(Collectors.toSet());
 
                     GraphPartitionWithEntities r = new GraphPartitionWithEntities(partitionKey, graph, entities);
                     return r;
@@ -275,7 +597,7 @@ public class EntityQueryRx {
      * Execute a CONSTRUCT query w.r.t. partitions. For every partition a graph fragment is constructed
      * based on bindings that fell into the partition.
      * In addition, designate all values in that partition that were bound to the node referred to by
-     * {@link EntityQuery#getEntityNode()} as 'roots' of that partition.
+     * {@link EntityQueryBasic#getEntityNode()} as 'roots' of that partition.
      * Roots serve as designated starting points for traversal of the graph fragment.
      * Each root is returned as as separate {@link RDFNode} instance that holds a reference
      * to that partition's graph.
@@ -288,11 +610,11 @@ public class EntityQueryRx {
      */
     public static Flowable<RDFNode> execConstructEntities(
             SparqlQueryConnection conn,
-            EntityQuery queryEx,
+            EntityQueryBasic queryEx,
             Supplier<Graph> graphSupplier,
             ExprListEval exprListEval) {
 
-        Flowable<RDFNode> result = execConstructPartitioned(conn, queryEx, graphSupplier, exprListEval)
+        Flowable<RDFNode> result = execConstructPartitionedOld(conn, queryEx, graphSupplier, exprListEval)
             .flatMap(graphPartition -> Flowable.fromIterable(graphPartition.getRoots())
                     .map(node -> {
                         Graph graph = graphPartition.getGraph();
@@ -306,7 +628,7 @@ public class EntityQueryRx {
 
     public static Flowable<Quad> execConstructEntitiesNg(
             SparqlQueryConnection conn,
-            EntityQuery queryEx) {
+            EntityQueryBasic queryEx) {
         return execConstructEntitiesNg(conn, queryEx, GraphFactory::createDefaultGraph, EntityQueryRx::defaultEvalToNode);
     }
 
@@ -318,7 +640,7 @@ public class EntityQueryRx {
      */
     public static Flowable<Quad> execConstructEntitiesNg(
             SparqlQueryConnection conn,
-            EntityQuery queryEx,
+            EntityQueryBasic queryEx,
             Supplier<Graph> graphSupplier,
             ExprListEval exprListEval) {
 
@@ -329,7 +651,7 @@ public class EntityQueryRx {
 
         Node hasEntity = NodeFactory.createURI("http://sparql.org/hasEntity");
 
-        return execConstructPartitioned(conn, queryEx, graphSupplier, exprListEval)
+        return execConstructPartitionedOld(conn, queryEx, graphSupplier, exprListEval)
             .zipWith(LongStream.iterate(0, i -> i + 1)::iterator, SimpleEntry::new)
                 .flatMap(graphPartitionAndIndex -> {
                     long index = graphPartitionAndIndex.getValue();
@@ -377,7 +699,7 @@ public class EntityQueryRx {
 
 
     /**
-     * Based on the information present in {@link EntityQuery} return a function that
+     * Based on the information present in {@link EntityQueryBasic} return a function that
      * deterministically yields the same node (possibly a blank node) when passing equivalent bindings
      * to it.
      *
@@ -607,26 +929,26 @@ public class EntityQueryRx {
         return result;
     }
 
-
-    public static Query preprocessQueryForPartition(
-            Query baseQuery,
-            List<Var> partitionVars,
-            Element attributeElement,
-            Set<Var> requiredVars,
-            List<SortCondition> partitionOrderBy,
-            Generator<Var> varGenerator) {
-
-        boolean needsSubSelect = !(partitionOrderBy == null || partitionOrderBy.isEmpty())
-                || baseQuery.hasLimit()
-                || baseQuery.hasOffset();
-
-        Query result = needsSubSelect
-                ? preprocessQueryForPartitionWithSubSelect(baseQuery, partitionVars, attributeElement, requiredVars, partitionOrderBy, varGenerator)
-                : preprocessQueryForPartitionWithoutSubSelect(baseQuery, partitionVars, attributeElement, requiredVars, true);
-
-        System.err.println(result);
-        return result;
-    }
+//
+//    public static Query preprocessQueryForPartition(
+//            Query baseQuery,
+//            List<Var> partitionVars,
+//            Element attributeElement,
+//            Set<Var> requiredVars,
+//            List<SortCondition> partitionOrderBy,
+//            Generator<Var> varGenerator) {
+//
+//        boolean needsSubSelect = !(partitionOrderBy == null || partitionOrderBy.isEmpty())
+//                || baseQuery.hasLimit()
+//                || baseQuery.hasOffset();
+//
+//        Query result = needsSubSelect
+//                ? preprocessQueryForPartitionWithSubSelect(baseQuery, partitionVars, attributeElement, requiredVars, partitionOrderBy, varGenerator)
+//                : preprocessQueryForPartitionWithoutSubSelect(baseQuery, partitionVars, attributeElement, requiredVars, true);
+//
+//        System.err.println(result);
+//        return result;
+//    }
 
 
     public static Query preprocessQueryForPartitionWithSubSelect(
@@ -640,7 +962,7 @@ public class EntityQueryRx {
         Query result = preprocessQueryForPartitionWithoutSubSelect(
                 entityQuery,
                 partitionVars,
-                attributeElement,
+                //attributeElement,
                 requiredVars,
                 true);
 
@@ -706,7 +1028,7 @@ public class EntityQueryRx {
 
 
         ElementGroup newPattern = ElementUtils.createElementGroup(new ElementSubQuery(subSelect));
-        ElementUtils.copyElements(newPattern, basePattern);
+        ElementUtils.copyElements(newPattern, attributeElement);
 
         // Update the query pattern
         result.setQueryPattern(newPattern);
@@ -743,7 +1065,7 @@ public class EntityQueryRx {
     public static Query preprocessQueryForPartitionWithoutSubSelect(
             Query baseQuery,
             List<Var> partitionVars,
-            Element attributeElement, // attribute element is assumed to be aligned with baseQueryat this point
+            // Element attributeElement, // attribute element is assumed to be aligned with baseQueryat this point
             Set<Var> requiredVars,
             boolean sortRowsByPartitionVars) {
 
