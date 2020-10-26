@@ -3,6 +3,7 @@ package org.aksw.jena_sparql_api.rx;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.aksw.jena_sparql_api.rx.entity.model.EntityTemplate;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.SortCondition;
 import org.apache.jena.sparql.core.Var;

@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.rx;
+package org.aksw.jena_sparql_api.rx.entity.model;
 
 import java.util.List;
 

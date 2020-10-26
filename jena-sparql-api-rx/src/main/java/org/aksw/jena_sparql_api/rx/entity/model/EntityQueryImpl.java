@@ -1,7 +1,9 @@
-package org.aksw.jena_sparql_api.rx;
+package org.aksw.jena_sparql_api.rx.entity.model;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import org.aksw.jena_sparql_api.rx.EntityBaseQuery;
 
 
 /** Basic implementation of {@link EntityQueryBasic} */

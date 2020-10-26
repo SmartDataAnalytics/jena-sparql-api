@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.rx;
+package org.aksw.jena_sparql_api.rx.entity.engine;
 
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
@@ -21,7 +21,20 @@ import org.aksw.commons.collections.SetUtils;
 import org.aksw.commons.collections.generator.Generator;
 import org.aksw.jena_sparql_api.mapper.Accumulator;
 import org.aksw.jena_sparql_api.mapper.Aggregator;
+import org.aksw.jena_sparql_api.rx.AggCollection;
+import org.aksw.jena_sparql_api.rx.AggObjectGraph;
 import org.aksw.jena_sparql_api.rx.AggObjectGraph.AccObjectGraph;
+import org.aksw.jena_sparql_api.rx.EntityBaseQuery;
+import org.aksw.jena_sparql_api.rx.EntityGraphFragment;
+import org.aksw.jena_sparql_api.rx.ExprTransformAllocAggregate;
+import org.aksw.jena_sparql_api.rx.SparqlRx;
+import org.aksw.jena_sparql_api.rx.entity.model.EntityQueryBasic;
+import org.aksw.jena_sparql_api.rx.entity.model.EntityQueryImpl;
+import org.aksw.jena_sparql_api.rx.entity.model.EntityTemplate;
+import org.aksw.jena_sparql_api.rx.entity.model.EntityTemplateImpl;
+import org.aksw.jena_sparql_api.rx.entity.model.ExprListEval;
+import org.aksw.jena_sparql_api.rx.entity.model.GraphPartitionJoin;
+import org.aksw.jena_sparql_api.rx.entity.model.GraphPartitionWithEntities;
 import org.aksw.jena_sparql_api.rx.op.OperatorOrderedGroupBy;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.NodeTransformRenameMap;
@@ -86,6 +99,40 @@ import io.reactivex.rxjava3.core.FlowableTransformer;
  *
  */
 public class EntityQueryRx {
+
+
+    public static Flowable<Quad> execConstructEntitiesNg(
+            SparqlQueryConnection conn,
+            EntityQueryImpl query) {
+
+        return execConstructEntitiesNg(
+                conn, query,
+                GraphFactory::createDefaultGraph);
+    }
+
+    public static Flowable<Quad> execConstructEntitiesNg(
+            SparqlQueryConnection conn,
+            EntityQueryImpl query,
+            Supplier<Graph> graphSupplier) {
+
+        return execConstructEntitiesNg(
+                conn, query,
+                GraphFactory::createDefaultGraph, EntityQueryRx::defaultEvalToNode);
+    }
+
+    public static Flowable<Quad> execConstructEntitiesNg(
+            SparqlQueryConnection conn,
+            EntityQueryImpl queryEx,
+            Supplier<Graph> graphSupplier,
+            ExprListEval exprListEval) {
+
+        EntityQueryBasic basicEntityQuery = assembleEntityAndAttributeParts(queryEx);
+        return execConstructEntitiesNg(conn, basicEntityQuery, graphSupplier, exprListEval);
+        //return execConstructPartitionedOld(conn, assembledQuery, graphSupplier, exprListEval);
+    }
+
+
+
 
     /** Execute a partitioned query.
      * See {@link #execConstructEntities(SparqlQueryConnection, EntityQueryBasic, Supplier, ExprListEval)} */
@@ -204,19 +251,19 @@ public class EntityQueryRx {
 //            System.out.println("----");
 //        }
 
-        GraphPartitionJoin join = Iterables.getFirst(query.getAuxiliaryGraphPartitions(), null);
-        GraphPartitionJoin optional = Iterables.getFirst(query.getOptionalJoins(), null);
+        GraphPartitionJoin join = Iterables.getFirst(query.getAuxiliaryGraphPartitions(),
+                new GraphPartitionJoin(false,
+                        EntityGraphFragment.empty(query.getBaseQuery().getPartitionVars())));
 
-        EntityGraphFragment graphFragment = join.getEntityGraphFragment();
+        GraphPartitionJoin optional = Iterables.getFirst(query.getOptionalJoins(),
+                new GraphPartitionJoin(true,
+                        EntityGraphFragment.empty(query.getBaseQuery().getPartitionVars())));
 
         EntityQueryBasic result = new EntityQueryBasic();
         result.setBaseQuery(queryRaw.getBaseQuery());
-        result.setAttributeFragment(graphFragment);
+        result.setAttributeFragment(join.getEntityGraphFragment());
         result.setOptionalAttributeFragment(optional.getEntityGraphFragment());
 
-
-        System.out.println(result);
-        System.out.println("---");
 
 //        if (true) throw new RuntimeException("implement me");
 
@@ -381,7 +428,7 @@ public class EntityQueryRx {
     }
 
 
-    public static Flowable<GraphPartitionWithEntities> execConstructPartitioned(
+    public static Flowable<GraphPartitionWithEntities> execConstructPartitionedOld(
             SparqlQueryConnection conn,
             EntityQueryImpl queryEx,
             Supplier<Graph> graphSupplier,
@@ -631,6 +678,7 @@ public class EntityQueryRx {
             EntityQueryBasic queryEx) {
         return execConstructEntitiesNg(conn, queryEx, GraphFactory::createDefaultGraph, EntityQueryRx::defaultEvalToNode);
     }
+
 
     /**
      * Stream the result of an entity query as named graphs

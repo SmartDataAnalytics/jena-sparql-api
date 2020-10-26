@@ -3,6 +3,8 @@ package org.aksw.jena_sparql_api.rx;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.aksw.jena_sparql_api.rx.entity.model.EntityTemplate;
+import org.aksw.jena_sparql_api.rx.entity.model.EntityTemplateImpl;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
@@ -10,6 +12,7 @@ import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.graph.NodeTransform;
 import org.apache.jena.sparql.graph.NodeTransformLib;
 import org.apache.jena.sparql.syntax.Element;
+import org.apache.jena.sparql.syntax.ElementGroup;
 
 /**
  * A simplified construct query that is just comprised of a sequence of
@@ -33,6 +36,12 @@ public class EntityGraphFragment {
         this.partitionVars = partitionVars;
         this.entityTemplate = entityTemplate;
         this.element = element;
+    }
+
+    public static EntityGraphFragment empty(List<Var> partitionVars) {
+        return new EntityGraphFragment(partitionVars,
+                new EntityTemplateImpl(),
+                new ElementGroup());
     }
 
     public static EntityGraphFragment fromQuery(List<Var> partitionVars, List<Node> entityNodes, Query query) {

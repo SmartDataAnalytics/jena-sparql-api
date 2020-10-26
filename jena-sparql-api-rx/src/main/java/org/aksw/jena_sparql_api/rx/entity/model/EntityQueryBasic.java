@@ -1,7 +1,9 @@
-package org.aksw.jena_sparql_api.rx;
+package org.aksw.jena_sparql_api.rx.entity.model;
 
 import java.util.List;
 
+import org.aksw.jena_sparql_api.rx.EntityBaseQuery;
+import org.aksw.jena_sparql_api.rx.EntityGraphFragment;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.SortCondition;

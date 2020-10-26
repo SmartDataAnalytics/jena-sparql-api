@@ -1,7 +1,8 @@
-package org.aksw.jena_sparql_api.rx;
+package org.aksw.jena_sparql_api.rx.entity.model;
 
 import java.util.List;
 
+import org.aksw.jena_sparql_api.rx.EntityGraphFragment;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.graph.NodeTransform;
 
