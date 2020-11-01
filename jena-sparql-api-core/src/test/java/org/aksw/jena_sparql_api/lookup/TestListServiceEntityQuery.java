@@ -30,11 +30,11 @@ public class TestListServiceEntityQuery {
         try (SparqlQueryConnection conn = RDFConnectionFactory.connect(dataset)) {
             ListService<EntityBaseQuery, RDFNode> listService = new ListServiceEntityQuery(conn, agf);
 
-            EntityBaseQuery baseQuery = EntityBaseQuery.create(Vars.x, parser.apply("SELECT * { ?x a ?y }"));
+            EntityBaseQuery baseQuery = EntityBaseQuery.create(Vars.x, parser.apply("SELECT * { ?x a ?y } LIMIT 10 OFFSET 5"));
             ListPaginator<RDFNode> paginator = listService.createPaginator(baseQuery);
             System.out.println(paginator.fetchCount(null, null).blockingGet());
 
-            List<RDFNode> nodes = paginator.apply(Range.closed(0l, 5l)).toList().blockingGet();
+            List<RDFNode> nodes = paginator.apply(Range.closedOpen(0l, 10l)).toList().blockingGet();
             System.out.println(nodes);
         }
     }

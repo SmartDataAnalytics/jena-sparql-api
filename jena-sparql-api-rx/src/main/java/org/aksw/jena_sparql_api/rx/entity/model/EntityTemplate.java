@@ -15,6 +15,9 @@ import org.apache.jena.sparql.graph.NodeTransform;
 import org.apache.jena.sparql.syntax.Template;
 
 public interface EntityTemplate {
+
+    EntityTemplate cloneTemplate();
+
     Template getTemplate();
     void setTemplate(Template template);
 

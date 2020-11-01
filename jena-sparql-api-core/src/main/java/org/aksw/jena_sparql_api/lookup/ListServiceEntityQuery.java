@@ -48,16 +48,25 @@ public class ListServiceEntityQuery
 
         @Override
         public Flowable<RDFNode> apply(Range<Long> t) {
+            t = t == null ? Range.atLeast(0l) : t;
+
+            EntityBaseQuery clone = baseQuery.cloneQuery();
+
             // TODO Ensure we create a deep clone
+            Query standardQuery = clone.getStandardQuery();
+
+            Range<Long> baseRange = QueryUtils.toRange(baseQuery.getStandardQuery());
+            Range<Long> effectiveRange = QueryUtils.subRange(baseRange, t);
+
+            QueryUtils.applyRange(standardQuery, effectiveRange);
+
+
             EntityQueryImpl entityQuery = new EntityQueryImpl();
-            entityQuery.setBaseQuery(baseQuery);
+            entityQuery.setBaseQuery(clone);
             entityQuery.setAttributePart(attributePart);
 
 
-
             // QueryUtils.applySlice(query, offset, limit, cloneOnChange)
-            long limit = QueryUtils.rangeToLimit(t);
-            long offset = QueryUtils.rangeToOffset(t);
 
             Flowable<RDFNode> result = EntityQueryRx.execConstructEntities(conn, entityQuery);
             return result;

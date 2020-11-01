@@ -55,6 +55,13 @@ public class EntityTemplateImpl
         this.bnodeIdMapping = bnodeIdMapping;
     }
 
+    public EntityTemplateImpl cloneTemplate() {
+        return new EntityTemplateImpl(
+                new ArrayList<>(entityNodes),
+                new Template(BasicPattern.wrap(new ArrayList<>(template.getTriples()))),
+                new LinkedHashMap<>(bnodeIdMapping));
+    }
+
     /**
      * Template to construct graphs directly from the given select
      * query (avoids having to repeat the select query's pattern as a graph partition)

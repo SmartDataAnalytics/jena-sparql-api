@@ -537,24 +537,25 @@ public class QueryUtils {
 
 
     /**
-     * Transform a range w.r.t. a discrete domain such that any existing bound is closed.
+     * Transform a range w.r.t. a discrete domain such that any lower bound is closed and the upper bound
+     * is open. As a result, a zero-length range is represented by [x..x)
      *
      * @param <T>
      * @param range
      * @param domain
      * @return
      */
-    public static <T extends Comparable<T>> Range<T> makeClosed(Range<T> range, DiscreteDomain<T> domain) {
+    public static <T extends Comparable<T>> Range<T> makeClosedOpen(Range<T> range, DiscreteDomain<T> domain) {
         T lower = closedLowerEndpointOrNull(range, domain);
-        T upper = closedUpperEndpointOrNull(range, domain);
+        T upper = openUpperEndpointOrNull(range, domain);
 
         Range<T> result = lower == null
                 ? upper == null
                     ? Range.all()
-                    : Range.atMost(upper)
+                    : Range.upTo(upper, BoundType.OPEN)
                 : upper == null
                     ? Range.atLeast(lower)
-                    : Range.closed(lower, upper);
+                    : Range.closedOpen(lower, upper);
 
         return result;
     }
@@ -622,12 +623,12 @@ public class QueryUtils {
         return result;
     }
 
-    public static <T extends Comparable<T>> T closedUpperEndpointOrNull(Range<T> range, DiscreteDomain<T> domain) {
+    public static <T extends Comparable<T>> T openUpperEndpointOrNull(Range<T> range, DiscreteDomain<T> domain) {
         T result = !range.hasUpperBound()
                 ? null
-                : range.lowerBoundType().equals(BoundType.CLOSED)
-                    ? range.upperEndpoint()
-                    : domain.previous(range.upperEndpoint());
+                : range.upperBoundType().equals(BoundType.CLOSED)
+                    ? domain.next(range.upperEndpoint())
+                    : range.upperEndpoint();
 
         return result;
     }
@@ -648,11 +649,13 @@ public class QueryUtils {
      * @return
      */
     public static long rangeToLimit(Range<Long> range) {
-        range = range == null ? null : makeClosed(range, DiscreteDomain.longs());
+        range = range == null ? null : makeClosedOpen(range, DiscreteDomain.longs());
 
         long result = range == null || !range.hasUpperBound()
             ? Query.NOLIMIT
-            : DiscreteDomain.longs().distance(range.lowerEndpoint(), range.upperEndpoint());
+            : DiscreteDomain.longs().distance(range.lowerEndpoint(), range.upperEndpoint())
+                // If the upper bound is closed such as [x, x] then the result is the distance plus 1
+                + (range.upperBoundType().equals(BoundType.CLOSED) ? 1 : 0);
 
         return result;
     }
@@ -683,22 +686,22 @@ public class QueryUtils {
      * @return
      */
     public static Range<Long> subRange(Range<Long> _parent, Range<Long> _child) {
-        Range<Long> parent = makeClosed(_parent, DiscreteDomain.longs());
-        Range<Long> child = makeClosed(_child, DiscreteDomain.longs());
+        Range<Long> parent = makeClosedOpen(_parent, DiscreteDomain.longs());
+        Range<Long> child = makeClosedOpen(_child, DiscreteDomain.longs());
 
         long newMin = parent.lowerEndpoint() + child.lowerEndpoint();
 
         Long newMax = (parent.hasUpperBound()
             ? child.hasUpperBound()
-                ? (Long)Math.min(parent.upperEndpoint(), child.upperEndpoint())
+                ? (Long)Math.min(parent.upperEndpoint(), newMin + child.upperEndpoint())
                 : parent.upperEndpoint()
             : child.hasUpperBound()
-                ? (Long)child.upperEndpoint()
+                ? newMin + (Long)child.upperEndpoint()
                 : null);
 
         Range<Long> result = newMax == null
                 ? Range.atLeast(newMin)
-                : Range.closed(newMin, newMax);
+                : Range.closedOpen(newMin, newMax);
 
         return result;
     }

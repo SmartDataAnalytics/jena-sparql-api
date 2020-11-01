@@ -19,7 +19,9 @@ import org.apache.jena.sparql.syntax.Template;
  * @author raven
  *
  */
-public class EntityBaseQuery {
+public class EntityBaseQuery
+    implements Cloneable
+{
     /**
      * The standard query can be SPARQL SELECT query
      *
@@ -47,6 +49,15 @@ public class EntityBaseQuery {
         this.entityTemplate = entityTemplate;
         this.partitionVars = partitionVars;
         this.partitionOrderBy = partitionOrderBy;
+    }
+
+//    @Override
+    public EntityBaseQuery cloneQuery() {
+        return new EntityBaseQuery(
+                new ArrayList<>(partitionVars),
+                entityTemplate.cloneTemplate(),
+                standardQuery.cloneQuery(),
+                new ArrayList<>(partitionOrderBy));
     }
 
     public Query getStandardQuery() {
