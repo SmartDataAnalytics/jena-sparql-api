@@ -30,6 +30,14 @@ public interface EntityTemplate {
     EntityTemplate applyNodeTransform(NodeTransform nodeTransform);
 
 
+    /**
+     * Combine the information from multiple EntityTemplates into a single one
+     * This operation should only be performed after processing variable names
+     * such that no clashes occur.
+     *
+     * @param templates
+     * @return
+     */
     static EntityTemplate merge(EntityTemplate ... templates) {
         Set<Triple> triples = new LinkedHashSet<>();
         Set<Node> entityNodes = new LinkedHashSet<>();

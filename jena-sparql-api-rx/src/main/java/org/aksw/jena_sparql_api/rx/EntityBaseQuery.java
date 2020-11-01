@@ -1,12 +1,17 @@
 package org.aksw.jena_sparql_api.rx;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.aksw.jena_sparql_api.rx.entity.model.EntityTemplate;
+import org.aksw.jena_sparql_api.rx.entity.model.EntityTemplateImpl;
+import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.SortCondition;
+import org.apache.jena.sparql.core.BasicPattern;
 import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.syntax.Template;
 
 /**
  * A query with a sequence of designated partition variables
@@ -82,4 +87,27 @@ public class EntityBaseQuery {
 
         return result;
     }
+
+    public static EntityBaseQuery create(Var partitionAndEntityVar, Query standardQuery) {
+        Query partitionSelect = standardQuery.cloneQuery();
+        partitionSelect.setQuerySelectType();
+        partitionSelect.setQueryResultStar(true);
+
+        List<Var> partitionVars = Collections.singletonList(partitionAndEntityVar);
+        List<Node> entityNodes = Collections.<Node>singletonList(partitionAndEntityVar);
+
+        Template template = standardQuery.getConstructTemplate();
+        if (template == null) {
+            template = new Template(new BasicPattern());
+        }
+
+        EntityTemplateImpl et = new EntityTemplateImpl(
+                entityNodes,
+                template);
+
+        EntityBaseQuery result = new EntityBaseQuery(partitionVars, et, partitionSelect);
+
+        return result;
+    }
 }
+

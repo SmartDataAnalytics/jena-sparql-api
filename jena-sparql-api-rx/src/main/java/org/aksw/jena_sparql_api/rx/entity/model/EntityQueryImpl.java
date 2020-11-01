@@ -1,6 +1,5 @@
 package org.aksw.jena_sparql_api.rx.entity.model;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.aksw.jena_sparql_api.rx.EntityBaseQuery;
@@ -10,19 +9,16 @@ import org.aksw.jena_sparql_api.rx.EntityBaseQuery;
 public class EntityQueryImpl
 {
     protected EntityBaseQuery baseQuery;
-    protected List<GraphPartitionJoin> auxiliaryGraphPartitions;
-    protected List<GraphPartitionJoin> optionalJoins;
-
+    protected AttributeGraphFragment attributePart;
 
     public EntityQueryImpl() {
-        this(null, new ArrayList<>(), new ArrayList<>());
+        this(null, new AttributeGraphFragment());
     }
 
-    public EntityQueryImpl(EntityBaseQuery baseQuery, List<GraphPartitionJoin> auxiliaryGraphPartitions, List<GraphPartitionJoin> optionalJoins) {
+    public EntityQueryImpl(EntityBaseQuery baseQuery, AttributeGraphFragment attributePart) {
         super();
         this.baseQuery = baseQuery;
-        this.auxiliaryGraphPartitions = auxiliaryGraphPartitions;
-        this.optionalJoins = optionalJoins;
+        this.attributePart = attributePart;
     }
 
     public EntityBaseQuery getBaseQuery() {
@@ -33,16 +29,24 @@ public class EntityQueryImpl
         this.baseQuery = baseQuery;
     }
 
-    public List<GraphPartitionJoin> getAuxiliaryGraphPartitions() {
-        return auxiliaryGraphPartitions;
+    public AttributeGraphFragment getAttributePart() {
+        return attributePart;
+    }
+
+    public void setAttributePart(AttributeGraphFragment attributePart) {
+        this.attributePart = attributePart;
+    }
+
+    public List<GraphPartitionJoin> getMandatoryJoins() {
+        return attributePart.getMandatoryJoins();
     }
 
     public List<GraphPartitionJoin> getOptionalJoins() {
-        return optionalJoins;
+        return attributePart.getOptionalJoins();
     }
 
     public void setOptionalJoins(List<GraphPartitionJoin> optionalJoins) {
-        this.optionalJoins = optionalJoins;
+        this.attributePart.setOptionalJoins(optionalJoins);
     }
 }
 

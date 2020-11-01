@@ -219,7 +219,7 @@ public class EntityQueryRx {
 
         Generator<Var> varGen = VarGeneratorImpl2.create();
 
-        for (GraphPartitionJoin join : query.getAuxiliaryGraphPartitions()) {
+        for (GraphPartitionJoin join : query.getMandatoryJoins()) {
 
             EntityGraphFragment egm = join.getEntityGraphFragment();
 
@@ -238,7 +238,7 @@ public class EntityQueryRx {
             NodeTransform nodeTransform = new NodeTransformRenameMap(varMap);
             GraphPartitionJoin newJoin = join.applyNodeTransform(nodeTransform);
 
-            result.getAuxiliaryGraphPartitions().add(newJoin);
+            result.getMandatoryJoins().add(newJoin);
         }
 
         // TODO Get rid of code duplication
@@ -304,7 +304,7 @@ public class EntityQueryRx {
 //            System.out.println("----");
 //        }
 
-        GraphPartitionJoin join = Iterables.getFirst(query.getAuxiliaryGraphPartitions(),
+        GraphPartitionJoin join = Iterables.getFirst(query.getMandatoryJoins(),
                 new GraphPartitionJoin(
                         EntityGraphFragment.empty(query.getBaseQuery().getPartitionVars())));
 
@@ -349,7 +349,7 @@ public class EntityQueryRx {
         //List<Element> combinedAttributes = new ArrayList<>();
         combinedFilter.add(baseQuery.getQueryPattern());
 
-        for (GraphPartitionJoin join : query.getAuxiliaryGraphPartitions()) {
+        for (GraphPartitionJoin join : query.getMandatoryJoins()) {
             List<Element> elts = ElementUtils.toElementList(join.getEntityGraphFragment().getElement());
             Element elt = ElementUtils.groupIfNeeded(elts);
             String lfgn = join.getLazyFetchGroupName();
@@ -391,7 +391,7 @@ public class EntityQueryRx {
 
         EntityQueryImpl result = new EntityQueryImpl();
         result.setBaseQuery(query.getBaseQuery());
-        result.getAuxiliaryGraphPartitions().addAll(fetchGroups);
+        result.getMandatoryJoins().addAll(fetchGroups);
         result.getOptionalJoins().addAll(optionalFetchGroups);
 
         return result;
@@ -495,6 +495,66 @@ public class EntityQueryRx {
         return execConstructPartitionedOld(conn, assembledQuery, graphSupplier, exprListEval);
     }
 
+    public static Flowable<GraphPartitionWithEntities> execConstructPartitionedOld(
+            SparqlQueryConnection conn,
+            EntityQueryBasic queryEx,
+            Supplier<Graph> graphSupplier,
+            ExprListEval exprListEval) {
+
+//      Model entitySortModel = ModelFactory.createDefaultModel();
+        EntityQueryProcessed tmp = processEntityQuery(queryEx, false, graphSupplier, exprListEval);
+
+        return execQueryActual(conn, tmp.partitionVars, tmp.trackedTemplateNodes, tmp.selectQuery, tmp.tableToGraph);
+    }
+
+    public static class EntityQueryProcessed {
+        protected List<Var> partitionVars;
+        protected Query selectQuery;
+        protected Set<Node> trackedTemplateNodes;
+        protected Function<Table, AccObjectGraph> tableToGraph;
+
+        public EntityQueryProcessed(List<Var> partitionVars, Query selectQuery, Set<Node> trackedTemplateNodes,
+                Function<Table, AccObjectGraph> tableToGraph) {
+            super();
+            this.partitionVars = partitionVars;
+            this.selectQuery = selectQuery;
+            this.trackedTemplateNodes = trackedTemplateNodes;
+            this.tableToGraph = tableToGraph;
+        }
+
+        public Query getInnerSelect() {
+            ElementGroup grp = (ElementGroup)(selectQuery.getQueryPattern());
+            ElementSubQuery subQueryElt = (ElementSubQuery)grp.get(0);
+            Query result = subQueryElt.getQuery();
+
+            return result;
+        }
+
+        public List<Var> getPartitionVars() {
+            return partitionVars;
+        }
+
+        public Query getSelectQuery() {
+            return selectQuery;
+        }
+
+        public Set<Node> getTrackedTemplateNodes() {
+            return trackedTemplateNodes;
+        }
+
+        public Function<Table, AccObjectGraph> getTableToGraph() {
+            return tableToGraph;
+        }
+
+
+    }
+
+    public static EntityQueryProcessed processEntityQuery(
+            EntityQueryBasic queryEx,
+            boolean forceSubSelect) {
+        return processEntityQuery(queryEx, forceSubSelect, GraphFactory::createDefaultGraph, EntityQueryRx::defaultEvalToNode);
+    }
+
     /**
      * Execute a CONSTRUCT query using partitions.
      *
@@ -504,9 +564,9 @@ public class EntityQueryRx {
      * @param exprListEval
      * @return
      */
-    public static Flowable<GraphPartitionWithEntities> execConstructPartitionedOld(
-            SparqlQueryConnection conn,
+    public static EntityQueryProcessed processEntityQuery(
             EntityQueryBasic queryEx,
+            boolean forceSubSelect,
             Supplier<Graph> graphSupplier,
             ExprListEval exprListEval) {
 
@@ -565,7 +625,8 @@ public class EntityQueryRx {
         Element attributeElement = queryEx.getAttributeFragment().getElement(); //standardQuery.getQueryPattern();
         Element optionalAttributeElement = queryEx.getOptionalAttributeFragment().getElement();
 
-        boolean needsSubSelect = !(partitionOrderBy == null || partitionOrderBy.isEmpty())
+        boolean needsSubSelect = forceSubSelect
+                || !(partitionOrderBy == null || partitionOrderBy.isEmpty())
                 || standardQuery.hasLimit()
                 || standardQuery.hasOffset();
 
@@ -632,9 +693,16 @@ public class EntityQueryRx {
                 exprListEval,
                 graphSupplier);
 
+        return new EntityQueryProcessed(partitionVars, selectQuery, trackedTemplateNodes, tableToGraph);
+    }
 
-//        Model entitySortModel = ModelFactory.createDefaultModel();
 
+    public static Flowable<GraphPartitionWithEntities> execQueryActual(
+            SparqlQueryConnection conn,
+            List<Var> partitionVars,
+            Set<Node> trackedTemplateNodes,
+            Query selectQuery, Function<Table,
+            AccObjectGraph> tableToGraph) {
         Flowable<GraphPartitionWithEntities> result = execSelectPartitioned(
                 conn, selectQuery, partitionVars)
                 /*
