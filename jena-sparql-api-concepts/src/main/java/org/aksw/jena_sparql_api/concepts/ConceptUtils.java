@@ -217,7 +217,7 @@ public class ConceptUtils {
         return result;
     }
 
-    public static Concept createConcept(Iterable<Node> nodes) {
+    public static Concept createConcept(Iterable<? extends Node> nodes) {
         ElementData data = new ElementData();
         data.add(Vars.s);
         for(Node node : nodes) {

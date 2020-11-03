@@ -9,7 +9,9 @@ public class LiteralPreference {
     protected List<Node> predicates;
     protected boolean preferProperties = false;
 
-    public LiteralPreference(List<String> langs, List<Node> predicates,
+    public LiteralPreference(
+            List<String> langs,
+            List<Node> predicates,
             boolean preferProperties) {
         super();
         this.langs = langs;

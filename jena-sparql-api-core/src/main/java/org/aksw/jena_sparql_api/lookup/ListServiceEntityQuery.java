@@ -1,5 +1,12 @@
 package org.aksw.jena_sparql_api.lookup;
 
+import java.util.AbstractMap.SimpleEntry;
+import java.util.Map.Entry;
+import java.util.function.Function;
+
+import org.aksw.jena_sparql_api.concepts.Concept;
+import org.aksw.jena_sparql_api.concepts.ConceptUtils;
+import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.rx.EntityBaseQuery;
 import org.aksw.jena_sparql_api.rx.SparqlRx;
 import org.aksw.jena_sparql_api.rx.entity.engine.EntityQueryRx;
@@ -8,6 +15,7 @@ import org.aksw.jena_sparql_api.rx.entity.model.AttributeGraphFragment;
 import org.aksw.jena_sparql_api.rx.entity.model.EntityQueryBasic;
 import org.aksw.jena_sparql_api.rx.entity.model.EntityQueryImpl;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
+import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
@@ -87,7 +95,115 @@ public class ListServiceEntityQuery
             Single<Range<Long>> result = SparqlRx.fetchCountQueryPartition(conn, query, processed.getPartitionVars(), itemLimit, rowLimit);
             return result;
         }
-
     }
+
+    public MapService<EntityBaseQuery, Node, RDFNode> asMapService() {
+        MapService<EntityBaseQuery, Node, RDFNode> result = new MapServiceFromListService<>(
+                this, RDFNode::asNode, Function.<RDFNode>identity());
+
+        return result;
+    }
+
+    public LookupService<Node, RDFNode> asLookupService() {
+        MapServiceFromListService<EntityBaseQuery, RDFNode, Node, RDFNode> mapService = new MapServiceFromListService<>(
+                this, RDFNode::asNode, Function.<RDFNode>identity());
+
+
+        LookupService<Node, RDFNode> result = mapService.asLookupService(ListServiceEntityQuery::toBaseQuery);
+        return result;
+    }
+
+    public static EntityBaseQuery fromConcept(UnaryRelation rel) {
+        return EntityBaseQuery.create(rel.getVar(), rel.asQuery());
+    }
+
+    public static EntityBaseQuery toBaseQuery(Iterable<? extends Node> nodes) {
+        Concept concept = ConceptUtils.createConcept(nodes);
+        EntityBaseQuery result = fromConcept(concept);
+        return result;
+    }
+}
+
+class MapServiceFromListService<C, T, K, V>
+    implements MapService<C, K, V>
+{
+    protected ListService<C, T> listService;
+    protected Function<? super T, ? extends K> itemToKey;
+    protected Function<? super T, ? extends V> itemToValue;
+
+    public MapServiceFromListService(
+            ListService<C, T> listService,
+            Function<? super T, ? extends K> itemToKey,
+            Function<? super T, ? extends V> itemToValue) {
+        super();
+        this.listService = listService;
+        this.itemToKey = itemToKey;
+        this.itemToValue = itemToValue;
+    }
+
+
+    public class MapPaginatorFromListService
+        implements MapPaginator<K, V>
+    {
+        protected ListPaginator<T> listPaginator;
+
+        public MapPaginatorFromListService(ListPaginator<T> listPaginator) {
+            super();
+            this.listPaginator = listPaginator;
+        }
+
+        @Override
+        public Flowable<Entry<K, V>> apply(Range<Long> t) {
+            Flowable<Entry<K, V>> result = listPaginator.apply(t)
+                .map(item -> {
+                    K key = itemToKey.apply(item);
+                    V value = itemToValue.apply(item);
+                    Entry<K, V> r = new SimpleEntry<>(key, value);
+                    return r;
+                });
+
+            return result;
+        }
+
+        @Override
+        public Single<Range<Long>> fetchCount(Long itemLimit, Long rowLimit) {
+            return listPaginator.fetchCount(itemLimit, rowLimit);
+        }
+    }
+
+
+    @Override
+    public MapPaginator<K, V> createPaginator(C concept) {
+        ListPaginator<T> listPaginator = listService.createPaginator(concept);
+        return new MapPaginatorFromListService(listPaginator);
+    }
+
+    public LookupService<K, V> asLookupService(Function<? super Iterable<? extends K>, C> keysToFilter) {
+        LookupService<K, V> result = new LookupServiceFromMapService<>(this, keysToFilter);
+        return result;
+    }
+}
+
+class LookupServiceFromMapService<K, V, C>
+    implements LookupService<K, V>
+{
+    protected MapService<C, K, V> mapService;
+    protected Function<? super Iterable<? extends K>, C> keysToFilter;
+
+
+    public LookupServiceFromMapService(MapService<C, K, V> mapService,
+            Function<? super Iterable<? extends K>, C> keysToFilter) {
+        super();
+        this.mapService = mapService;
+        this.keysToFilter = keysToFilter;
+    }
+
+
+    @Override
+    public Flowable<Entry<K, V>> apply(Iterable<K> t) {
+        C filter = keysToFilter.apply(t);
+        return mapService.streamData(filter, Range.atLeast(0l));
+    }
+
 }
 

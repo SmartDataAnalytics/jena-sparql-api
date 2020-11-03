@@ -1,6 +1,7 @@
 package org.aksw.jena_sparql_api.mapper;
 
 import java.util.Iterator;
+import java.util.List;
 import java.util.function.BiPredicate;
 import java.util.stream.IntStream;
 
@@ -37,6 +38,9 @@ public class AccBestLiteral
         Node property = binding.get(bestLiteralConfig.getPredicateVar());
         Node label = binding.get(bestLiteralConfig.getObjectVar());
 
+        List<Node> predicates = bestLiteralConfig.getPredicates();
+        List<String> langs = bestLiteralConfig.getLangs();
+
         if(this.bestMatchNode == null) {
             this.bestMatchNode = subject;
         }
@@ -44,8 +48,8 @@ public class AccBestLiteral
         String candidateLang = NodeUtils.getLang(label);
 
         // Determine the score vector for the property and the language
-        int propertyScore = bestLiteralConfig.getPredicates().indexOf(property);
-        int langScore = bestLiteralConfig.getLangs().indexOf(candidateLang);
+        int propertyScore = predicates == null ? 0 : predicates.indexOf(property);
+        int langScore = langs == null ? 0 : langs.indexOf(candidateLang);
 
         int[] score = new int[] {propertyScore, langScore};
 

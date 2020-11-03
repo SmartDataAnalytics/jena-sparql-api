@@ -1,8 +1,16 @@
 package org.aksw.jena_sparql_api.rx.entity.model;
 
+import java.util.Collections;
 import java.util.List;
 
 import org.aksw.jena_sparql_api.rx.EntityBaseQuery;
+import org.aksw.jena_sparql_api.rx.EntityGraphFragment;
+import org.aksw.jena_sparql_api.utils.Vars;
+import org.apache.jena.graph.Node;
+import org.apache.jena.query.Query;
+import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.engine.binding.BindingFactory;
+import org.apache.jena.sparql.syntax.ElementData;
 
 
 /** Basic implementation of {@link EntityQueryBasic} */
@@ -48,6 +56,43 @@ public class EntityQueryImpl
     public void setOptionalJoins(List<GraphPartitionJoin> optionalJoins) {
         this.attributePart.setOptionalJoins(optionalJoins);
     }
+
+    public static EntityQueryImpl createEntityQuery(Var entityVar, Query standardQuery) {
+        EntityBaseQuery ebq = new EntityBaseQuery(
+                Collections.singletonList(entityVar),
+                new EntityTemplateImpl(), standardQuery);
+        EntityQueryImpl result = new EntityQueryImpl();
+        result.setBaseQuery(ebq);
+
+        return result;
+    }
+
+    public static Query createStandardQuery(Var entityVar, Node node) {
+        Query query = new Query();
+        query.setQuerySelectType();
+        query.setQueryPattern(new ElementData(
+                Collections.singletonList(entityVar),
+                Collections.singletonList(BindingFactory.binding(Vars.s, node))));
+
+        return query;
+    }
+
+    /**
+     * A convenience function to create an entity query for a specific entity (denoted by the node)
+     *
+     * @param entityGraphFragment
+     * @param node
+     * @return
+     */
+    public static EntityQueryImpl createEntityQuery(EntityGraphFragment entityGraphFragment, Node node) {
+        Var entityVar = Vars.s;
+
+        Query standardQuery = createStandardQuery(entityVar, node);
+        EntityQueryImpl result = EntityQueryImpl.createEntityQuery(entityVar, standardQuery);
+
+        result.getMandatoryJoins().add(new GraphPartitionJoin(entityGraphFragment));
+
+        return result;
+    }
+
 }
-
-
