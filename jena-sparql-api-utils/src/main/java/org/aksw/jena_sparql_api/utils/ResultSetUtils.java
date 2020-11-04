@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -50,7 +51,6 @@ public class ResultSetUtils {
 
         return result;
     }
-
 
     public static Multiset<QuerySolution> toMultisetQs(ResultSet rs) {
         Multiset<QuerySolution> result = HashMultiset.create();
