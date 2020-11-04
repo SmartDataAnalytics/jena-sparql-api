@@ -155,6 +155,7 @@ public class JenaPluginUtils {
 
     public static void scan(String basePackage, Personality<RDFNode> p, PrefixMapping pm) {
         Set<ClassInfo> classInfos;
+//        System.err.println("Scanning " + basePackage);
         try {
             classInfos = ClassPath.from(Thread.currentThread().getContextClassLoader()).getTopLevelClassesRecursive(basePackage);
         } catch (IOException e) {
@@ -168,7 +169,8 @@ public class JenaPluginUtils {
         }
     }
 
-    public static void registerResourceClasses(Class<?> ... classes) {
+    @SafeVarargs
+    public static void registerResourceClasses(Class<? extends Resource> ... classes) {
         registerResourceClasses(Arrays.asList(classes));
     }
 
