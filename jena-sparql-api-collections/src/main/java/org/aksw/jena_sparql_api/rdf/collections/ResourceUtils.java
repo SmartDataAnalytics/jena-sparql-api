@@ -3,7 +3,10 @@ package org.aksw.jena_sparql_api.rdf.collections;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
@@ -1158,6 +1161,30 @@ public class ResourceUtils {
 
     public static <T extends RDFNode> T getPropertyValue(Statement stmt, RDFNodeMapper<T> rdfNodeMapper) {
         T result = getPropertyValue(stmt, true, rdfNodeMapper);
+        return result;
+    }
+
+    /**
+     * A variant of {@link org.apache.jena.util.ResourceUtils#renameResource(Resource, String)}
+     * which renames multiple resources in bulk based on a given map.
+     *
+     * @param rdfNodeToIri
+     * @return A map of the remapped Resources
+     */
+    public static Map<Resource, Resource> renameResources(Map<? extends RDFNode, String> rdfNodeToIri) {
+        Map<Resource, Resource> result = new HashMap<>();
+
+        for(Entry<? extends RDFNode, String> e : rdfNodeToIri.entrySet()) {
+            RDFNode n = e.getKey();
+            String iri = e.getValue();
+
+            if(n.isResource()) {
+                Resource src = n.asResource();
+                Resource tgt = org.apache.jena.util.ResourceUtils.renameResource(src, iri);
+                result.put(src, tgt);
+            }
+        }
+
         return result;
     }
 
