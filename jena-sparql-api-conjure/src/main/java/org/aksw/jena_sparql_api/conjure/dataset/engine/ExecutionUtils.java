@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 
 import org.aksw.dcat.jena.domain.api.DcatDataset;
 import org.aksw.dcat.jena.domain.api.DcatDistribution;
-import org.aksw.dcat.jena.domain.api.MvnEntity;
+import org.aksw.dcat.jena.domain.api.MavenEntity;
 import org.aksw.jena_sparql_api.conjure.algebra.common.ResourceTreeUtils;
 import org.aksw.jena_sparql_api.conjure.datapod.api.RdfDataPod;
 import org.aksw.jena_sparql_api.conjure.dataref.rdf.api.DataRef;
@@ -69,7 +69,7 @@ public class ExecutionUtils {
      * @return
      */
     public static String deriveId(Resource r) {
-        MvnEntity ds = ModelFactory.createDefaultModel().createResource().as(MvnEntity.class);
+        MavenEntity ds = ModelFactory.createDefaultModel().createResource().as(MavenEntity.class);
         String mvnId = Arrays.asList(ds.getGroupId(), ds.getArtifactId(), ds.getVersion(), ds.getClassifier()).stream()
             .filter(Objects::nonNull)
             .collect(Collectors.joining(":"));
