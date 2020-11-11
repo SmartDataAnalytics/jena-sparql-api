@@ -124,7 +124,7 @@ public class ExecutionUtils {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        ResourceStore cacheStore = repo.getCacheStore();
+//        ResourceStore cacheStore = repo.getCacheStore();
         OpExecutorDefault catalogExecutor = new OpExecutorDefault(repo, TaskContext.empty(), new LinkedHashMap<>(), RDFFormat.TURTLE_PRETTY);
 
         RdfDataPod result = op.accept(catalogExecutor);
