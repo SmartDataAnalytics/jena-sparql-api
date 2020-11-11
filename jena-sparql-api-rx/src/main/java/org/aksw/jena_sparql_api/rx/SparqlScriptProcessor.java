@@ -149,7 +149,15 @@ public class SparqlScriptProcessor {
         return sparqlParser;
     }
 
-    public static SparqlScriptProcessor create(PrefixMapping pm) {
+
+    /**
+     * Create a script processor that substitutes references to environment variables
+     * with the appropriate values.
+     *
+     * @param pm
+     * @return
+     */
+    public static SparqlScriptProcessor createWithEnvSubstitution(PrefixMapping pm) {
         Prologue p = new Prologue(pm);
         SparqlQueryParser queryParser = SparqlQueryParserWrapperSelectShortForm.wrap(
                 SparqlQueryParserImpl.create(Syntax.syntaxARQ, p));
@@ -165,6 +173,9 @@ public class SparqlScriptProcessor {
         SparqlScriptProcessor result = new SparqlScriptProcessor(sparqlParser, pm);
         return result;
     }
+
+
+
 
     public void process(List<String> filenames) {
         for (String filename : filenames) {

@@ -37,7 +37,13 @@ public class NodeUtils {
         return result;
     }
 
-    // Return key + flag for string/iri
+    /**
+     * Return a pair (key, flag for string (false)/iri(true)) for nodes that reference
+     * environment variables - null otherwise.
+     *
+     * @param node
+     * @return
+     */
     public static Entry<String, Boolean> getEnvKey(Node node) {
         Entry<String, Boolean> result = null;
         if(node.isURI()) {

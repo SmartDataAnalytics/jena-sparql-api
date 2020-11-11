@@ -29,104 +29,133 @@ import org.apache.jena.sparql.lang.arq.ParseException;
 
 public class JobUtils {
 
-	public static Job fromSparqlFile(String path) throws FileNotFoundException, IOException, ParseException {
-		// TODO Add API for Query objects to fluent
-		List<SparqlStmt> stmts = Streams.stream(SparqlStmtUtils.processFile(DefaultPrefixes.prefixes, path))
-				.collect(Collectors.toList());
-		
-		List<String> stmtStrs = stmts.stream()
-				.map(Object::toString)
-				.collect(Collectors.toList());
-		
-		
-		//RDFDataMgrRx
-		//SparqlStmtUtils.
-		
-		
-//		
+    public static Job fromSparqlFile(String path) throws FileNotFoundException, IOException, ParseException {
+        // TODO Add API for Query objects to fluent
+        List<SparqlStmt> stmts = Streams.stream(SparqlStmtUtils.processFile(DefaultPrefixes.prefixes, path))
+                .collect(Collectors.toList());
+
+        List<String> stmtStrs = stmts.stream()
+                .map(Object::toString)
+                .collect(Collectors.toList());
+
+
+        //RDFDataMgrRx
+        //SparqlStmtUtils.
+
+
+//
 //		List<String> queries = RDFDataMgrEx.loadQueries(path, DefaultPrefixes.prefixes).stream()
 //				.map(Object::toString)
 //				.collect(Collectors.toList());
-		ConjureBuilder cj = new ConjureBuilderImpl();
+        ConjureBuilder cj = new ConjureBuilderImpl();
 
-		String opVarName = "ARG"; 
-		Op op = cj.fromVar(opVarName).stmts(stmtStrs).getOp();
-		
+        String opVarName = "ARG";
+        Op op = cj.fromVar(opVarName).stmts(stmtStrs).getOp();
+
 //		Set<String> vars = OpUtils.mentionedVarNames(op);
 //		for(SparqlStmt stmt : stmts) {
 //			System.out.println("Env vars: " + SparqlStmtUtils.mentionedEnvVars(stmt));
 //		}
-		
-		Map<String, Boolean> combinedMap = stmts.stream()
-			.map(SparqlStmtUtils::mentionedEnvVars)
-			.map(Map::entrySet)
-			.flatMap(Collection::stream)
-			.distinct()
-			.collect(Collectors.toMap(Entry::getKey, Entry::getValue));
-		
-		Set<String> envVars = combinedMap.keySet();
+
+        Map<String, Boolean> combinedMap = stmts.stream()
+            .map(SparqlStmtUtils::mentionedEnvVars)
+            .map(Map::entrySet)
+            .flatMap(Collection::stream)
+            .distinct()
+            .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+
+        Set<String> envVars = combinedMap.keySet();
 //		System.out.println("All env vars: " + combinedMap);
-		
-		
+
+
 //		System.out.println("MentionedVars: " + vars);
-		
-		Job result = Job.create(cj.getContext().getModel())
-				.setOp(op)
-				.setDeclaredVars(envVars)
-				.setOpVars(Collections.singleton(opVarName));
-		
-		
-		return result;
-	}
 
-	public static JobInstance createJobInstance(
-			Job job,
-			Map<String, ? extends Node> env,
-			Map<String, ? extends Op> map) {
-		Model model = ModelFactory.createDefaultModel();
-		Job j = JenaPluginUtils.copyClosureInto(job, Job.class, model);
+        Job result = Job.create(cj.getContext().getModel())
+                .setOp(op)
+                .setDeclaredVars(envVars)
+                .setOpVars(Collections.singleton(opVarName));
 
-		JobInstance result = model.createResource().as(JobInstance.class)
-				.setJob(j);
 
-		result.getEnvMap().putAll(env);
+        return result;
+    }
 
-		for(Entry<String, ? extends Op> e : map.entrySet()) {
-			String k = e.getKey();
-			Op v = e.getValue();
-			
-			Op vv = JenaPluginUtils.copyClosureInto(v, Op.class, model);
-			result.getOpVarMap().put(k, vv);
-		}
-		
-		return result;
-	}
-	
-	/**
-	 * Return the associated op with all all variables (literals and resources) substituted
-	 * 
-	 * @param jobInstance
-	 * @return
-	 */
-	public static Op materializeJobInstance(JobInstance jobInstance) {
-		Map<String, Node> envMap = jobInstance.getEnvMap();
-		Map<String, Op> opMap = jobInstance.getOpVarMap();
-		
-		Job job = jobInstance.getJob();
-		Op tmp = job.getOp();
-		Op op = JenaPluginUtils.reachableClosure(tmp, Op.class);
-		
-		NodeTransform nodeTransform = x -> NodeUtils.substWithLookup2(x, envMap::get);
-		//NodeTransform nodeTransform = new NodeTransformRenameMap(envMap);
-		OpUtils.applyNodeTransform(op, nodeTransform, stmt -> SparqlStmtUtils.optimizePrefixes(SparqlStmtParserImpl.create(DefaultPrefixes.prefixes).apply(stmt)));
+    public static JobInstance createJobInstanceWithCopy(
+            Job job,
+            Map<String, ? extends Node> env,
+            Map<String, ? extends Op> map) {
+        Model model = ModelFactory.createDefaultModel();
+        Job j = JenaPluginUtils.copyClosureInto(job, Job.class, model);
 
-		// OpUtils.applyNodeTransform();
-		
-		
-		//ResourceUtils.reachableClosure(root)
-		
-		Op inst = OpUtils.substituteVars(op, opMap::get);
-		
-		return inst;
-	}
+        JobInstance result = model.createResource().as(JobInstance.class)
+                .setJob(j);
+
+        result.getEnvMap().putAll(env);
+
+        for(Entry<String, ? extends Op> e : map.entrySet()) {
+            String k = e.getKey();
+            Op v = e.getValue();
+
+            Op vv = JenaPluginUtils.copyClosureInto(v, Op.class, model);
+            result.getOpVarMap().put(k, vv);
+        }
+
+        return result;
+    }
+
+    /**
+     * Create a job instance in the same model as the job
+     *
+     * @param job
+     * @param env
+     * @param map
+     * @return
+     */
+    public static JobInstance createJobInstance(
+            Job job,
+            Map<String, ? extends Node> env,
+            Map<String, ? extends Op> map) {
+        Model model = job.getModel();
+        JobInstance result = model.createResource().as(JobInstance.class)
+                .setJob(job);
+
+        result.getEnvMap().putAll(env);
+
+        for(Entry<String, ? extends Op> e : map.entrySet()) {
+            String k = e.getKey();
+            Op v = e.getValue();
+
+            Op vv = JenaPluginUtils.copyClosureInto(v, Op.class, model);
+            result.getOpVarMap().put(k, vv);
+        }
+
+        return result;
+    }
+
+    /**
+     * Return the associated op with all all variables (literals and resources) substituted
+     *
+     * @param jobInstance
+     * @return
+     */
+    public static Op materializeJobInstance(JobInstance jobInstance) {
+        Map<String, Node> envMap = jobInstance.getEnvMap();
+        Map<String, Op> opMap = jobInstance.getOpVarMap();
+
+        Job job = jobInstance.getJob();
+        Op tmp = job.getOp();
+        Op op = JenaPluginUtils.reachableClosure(tmp, Op.class);
+
+        NodeTransform nodeTransform = x -> NodeUtils.substWithLookup2(x, envMap::get);
+        //NodeTransform nodeTransform = new NodeTransformRenameMap(envMap);
+        OpUtils.applyNodeTransform(op, nodeTransform, stmt -> SparqlStmtUtils.optimizePrefixes(SparqlStmtParserImpl.create(DefaultPrefixes.prefixes).apply(stmt)));
+
+        // OpUtils.applyNodeTransform();
+
+
+        //ResourceUtils.reachableClosure(root)
+
+        Op inst = OpUtils.substituteVars(op, opMap::get);
+
+        return inst;
+    }
 }

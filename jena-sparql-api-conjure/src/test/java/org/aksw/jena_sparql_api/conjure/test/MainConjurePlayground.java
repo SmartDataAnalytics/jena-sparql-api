@@ -131,7 +131,7 @@ public class MainConjurePlayground {
         System.out.println("Op Vars: " + job.getOpVars());
         System.out.println("Literal Vars: " + job.getDeclaredVars());
 
-        JobInstance ji = JobUtils.createJobInstance(job, env, map);
+        JobInstance ji = JobUtils.createJobInstanceWithCopy(job, env, map);
 
         System.out.println("EnvMap: " + ji.getEnvMap());
         System.out.println("OpMap: " + ji.getOpVarMap());
