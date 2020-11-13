@@ -77,6 +77,13 @@ public class HttpResourceRepositoryFromFileSystemImpl
         super();
     }
 
+    /**
+     * Utility method to convert a hash value (e.g. sha256) to a relative path
+     * by splitting after 'n' characters
+     *
+     * @param hash
+     * @return
+     */
     public static Path hashToRelPath(String hash) {
         List<String> parts = Splitter
                 .fixedLength(8)
