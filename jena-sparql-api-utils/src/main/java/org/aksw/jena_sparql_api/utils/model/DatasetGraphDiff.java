@@ -3,10 +3,15 @@ package org.aksw.jena_sparql_api.utils.model;
 import static org.apache.jena.query.ReadWrite.WRITE;
 import static org.apache.jena.system.Txn.executeWrite;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 
+import org.aksw.commons.collections.sets.SetIterator;
 import org.apache.jena.ext.com.google.common.collect.Iterators;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
@@ -47,6 +52,9 @@ public class DatasetGraphDiff
 
     protected TransactionalSet<Node> removedGraphs;
     protected TransactionalSet<Node> addedGraphs;
+
+    protected GraphView defaultGraphViewCache = GraphView.createDefaultGraph(this);
+    protected Map<Node, GraphView> namedGraphViewCache = Collections.synchronizedMap(new HashMap<>());
 
     public DatasetGraphDiff() {
         this(DatasetGraphFactory.createTxnMem());
@@ -121,27 +129,30 @@ public class DatasetGraphDiff
     }
 
     @Override
-    public Graph getDefaultGraph() {
-        return GraphView.createDefaultGraph(this);
-//        return new Union(
-//                new Difference(base.getDefaultGraph(), removed.getDefaultGraph()),
-//                added.getDefaultGraph());
+    public GraphView getDefaultGraph() {
+        return defaultGraphViewCache;
     }
 
     @Override
-    public Graph getGraph(Node graphNode) {
-        return GraphView.createNamedGraph(this, graphNode);
-//        return new Union(
-//                new Difference(base.getGraph(graphNode), removed.getGraph(graphNode)),
-//                added.getGraph(graphNode));
+    public GraphView getGraph(Node graphNode) {
+        GraphView result = namedGraphViewCache.computeIfAbsent(graphNode,
+                n -> GraphView.createNamedGraph(this, n));
+
+        return result;
     }
 
 
     @Override
     public Iterator<Node> listGraphNodes() {
         Iterator<Node> result = base.listGraphNodes();
+        // TODO Add flag to treat empty graphs as effectively removed
         result = Iterators.filter(result, node -> !removedGraphs.contains(node));
-        result = Iterators.concat(result, addedGraphs.iterator());
+
+        Set<Node> effectiveAddedGraphs = new LinkedHashSet<Node>(addedGraphs);
+        added.listGraphNodes().forEachRemaining(effectiveAddedGraphs::add);
+
+        result = Iterators.concat(result, effectiveAddedGraphs.iterator());
+
 
         return result;
     }
@@ -206,6 +217,11 @@ public class DatasetGraphDiff
     }
 
     @Override
+    public boolean supportsTransactionAbort() {
+        return true;
+    }
+
+    @Override
     public void abort() {
         addedGraphs.abort();
         removedGraphs.abort();
@@ -225,11 +241,11 @@ public class DatasetGraphDiff
 
     @Override
     public void commit() {
-        base.commit();
-        added.commit();
-        removed.commit();
-        addedGraphs.commit();
         removedGraphs.commit();
+        addedGraphs.commit();
+        removed.commit();
+        added.commit();
+        base.commit();
     }
 
     @Override
