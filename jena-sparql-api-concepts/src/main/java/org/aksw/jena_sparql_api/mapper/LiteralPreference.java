@@ -4,6 +4,15 @@ import java.util.List;
 
 import org.apache.jena.graph.Node;
 
+/**
+ * Configuration object that serves as the base for choosing the best rdf term in object position
+ * from a set of triples.
+ *
+ * TODO Add a flag to also match IRIs
+ *
+ * @author raven
+ *
+ */
 public class LiteralPreference {
     protected List<String> langs;
     protected List<Node> predicates;
