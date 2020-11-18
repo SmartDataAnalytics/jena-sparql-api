@@ -1,7 +1,7 @@
 package org.aksw.jena_sparql_api.pagination.core;
 
 
-import java.util.ArrayList;
+import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
 
@@ -10,14 +10,13 @@ import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.ResultSetCloseable;
 import org.aksw.jena_sparql_api.utils.CloseableQueryExecution;
 import org.apache.jena.atlas.lib.Closeable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.engine.iterator.QueryIteratorResultSet;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /*
 class ConstructPaginated
@@ -52,22 +51,28 @@ public class ResultSetPaginated
     extends PrefetchIterator<Binding>
     implements Closeable
 {
-    private static Logger logger = LoggerFactory.getLogger(ResultSetPaginated.class);
+    private static final Logger logger = LoggerFactory.getLogger(ResultSetPaginated.class);
 
-    private QueryExecutionFactory serviceFactory;
+    protected QueryExecutionFactory serviceFactory;
     //private QueryExecutionIterated execution;
 
-    private Iterator<Query> queryIterator;
-    private boolean stopOnEmptyResult = true;
+    protected Iterator<Query> queryIterator;
+    protected boolean stopOnEmptyResult = true;
 
-    private ResultSet currentResultSet = null;
-    private QueryExecution currentExecution = null;
+    // Stop if a query returned by the queryIterator has a limit but its result set is less than that
+    protected boolean stopIfLimitNotReached = true;
+
+    protected ResultSet currentResultSet = null;
+    protected QueryExecution currentExecution = null;
 
     // A cache of the resultVars of the current resultSet
-    // This is needed, because we might empty result sets might close immediately before we
-    // have a change to access their metadata (i.e. the result vars)
+    // This is needed, because on empty result sets we close the underyling result set immediately before we
+    // have a chance to access its metadata (i.e. the result vars)
     // Jene even raises an exception when calling getResultVars() on a closed result set.
-    private List<String> currentResultVars = null;
+    protected List<String> currentResultVars = null;
+
+    protected long lastExpectedResultSetSize = Query.NOLIMIT;
+    protected long lastSeenResultSetSize = 0;
 
     /*
     public ResultSetPaginated(QueryExecutionIterated execution,QueryExecutionFactory service, Iterator<Query> queryIterator) {
@@ -75,11 +80,12 @@ public class ResultSetPaginated
     }
     */
 
-    public ResultSetPaginated(QueryExecutionFactory service, Iterator<Query> queryIterator, boolean stopOnEmptyResult) {
-        //this.execution = execution;
+    public ResultSetPaginated(QueryExecutionFactory service, Iterator<Query> queryIterator, boolean stopOnEmptyResult, boolean stopIfLimitNotReached) {
+        super();
         this.serviceFactory = service;
-        //this.state = new PaginationQueryIterator(query, pageSize);
         this.queryIterator = queryIterator;
+        this.stopOnEmptyResult = stopOnEmptyResult;
+        this.stopIfLimitNotReached = stopIfLimitNotReached;
     }
 
     public ResultSet getCurrentResultSet() {
@@ -90,42 +96,72 @@ public class ResultSetPaginated
         return currentResultVars;
     }
 
+
+    // Cache of the rowNumber of currentResultSet;
+    protected long lastSeenRowNumber = -1;
+
     @Override
     protected QueryIteratorResultSet prefetch() throws Exception {
-        while(queryIterator.hasNext()) {
+        QueryIteratorResultSet result = null;
 
-            Query query = queryIterator.next();
-            if(query == null) {
-                throw new RuntimeException("Null query encountered in iterator");
-            }
+        // long lastSeenRowNumber = currentResultSet == null ? -1 : currentResultSet.getRowNumber();
 
-            final QueryExecution qe = serviceFactory.createQueryExecution(query);
+        // If the last iterator we returned had fewer results than a given limit on the query we can abort the iteration
+        if(stopIfLimitNotReached &&
+                (lastExpectedResultSetSize != Query.NOLIMIT &&
+                currentResultSet != null && lastSeenRowNumber < lastExpectedResultSetSize)) {
+            result = null;
+        } else {
 
-            logger.trace("Executing: " + query);
+            while(queryIterator.hasNext()) {
 
-            // TODO Virtuoso sometimes yields invalid XML (probably due to encoding issues) and thus execSelect fails
-            // Should this happen, we could try to recover by
-            // doing a binary partitioning of the current query range, and try to locate the bindings causing the error
-            currentResultSet = qe.execSelect();
-
-            //currentResultVars = new ArrayList<String>(currentResultSet.getResultVars());
-            currentResultVars = currentResultSet.getResultVars();
-
-
-            currentResultSet = new ResultSetCloseable(currentResultSet, new CloseableQueryExecution(qe));
-
-            if(!currentResultSet.hasNext()) {
-                if(stopOnEmptyResult) {
-                    break;
+                Query query = queryIterator.next();
+                if(query == null) {
+                    throw new RuntimeException("Null query encountered in iterator");
                 }
 
-                continue;
-            }
+                // Abort early feature: If the result set size is less than a givin limit, we can abort (without having to wait for an
+                // empty result set)
+                // As a side effect, this causes pagination configured with a too large page size to exit immediatly
+                lastExpectedResultSetSize = query.getLimit();
 
-            return new QueryIteratorResultSet(currentResultSet);
+                final QueryExecution qe = serviceFactory.createQueryExecution(query);
+
+                logger.trace("Executing: " + query);
+
+                // TODO Virtuoso sometimes yields invalid XML (probably due to encoding issues) and thus execSelect fails
+                // Should this happen, we could try to recover by
+                // doing a binary partitioning of the current query range, and try to locate the bindings causing the error
+                currentResultSet = qe.execSelect();
+
+                //currentResultVars = new ArrayList<String>(currentResultSet.getResultVars());
+                currentResultVars = currentResultSet.getResultVars();
+
+
+                currentResultSet = new ResultSetCloseable(currentResultSet, new CloseableQueryExecution(qe)) {
+                    @Override
+                    public void close() throws IOException {
+                        // Save the value of getRowNumber;
+                        // After close getRowNumber raises an exception
+                        lastSeenRowNumber = getRowNumber();
+                        super.close();
+                    }
+                };
+
+                if(!currentResultSet.hasNext()) {
+                    if(stopOnEmptyResult) {
+                        break;
+                    }
+
+                    continue;
+                }
+
+                result = new QueryIteratorResultSet(currentResultSet);
+                break;
+            }
         }
 
-        return null;
+        return result;
     }
 
     @Override

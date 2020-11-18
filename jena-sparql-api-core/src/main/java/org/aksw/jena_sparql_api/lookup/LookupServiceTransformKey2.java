@@ -7,7 +7,7 @@ import org.apache.jena.ext.com.google.common.collect.Maps;
 import com.google.common.base.Function;
 import com.google.common.collect.Iterables;
 
-import io.reactivex.Flowable;
+import io.reactivex.rxjava3.core.Flowable;
 
 
 public class LookupServiceTransformKey2<KI, KO, V>

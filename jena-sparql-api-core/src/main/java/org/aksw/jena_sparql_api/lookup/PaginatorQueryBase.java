@@ -1,6 +1,6 @@
 package org.aksw.jena_sparql_api.lookup;
 
-import java.util.function.Supplier;
+import java.util.concurrent.Callable;
 
 import org.aksw.jena_sparql_api.rx.SparqlRx;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
@@ -10,8 +10,8 @@ import org.apache.jena.rdfconnection.SparqlQueryConnection;
 
 import com.google.common.collect.Range;
 
-import io.reactivex.Flowable;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Single;
 
 public abstract class PaginatorQueryBase<T>
     implements ListPaginator<T>
@@ -19,7 +19,7 @@ public abstract class PaginatorQueryBase<T>
     protected SparqlQueryConnection qef;
     protected Query query;
 
-    protected abstract Flowable<T> obtainResultIterator(Supplier<QueryExecution> qe);
+    protected abstract Flowable<T> obtainResultIterator(Callable<QueryExecution> qe);
 
 
     public PaginatorQueryBase(SparqlQueryConnection qef, Query query) {
@@ -49,7 +49,7 @@ public abstract class PaginatorQueryBase<T>
 
     @Override
     public Single<Range<Long>> fetchCount(Long itemLimit, Long rowLimit) {
-    	Single<Range<Long>> result = SparqlRx.fetchCountQuery(qef, query, itemLimit, rowLimit);
+        Single<Range<Long>> result = SparqlRx.fetchCountQuery(qef, query, itemLimit, rowLimit);
         //Range<Long> result = ServiceUtils.fetchCountQuery(qef, query, itemLimit, rowLimit);
         return result;
     }

@@ -23,15 +23,25 @@ public class BindingUtils {
 //        Binding result = new BindingHashMap();
 //    }
 
-	
-	public static Binding fromMap(Map<? extends Var, ? extends Node> map) {
-		BindingMap result = BindingFactory.create();
-		for(Entry<? extends Var, ? extends Node> e : map.entrySet()) {
-			result.add(e.getKey(), e.getValue());
-		}
-		return result;
-	}
-	
+    public static Binding project(Binding binding, Iterable<Var> vars) {
+        BindingHashMap result = new BindingHashMap();
+
+        for(Var var : vars) {
+            Node node = binding.get(var);
+            result.add(var, node);
+        }
+
+        return result;
+    }
+
+    public static Binding fromMap(Map<? extends Var, ? extends Node> map) {
+        BindingMap result = BindingFactory.create();
+        for(Entry<? extends Var, ? extends Node> e : map.entrySet()) {
+            result.add(e.getKey(), e.getValue());
+        }
+        return result;
+    }
+
     public static Binding transformKeys(Binding binding, NodeTransform transform) {
         Iterator<Var> it = binding.vars();
 

@@ -3,7 +3,7 @@ package org.aksw.jena_sparql_api.update;
 import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.core.UpdateExecutionFactory;
 import org.aksw.jena_sparql_api.core.utils.UpdateExecutionUtils;
-import org.aksw.jena_sparql_api.core.utils.UpdateUtils;
+import org.aksw.jena_sparql_api.syntax.UpdateUtils;
 import org.apache.jena.atlas.lib.Sink;
 
 import org.apache.jena.rdf.model.Model;

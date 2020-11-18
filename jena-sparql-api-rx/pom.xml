@@ -13,29 +13,38 @@
 	<parent>
 		<groupId>org.aksw.jena-sparql-api</groupId>
 		<artifactId>jena-sparql-api-parent</artifactId>
-		<version>3.14.0-2-SNAPSHOT</version>
+		<version>3.16.0-2-SNAPSHOT</version>
 	</parent>
 
 	<dependencies>
 		<dependency>
-			<groupId>org.aksw.jena-sparql-api</groupId>
-			<artifactId>jena-sparql-api-stmt</artifactId>
+			<groupId>org.apache.jena</groupId>
+			<artifactId>jena-dboe-storage</artifactId>
 		</dependency>
 
-<!-- 		<dependency> -->
-<!-- 			<groupId>com.google.guava</groupId> -->
-<!-- 			<artifactId>guava</artifactId> -->
-<!-- 		</dependency> -->
+		<dependency>
+			<groupId>org.aksw.jena-sparql-api</groupId>
+			<artifactId>jena-sparql-api-concepts</artifactId>
+		</dependency>
 
 		<dependency>
-			<groupId>io.reactivex.rxjava2</groupId>
+			<groupId>org.aksw.jena-sparql-api</groupId>
+			<artifactId>jena-sparql-api-collections</artifactId>
+		</dependency>
+
+		<!-- <dependency> -->
+		<!-- <groupId>com.google.guava</groupId> -->
+		<!-- <artifactId>guava</artifactId> -->
+		<!-- </dependency> -->
+
+		<dependency>
+			<groupId>io.reactivex.rxjava3</groupId>
 			<artifactId>rxjava</artifactId>
 		</dependency>
 
-		<dependency>
-			<groupId>com.github.davidmoten</groupId>
-			<artifactId>rxjava2-extras</artifactId>
-		</dependency>
+		<!-- <dependency> <groupId>com.github.davidmoten</groupId> <artifactId>rxjava2-extras</artifactId> 
+			</dependency> -->
+
 
 
 		<!-- <dependency> -->

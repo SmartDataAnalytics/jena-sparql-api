@@ -20,82 +20,88 @@ import org.apache.jena.sparql.core.Var;
 import com.google.common.collect.Iterables;
 
 public class NodeUtils {
-	
-	public static final String nullUri = "http://null.null/null";
-	public static final Node nullUriNode = NodeFactory.createURI(nullUri);
 
-	// Prefix for URIs referring to environment variables
-	public static final String ENV_PREFIX = "env:";
+    public static final String nullUri = "http://null.null/null";
+    public static final Node nullUriNode = NodeFactory.createURI(nullUri);
+
+    // Prefix for URIs referring to environment variables
+    public static final String ENV_PREFIX = "env:";
 
 //	public static final Node N_ABSENT = NodeFactory.createURI("http://special.absent/none");
 
-	// Note to myself because I repeatedly added node/prefix utils here:
-	// Prefix / PrefixMapping related utils are in PrefixUtils ~ Claus
+    // Note to myself because I repeatedly added node/prefix utils here:
+    // Prefix / PrefixMapping related utils are in PrefixUtils ~ Claus
 
-	public static boolean isEnvKey(Node node) {
-		boolean result = getEnvKey(node) != null;
-		return result;
-	}
+    public static boolean isEnvKey(Node node) {
+        boolean result = getEnvKey(node) != null;
+        return result;
+    }
 
-	// Return key + flag for string/iri
-	public static Entry<String, Boolean> getEnvKey(Node node) {
-		Entry<String, Boolean> result = null;
-		if(node.isURI()) {
-			String str = node.getURI();
-			if(str.startsWith(ENV_PREFIX)) {
-				String key = str.substring(ENV_PREFIX.length());
+    /**
+     * Return a pair (key, flag for string (false)/iri(true)) for nodes that reference
+     * environment variables - null otherwise.
+     *
+     * @param node
+     * @return
+     */
+    public static Entry<String, Boolean> getEnvKey(Node node) {
+        Entry<String, Boolean> result = null;
+        if(node.isURI()) {
+            String str = node.getURI();
+            if(str.startsWith(ENV_PREFIX)) {
+                String key = str.substring(ENV_PREFIX.length());
 
-				boolean isIri = false;
-				if(key.startsWith("//")) {
-					key = key.substring(2);
-					isIri = true;
-				}
-				
-				result = Maps.immutableEntry(key, isIri);
-			}
-		}
+                boolean isIri = false;
+                if(key.startsWith("//")) {
+                    key = key.substring(2);
+                    isIri = true;
+                }
 
-		return result;
-	}
-	
-	
-	public static Node substWithLookup2(Node node, Function<String, Node> lookup) {
-		Entry<String, Boolean> e = getEnvKey(node);
+                result = Maps.immutableEntry(key, isIri);
+            }
+        }
 
-		Node result = node;
-		if(e != null) {
-			String key = e.getKey();
-			boolean isUri = e.getValue();
-			Node value = lookup.apply(key);
-			if(value != null) {
-				result = isUri
-					? NodeFactory.createURI(value.toString())
-					: value; // NodeFactory.createLiteral(value);
-			}
-		}
-		
-		return result;
-	}
-	
-	public static Node substWithLookup(Node node, Function<String, String> lookup) {
-		
-		Entry<String, Boolean> e = getEnvKey(node);
+        return result;
+    }
 
-		Node result = node;
-		if(e != null) {
-			String key = e.getKey();
-			boolean isUri = e.getValue();
-			String value = lookup.apply(key);
-			if(value != null) {
-				result = isUri
-					? NodeFactory.createURI(value)
-					: NodeFactory.createLiteral(value);
-			}
 
-		}
-		
-		return result;
-		
+    public static Node substWithLookup2(Node node, Function<String, Node> lookup) {
+        Entry<String, Boolean> e = getEnvKey(node);
+
+        Node result = node;
+        if(e != null) {
+            String key = e.getKey();
+            boolean isUri = e.getValue();
+            Node value = lookup.apply(key);
+            if(value != null) {
+                result = isUri
+                    ? NodeFactory.createURI(value.toString())
+                    : value; // NodeFactory.createLiteral(value);
+            }
+        }
+
+        return result;
+    }
+
+    public static Node substWithLookup(Node node, Function<String, String> lookup) {
+
+        Entry<String, Boolean> e = getEnvKey(node);
+
+        Node result = node;
+        if(e != null) {
+            String key = e.getKey();
+            boolean isUri = e.getValue();
+            String value = lookup.apply(key);
+            if(value != null) {
+                result = isUri
+                    ? NodeFactory.createURI(value)
+                    : NodeFactory.createLiteral(value);
+            }
+
+        }
+
+        return result;
+
 //		Node result = node;
 //		if(node.isURI()) {
 //			String str = node.getURI();
@@ -108,7 +114,7 @@ public class NodeUtils {
 //					isUri = true;
 //				}
 //
-//				
+//
 //				String value = lookup.apply(key);
 //				if(!Strings.isNullOrEmpty(value)) {
 //					result = isUri
@@ -117,10 +123,22 @@ public class NodeUtils {
 //				}
 //			}
 //		}
-//		
+//
 //		return result;
-	}
-	
+    }
+
+    /**
+     * Return the language of a node or null if the argument is not applicable
+     *
+     * @param node
+     * @return
+     */
+    public static String getLang(Node node) {
+        String result = node != null && node.isLiteral() ? node.getLiteralLanguage() : null;
+        return result;
+    }
+
+
     public static Node asNullableNode(String uri) {
         Node result = uri == null ? null : NodeFactory.createURI(uri);
         return result;
@@ -175,11 +193,11 @@ public class NodeUtils {
         String result = writer.toString();
         return result;
     }
-    
-    
+
+
     @Deprecated
     public static String toNTriplesStringOld(Node node) {
-        
+
         String result;
         if(node.isURI()) {
             result = "<" + node.getURI() + ">";

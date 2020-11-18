@@ -6,8 +6,10 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import org.aksw.commons.collections.diff.ListDiff;
@@ -17,10 +19,13 @@ import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.query.ResultSetFactory;
+import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.sparql.algebra.Table;
+import org.apache.jena.sparql.algebra.TableFactory;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.QueryIterator;
 import org.apache.jena.sparql.engine.binding.Binding;
-import org.apache.jena.sparql.engine.binding.BindingHashMap;
+import org.apache.jena.sparql.engine.binding.BindingFactory;
 import org.apache.jena.sparql.engine.iterator.QueryIterPlainWrapper;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.util.iterator.ExtendedIterator;
@@ -34,6 +39,18 @@ import com.google.common.collect.Multisets;
 
 
 public class ResultSetUtils {
+
+    /** Materialize a {@link ResultSet} into a {@link Table} */
+    public static Table resultSetToTable(ResultSet rs) {
+        List<Var> vars = Var.varList(rs.getResultVars());
+        Table result = TableFactory.create(vars);
+        while (rs.hasNext()) {
+            Binding b = BindingFactory.copy(rs.nextBinding());
+            result.addBinding(b);
+        }
+
+        return result;
+    }
 
     public static Multiset<QuerySolution> toMultisetQs(ResultSet rs) {
         Multiset<QuerySolution> result = HashMultiset.create();
@@ -142,6 +159,38 @@ public class ResultSetUtils {
         return result;
     }
 
+    public static Node getNextNode(ResultSet rs, Var v) {
+        Node result = null;
+
+        if (rs.hasNext()) {
+            Binding binding = rs.nextBinding();
+            result = binding.get(v);
+        }
+        return result;
+    }
+
+    public static Optional<Node> tryGetNextNode(ResultSet rs, Var v) {
+        Node node = getNextNode(rs, v);
+        Optional<Node> result = Optional.ofNullable(node);
+        return result;
+    }
+
+    public static RDFNode getNextRDFNode(ResultSet rs, Var v) {
+        RDFNode result = null;
+        if (rs.hasNext()) {
+            QuerySolution qs = rs.next();
+            String varName = v.getName();
+            result = qs.get(varName);
+        }
+        return result;
+    }
+
+    public static Optional<RDFNode> tryGetNextRDFNode(ResultSet rs, Var v) {
+        RDFNode node = getNextRDFNode(rs, v);
+        Optional<RDFNode> result = Optional.ofNullable(node);
+        return result;
+    }
+
     public static Integer resultSetToInt(ResultSet rs, Var v) {
         Integer result = null;
 
@@ -187,7 +236,6 @@ public class ResultSetUtils {
         }
         return result;
     }
-
 
     public static Map<Node, ResultSetPart> partition(ResultSet rs, Var var) {
         List<String> varNames = rs.getResultVars();
@@ -298,13 +346,7 @@ public class ResultSetUtils {
 
         while(rs.hasNext()) {
             Binding o = rs.nextBinding();
-
-            BindingHashMap n = new BindingHashMap();
-
-            for(Var var : vars) {
-                Node node = o.get(var);
-                n.add(var, node);;
-            }
+            Binding n = BindingUtils.project(o, vars);
 
             newBindings.add(n);
         }

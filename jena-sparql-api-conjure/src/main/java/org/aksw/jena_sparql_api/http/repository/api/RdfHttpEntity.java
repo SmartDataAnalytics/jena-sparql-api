@@ -6,7 +6,11 @@ import java.io.InputStream;
 import org.apache.jena.rdf.model.Resource;
 
 public interface RdfHttpEntity {
-	Resource getCombinedInfo();
+    // RdfHttpResourceFile getHttpResource();
 
-	InputStream open() throws IOException;
+    Resource getCombinedInfo();
+
+    InputStream open() throws IOException;
+
+//    WriteProgress put(InputStream in);
 }

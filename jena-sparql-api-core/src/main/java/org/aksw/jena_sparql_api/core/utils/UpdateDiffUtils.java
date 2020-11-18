@@ -18,7 +18,7 @@ import org.aksw.jena_sparql_api.utils.QuadPatternUtils;
 import org.aksw.jena_sparql_api.utils.QuadUtils;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.aksw.jena_sparql_api.utils.ResultSetUtils;
-import org.aksw.jena_sparql_api.utils.SetDatasetGraph;
+import org.aksw.jena_sparql_api.utils.SetFromDatasetGraph;
 
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
@@ -188,8 +188,8 @@ public class UpdateDiffUtils {
     }
 
     public static Diff<Set<Quad>> computeDelta(DatasetGraph after, DatasetGraph before) {
-        SetDatasetGraph afterSet = new SetDatasetGraph(after);
-        SetDatasetGraph beforeSet = new SetDatasetGraph(before);
+        SetFromDatasetGraph afterSet = new SetFromDatasetGraph(after);
+        SetFromDatasetGraph beforeSet = new SetFromDatasetGraph(before);
 
         Diff<Set<Quad>> result = computeDelta(afterSet, beforeSet);
         return result;

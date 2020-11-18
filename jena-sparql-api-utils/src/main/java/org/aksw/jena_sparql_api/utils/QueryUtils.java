@@ -13,7 +13,6 @@ import java.util.stream.Collectors;
 
 import org.aksw.commons.collections.generator.Generator;
 import org.aksw.jena_sparql_api.backports.syntaxtransform.ExprTransformNodeElement;
-import org.aksw.jena_sparql_api.backports.syntaxtransform.QueryTransformOps;
 import org.aksw.jena_sparql_api.utils.transform.NodeTransformCollectNodes;
 import org.apache.jena.ext.com.google.common.collect.Sets;
 import org.apache.jena.graph.Node;
@@ -39,6 +38,7 @@ import org.apache.jena.sparql.graph.NodeTransformLib;
 import org.apache.jena.sparql.modify.request.QuadAcc;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementFilter;
+import org.apache.jena.sparql.syntax.ElementGroup;
 import org.apache.jena.sparql.syntax.ElementNamedGraph;
 import org.apache.jena.sparql.syntax.ElementSubQuery;
 import org.apache.jena.sparql.syntax.ElementVisitorBase;
@@ -50,66 +50,53 @@ import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransformCopyBase;
 import org.apache.jena.sparql.util.ExprUtils;
 import org.apache.jena.sparql.util.PrefixMapping2;
 
+import com.google.common.collect.BoundType;
 import com.google.common.collect.DiscreteDomain;
 import com.google.common.collect.Range;
 
 public class QueryUtils {
-	
-	/**
-	 * Experimental clone that does not de-/serialize the query to string
-	 * 
-	 * @param query
-	 * @return
-	 */
-	public static Query fastClone(Query query) {
-		ElementTransform eltXform = new ElementTransformCopyBase2(true);
-        ExprTransform exprXform = new ExprTransformApplyElementTransform2(eltXform, true);
 
-		Query result = QueryTransformOps.transform(query, eltXform, exprXform);
-		return result;
-	}
-	
-	public static Query applyOpTransform(Query beforeQuery, Function<? super Op, ? extends Op> transform) {
-		Op beforeOp = Algebra.compile(beforeQuery);
-		Op afterOp = transform.apply(beforeOp);
-		
-		//Set<Var> afterOpVars = OpVars.visibleVars(afterOp);
+    public static Query applyOpTransform(Query beforeQuery, Function<? super Op, ? extends Op> transform) {
+        Op beforeOp = Algebra.compile(beforeQuery);
+        Op afterOp = transform.apply(beforeOp);
+
+        //Set<Var> afterOpVars = OpVars.visibleVars(afterOp);
 //		Op op = NodeTransformLib.transform(new NodeTransformBNodesToVariables(), afterOp);
-		
-		Collection<Var> mentionedVars = OpVars.mentionedVars(beforeOp);		
-		Query afterQueryTmp = OpAsQuery.asQuery(afterOp);
+
+        Collection<Var> mentionedVars = OpVars.mentionedVars(beforeOp);
+        Query afterQueryTmp = OpAsQuery.asQuery(afterOp);
 //		Query afterQuery = fixVarNames(afterQueryTmp);
 
-		Generator<Var> vargen = VarGeneratorBlacklist.create(mentionedVars);
-		Element eltBefore = afterQueryTmp.getQueryPattern();
+        Generator<Var> vargen = VarGeneratorBlacklist.create(mentionedVars);
+        Element eltBefore = afterQueryTmp.getQueryPattern();
 
-		// Fix blank nodes introduced as graph names by e.g. Algebra.unionDefaultGraph
-		Element eltAfter = org.aksw.jena_sparql_api.backports.syntaxtransform.ElementTransformer.transform(eltBefore, new ElementTransformCopyBase() {
-			protected Map<Node, Var> map = new HashMap<>();
-			
-			@Override
-			public Element transform(ElementNamedGraph el, Node gn, Element elt1) {
-				Element result;
-				if(gn.isBlank() || (gn.isVariable() && gn.getName().startsWith("?"))) {
-					Var v = map.get(gn);
-					if(v == null) {
-						v = vargen.next();
-						map.put(gn, v);
-					}
-					result = new ElementNamedGraph(v, elt1);
-				} else {
-					result = super.transform(el, gn, elt1);
-				}
-				return result;
-			}
-		});
-		afterQueryTmp.setQueryPattern(eltAfter);
-		
-		Query result = QueryUtils.restoreQueryForm(afterQueryTmp, beforeQuery);
-		
-		return result;
-	}
-	
+        // Fix blank nodes introduced as graph names by e.g. Algebra.unionDefaultGraph
+        Element eltAfter = org.aksw.jena_sparql_api.backports.syntaxtransform.ElementTransformer.transform(eltBefore, new ElementTransformCopyBase() {
+            protected Map<Node, Var> map = new HashMap<>();
+
+            @Override
+            public Element transform(ElementNamedGraph el, Node gn, Element elt1) {
+                Element result;
+                if(gn.isBlank() || (gn.isVariable() && gn.getName().startsWith("?"))) {
+                    Var v = map.get(gn);
+                    if(v == null) {
+                        v = vargen.next();
+                        map.put(gn, v);
+                    }
+                    result = new ElementNamedGraph(v, elt1);
+                } else {
+                    result = super.transform(el, gn, elt1);
+                }
+                return result;
+            }
+        });
+        afterQueryTmp.setQueryPattern(eltAfter);
+
+        Query result = QueryUtils.restoreQueryForm(afterQueryTmp, beforeQuery);
+
+        return result;
+    }
+
 // Seems like Query.getResultVars already does what I wanted to do here
 //	public Set<Var> visibleVars(Query query) {
 //		Set<Var> result;
@@ -120,177 +107,177 @@ public class QueryUtils {
 //			query.getPro
 //		}
 //	}
-	
-	/**
-	 * Restore a query form from a prototype.
-	 * Typical use case is when a query form should be restored after
-	 * it was compiled using Algebra.compile(). 
-	 * 
-	 * @param query
-	 * @param proto
-	 * @return
-	 */
-	public static Query restoreQueryForm(Query query, Query proto) {
-		if(!query.isSelectType()) {
-			throw new RuntimeException("SELECT query expected - got: " + query);
-		}
 
-		Query result;
-		int tgtQueryType = proto.getQueryType();
-		switch(tgtQueryType) {
-		case Query.QueryTypeSelect:
-			result = query.cloneQuery();
+    /**
+     * Restore a query form from a prototype.
+     * Typical use case is when a CONSTRUCT query should be restored after a
+     * it was compiled using Algebra.compile() (which discards the template part).
+     *
+     * @param query
+     * @param proto
+     * @return
+     */
+    public static Query restoreQueryForm(Query query, Query proto) {
+        if(!query.isSelectType()) {
+            throw new RuntimeException("SELECT query expected - got: " + query);
+        }
 
-			Set<Var> expectedVars = new LinkedHashSet<>(proto.getProjectVars());
-			VarExprList replacement = new VarExprList();
+        Query result;
+        int tgtQueryType = proto.getQueryType();
+        switch(tgtQueryType) {
+        case Query.QueryTypeSelect:
+            result = query.cloneQuery();
 
-			Set<Var> actualVars = new LinkedHashSet<>(result.getProjectVars());
-			
-			Set<Var> missingVars = Sets.difference(expectedVars, actualVars);
-			Set<Var> exceedingVars = Sets.difference(actualVars, expectedVars);
-			if(!missingVars.isEmpty()) {
-				throw new RuntimeException("Missing vars: " + missingVars + ", expected: " + expectedVars + ", actual: " + actualVars);
-			}
-			
-			if(!exceedingVars.isEmpty()) {
-				VarExprList actual = result.getProject();
-				for(Var expectedVar : expectedVars) {				
-					Expr expr = actual.getExpr(expectedVar);
-					VarExprListUtils.add(replacement, expectedVar, expr);
-				}
-				
-				VarExprListUtils.replace(result.getProject(), replacement);
-				result.setQueryResultStar(false);
-				result.setResultVars();
-			}
-			break;
-		case Query.QueryTypeConstruct:
-			// If the projection uses expressions, create a sub query
-			result = selectToConstruct(query, proto.getConstructTemplate());
-			break;
-		case Query.QueryTypeAsk:
-			result = query.cloneQuery();
-			result.setQueryAskType();
-			break;
-		case Query.QueryTypeDescribe:
-			result = query.cloneQuery();
-			result.setQueryDescribeType();
-			for(Node node : proto.getResultURIs()) {
-				result.addDescribeNode(node);
-			}
-			for(Var var : proto.getProjectVars()) {
-				result.addDescribeNode(var);
-			}
-			break;
-		case Query.QueryTypeJson:
-			result = query.cloneQuery();
-			result.setQueryJsonType();
-        	proto.getJsonMapping().entrySet()
-    			.forEach(e -> result.addJsonMapping(e.getKey(), e.getValue()));
-			break;
+            Set<Var> expectedVars = new LinkedHashSet<>(proto.getProjectVars());
+            VarExprList replacement = new VarExprList();
 
-		default:
-			throw new RuntimeException("unsupported query type");
-			//proto.result
-		}
+            Set<Var> actualVars = new LinkedHashSet<>(result.getProjectVars());
 
-		result.setSyntax(proto.getSyntax());
-		result.setPrefixMapping(proto.getPrefixMapping());
+            Set<Var> missingVars = Sets.difference(expectedVars, actualVars);
+            Set<Var> exceedingVars = Sets.difference(actualVars, expectedVars);
+            if(!missingVars.isEmpty()) {
+                throw new RuntimeException("Missing vars: " + missingVars + ", expected: " + expectedVars + ", actual: " + actualVars);
+            }
 
-		
-		// TODO We may want to move (named) graph URI copying to a separate function
+            if(!exceedingVars.isEmpty()) {
+                VarExprList actual = result.getProject();
+                for(Var expectedVar : expectedVars) {
+                    Expr expr = actual.getExpr(expectedVar);
+                    VarExprListUtils.add(replacement, expectedVar, expr);
+                }
+
+                VarExprListUtils.replace(result.getProject(), replacement);
+                result.setQueryResultStar(false);
+                result.setResultVars();
+            }
+            break;
+        case Query.QueryTypeConstruct:
+            // If the projection uses expressions, create a sub query
+            result = selectToConstruct(query, proto.getConstructTemplate());
+            break;
+        case Query.QueryTypeAsk:
+            result = query.cloneQuery();
+            result.setQueryAskType();
+            break;
+        case Query.QueryTypeDescribe:
+            result = query.cloneQuery();
+            result.setQueryDescribeType();
+            for(Node node : proto.getResultURIs()) {
+                result.addDescribeNode(node);
+            }
+            for(Var var : proto.getProjectVars()) {
+                result.addDescribeNode(var);
+            }
+            break;
+        case Query.QueryTypeJson:
+            result = query.cloneQuery();
+            result.setQueryJsonType();
+            proto.getJsonMapping().entrySet()
+                .forEach(e -> result.addJsonMapping(e.getKey(), e.getValue()));
+            break;
+
+        default:
+            throw new RuntimeException("unsupported query type");
+            //proto.result
+        }
+
+        result.setSyntax(proto.getSyntax());
+        result.setPrefixMapping(proto.getPrefixMapping());
+
+
+        // TODO We may want to move (named) graph URI copying to a separate function
 //		result.getGraphURIs().addAll(proto.getGraphURIs());
 //		result.getNamedGraphURIs().addAll(proto.getNamedGraphURIs());
-		
-		return result;
-	}
 
-	// Create a construct query from a select query and a template
-	public static Query selectToConstruct(Query query, Template template) {
-		Query result = new Query();
-		result.setQueryConstructType();
-		result.setConstructTemplate(template != null ? template : new Template(new BasicPattern()));
-		
-		boolean canActAsConstruct = QueryUtils.canActAsConstruct(query);
-		if(canActAsConstruct) {
-			result.setQueryPattern(query.getQueryPattern());
-		} else {
-			result.setQueryPattern(new ElementSubQuery(query));
-		}
+        return result;
+    }
 
-		result.setLimit(query.getLimit());
-		result.setOffset(query.getOffset());
-		List<SortCondition> scs = query.getOrderBy();
-		if(scs != null) {
-			for(SortCondition sc : scs) {
-				result.addOrderBy(sc);
-			}
-			scs.clear();
-		}
-		
-		query.setLimit(Query.NOLIMIT);
-		query.setOffset(Query.NOLIMIT);
+    // Create a construct query from a select query and a template
+    public static Query selectToConstruct(Query query, Template template) {
+        Query result = new Query();
+        result.setQueryConstructType();
+        result.setConstructTemplate(template != null ? template : new Template(new BasicPattern()));
 
-		return result;
-	}
-	/**
-	 * Rewrite a query based on an algebraic transformation; preserves the construct
-	 * template
-	 * 
-	 * 
-	 * @param beforeQuery
-	 * @param xform
-	 * @return
-	 */
-	public static Query rewrite(Query beforeQuery, Function<? super Op, ? extends Op> xform) {
-		Op beforeOp = Algebra.compile(beforeQuery);
-		Op afterOp = xform.apply(beforeOp);// Transformer.transform(xform, beforeOp);
-		Query afterQuery = OpAsQuery.asQuery(afterOp);
-		afterQuery.getPrefixMapping().setNsPrefixes(beforeQuery.getPrefixMapping());
+        boolean canActAsConstruct = QueryUtils.canActAsConstruct(query);
+        if(canActAsConstruct) {
+            result.setQueryPattern(query.getQueryPattern());
+        } else {
+            result.setQueryPattern(new ElementSubQuery(query));
+        }
 
-		Query result = restoreQueryForm(afterQuery, beforeQuery);
+        result.setLimit(query.getLimit());
+        result.setOffset(query.getOffset());
+        List<SortCondition> scs = query.getOrderBy();
+        if(scs != null) {
+            for(SortCondition sc : scs) {
+                result.addOrderBy(sc);
+            }
+            scs.clear();
+        }
+
+        query.setLimit(Query.NOLIMIT);
+        query.setOffset(Query.NOLIMIT);
+
+        return result;
+    }
+    /**
+     * Rewrite a query based on an algebraic transformation; preserves the construct
+     * template
+     *
+     *
+     * @param beforeQuery
+     * @param xform
+     * @return
+     */
+    public static Query rewrite(Query beforeQuery, Function<? super Op, ? extends Op> xform) {
+        Op beforeOp = Algebra.compile(beforeQuery);
+        Op afterOp = xform.apply(beforeOp);// Transformer.transform(xform, beforeOp);
+        Query afterQuery = OpAsQuery.asQuery(afterOp);
+        afterQuery.getPrefixMapping().setNsPrefixes(beforeQuery.getPrefixMapping());
+
+        Query result = restoreQueryForm(afterQuery, beforeQuery);
 //		if(beforeQuery.isConstructType()) {
 //			result.setQueryConstructType();
 //			Template template = beforeQuery.getConstructTemplate();
 //			result.setConstructTemplate(template);
 //		}
-		
-		return result;
-	}
 
-	// Get a query pattern (of a select query) in a way that it can be injected as a query pattern of a construct query
-	public static Element asPatternForConstruct(Query q) {
-		Element result = canActAsConstruct(q)
-			? q.getQueryPattern()
-			: new ElementSubQuery(q);
-			
-		return result;
-	}
-	
-	public static boolean canActAsConstruct(Query q) {
-		boolean result = true;
-		result = result && !q.hasAggregators();
-		result = result && !q.hasGroupBy();
-		result = result && !q.hasValues();
-		result = !q.hasHaving();
-		result = result && !VarExprListUtils.hasExprs(q.getProject());
+        return result;
+    }
 
-		return result;
-	}
-	
-	public static Set<Var> mentionedVars(Query query) {
-		Set<Node> nodes = mentionedNodes(query);
-		Set<Var> result = NodeUtils.getVarsMentioned(nodes);
-		return result;
-	}
+    // Get a query pattern (of a select query) in a way that it can be injected as a query pattern of a construct query
+    public static Element asPatternForConstruct(Query q) {
+        Element result = canActAsConstruct(q)
+            ? q.getQueryPattern()
+            : new ElementSubQuery(q);
 
-	public static Set<Node> mentionedNodes(Query query) {
-		NodeTransformCollectNodes xform = new NodeTransformCollectNodes();
-		QueryUtils.applyNodeTransform(query, xform);
-		Set<Node> result = xform.getNodes();
-		return result;
-	}
-	
+        return result;
+    }
+
+    public static boolean canActAsConstruct(Query q) {
+        boolean result = true;
+        result = result && !q.hasAggregators();
+        result = result && !q.hasGroupBy();
+        result = result && !q.hasValues();
+        result = !q.hasHaving();
+        result = result && !VarExprListUtils.hasExprs(q.getProject());
+
+        return result;
+    }
+
+    public static Set<Var> mentionedVars(Query query) {
+        Set<Node> nodes = mentionedNodes(query);
+        Set<Var> result = NodeUtils.getVarsMentioned(nodes);
+        return result;
+    }
+
+    public static Set<Node> mentionedNodes(Query query) {
+        NodeTransformCollectNodes xform = new NodeTransformCollectNodes();
+        QueryUtils.applyNodeTransform(query, xform);
+        Set<Node> result = xform.getNodes();
+        return result;
+    }
+
     public static Var freshVar(Query query) {
         Var result = freshVar(query, null);
         return result;
@@ -307,23 +294,23 @@ public class QueryUtils {
         return result;
     }
 
-	
 
-	/**
-	 * Transform json mapping obtained via Query.getJsonMapping
-	 * TODO Actually this should be added to Jena's NodeTransformLib.
-	 * 
-	 * @param jsonMapping
-	 * @param nodeTransform
-	 * @return
-	 */
-	public static Map<String, Node> applyNodeTransform(Map<String, Node> jsonMapping, NodeTransform nodeTransform) {
-		Map<String, Node> result = jsonMapping.entrySet().stream()
-				.collect(Collectors.toMap(
-						Entry::getKey,
-						e -> nodeTransform.apply(e.getValue())));
-		return result;
-	}
+
+    /**
+     * Transform json mapping obtained via Query.getJsonMapping
+     * TODO Actually this should be added to Jena's NodeTransformLib.
+     *
+     * @param jsonMapping
+     * @param nodeTransform
+     * @return
+     */
+    public static Map<String, Node> applyNodeTransform(Map<String, Node> jsonMapping, NodeTransform nodeTransform) {
+        Map<String, Node> result = jsonMapping.entrySet().stream()
+                .collect(Collectors.toMap(
+                        Entry::getKey,
+                        e -> nodeTransform.apply(e.getValue())));
+        return result;
+    }
 
     public static Query applyNodeTransform(Query query, NodeTransform nodeTransform) {
 
@@ -333,51 +320,51 @@ public class QueryUtils {
 
         Template template = null;
         if(query.isConstructType()) {
-        	Template tmp = query.getConstructTemplate();
-        	if(tmp.containsRealQuad()) {
-        		QuadPattern before = QuadPatternUtils.create(tmp.getQuads());
+            Template tmp = query.getConstructTemplate();
+            if(tmp.containsRealQuad()) {
+                QuadPattern before = QuadPatternUtils.create(tmp.getQuads());
 //        	BasicPattern before = tmp.getBGP();
-        		QuadPattern after = NodeTransformLib.transform(nodeTransform, before);
-        		template = new Template(new QuadAcc(after.getList()));
-        	} else {
-        		BasicPattern before = tmp.getBGP();
-        		BasicPattern after = NodeTransformLib.transform(nodeTransform, before);
-        		template = new Template(after);
-        	}
-        }
-        
-        Map<String, Node> jsonMapping = null;
-        if(query.isJsonType()) {
-        	 Map<String, Node> before = query.getJsonMapping();
-        	jsonMapping = applyNodeTransform(before, nodeTransform);
+                QuadPattern after = NodeTransformLib.transform(nodeTransform, before);
+                template = new Template(new QuadAcc(after.getList()));
+            } else {
+                BasicPattern before = tmp.getBGP();
+                BasicPattern after = NodeTransformLib.transform(nodeTransform, before);
+                template = new Template(after);
+            }
         }
 
-        
+        Map<String, Node> jsonMapping = null;
+        if(query.isJsonType()) {
+             Map<String, Node> before = query.getJsonMapping();
+            jsonMapping = applyNodeTransform(before, nodeTransform);
+        }
+
+
         //Query result = org.apache.jena.sparql.syntax.syntaxtransform.QueryTransformOps.transform(query, eltrans, exprTrans) ;
         Query result = org.aksw.jena_sparql_api.backports.syntaxtransform.QueryTransformOps.transform(query, eltrans, exprTrans) ;
-        
+
         // QueryTransformOps creates a shallow copy of the query which causes problems
         // if a PrefixMapping2 is used; the PM2 is materialized into a PM
         // Fix prefixes in sub queries by clearing them
         Element resultEl = result.getQueryPattern();
         if(resultEl != null) {
-	        ElementWalker.walk(resultEl, new ElementVisitorBase() {
-	        	@Override
-	        	public void visit(ElementSubQuery el) {
-	        		el.getQuery().getPrefixMapping().clearNsPrefixMap();
-	        	}
-	        });
+            ElementWalker.walk(resultEl, new ElementVisitorBase() {
+                @Override
+                public void visit(ElementSubQuery el) {
+                    el.getQuery().getPrefixMapping().clearNsPrefixMap();
+                }
+            });
         }
-        
+
         if(template != null) {
-        	result.setQueryConstructType();
-        	result.setConstructTemplate(template);
+            result.setQueryConstructType();
+            result.setConstructTemplate(template);
         }
-        
+
         if(jsonMapping != null) {
-        	result.setQueryJsonType();
-        	jsonMapping.entrySet()
-        		.forEach(e -> result.addJsonMapping(e.getKey(), e.getValue()));
+            result.setQueryJsonType();
+            jsonMapping.entrySet()
+                .forEach(e -> result.addJsonMapping(e.getKey(), e.getValue()));
         }
 
 //        Query result = tmp;
@@ -388,34 +375,34 @@ public class QueryUtils {
 //    		public Element transform(ElementSubQuery el, Query query) {
 //    			ElementSubQuery x = (ElementSubQuery)super.transform(el, query);
 //    			x.getQuery().getPrefixMapping().clearNsPrefixMap();
-//    			
+//
 //    			return x;
 //    		}
 //    	};
- 
+
 //        Query result = org.apache.jena.sparql.syntax.syntaxtransform.QueryTransformOps.transform(tmp, clearPrefixesInSubQuery);
-  
-        
+
+
         return result;
     }
 
-    
+
     /**
      * Determines the used prefixes w.r.t the query's local prefixes and
      * a global prefix map (may be null).
      * The local prefixes take precedence.
-     * 
+     *
      * @param query
      * @param global
      * @return
      */
     public static PrefixMapping usedPrefixes(Query query, PrefixMapping global) {
-    	PrefixMapping local = query.getPrefixMapping();
-    	PrefixMapping pm = global == null ? local : new PrefixMapping2(global, local);
-    	PrefixMapping result = usedReferencePrefixes(query, pm);
+        PrefixMapping local = query.getPrefixMapping();
+        PrefixMapping pm = global == null ? local : new PrefixMapping2(global, local);
+        PrefixMapping result = usedReferencePrefixes(query, pm);
         return result;
     }
-    
+
     /**
      * Scans the query for all occurrences of URI nodes and returns the applicable subset of its
      * prefix mapping.
@@ -442,14 +429,14 @@ public class QueryUtils {
      * @return
      */
     public static PrefixMapping usedPrefixes(Query query) {
-    	PrefixMapping result = usedPrefixes(query, null);
-    	return result;
+        PrefixMapping result = usedPrefixes(query, null);
+        return result;
     }
 
     /**
      * Determine used prefixes within the given prefix mapping.
      * The query's own prefixes are ignored.
-     * 
+     *
      * @param query
      * @param pm
      * @return
@@ -466,20 +453,20 @@ public class QueryUtils {
 
     /**
      * In-place optimize a query's prefixes to only used prefixes
-     * 
+     *
      * @param query
      * @param pm
      * @return
      */
     public static Query optimizePrefixes(Query query, PrefixMapping globalPm) {
-    	PrefixMapping usedPrefixes = QueryUtils.usedPrefixes(query, globalPm);
-    	query.setPrefixMapping(usedPrefixes);
-    	return query;
+        PrefixMapping usedPrefixes = QueryUtils.usedPrefixes(query, globalPm);
+        query.setPrefixMapping(usedPrefixes);
+        return query;
     }
 
     public static Query optimizePrefixes(Query query) {
-    	optimizePrefixes(query, null);
-    	return query;
+        optimizePrefixes(query, null);
+        return query;
     }
 
     public static Query randomizeVars(Query query) {
@@ -548,6 +535,31 @@ public class QueryUtils {
         return result;
     }
 
+
+    /**
+     * Transform a range w.r.t. a discrete domain such that any lower bound is closed and the upper bound
+     * is open. As a result, a zero-length range is represented by [x..x)
+     *
+     * @param <T>
+     * @param range
+     * @param domain
+     * @return
+     */
+    public static <T extends Comparable<T>> Range<T> makeClosedOpen(Range<T> range, DiscreteDomain<T> domain) {
+        T lower = closedLowerEndpointOrNull(range, domain);
+        T upper = openUpperEndpointOrNull(range, domain);
+
+        Range<T> result = lower == null
+                ? upper == null
+                    ? Range.all()
+                    : Range.upTo(upper, BoundType.OPEN)
+                : upper == null
+                    ? Range.atLeast(lower)
+                    : Range.closedOpen(lower, upper);
+
+        return result;
+    }
+
     /**
      * Limit the query to the given range, relative to its own given range
      *
@@ -601,10 +613,33 @@ public class QueryUtils {
 
     //public static LimitAndOffset rangeToLimitAndOffset(Range<Long> range)
 
-    public static long rangeToOffset(Range<Long> range) {
-        long result = range == null || !range.hasLowerBound() ? 0 : range.lowerEndpoint();
+    public static <T extends Comparable<T>> T closedLowerEndpointOrNull(Range<T> range, DiscreteDomain<T> domain) {
+        T result = !range.hasLowerBound()
+                ? null
+                : range.lowerBoundType().equals(BoundType.CLOSED)
+                    ? range.lowerEndpoint()
+                    : domain.next(range.lowerEndpoint());
 
-        result = result == 0 ? Query.NOLIMIT : result;
+        return result;
+    }
+
+    public static <T extends Comparable<T>> T openUpperEndpointOrNull(Range<T> range, DiscreteDomain<T> domain) {
+        T result = !range.hasUpperBound()
+                ? null
+                : range.upperBoundType().equals(BoundType.CLOSED)
+                    ? domain.next(range.upperEndpoint())
+                    : range.upperEndpoint();
+
+        return result;
+    }
+
+
+    public static long rangeToOffset(Range<Long> range) {
+        Long tmp = range == null
+                ? null
+                : closedLowerEndpointOrNull(range, DiscreteDomain.longs());
+
+        long result = tmp == null || tmp == 0 ? Query.NOLIMIT : tmp;
         return result;
     }
 
@@ -614,11 +649,13 @@ public class QueryUtils {
      * @return
      */
     public static long rangeToLimit(Range<Long> range) {
-        range = range == null ? null : range.canonical(DiscreteDomain.longs());
+        range = range == null ? null : makeClosedOpen(range, DiscreteDomain.longs());
 
         long result = range == null || !range.hasUpperBound()
             ? Query.NOLIMIT
-            : DiscreteDomain.longs().distance(range.lowerEndpoint(), range.upperEndpoint());
+            : DiscreteDomain.longs().distance(range.lowerEndpoint(), range.upperEndpoint())
+                // If the upper bound is closed such as [x, x] then the result is the distance plus 1
+                + (range.upperBoundType().equals(BoundType.CLOSED) ? 1 : 0);
 
         return result;
     }
@@ -640,20 +677,31 @@ public class QueryUtils {
         return result;
     }
 
-    public static Range<Long> subRange(Range<Long> parent, Range<Long> child) {
+    /**
+     * Returns the absolute range for a child range relative to a parent range
+     * Assumes that both ranges have a lower endpoint
+     *
+     * @param _parent
+     * @param _child
+     * @return
+     */
+    public static Range<Long> subRange(Range<Long> _parent, Range<Long> _child) {
+        Range<Long> parent = makeClosedOpen(_parent, DiscreteDomain.longs());
+        Range<Long> child = makeClosedOpen(_child, DiscreteDomain.longs());
+
         long newMin = parent.lowerEndpoint() + child.lowerEndpoint();
 
         Long newMax = (parent.hasUpperBound()
             ? child.hasUpperBound()
-                ? (Long)Math.min(parent.upperEndpoint(), child.upperEndpoint())
+                ? (Long)Math.min(parent.upperEndpoint(), newMin + child.upperEndpoint())
                 : parent.upperEndpoint()
             : child.hasUpperBound()
-                ? (Long)child.upperEndpoint()
+                ? newMin + (Long)child.upperEndpoint()
                 : null);
 
         Range<Long> result = newMax == null
                 ? Range.atLeast(newMin)
-                : Range.closed(newMin, newMax);
+                : Range.closedOpen(newMin, newMax);
 
         return result;
     }
@@ -706,7 +754,12 @@ public class QueryUtils {
         if (pattern == null)
             return null;
         Query query = new Query();
-        query.setQueryPattern(pattern);
+
+        Element cleanElement = pattern instanceof ElementGroup || pattern instanceof ElementSubQuery
+                ? pattern
+                : ElementUtils.createElementGroup(pattern);
+
+        query.setQueryPattern(cleanElement);
         query.setQuerySelectType();
 
         if (resultVar == null) {
@@ -726,6 +779,7 @@ public class QueryUtils {
     public static Query elementToQuery(Element pattern) {
         return elementToQuery(pattern, null);
     }
+
 
     /**
      * This method does basically the same as

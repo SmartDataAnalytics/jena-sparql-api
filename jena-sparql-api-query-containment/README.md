@@ -19,7 +19,7 @@ A simple boolean QC check can be performed using:
 ```java
 Query vStr = "SELECT * { ?a ?b ?c }";
 Query qStr = "SELECT * { ?s ?p ?o . FILTER(?p = <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>) }";
-boolean isContained = SparqlQueryContainmentUtils.checkContainment(vStr, qStr);
+boolean isContained = SparqlQueryContainmentUtils.tryMatch(vStr, qStr);
 ```
 
 QC Testing for homomorphic query containment can be done using:
@@ -53,7 +53,7 @@ There exist further create() methods on [SparqlQueryContainmentIndexImpl](src/ma
 
 * The [Subgraph Isomorphism Index](https://github.com/SmartDataAnalytics/SubgraphIsomorphismIndex) to use for indexing conjunctive queries.
   * This repository provides a simple interface for a Subgraph Isomorphism index together with a JGraphT-based implementation.
-  * Othear index implementations with different performance characteristics can thus be easily used for QC testing.
+  * Additional index implementations with different performance characteristics can thus be easily used for QC testing.
 * The factory for creating "NodeMapper" instances: A NodeMapper takes as input
   * a pair of nodes of the AETs of v and q
   * the so far computed containment mapping (i.e. how variables of v are mapped to those of q)

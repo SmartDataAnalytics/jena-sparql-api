@@ -33,8 +33,8 @@ import com.google.common.collect.Multimaps;
 import com.google.common.collect.Range;
 import com.google.common.collect.Sets;
 
-import io.reactivex.Flowable;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Single;
 
 public class MapPaginatorHop
     implements MapPaginator<Node, DatasetGraph>
@@ -74,7 +74,7 @@ public class MapPaginatorHop
 
     @Override
     public Single<Range<Long>> fetchCount(Long itemLimit, Long rowLimit) {
-    	Single<Range<Long>> result = SparqlRx.fetchCountConcept(defaultQef, concept, itemLimit, rowLimit);
+        Single<Range<Long>> result = SparqlRx.fetchCountConcept(defaultQef, concept, itemLimit, rowLimit);
         //CountInfo result = ServiceUtils.fetchCountConcept(defaultQef, concept, itemLimit, rowLimit);
         return result;
     }
@@ -145,7 +145,7 @@ public class MapPaginatorHop
     }
 
     public static void processHopRelation(HopRelation hopRelation, Collection<Node> sourceNodes, Map<Node, DatasetGraph> result, SparqlQueryConnection defaultQef, Multimap<Node, Node> back) {
-    	SparqlQueryConnection qef = hopRelation.getQef();
+        SparqlQueryConnection qef = hopRelation.getQef();
         qef = (qef == null ? defaultQef : qef);
 
         BinaryRelation relation = hopRelation.getRelation();
@@ -203,7 +203,7 @@ public class MapPaginatorHop
     @Override
     public Flowable<Entry<Node, DatasetGraph>> apply(Range<Long> range) {
         // TODO This kind of implementation does not support canceling requests
-    	return Flowable.fromIterable(fetchMap(range).entrySet());
+        return Flowable.fromIterable(fetchMap(range).entrySet());
     }
 
 }

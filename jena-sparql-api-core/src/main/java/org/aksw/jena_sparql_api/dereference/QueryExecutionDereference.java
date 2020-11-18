@@ -3,9 +3,8 @@ package org.aksw.jena_sparql_api.dereference;
 import java.io.IOException;
 import java.net.URISyntaxException;
 
-import org.aksw.jena_sparql_api.core.QueryExecutionAdapter;
 import org.aksw.jena_sparql_api.core.QueryExecutionBaseSelect;
-
+import org.aksw.jena_sparql_api.utils.query_execution.QueryExecutionAdapter;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
 import org.apache.jena.rdf.model.Model;

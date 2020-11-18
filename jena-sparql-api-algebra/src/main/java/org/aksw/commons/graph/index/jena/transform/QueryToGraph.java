@@ -13,6 +13,7 @@ import java.util.stream.Stream;
 import org.aksw.commons.collections.generator.Generator;
 import org.aksw.commons.jena.jgrapht.LabeledEdge;
 import org.aksw.commons.jena.jgrapht.LabeledEdgeImpl;
+import org.aksw.jena_sparql_api.algebra.transform.SubstitutionStrategy;
 import org.aksw.jena_sparql_api.algebra.transform.TransformDistributeJoinOverUnion;
 import org.aksw.jena_sparql_api.algebra.transform.TransformJoinToSequence;
 import org.aksw.jena_sparql_api.algebra.transform.TransformMergeProject;
@@ -50,24 +51,24 @@ public class QueryToGraph {
 
     public static Op normalizeOpReplaceConstants(Op op) {
         //Op xxx = Optimize.stdOptimizationFactory.create(ARQ.getContext()).rewrite(op);
-        
+
         // Transform join of union to union of joins
         op = TransformDistributeJoinOverUnion.transform(op);
 
         //System.out.println("now op:\n" + op);
-        
+
         op = Transformer.transform(TransformUnionToDisjunction.fn, op);
-        
+
         op = Transformer.transform(new TransformMergeBGPs(), op);
 
         op = Transformer.transform(TransformJoinToSequence.fn, op);
 
         //System.out.println("now op:\n" + op);
-        
+
         op = Algebra.toQuadForm(op);
         //System.out.println("now op:\n" + op);
-        
-        
+
+
         //op = Transformer.transform(new TransformReplaceConstants(), op);
         op = TransformReplaceConstants.transform(op);
         //System.out.println("before:" + op);
@@ -88,9 +89,9 @@ public class QueryToGraph {
 
         op = OpUtils.substitute(op, false, (o) -> AlgebraUtils.tryCreateCqfp(o, generatorCache));
         if(normalizeUnaryOps) {
-        	op = Transformer.transform(new OpTransformNormalizeUnaryOps(), op);
+            op = Transformer.transform(new OpTransformNormalizeUnaryOps(), op);
         }
-        
+
 
         return op;
     }

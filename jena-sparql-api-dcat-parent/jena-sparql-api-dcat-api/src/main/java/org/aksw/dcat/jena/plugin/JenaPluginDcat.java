@@ -2,7 +2,7 @@ package org.aksw.dcat.jena.plugin;
 
 import org.aksw.dcat.jena.domain.api.DcatDataset;
 import org.aksw.dcat.jena.domain.api.DcatDistribution;
-import org.aksw.dcat.jena.domain.api.MvnEntity;
+import org.aksw.dcat.jena.domain.api.MavenEntity;
 import org.aksw.dcat.jena.domain.impl.DatasetImpl;
 import org.aksw.dcat.jena.domain.impl.DcatDistributionImpl;
 import org.aksw.jena_sparql_api.mapper.proxy.JenaPluginUtils;
@@ -28,7 +28,7 @@ public class JenaPluginDcat
 	}
 	
 	public static void init(Personality<RDFNode> p) {
-		JenaPluginUtils.registerResourceClasses(MvnEntity.class);
+		JenaPluginUtils.registerResourceClasses(MavenEntity.class);
     	p.add(DcatDataset.class, new SimpleImplementation(DatasetImpl::new));
     	p.add(DcatDistribution.class, new SimpleImplementation(DcatDistributionImpl::new));
     }

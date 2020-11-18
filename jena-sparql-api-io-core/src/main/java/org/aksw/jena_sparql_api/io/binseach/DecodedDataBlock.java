@@ -1,60 +1,99 @@
 package org.aksw.jena_sparql_api.io.binseach;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
+import java.nio.channels.SeekableByteChannel;
+
+import org.aksw.jena_sparql_api.io.api.ChannelFactory;
+import org.aksw.jena_sparql_api.io.common.Reference;
 
 public class DecodedDataBlock
-	implements Block
+    implements Block
 {
-	protected BlockSource blockSource;
+    protected BlockSource blockSource;
 
-	protected long blockStart;
-	protected long blockEnd;
-		
-	public Block nextBlock() throws IOException {
-		return blockSource.contentAfter(blockEnd);
-	}
+    protected long blockStart;
 
-	public Block prevBlock() throws IOException {
-		return blockSource.contentBefore(blockStart);
-	}
-	
-	public long blockSize() {
-		return data.length;
-	}
-	
-	protected byte[] data;
-	
-	public DecodedDataBlock(
-			BlockSource bufferSource,
-			long blockStart,
-			long blockEnd,
-			byte[] data) {
-		super();
-		this.blockSource = bufferSource;
-		this.blockStart = blockStart;
-		this.blockEnd = blockEnd;
-		this.data = data;
-	}
+    // protected long blockEnd;
 
-	public BlockSource getBufferSource() {
-		return blockSource;
-	}
-	
-	public long getBlockStart() {
-		return blockStart;
-	}
+    @Override
+    public boolean hasNext() throws IOException {
+        return blockSource.hasBlockAfter(blockStart);
+    }
 
-	public long getBlockEnd() {
-		return blockEnd;
-	}
+    public boolean hasPrev() throws IOException {
+        return blockSource.hasBlockBefore(blockStart);
+    }
 
-	public byte[] getData() {
-		return data;
-	}
-	
-	@Override
-	public ByteBuffer newBuffer() {
-		return ByteBuffer.wrap(data);
-	}
+    @Override
+    public Reference<? extends Block> nextBlock() throws IOException {
+        return blockSource.contentAtOrAfter(blockStart, false);
+    }
+
+    @Override
+    public Reference<? extends Block> prevBlock() throws IOException {
+        return blockSource.contentAtOrBefore(blockStart, false);
+    }
+
+    @Override
+    public long getOffset() {
+        return blockStart;
+    }
+
+//    public long blockSize() {
+//        return data.length;
+//    }
+
+    // TODO: Replaces 'data'
+    protected ChannelFactory<Seekable> channelFactory;
+
+    public DecodedDataBlock(
+            BlockSource blockSource,
+            long blockStart,
+            ChannelFactory<Seekable> channelFactory) {
+        super();
+        this.blockSource = blockSource;
+        this.blockStart = blockStart;
+        this.channelFactory = channelFactory;
+    }
+
+    public BlockSource getBufferSource() {
+        return blockSource;
+    }
+
+    public long getBlockStart() {
+        return blockStart;
+    }
+
+//    public long getBlockEnd() {
+//        return blockEnd;
+//    }
+
+    public ChannelFactory<Seekable> getChannelFactory() {
+        return channelFactory;
+    }
+
+    @Override
+    public Seekable newChannel() {
+        return channelFactory.newChannel();
+    }
+
+    @Override
+    public void close() throws Exception {
+        channelFactory.close();
+    }
+
+    @Override
+    public long length() throws IOException {
+        long result = blockSource.getSizeOfBlock(blockStart);
+        return result;
+    }
+
+//    public byte[] getData() {
+//        return data;
+//    }
+//
+//    @Override
+//    public ByteBuffer newBuffer() {
+//        return ByteBuffer.wrap(data);
+//    }
 }

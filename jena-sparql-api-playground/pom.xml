@@ -12,7 +12,7 @@
     <parent>
         <groupId>org.aksw.jena-sparql-api</groupId>
         <artifactId>jena-sparql-api-parent</artifactId>
-        <version>3.14.0-2-SNAPSHOT</version>
+        <version>3.16.0-2-SNAPSHOT</version>
     </parent>
 
     <!-- <properties> -->
@@ -26,6 +26,12 @@
             <artifactId>jena-fuseki-war</artifactId>
             <version>${jena.version}</version>
             <type>war</type>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.jena</groupId>
+            <artifactId>jena-tdb2</artifactId>
+            <version>${jena.version}</version>
         </dependency>
 
         <dependency>

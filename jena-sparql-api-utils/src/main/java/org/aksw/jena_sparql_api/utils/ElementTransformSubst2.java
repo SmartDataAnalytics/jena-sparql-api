@@ -33,7 +33,6 @@ import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.engine.binding.BindingFactory;
 import org.apache.jena.sparql.engine.binding.BindingMap;
 import org.apache.jena.sparql.graph.NodeTransform ;
-import org.apache.jena.sparql.graph.NodeTransformLib;
 import org.apache.jena.sparql.syntax.Element ;
 import org.apache.jena.sparql.syntax.ElementData;
 import org.apache.jena.sparql.syntax.ElementPathBlock ;
@@ -110,7 +109,7 @@ public class ElementTransformSubst2 extends ElementTransformCopyBase {
         return new TriplePath(s1, path.getPath(), o1) ;
     }
 
-    private Triple transform(Triple triple) {
+    public Triple transform(Triple triple) {
         Node s = triple.getSubject() ;
         Node s1 = transform(s) ;
         Node p = triple.getPredicate() ;
@@ -127,18 +126,18 @@ public class ElementTransformSubst2 extends ElementTransformCopyBase {
         return nodeTransform.apply(n) ;
     }
 
-    
-    public static ElementData transform(ElementData el, NodeTransform nodeTransform) {
-    	Table inTable = el.getTable();
-    	// Does not transform data in tables - only the result vars (jena 3.11.0)
-    	//Table outTable = NodeTransformLib.transform(inTable, nodeTransform);
-    	
-    	ElementData result = new ElementData();
 
-    	inTable.getVars().stream().map(nodeTransform).map(v -> (Var)v).forEach(result::add);
-    	Streams.stream(inTable.rows()).map(b -> transform(b, nodeTransform)).forEach(result::add);
-    	
-    	return result;
+    public static ElementData transform(ElementData el, NodeTransform nodeTransform) {
+        Table inTable = el.getTable();
+        // Does not transform data in tables - only the result vars (jena 3.11.0)
+        //Table outTable = NodeTransformLib.transform(inTable, nodeTransform);
+
+        ElementData result = new ElementData();
+
+        inTable.getVars().stream().map(nodeTransform).map(v -> (Var)v).forEach(result::add);
+        Streams.stream(inTable.rows()).map(b -> transform(b, nodeTransform)).forEach(result::add);
+
+        return result;
     }
 
     public static Binding transform(Binding b, NodeTransform transform) {
@@ -155,13 +154,13 @@ public class ElementTransformSubst2 extends ElementTransformCopyBase {
 
     @Override
     public Element transform(ElementData el) {
-    	Element result = transform(el, nodeTransform);
-    	return result;
-    	//    	List<Var> vars = el.getVars().stream()
+        Element result = transform(el, nodeTransform);
+        return result;
+        //    	List<Var> vars = el.getVars().stream()
 //    			.map(v -> Optional.ofNullable((Var)nodeTransform.apply(v)).orElse(v))
 //    			.collect(Collectors.toList());
 //
-//    	
+//
 //    	TableData table = new TableData(vars, bindings);
     }
 }

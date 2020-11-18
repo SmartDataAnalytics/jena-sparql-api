@@ -6,8 +6,8 @@ import org.aksw.jena_sparql_api.utils.RangeUtils;
 
 import com.google.common.collect.Range;
 
-import io.reactivex.Flowable;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Single;
 
 
 /**
@@ -43,17 +43,17 @@ public class ListPaginatorBatch<I>
 
     @Override
     public Single<Range<Long>> fetchCount(Long itemLimit, Long rowLimit) {
-    	return base.fetchCount(itemLimit, rowLimit).map(countInfo -> {
-	        long baseCount = countInfo.lowerEndpoint();
-	        long n = (baseCount + batchSize - 1) / batchSize;
+        return base.fetchCount(itemLimit, rowLimit).map(countInfo -> {
+            long baseCount = countInfo.lowerEndpoint();
+            long n = (baseCount + batchSize - 1) / batchSize;
 
-	        // TODO We silently assume the range to be a singleton if is has an upperBound
-	        // TODO Add a method that correctly captures the corner cases to RangeUtils.
-	        Range<Long> result = countInfo.hasUpperBound() ? Range.singleton(n) : Range.atLeast(n);
-	        
-	        //CountInfo result = new CountInfo(n, countInfo.isHasMoreItems(), itemLimit);
-	        return result;
-    	});
+            // TODO We silently assume the range to be a singleton if is has an upperBound
+            // TODO Add a method that correctly captures the corner cases to RangeUtils.
+            Range<Long> result = countInfo.hasUpperBound() ? Range.singleton(n) : Range.atLeast(n);
+
+            //CountInfo result = new CountInfo(n, countInfo.isHasMoreItems(), itemLimit);
+            return result;
+        });
     }
 
 }

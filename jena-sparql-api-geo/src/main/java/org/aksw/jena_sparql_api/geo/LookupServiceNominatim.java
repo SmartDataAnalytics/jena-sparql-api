@@ -11,15 +11,15 @@ import org.slf4j.LoggerFactory;
 
 import fr.dudie.nominatim.client.NominatimClient;
 import fr.dudie.nominatim.model.Address;
-import io.reactivex.Flowable;
+import io.reactivex.rxjava3.core.Flowable;
 
 public class LookupServiceNominatim
     implements LookupService<String, List<Address>>
 {
     private static final Logger logger = LoggerFactory.getLogger(LookupServiceNominatim.class);
-    
+
     private NominatimClient client;
-    
+
     public LookupServiceNominatim(NominatimClient client) {
         this.client = client;
     }
@@ -35,7 +35,7 @@ public class LookupServiceNominatim
                 logger.warn("Failed nominatim request", e);
             }
         }
-        
+
         return Flowable.fromIterable(result.entrySet());
         //return result;
     }

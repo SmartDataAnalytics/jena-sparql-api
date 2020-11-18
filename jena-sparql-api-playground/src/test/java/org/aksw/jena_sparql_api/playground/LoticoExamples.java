@@ -12,14 +12,13 @@ import java.util.concurrent.TimeUnit;
 import org.aksw.jena_sparql_api.algebra.expr.transform.ExprTransformVirtualBnodeUris;
 import org.aksw.jena_sparql_api.algebra.utils.VirtualPartitionedQuery;
 import org.aksw.jena_sparql_api.cache.file.CacheBackendFile;
-import org.aksw.jena_sparql_api.cache.staging.CacheBackendMem;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.TernaryRelation;
 import org.aksw.jena_sparql_api.concepts.TernaryRelationImpl;
-import org.aksw.jena_sparql_api.core.RDFConnectionFactoryEx;
 import org.aksw.jena_sparql_api.core.SparqlService;
-import org.aksw.jena_sparql_api.rx.RDFDataMgrEx;
+import org.aksw.jena_sparql_api.core.connection.RDFConnectionFactoryEx;
 import org.aksw.jena_sparql_api.rx.SparqlRx;
+import org.aksw.jena_sparql_api.stmt.SparqlStmtMgr;
 import org.aksw.jena_sparql_api.update.FluentSparqlService;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.query.DatasetFactory;
@@ -91,7 +90,7 @@ public class LoticoExamples {
     public void testJsonExtern() throws FileNotFoundException, IOException, ParseException {
         Model model = ModelFactory.createDefaultModel();
 
-        Query query = RDFDataMgrEx.loadQuery("sparql-with-json.rq");
+        Query query = SparqlStmtMgr.loadQuery("sparql-with-json.rq");
 
         try(QueryExecution qe = QueryExecutionFactory.create(query, model)) {
             System.out.println(ResultSetFormatter.asText(qe.execSelect()));
@@ -115,7 +114,7 @@ public class LoticoExamples {
 
     public static RDFConnection wrapWithVirtualBnodeUris(RDFConnection conn, String profile) {
         Model model = RDFDataMgr.loadModel("bnode-rewrites.ttl");
-        RDFDataMgrEx.execSparql(model, "udf-inferences.sparql");
+        SparqlStmtMgr.execSparql(model, "udf-inferences.sparql");
 
         Set<String> activeProfiles = new HashSet<>(Arrays.asList("http://ns.aksw.org/profile/" + profile));
         ExprTransformVirtualBnodeUris xform = ExprTransformVirtualBnodeUris.createTransformFromUdfModel(model, activeProfiles);

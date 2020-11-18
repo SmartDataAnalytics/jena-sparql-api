@@ -25,7 +25,7 @@ public class OpDistinctExtendFilter
     protected Op subOp;
 
     public OpDistinctExtendFilter(Op subOp, Collection<Var> initialVars) {
-        super("OpDef");
+        super(OpDistinctExtendFilter.class.getSimpleName());
         this.subOp = subOp;
 
         this.def = DistinctExtendFilter.create(initialVars);

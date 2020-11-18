@@ -42,7 +42,7 @@ import org.apache.jena.sparql.syntax.ElementGroup ;
 import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransform;
 import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransformSubst;
 
-/* MODIFIED VERSION WITH FIX FOR PROJECTIONS AND AGGREGATIONS (VarExprList) 
+/* MODIFIED VERSION WITH FIX FOR PROJECTIONS AND AGGREGATIONS (VarExprList)
 
 /** Support for transformation of query abstract syntax. */
 
@@ -72,14 +72,14 @@ public class QueryTransformOps {
 //        q2.setQueryPattern(el2) ;
 //        return q2 ;
 //    }
-    
+
     /** Transform a query using {@link ElementTransform} and {@link ExprTransform}.
      *  It is the responsibility of these transforms to transform to a legal SPARQL query.
-     */ 
+     */
     public static Query transform(Query query, ElementTransform transform, ExprTransform exprTransform) {
         Query q2 = QueryTransformOps.shallowCopy(query);
 
-        
+
         // "Shallow copy with transform."
         transformVarExprList(q2.getProject(), exprTransform);
         transformVarExprList(q2.getGroupBy(), exprTransform);
@@ -91,28 +91,28 @@ public class QueryTransformOps {
         // if ( q2.hasHaving() ) {}
         // if ( q2.hasAggregators() ) {}
         if(q2.hasAggregators()) {
-        	List<ExprAggregator> eas = q2.getAggregators();
-        	for(int i = 0; i < eas.size(); ++i) {
-        		ExprAggregator before = eas.get(i);
-        		ExprAggregator after = (ExprAggregator)before.apply(exprTransform);
-        		eas.set(i, after);
-        	}
+            List<ExprAggregator> eas = q2.getAggregators();
+            for(int i = 0; i < eas.size(); ++i) {
+                ExprAggregator before = eas.get(i);
+                ExprAggregator after = (ExprAggregator)before.apply(exprTransform);
+                eas.set(i, after);
+            }
         }
         //transformExprAggregatorList(q2.getAggregators(), exprTransform);
-        
-        
+
+
         Element el = q2.getQueryPattern();
-        
+
         // Pattern can be null, such as for DESCRIBE queries
         if(el != null) {
-	        Element el2 = ElementTransformer.transform(el, transform, exprTransform);
-	        // Top level is always a group.
-	        if (!(el2 instanceof ElementGroup)) {
-	            ElementGroup eg = new ElementGroup();
-	            eg.addElement(el2);
-	            el2 = eg;
-	        }
-	        q2.setQueryPattern(el2);
+            Element el2 = ElementTransformer.transform(el, transform, exprTransform);
+            // Top level is always a group.
+            if (!(el2 instanceof ElementGroup)) {
+                ElementGroup eg = new ElementGroup();
+                eg.addElement(el2);
+                el2 = eg;
+            }
+            q2.setQueryPattern(el2);
         }
         return q2;
     }
@@ -171,7 +171,7 @@ public class QueryTransformOps {
                 DatasetDescription desc = query.getDatasetDescription() ;
                 for (String x : desc.getDefaultGraphURIs())
                     newQuery.addGraphURI(x) ;
-                for (String x : desc.getDefaultGraphURIs())
+                for (String x : desc.getNamedGraphURIs())
                     newQuery.addNamedGraphURI(x) ;
             }
 
@@ -279,11 +279,11 @@ public class QueryTransformOps {
         @Override
         public void finishVisit(Query query) {}
 
-		@Override
-		public void visitJsonResultForm(Query arg0) {
-			// TODO Auto-generated method stub
-			
-		}
+        @Override
+        public void visitJsonResultForm(Query arg0) {
+            // TODO Auto-generated method stub
+
+        }
     }
 
     public static Query shallowCopy(Query query) {

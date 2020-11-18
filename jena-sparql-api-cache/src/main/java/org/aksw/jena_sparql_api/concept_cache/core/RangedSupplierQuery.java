@@ -1,24 +1,17 @@
 package org.aksw.jena_sparql_api.concept_cache.core;
 
-import java.util.Iterator;
-import java.util.stream.Stream;
-
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.rx.SparqlRx;
-import org.aksw.jena_sparql_api.util.collection.RangedSupplier;
-import org.aksw.jena_sparql_api.utils.IteratorResultSetBinding;
+import org.aksw.jena_sparql_api.rx.util.collection.RangedSupplier;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.apache.jena.query.Query;
-import org.apache.jena.query.QueryExecution;
-import org.apache.jena.query.ResultSet;
 import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.engine.binding.Binding;
 
 import com.google.common.collect.Range;
-import com.google.common.collect.Streams;
 
-import io.reactivex.Flowable;
+import io.reactivex.rxjava3.core.Flowable;
 
 public class RangedSupplierQuery
     implements RangedSupplier<Long, Binding>, OpAttribute

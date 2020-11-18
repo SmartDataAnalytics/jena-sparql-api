@@ -6,7 +6,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Function;
 
-import org.aksw.commons.accessors.CollectionFromConverter;
+import org.aksw.commons.collections.ConvertingCollection;
 import org.aksw.commons.collections.sets.SetFromCollection;
 
 import com.google.common.base.Converter;
@@ -110,13 +110,13 @@ public class MapFromKeyConverter<K, J, V>
 	
 	@Override
 	public Set<K> keySet() {
-		return new SetFromCollection<>(new CollectionFromConverter<>(map.keySet(), converter));
+		return new SetFromCollection<>(new ConvertingCollection<>(map.keySet(), converter));
 	}
 	
 	//public static <K, L> Entry<L, V> transform(Entry<K, V>, Function<? super K, ? extends V> )
 	
 	@Override
 	public Set<Entry<K, V>> entrySet() {
-		return new SetFromCollection<>(new CollectionFromConverter<>(map.entrySet(), new EntryConverterByKey<>(converter)));
+		return new SetFromCollection<>(new ConvertingCollection<>(map.entrySet(), new EntryConverterByKey<>(converter)));
 	}
 }

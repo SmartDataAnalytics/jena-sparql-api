@@ -17,8 +17,8 @@ import org.apache.jena.sparql.syntax.ElementSubQuery;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Range;
 
-import io.reactivex.Flowable;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Single;
 
 /**
  * TODO Convert to a ListService
@@ -106,33 +106,33 @@ public class MapPaginatorConcept
         //if(true) { return null; }
 
         Single<Range<Long>> result = SparqlRx.execSelectRaw(() -> qef.createQueryExecution(query))
-        	.map(b -> b.get(c))
-        	.map(countNode -> ((Number)countNode.getLiteralValue()).longValue())
-        	.map(count -> {
-        		boolean hasMoreItems = false;
+            .map(b -> b.get(c))
+            .map(countNode -> ((Number)countNode.getLiteralValue()).longValue())
+            .map(count -> {
+                boolean hasMoreItems = false;
                 if(itemLimit != null && count > itemLimit) {
                     count = itemLimit;
                     hasMoreItems = true;
                 }
 
-                Range<Long> r = hasMoreItems ? Range.atLeast(itemLimit) : Range.singleton(count);        		
+                Range<Long> r = hasMoreItems ? Range.atLeast(itemLimit) : Range.singleton(count);
                 return r;
-        	})
-        	.single(null);
-        
+            })
+            .single(null);
+
         return result;
     }
 
     @Override
     public Flowable<Entry<Node, Node>> apply(Range<Long> range) {
-    	Query query = concept.asQuery();
-    	QueryUtils.applyRange(query, range);
+        Query query = concept.asQuery();
+        QueryUtils.applyRange(query, range);
 
-    	//Query query = createQueryCount(concept, itemLimit, rowLimit, resultVar)
-    	return SparqlRx.execSelectRaw(() -> qef.createQueryExecution(query))
-    			.map(b -> b.get(b.vars().next()))
-    			.map(node -> Maps.immutableEntry(node, node));
-    	
+        //Query query = createQueryCount(concept, itemLimit, rowLimit, resultVar)
+        return SparqlRx.execSelectRaw(() -> qef.createQueryExecution(query))
+                .map(b -> b.get(b.vars().next()))
+                .map(node -> Maps.immutableEntry(node, node));
+
 //    	apply(range);
 //        Map<Node, Node> map = fetchMap(range);
 //        return map.entrySet().stream();

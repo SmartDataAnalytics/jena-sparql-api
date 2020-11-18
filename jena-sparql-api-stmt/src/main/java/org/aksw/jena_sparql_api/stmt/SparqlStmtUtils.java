@@ -8,21 +8,26 @@ import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.aksw.jena_sparql_api.backports.syntaxtransform.ExprTransformNodeElement;
-import org.aksw.jena_sparql_api.core.utils.UpdateRequestUtils;
-import org.aksw.jena_sparql_api.core.utils.UpdateUtils;
 import org.aksw.jena_sparql_api.http.HttpExceptionUtils;
+import org.aksw.jena_sparql_api.syntax.UpdateRequestUtils;
+import org.aksw.jena_sparql_api.syntax.UpdateUtils;
 import org.aksw.jena_sparql_api.utils.ElementTransformSubst2;
 import org.aksw.jena_sparql_api.utils.GraphUtils;
 import org.aksw.jena_sparql_api.utils.NodeUtils;
@@ -63,6 +68,7 @@ import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.core.Prologue;
 import org.apache.jena.sparql.core.Quad;
+import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.ExprTransform;
 import org.apache.jena.sparql.graph.NodeTransform;
 import org.apache.jena.sparql.lang.arq.ParseException;
@@ -91,6 +97,32 @@ public class SparqlStmtUtils {
             .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
 
         return result;
+    }
+
+    /**
+     * For the given collection of SparqlStmts yield the set of used projection vars
+     * in select queries
+     *
+     * This can be used to compose a union result set from multiple separate queries
+     *
+     * @param stmts
+     * @return
+     */
+    public static List<Var> getUnionProjectVars(Collection<? extends SparqlStmt> stmts) {
+        List<Query> selectQueries = stmts.stream()
+                .filter(SparqlStmt::isQuery)
+                .map(SparqlStmt::getQuery)
+                .filter(Query::isSelectType)
+                .collect(Collectors.toList());
+
+        // Create the union of variables used in select queries
+        Set<Var> result = new LinkedHashSet<>();
+        for(Query query : selectQueries) {
+            List<Var> varContrib = query.getProjectVars();
+            result.addAll(varContrib);
+        }
+
+        return new ArrayList<>(result);
     }
 
     /**
@@ -421,7 +453,7 @@ public class SparqlStmtUtils {
      *                Allows for use of insert-order preserving dataset implementations.
      * @return
      */
-    public static Sink<Quad> createSink(RDFFormat format, OutputStream out, PrefixMapping pm, Dataset dataset) {
+    public static Sink<Quad> createSinkQuads(RDFFormat format, OutputStream out, PrefixMapping pm, Supplier<Dataset> datasetSupp) {
         boolean useStreaming = format == null ||
                 Arrays.asList(Lang.NTRIPLES, Lang.NQUADS).contains(format.getLang());
 
@@ -429,8 +461,7 @@ public class SparqlStmtUtils {
         if(useStreaming) {
             result = new SinkQuadOutput(out, null, null);
         } else {
-            // Dataset ds = DatasetFactory.create();
-            // Dataset ds = DatasetFactory.wrap(new Datasetgraphquadsim
+            Dataset dataset = datasetSupp.get();
             SinkQuadsToDataset core = new SinkQuadsToDataset(false, dataset.asDatasetGraph());
 
             return new Sink<Quad>() {
@@ -472,7 +503,6 @@ public class SparqlStmtUtils {
 
         return result;
     }
-
 
     public static void output(
             SPARQLResultEx rr,

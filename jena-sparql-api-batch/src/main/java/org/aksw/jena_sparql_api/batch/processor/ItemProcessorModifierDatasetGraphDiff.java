@@ -10,7 +10,7 @@ import org.aksw.commons.collections.diff.Diff;
 import org.aksw.commons.util.Pair;
 import org.aksw.jena_sparql_api.modifier.Modifier;
 import org.aksw.jena_sparql_api.utils.DatasetGraphUtils;
-import org.aksw.jena_sparql_api.utils.SetDatasetGraph;
+import org.aksw.jena_sparql_api.utils.SetFromDatasetGraph;
 import org.springframework.batch.item.ItemProcessor;
 
 import com.google.common.collect.Sets;
@@ -34,8 +34,8 @@ public class ItemProcessorModifierDatasetGraphDiff
 
 		modifier.apply(clone);
 
-		Set<Quad> baseQuads = SetDatasetGraph.wrap(base);
-		Set<Quad> cloneQuads = SetDatasetGraph.wrap(clone);
+		Set<Quad> baseQuads = SetFromDatasetGraph.wrap(base);
+		Set<Quad> cloneQuads = SetFromDatasetGraph.wrap(clone);
 
 		//Diff<Set<Quad>>
 		Diff<Set<Quad>> tmp = createDiff(cloneQuads, baseQuads);

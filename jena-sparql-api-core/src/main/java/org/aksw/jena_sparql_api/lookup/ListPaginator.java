@@ -2,11 +2,11 @@ package org.aksw.jena_sparql_api.lookup;
 
 import java.util.List;
 
-import org.aksw.jena_sparql_api.util.collection.RangedSupplier;
+import org.aksw.jena_sparql_api.rx.util.collection.RangedSupplier;
 
 import com.google.common.collect.Range;
 
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Single;
 
 public interface ListPaginator<T>
     extends RangedSupplier<Long, T>

@@ -10,7 +10,7 @@
     <parent>
         <groupId>org.aksw.jena-sparql-api</groupId>
         <artifactId>jena-sparql-api-dcat-parent</artifactId>
-        <version>3.14.0-2-SNAPSHOT</version>
+        <version>3.16.0-2-SNAPSHOT</version>
     </parent>
 
     <dependencies>

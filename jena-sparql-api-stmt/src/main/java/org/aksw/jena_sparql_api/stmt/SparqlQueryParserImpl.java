@@ -16,7 +16,7 @@ public class SparqlQueryParserImpl
     protected Supplier<Query> querySupplier;
     protected Syntax syntax;
     protected String baseURI;
-    
+
     public SparqlQueryParserImpl() {
         this(new QuerySupplierImpl(), Syntax.syntaxARQ, "http://example.org/base/");
     }
@@ -65,10 +65,10 @@ public class SparqlQueryParserImpl
 
     // TODO Move to common query parser utils
     public static SparqlQueryParser wrapWithOptimizePrefixes(Function<String, Query> delegate) {
-    	return str -> {
-    		Query r = delegate.apply(str);
-    		QueryUtils.optimizePrefixes(r);
-    		return r;
-    	};
+        return str -> {
+            Query r = delegate.apply(str);
+            QueryUtils.optimizePrefixes(r);
+            return r;
+        };
     }
 }

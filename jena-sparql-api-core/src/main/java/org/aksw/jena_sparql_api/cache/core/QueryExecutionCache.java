@@ -111,7 +111,7 @@ public class QueryExecutionCache
 
         return resource.asModel(result);
     }
-    
+
     public boolean doCacheBoolean()
     {
         CacheResource resource = cache.lookup(queryString);

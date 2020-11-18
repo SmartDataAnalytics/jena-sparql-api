@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
@@ -29,22 +28,24 @@ import com.google.common.collect.Multimap;
  */
 public class UriUtils {
 
+    /**
+     * See {@link #replaceNamespace}
+     */
     public static final Pattern replaceNamespacePattern = Pattern.compile("(?<=/)[^/]+(?=/[^/]+/*$)");
 
-    
+
     /**
      * Only retains first value
      * @return
      */
     public static Map<String, String> createMapFromUriQueryString(URI uri) {
-    	List<NameValuePair> nm = URLEncodedUtils.parse(uri, StandardCharsets.UTF_8);
-    	Map<String, String> result = nm.stream()
-    		.collect(Collectors.toMap(
-    				NameValuePair::getName,
-    				NameValuePair::getValue,
-    				(u, v) -> u, LinkedHashMap::new));
+        List<NameValuePair> pairs = URLEncodedUtils.parse(uri, StandardCharsets.UTF_8);
+        Map<String, String> result = new LinkedHashMap<>();
+        for (NameValuePair pair : pairs) {
+            result.putIfAbsent(pair.getName(), pair.getValue());
+        }
 
-    	return result;
+        return result;
     }
 
     /**

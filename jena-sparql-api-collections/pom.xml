@@ -13,38 +13,42 @@
 	<parent>
 		<groupId>org.aksw.jena-sparql-api</groupId>
 		<artifactId>jena-sparql-api-parent</artifactId>
-		<version>3.14.0-2-SNAPSHOT</version>
+		<version>3.16.0-2-SNAPSHOT</version>
 	</parent>
 
 	<dependencies>
 		<dependency>
-			<groupId>org.aksw.jena-sparql-api</groupId>
-			<artifactId>jena-sparql-api-rx</artifactId>
+			<groupId>org.apache.jena</groupId>
+			<artifactId>jena-arq</artifactId>
 		</dependency>
-		
+
+		<dependency>
+			<groupId>org.aksw.commons</groupId>
+			<artifactId>aksw-commons-util</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.aksw.jena-sparql-api</groupId>
+			<artifactId>jena-sparql-api-resources</artifactId>
+		</dependency>
+
+		<!-- The type decider can read out annotations from classes -->
 		<dependency>
 			<groupId>org.aksw.jena-sparql-api</groupId>
 			<artifactId>jena-sparql-api-mapper-annotations</artifactId>
 		</dependency>
 
-<!-- 		<dependency> -->
-<!-- 			<groupId>com.google.guava</groupId> -->
-<!-- 			<artifactId>guava</artifactId> -->
-<!-- 		</dependency> -->
-		
-		<dependency>
-			<groupId>commons-validator</groupId>
-			<artifactId>commons-validator</artifactId>
-		</dependency>
-		<!-- <dependency> -->
-		<!-- <groupId>org.aksw.jena-sparql-api</groupId> -->
-		<!-- <artifactId>jena-sparql-api-core</artifactId> -->
-		<!-- </dependency> -->
 
 		<!-- Unit Testing -->
 		<dependency>
 			<groupId>org.aksw.jena-sparql-api</groupId>
 			<artifactId>jena-sparql-api-resources-test-config</artifactId>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>org.aksw.jena-sparql-api</groupId>
+			<artifactId>jena-sparql-api-utils</artifactId>
 			<scope>test</scope>
 		</dependency>
 

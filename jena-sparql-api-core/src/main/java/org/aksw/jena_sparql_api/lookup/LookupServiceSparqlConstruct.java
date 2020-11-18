@@ -9,7 +9,6 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
-import org.apache.jena.sparql.algebra.Table;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.E_OneOf;
 import org.apache.jena.sparql.expr.Expr;
@@ -23,7 +22,7 @@ import org.apache.jena.sparql.syntax.ElementFilter;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 
-import io.reactivex.Flowable;
+import io.reactivex.rxjava3.core.Flowable;
 
 
 /**
@@ -50,7 +49,7 @@ public class LookupServiceSparqlConstruct
 
         //Map<Node, Model> result = new HashMap<Node, Model>();
 
-    	Flowable<Entry<Node, Model>> result;
+        Flowable<Entry<Node, Model>> result;
 
         if(!Iterables.isEmpty(keys)) {
 
@@ -71,10 +70,10 @@ public class LookupServiceSparqlConstruct
             //System.out.println("Lookup query: " + q);
 
             result = SparqlRx.execConstructTriples(() -> qef.createQueryExecution(q))
-                	.groupBy(t -> t.getSubject())
-                	.flatMapSingle(groups -> groups
-                			.collectInto(GraphFactory.createDefaultGraph(), (g, t) -> g.add(t))
-                			.map(x -> (Entry<Node, Model>)Maps.immutableEntry(groups.getKey(), ModelFactory.createModelForGraph(x))));
+                    .groupBy(t -> t.getSubject())
+                    .flatMapSingle(groups -> groups
+                            .collectInto(GraphFactory.createDefaultGraph(), (g, t) -> g.add(t))
+                            .map(x -> (Entry<Node, Model>)Maps.immutableEntry(groups.getKey(), ModelFactory.createModelForGraph(x))));
 
 //            QueryExecution qe = qef.createQueryExecution(q);
 //            Model fullModel = qe.execConstruct();
@@ -88,7 +87,7 @@ public class LookupServiceSparqlConstruct
 //                result.put(key, tmp);
 //            }
         } else {
-        	result = Flowable.empty();
+            result = Flowable.empty();
         }
 
         return result;

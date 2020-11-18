@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<artifactId>jena-sparql-api-path-finding</artifactId>
+	<packaging>jar</packaging>
+
+	<name>Jena SPARQL API - Path Finding</name>
+	<url>http://github.org/AKSW/jena-sparql-api</url>
+
+	<parent>
+		<groupId>org.aksw.jena-sparql-api</groupId>
+		<artifactId>jena-sparql-api-parent</artifactId>
+		<version>3.16.0-2-SNAPSHOT</version>
+	</parent>
+
+	<dependencies>
+		<!-- Self Dependencies -->
+		<!-- <dependency> -->
+		<!-- <groupId>org.aksw.jena-sparql-api</groupId> -->
+		<!-- <artifactId>jena-sparql-api-jgrapht</artifactId> -->
+		<!-- </dependency> -->
+		<dependency>
+			<groupId>org.aksw.commons</groupId>
+			<artifactId>jena-jgrapht-bindings</artifactId>
+		</dependency>
+
+		<!-- Override the arq version from the jgrapht-bindings -->
+		<dependency>
+			<groupId>org.apache.jena</groupId>
+			<artifactId>jena-arq</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.aksw.jena-sparql-api</groupId>
+			<artifactId>jena-sparql-api-core</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.aksw.jena-sparql-api</groupId>
+			<artifactId>jena-sparql-api-algebra</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.aksw.jena-sparql-api</groupId>
+			<artifactId>jena-sparql-api-concepts</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.aksw.jena-sparql-api</groupId>
+			<artifactId>jena-sparql-api-resource-shape</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.aksw.gson</groupId>
+			<artifactId>gson-utils-core</artifactId>
+		</dependency>
+
+		<!-- <dependency> -->
+		<!-- <groupId>org.aksw.jena-sparql-api</groupId> -->
+		<!-- <artifactId>jena-sparql-api-web</artifactId> -->
+		<!-- <scope>test</scope> -->
+		<!-- </dependency> -->
+		<dependency>
+			<groupId>org.aksw.jena-sparql-api</groupId>
+			<artifactId>jena-sparql-api-resources-test-config</artifactId>
+			<scope>test</scope>
+		</dependency>
+
+		<!-- <dependency> <groupId>net.sourceforge.owlapi</groupId> <artifactId>owlapi-distribution</artifactId> 
+			</dependency> -->
+	</dependencies>
+</project>

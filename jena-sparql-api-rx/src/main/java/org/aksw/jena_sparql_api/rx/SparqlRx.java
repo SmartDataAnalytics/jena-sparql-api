@@ -3,44 +3,43 @@ package org.aksw.jena_sparql_api.rx;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.Callable;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 import org.aksw.commons.collections.SetUtils;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
-import org.aksw.jena_sparql_api.core.utils.QueryGenerationUtils;
 import org.aksw.jena_sparql_api.http.HttpExceptionUtils;
+import org.aksw.jena_sparql_api.rx.op.OperatorOrderedGroupBy;
+import org.aksw.jena_sparql_api.syntax.QueryGenerationUtils;
 import org.aksw.jena_sparql_api.utils.IteratorResultSetBinding;
 import org.aksw.jena_sparql_api.utils.QuadPatternUtils;
 import org.aksw.jena_sparql_api.utils.VarUtils;
-import org.aksw.jena_sparql_api.utils.Vars;
-import org.apache.jena.ext.com.google.common.base.Objects;
-import org.apache.jena.ext.com.google.common.collect.Maps;
+import org.apache.jena.atlas.json.JsonObject;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
-import org.apache.jena.query.QueryFactory;
 import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.query.SortCondition;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.RDFNode;
-import org.apache.jena.rdfconnection.RDFConnection;
-import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.apache.jena.sparql.algebra.Table;
 import org.apache.jena.sparql.algebra.table.TableData;
+import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.engine.binding.BindingHashMap;
@@ -52,14 +51,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Iterators;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Range;
 
-import io.reactivex.BackpressureStrategy;
-import io.reactivex.Flowable;
-import io.reactivex.FlowableEmitter;
-import io.reactivex.Single;
-import io.reactivex.functions.Predicate;
-import io.reactivex.processors.PublishProcessor;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.FlowableEmitter;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.functions.Predicate;
+import io.reactivex.rxjava3.processors.PublishProcessor;
 
 /**
  * Utilities for wrapping SPARQL query execution with flows.
@@ -70,6 +69,26 @@ import io.reactivex.processors.PublishProcessor;
 public class SparqlRx {
 
     private static final Logger logger = LoggerFactory.getLogger(SparqlRx.class);
+
+    /**
+     * Create a Flowable from a supplier of connections and a query.
+     * Each subscription obtains a fresh connection
+     *
+     * FIXME Connection is not yet closed when the flowable completes!
+     *
+     * @param query
+     * @param queryConnSupp
+     * @return
+     */
+    public static Flowable<Binding> execSelectRaw(Callable<? extends SparqlQueryConnection> queryConnSupp, Query query) {
+        // FIXME Close the connection; tie it to the query execution
+        // Queryexecution qe = new QueryExecution();
+        return SparqlRx.execSelectRaw(() -> queryConnSupp.call().query(query));
+    }
+
+    public static Flowable<Binding> execSelectRaw(SparqlQueryConnection queryConn, Query query) {
+        return SparqlRx.execSelectRaw(() -> queryConn.query(query));
+    }
 
     public static <K, X> Flowable<Entry<K, List<X>>> groupByOrdered(
             Flowable<X> in, Function<X, K> getGroupKey) {
@@ -82,7 +101,7 @@ public class SparqlRx {
              .doOnComplete(boundaryIndicator::onComplete)
              .doOnNext(item -> {
                     K groupKey = getGroupKey.apply(item);
-                    boolean isEqual = Objects.equal(current, groupKey);
+                    boolean isEqual = Objects.equals(current, groupKey);
 
                     prior[0] = current[0];
                     if(prior[0] == null) {
@@ -134,7 +153,6 @@ public class SparqlRx {
         }
     }
 
-
     public static void processExecConstructTriples(FlowableEmitter<Triple> emitter, QueryExecution qex) {
         try(QueryExecution qe = qex) {
             emitter.setCancellable(qe::abort);
@@ -161,41 +179,122 @@ public class SparqlRx {
 //		}
 //	}
 
-    public static <T> Flowable<T> execSelect(Supplier<QueryExecution> qes, Function<? super ResultSet, ? extends T> next) {
-        Flowable<T> result = Flowable.create(emitter -> {
-            QueryExecution qe = qes.get();
-            processExecSelect(emitter, qe, next);
-            //new Thread(() -> process(emitter, qe)).start();
-        }, BackpressureStrategy.BUFFER);
+    public static <T> Flowable<T> execSelect(Callable<QueryExecution> qes, Function<? super ResultSet, T> next) {
+        Flowable<T> result = RDFDataMgrRx.createFlowableFromResource(
+                qes::call,
+                QueryExecution::execSelect,
+                ResultSet::hasNext,
+                next,
+                QueryExecution::close
+            );
+
+//        Flowable<T> result = Flowable.generate(
+//                () -> {
+//                    QueryExecution qe = qes.get();
+//                    return new SimpleEntry<QueryExecution, ResultSet>(qe, null);
+//                },
+//                (state, emitter) -> {
+//                    ResultSet rs = state.getValue();
+//                    if(rs == null) {
+////                        System.out.println("STARTED NEW RESULT SET");
+//                        rs = state.getKey().execSelect();
+//                        state.setValue(rs);
+//                    }
+//
+//                    if(rs.hasNext()) {
+//                        T value = next.apply(rs);
+//                        emitter.onNext(value);
+//                    } else {
+//                        emitter.onComplete();
+//                    }
+//                },
+//                state -> {
+//                    QueryExecution qe = state.getKey();
+//                    // Note consuming the result set may also already close the qe
+//                    qe.close();
+//                });
+
+//        Flowable<T> result = Flowable.create(emitter -> {
+//            QueryExecution qe = qes.get();
+//            processExecSelect(emitter, qe, next);
+//            //new Thread(() -> process(emitter, qe)).start();
+//        }, BackpressureStrategy.BUFFER);
 
         return result;
     }
 
-    public static Flowable<Binding> execSelectRaw(Supplier<QueryExecution> qes) {
+    public static Flowable<Binding> execSelectRaw(Callable<QueryExecution> qes) {
         return execSelect(qes, ResultSet::nextBinding);
     }
 
-    public static Flowable<QuerySolution> execSelect(Supplier<QueryExecution> qes) {
+    public static Flowable<QuerySolution> execSelect(Callable<QueryExecution> qes) {
         return execSelect(qes, ResultSet::next);
     }
 
-    public static Flowable<QuerySolution> execSelect(RDFConnection conn, String queryStr) {
+    public static Flowable<QuerySolution> execSelect(SparqlQueryConnection conn, String queryStr) {
         return execSelect(() -> conn.query(queryStr), ResultSet::next);
     }
 
-    public static Flowable<QuerySolution> execSelect(RDFConnection conn, Query query) {
+    public static Flowable<QuerySolution> execSelect(SparqlQueryConnection conn, Query query) {
         return execSelect(() -> conn.query(query), ResultSet::next);
     }
 
-    public static Flowable<Triple> execConstructTriples(Supplier<QueryExecution> qes) {
-        Flowable<Triple> result = Flowable.create(emitter -> {
-            QueryExecution qe = qes.get();
-            processExecConstructTriples(emitter, qe);
-            //new Thread(() -> process(emitter, qe)).start();
-        }, BackpressureStrategy.BUFFER);
 
+    public static Flowable<Triple> execConstructTriples(SparqlQueryConnection conn, Query query) {
+        return execConstructTriples(() -> conn.query(query));
+    }
+
+    public static Flowable<Triple> execConstructTriples(Callable<QueryExecution> qes) {
+        Flowable<Triple> result = RDFDataMgrRx.createFlowableFromResource(
+                qes::call,
+                QueryExecution::execConstructTriples,
+                Iterator::hasNext,
+                Iterator::next,
+                QueryExecution::close
+            );
         return result;
     }
+
+    public static Flowable<Quad> execConstructQuads(SparqlQueryConnection conn, Query query) {
+        return execConstructQuads(() -> conn.query(query));
+    }
+
+    public static Flowable<Quad> execConstructQuads(Callable<QueryExecution> qes) {
+        Flowable<Quad> result = RDFDataMgrRx.createFlowableFromResource(
+                qes::call,
+                QueryExecution::execConstructQuads,
+                Iterator::hasNext,
+                Iterator::next,
+                QueryExecution::close
+            );
+        return result;
+    }
+
+
+    public static Flowable<JsonObject> execJsonItems(SparqlQueryConnection conn, Query query) {
+        return execJsonItems(() -> conn.query(query));
+    }
+
+    public static Flowable<JsonObject> execJsonItems(Callable<QueryExecution> qes) {
+        // Gson gson = new Gson();
+        Flowable<JsonObject> result = RDFDataMgrRx.createFlowableFromResource(
+                qes::call,
+                QueryExecution::execJsonItems,
+                Iterator::hasNext,
+                Iterator::next,
+                QueryExecution::close
+            ); //.map(obj -> gson.fromJson(Objects.toString(obj), JsonElement.class));
+        return result;
+    }
+//    public static Flowable<Triple> execConstructTriples(Callable<QueryExecution> qes) {
+//        Flowable<Triple> result = Flowable.create(emitter -> {
+//            QueryExecution qe = qes.call();
+//            processExecConstructTriples(emitter, qe);
+//            //new Thread(() -> process(emitter, qe)).start();
+//        }, BackpressureStrategy.BUFFER);
+//
+//        return result;
+//    }
 
     public static Entry<List<Var>, Flowable<Binding>> mapToFlowable(ResultSet rs) {
         Iterator<Binding> it = new IteratorResultSetBinding(rs);
@@ -290,7 +389,10 @@ public class SparqlRx {
                 .doOnNext(i -> currentValue[0] = i)
                 .doOnCancel(() -> isCancelled[0] = true)
                 .map(i -> Maps.immutableEntry((int)(i / 3), i))
-                .lift(new OperatorOrderedGroupBy<Entry<Integer, Integer>, Integer, List<Integer>>(Entry::getKey, ArrayList::new, (acc, e) -> acc.add(e.getValue())));
+                .lift(OperatorOrderedGroupBy.<Entry<Integer, Integer>, Integer, List<Integer>>create(
+                        Entry::getKey,
+                        groupKey -> new ArrayList<>(),
+                        (acc, e) -> acc.add(e.getValue())));
 
         Predicate<Entry<Integer, List<Integer>>> p = e -> e.getKey().equals(1);
         list.takeUntil(p).subscribe(x -> System.out.println("Item: " + x));
@@ -416,13 +518,17 @@ public class SparqlRx {
         Node s = e.getKey();
         Query q = e.getValue();
 
-        return execConstructGrouped(conn, s, q, sortRowsByPartitionVar);
+        return execConstructGrouped(conn, q, s, sortRowsByPartitionVar);
     }
 
+    /* Use grouped execution which aggregates over multiple rows */
+    @Deprecated
     public static Flowable<RDFNode> execPartitioned(SparqlQueryConnection conn, Entry<? extends Node, Query> e) {
         return execPartitioned(conn, e, true);
     }
 
+    /* Use grouped execution which aggregates over multiple rows */
+    @Deprecated
     public static Flowable<RDFNode> execPartitioned(SparqlQueryConnection conn, Entry<? extends Node, Query> e, boolean sortRowsByPartitionVar) {
         Node s = e.getKey();
         Query q = e.getValue();
@@ -430,45 +536,94 @@ public class SparqlRx {
         return execPartitioned(conn, s, q, sortRowsByPartitionVar);
     }
 
-    //public static Acc
-    public static Flowable<RDFNode> execConstructGrouped(SparqlQueryConnection conn, Node s, Query query) {
-        return execConstructGrouped(q -> conn.query(q), s, query, true);
+
+    public static Flowable<RDFNode> execConstructGrouped(SparqlQueryConnection conn, Query query, Node s) {
+        return execConstructGrouped(conn, query, s, true);
     }
 
-    public static Flowable<RDFNode> execConstructGrouped(SparqlQueryConnection conn, Node s, Query query, boolean sortRowsByPartitionVar) {
-        return execConstructGrouped(q -> conn.query(q), s, query, sortRowsByPartitionVar);
+
+    public static Flowable<RDFNode> execConstructGrouped(SparqlQueryConnection conn, Query query, Node s, boolean sortRowsByPartitionVar) {
+        return execConstructGrouped(conn, query, Collections.singletonList((Var)s), s, sortRowsByPartitionVar)
+                .map(Entry::getValue);
     }
 
-    public static Flowable<RDFNode> execConstructGrouped(Function<Query, QueryExecution> qeSupp, Node s, Query query, boolean sortRowsByPartitionVar) {
+
+    public static Flowable<Entry<Binding, RDFNode>> execConstructGrouped(SparqlQueryConnection conn, Query query, List<Var> primaryKeyVars, Node rootNode, boolean sortRowsByPartitionVar) {
+        return execConstructGrouped(q -> conn.query(q), query, primaryKeyVars, rootNode, sortRowsByPartitionVar);
+    }
+
+
+    public static Flowable<Entry<Binding, RDFNode>> execConstructGrouped(Function<Query, QueryExecution> qeSupp, Query query, List<Var> primaryKeyVars, Node rootNode, boolean sortRowsByPartitionVar) {
+        if(rootNode.isVariable() && !primaryKeyVars.contains(rootNode)) {
+            throw new RuntimeException("If the root node is a variable it must be among the primary key ones");
+        }
+
         Template template = query.getConstructTemplate();
-        Query clone = preprocessQueryForPartition(s, query, sortRowsByPartitionVar);
+        Query clone = preprocessQueryForPartition(query, primaryKeyVars, sortRowsByPartitionVar);
 
-        Flowable<RDFNode> result = SparqlRx
+        Function<Binding, Binding> grouper = createGrouper(primaryKeyVars, false);
+
+        Flowable<Entry<Binding, RDFNode>> result = SparqlRx
             // For future reference: If we get an empty results by using the query object, we probably have wrapped a variable with NodeValue.makeNode.
             .execSelectRaw(() -> qeSupp.apply(clone))
-            .groupBy(createGrouper((Var)s)::apply)
-            // Filter out null group keys; they can e.g. occur due to https://issues.apache.org/jira/browse/JENA-1487
-            .filter(group -> group.getKey() != null)
-            .map(group -> {
-                Node groupKey = group.getKey();
-                AccGraph acc = new AccGraph(template);
-                group.forEach(acc::accumulate);
-                Graph g = acc.getValue();
+            //.groupBy(createGrouper(primaryKeyVars, false)::apply)
+            .lift(OperatorOrderedGroupBy.<Binding, Binding, AccGraph>create(
+                    grouper::apply,
+                    groupKey -> new AccGraph(template),
+                    AccGraph::accumulate))
+            .map(keyAndAcc -> {
+                Binding groupKey = keyAndAcc.getKey();
+                AccGraph accGraph = keyAndAcc.getValue();
+                Map<Node, Node> bnodeMap = accGraph.getBnodeMap();
+
+                // TODO The accumulator should manage a blank node label map which we re-use to map the rootNode
+
+                Node effectiveRoot = rootNode.isVariable()
+                        ? groupKey.get((Var)rootNode)
+                        : rootNode.isBlank()
+                            ? bnodeMap.get(rootNode)
+                            : rootNode;
+
+                Graph g = accGraph.getValue();
                 Model m = ModelFactory.createModelForGraph(g);
-                RDFNode r = m.asRDFNode(groupKey);
-                return r;
+                RDFNode r = m.asRDFNode(effectiveRoot);
+                return Maps.immutableEntry(groupKey, r);
             });
+            // Filter out null group keys; they can e.g. occur due to https://issues.apache.org/jira/browse/JENA-1487
+            // .filter(group -> group.getKey() != null)
+//            .map(group -> {
+//                // Binding groupKey = group.getKey();
+//                AccGraph acc = new AccGraph(template);
+//                group.forEach(acc::accumulate);
+//                Graph g = acc.getValue();
+//                Model m = ModelFactory.createModelForGraph(g);
+//                RDFNode r = m.asRDFNode(rootNode);
+//                return r;
+//            });
         return result;
     }
 
 
-    public static Query preprocessQueryForPartition(Node s, Query q, boolean sortRowsByPartitionVar) {
+    /**
+     * Return a SELECT query from the given query where
+     * - it is ensured that all primaryKeyVars are part of the projection (if they aren't already)
+     * - distinct is applied in preparation to instantiation of construct templates (where duplicates can be ignored)
+     * - if sortRowsByPartitionVar is true then result bindings are sorted by the primary key vars
+     *   so that bindings that belong together are consecutive
+     * - In case of a construct template without variables variable free is handled
+     *
+     *
+     * @param q
+     * @param primaryKeyVars
+     * @param sortRowsByPartitionVar
+     * @return
+     */
+    public static Query preprocessQueryForPartition(Query q, List<Var> primaryKeyVars, boolean sortRowsByPartitionVar) {
 
         Template template = q.getConstructTemplate();
         Set<Var> projectVars = new LinkedHashSet<>();
-        if(s instanceof Var) {
-            projectVars.add((Var)s);
-        }
+        projectVars.addAll(primaryKeyVars);
+
         projectVars.addAll(QuadPatternUtils.getVarsMentioned(template.getQuads()));
 
         Query clone = q.cloneQuery();
@@ -494,19 +649,24 @@ public class SparqlRx {
 
         clone.setDistinct(true);
 
-        if(sortRowsByPartitionVar && s instanceof Var) {
+        if(sortRowsByPartitionVar) {
             // TODO Check that there is no prior sort condition already
-            clone.addOrderBy(new SortCondition((Var)s, Query.ORDER_ASCENDING));
+            for(Var primaryKeyVar : primaryKeyVars) {
+                clone.addOrderBy(new SortCondition(primaryKeyVar, Query.ORDER_ASCENDING));
+            }
         }
 
         logger.debug("Converted query to: " + clone);
         return clone;
     }
 
+
+    /* Use grouped execution which aggregates over multiple rows */
+    @Deprecated
     public static Flowable<RDFNode> execPartitioned(SparqlQueryConnection conn, Node s, Query q, boolean sortRowsByPartitionVar) {
 
         Template template = q.getConstructTemplate();
-        Query clone = preprocessQueryForPartition(s, q, sortRowsByPartitionVar);
+        Query clone = preprocessQueryForPartition(q, Collections.singletonList((Var)s), sortRowsByPartitionVar);
 
         Flowable<RDFNode> result = SparqlRx
                 // For future reference: If we get an empty results by using the query object, we probably have wrapped a variable with NodeValue.makeNode.
@@ -538,4 +698,19 @@ public class SparqlRx {
                 });
         return result;
     }
+
+
+    public static <T extends RDFNode> Flowable<T> execConcept(Callable<QueryExecution> qeSupp, Var var, Class<T> clazz) {
+        return execConcept(qeSupp, var)
+            .map(rdfNode -> rdfNode.as(clazz));
+    }
+
+
+    public static Flowable<RDFNode> execConcept(Callable<QueryExecution> qeSupp, Var var) {
+        String varName = var.getName();
+
+        return SparqlRx.execSelect(qeSupp)
+            .map(qs -> qs.get(varName));
+    }
+
 }

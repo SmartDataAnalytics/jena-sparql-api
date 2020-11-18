@@ -7,34 +7,36 @@ import java.nio.file.Path;
 import java.util.concurrent.CompletableFuture;
 
 public class HotFileFromJava
-	implements HotFile
+    implements HotFile
 {
-	protected ConcurrentFileEndpoint endpoint;
-	//protected Single<?> processSingle;
-	
-	public HotFileFromJava(ConcurrentFileEndpoint endpoint) {
-		super();
-		this.endpoint = endpoint;		
-	}
-	
-	@Override
-	public CompletableFuture<Path> future() {
-		return endpoint.getIsDone();
-	}
+    protected ConcurrentFileEndpoint endpoint;
+    protected AutoCloseable cancelAction;
+    //protected Single<?> processSingle;
 
-	@Override
-	public void abort() {
-		//processSingle.
-	}
+    public HotFileFromJava(ConcurrentFileEndpoint endpoint, AutoCloseable cancelAction) {
+        super();
+        this.endpoint = endpoint;
+        this.cancelAction = cancelAction;
+    }
 
-	@Override
-	public InputStream newInputStream() throws IOException {
-		InputStream result = Channels.newInputStream(endpoint.newReadChannel());
-		return result;
-	}
+    @Override
+    public CompletableFuture<Path> future() {
+        return endpoint.getIsDone();
+    }
 
-	@Override
-	public String toString() {
-		return "HotFileFromJava [endpoint=" + endpoint + "]";
-	}
+    @Override
+    public void abort() throws Exception {
+        cancelAction.close();
+    }
+
+    @Override
+    public InputStream newInputStream() throws IOException {
+        InputStream result = Channels.newInputStream(endpoint.newReadChannel());
+        return result;
+    }
+
+    @Override
+    public String toString() {
+        return "HotFileFromJava [endpoint=" + endpoint + "]";
+    }
 }
