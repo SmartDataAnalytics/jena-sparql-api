@@ -12,16 +12,13 @@ import org.apache.jena.rdfconnection.RDFConnection;
 
 public class MainDemoQueryFluent {
     public static void main(String[] args) {
-//		RDFConnection conn = RDFConnectionRemote.create()
-//				.destination("https://databus.dbpedia.org/repo/sparql")
-//				.build();
 
         SparqlService ss = FluentSparqlService
             .http("https://databus.dbpedia.org/repo/sparql")
             .config()
                 .configQuery()
                     .withDelay(1, TimeUnit.SECONDS)
-                    .withCache(new CacheBackendFile(Paths.get("/tmp/cache"), 600000l, true, false, true))
+                    // .withCache(new CacheBackendFile(Paths.get("/tmp/cache"), 600000l, true, false, true))
                     .withPagination(100)
                     .withDefaultLimit(10, true)
                 .end()
@@ -29,8 +26,6 @@ public class MainDemoQueryFluent {
             .create();
 
         try(RDFConnection baseConn = ss.getRDFConnection()) {
-//            Model m = ModelFactory.createModelForGraph(new GraphFromSparqlQueryConnection(baseConn));
-//            try(RDFConnection appConn = RDFConnectionFactory.connect(DatasetFactory.wrap(m))) {
           try(RDFConnection appConn = baseConn) {
                 String queryStr = "SELECT * { ?s a <http://dataid.dbpedia.org/ns/core#DataId> ; <http://dataid.dbpedia.org/ns/core#associatedAgent> <https://vehnem.github.io/webid.ttl#this> }";
                 SparqlRx.execSelect(appConn, queryStr)
