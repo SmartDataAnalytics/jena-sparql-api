@@ -1,7 +1,9 @@
 package org.aksw.jena_sparql_api.rx.entity.model;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.rx.EntityBaseQuery;
 import org.aksw.jena_sparql_api.rx.EntityGraphFragment;
@@ -10,6 +12,7 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.binding.BindingFactory;
+import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementData;
 
 
@@ -68,14 +71,27 @@ public class EntityQueryImpl
     }
 
     public static Query createStandardQuery(Var entityVar, Node node) {
+        Query result = createStandardQuery(entityVar, Collections.singleton(node));
+        return result;
+    }
+
+    public static Query createStandardQuery(Var entityVar, Collection<Node> nodes) {
+        Query result = createStandardQuery(entityVar, new ElementData(
+                Collections.singletonList(entityVar),
+                nodes.stream().map(n -> BindingFactory.binding(Vars.s, n)).collect(Collectors.toList())));
+
+        return result;
+    }
+
+    public static Query createStandardQuery(Var entityVar, Element element) {
         Query query = new Query();
         query.setQuerySelectType();
-        query.setQueryPattern(new ElementData(
-                Collections.singletonList(entityVar),
-                Collections.singletonList(BindingFactory.binding(Vars.s, node))));
+        query.getProject().add(entityVar);
+        query.setQueryPattern(element);
 
         return query;
     }
+
 
     /**
      * A convenience function to create an entity query for a specific entity (denoted by the node)
