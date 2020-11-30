@@ -18,8 +18,6 @@ import java.util.Set;
 import org.aksw.commons.collections.MultiMaps;
 import org.aksw.commons.util.strings.StringUtils;
 import org.apache.jena.graph.Graph;
-import org.apache.jena.graph.Node;
-import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Property;
@@ -28,7 +26,6 @@ import org.apache.jena.rdf.model.RDFWriter;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.StmtIterator;
-import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.vocabulary.RDFS;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,7 +35,18 @@ import org.slf4j.LoggerFactory;
  */
 public class ModelUtils {
 
-	
+    /**
+     * Remove all unused prefixes form the given model's prefix mapping.
+     * Assumes that the model delegates to the prefix mapping of an underlying {@link Graph}.
+     *
+     * @param graph The model whose prefix mapping to optimize
+     * @return The given model
+     */
+    public static Model optimizePrefixes(Model model) {
+        GraphUtils.optimizePrefixes(model.getGraph());
+        return model;
+    }
+
     /**
      * Extracts a mapping childClass -> parentClass from a given Model.
      * You can use TransitiveClosure.transitiveClosure for "inferring" the whole hierarchy.
@@ -289,18 +297,18 @@ public class ModelUtils {
             prefix = candidatePrefix;
             name = uri.substring(splitIdx);
         }
-		
+
         return new String[]{prefix, name};
     }
 
-	public static String prettyUri(String uri, NavigableMap<String, String> prefixMap)
-	{
-		String[] tmp = decompose(uri, prefixMap);
+    public static String prettyUri(String uri, NavigableMap<String, String> prefixMap)
+    {
+        String[] tmp = decompose(uri, prefixMap);
 
-		String result = (tmp[0].isEmpty())
-			? StringUtils.urlDecode(tmp[1])
-			: tmp[0] + ":" + StringUtils.urlDecode(tmp[1]);
+        String result = (tmp[0].isEmpty())
+            ? StringUtils.urlDecode(tmp[1])
+            : tmp[0] + ":" + StringUtils.urlDecode(tmp[1]);
 
-			return result;
-	}
+            return result;
+    }
 }

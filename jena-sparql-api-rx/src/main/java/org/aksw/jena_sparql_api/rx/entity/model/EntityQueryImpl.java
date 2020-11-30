@@ -111,4 +111,9 @@ public class EntityQueryImpl
         return result;
     }
 
+
+    @Override
+    public String toString() {
+        return attributePart + " " + baseQuery;
+    }
 }

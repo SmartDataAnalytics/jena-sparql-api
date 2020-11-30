@@ -3,6 +3,7 @@ package org.aksw.jena_sparql_api.rx.entity.model;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.rx.EntityGraphFragment;
 import org.apache.jena.graph.Node;
@@ -46,15 +47,23 @@ public class AttributeGraphFragment {
     public AttributeGraphFragment addMandatoryJoin(Var entityVar, Query query) {
         getMandatoryJoins()
                 .add(new GraphPartitionJoin(EntityGraphFragment.fromQuery(
-                        Collections.singletonList(entityVar), Collections.<Node>singletonList(entityVar), query)));
+                        entityVar, query)));
         return this;
     }
 
     public AttributeGraphFragment addOptionalJoin(Var entityVar, Query query) {
         getOptionalJoins()
             .add(new GraphPartitionJoin(EntityGraphFragment.fromQuery(
-                    Collections.singletonList(entityVar), Collections.<Node>singletonList(entityVar), query)));
+                    entityVar, query)));
         return this;
     }
 
+    @Override
+    public String toString() {
+        String result =
+            optionalJoins.stream().map(item -> "OPTIONAL " + item).collect(Collectors.joining("\n")) +
+            mandatoryJoins.stream().map(item -> "" + item).collect(Collectors.joining("\n"));
+
+        return result;
+    }
 }

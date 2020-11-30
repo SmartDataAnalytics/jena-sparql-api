@@ -63,7 +63,7 @@ public class TransformEvalTable
         return execCxt;
     }
 
-    protected OpTable exec(Op op) {
+    public OpTable exec(Op op) {
         QueryIterator queryIter = opExecutor.executeOp(op , QueryIterRoot.create(execCxt));
         Table table = new TableN(queryIter);
         return OpTable.create(table);

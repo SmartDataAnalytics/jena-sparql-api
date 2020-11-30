@@ -1,6 +1,7 @@
 package org.aksw.jena_sparql_api.rx;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.aksw.jena_sparql_api.rx.entity.model.EntityTemplate;
@@ -42,6 +43,10 @@ public class EntityGraphFragment {
         return new EntityGraphFragment(partitionVars,
                 new EntityTemplateImpl(),
                 new ElementGroup());
+    }
+
+    public static EntityGraphFragment fromQuery(Var entityVar, Query query) {
+        return fromQuery(Arrays.asList(entityVar), Arrays.asList(entityVar), query);
     }
 
     public static EntityGraphFragment fromQuery(List<Var> partitionVars, List<Node> entityNodes, Query query) {

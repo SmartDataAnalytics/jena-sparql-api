@@ -118,7 +118,7 @@ public class TransformExprToBasicPattern
                     Node p = NodeFactory.createURI(substInfo.getKey());
 
                     boolean subjectAsOutput = substInfo.getValue();
-                    Triple t = TripleUtils.create(argNode, p, v, subjectAsOutput);
+                    Triple t = TripleUtils.create(argNode, p, v, !subjectAsOutput);
                     triples.add(t);
 
                     result = new ExprVar(v);

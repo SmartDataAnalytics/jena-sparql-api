@@ -1,5 +1,7 @@
 package org.aksw.jena_sparql_api.utils;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -188,6 +190,52 @@ public class QueryUtils {
         // TODO We may want to move (named) graph URI copying to a separate function
 //		result.getGraphURIs().addAll(proto.getGraphURIs());
 //		result.getNamedGraphURIs().addAll(proto.getNamedGraphURIs());
+
+        return result;
+    }
+
+
+    /**
+     * Combine multiple construct queries into a single query whose
+     * template and query pattern is the union of those of the provided queries
+     * This method does NOT perform any renaming of variables.
+     *
+     *
+     * @param queries
+     * @return
+     */
+    public static Query unionConstruct(Query ... queries) {
+        return unionConstruct(Arrays.asList(queries));
+    }
+
+    /**
+     * Combine multiple construct queries into a single query whose
+     * template and query pattern is the union of those of the provided queries
+     * This method does NOT perform any renaming of variables.
+     *
+     *
+     * @param queries
+     * @return
+     */
+    public static Query unionConstruct(Iterable<Query> queries) {
+        Query result = new Query();
+
+        // BasicPatten bgp = new BasicPattern();
+        Set<Quad> quadPatterns = new LinkedHashSet<>();
+        Set<Element> elements = new LinkedHashSet<>();
+
+        for (Query query : queries) {
+            result.getPrefixMapping().setNsPrefixes(query.getPrefixMapping());
+
+            Template tmp = query.getConstructTemplate();
+
+            quadPatterns.addAll(tmp.getQuads());
+            elements.add(query.getQueryPattern());
+        }
+
+        result.setQueryConstructType();
+        result.setConstructTemplate(new Template(new QuadAcc(new ArrayList<>(quadPatterns))));
+        result.setQueryPattern(ElementUtils.unionIfNeeded(elements));
 
         return result;
     }

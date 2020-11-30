@@ -82,6 +82,12 @@ public class GraphPartitionJoin
         return subJoins;
     }
 
+    @Override
+    public String toString() {
+        return "GraphPartitionJoin [entityGraphFragment=" + entityGraphFragment + ", parentJoinVars=" + parentJoinVars
+                + ", lazyFetchGroupName=" + lazyFetchGroupName + ", subJoins=" + subJoins + "]";
+    }
+
 //    public boolean isOptional() {
 //        return isOptional;
 //    }
