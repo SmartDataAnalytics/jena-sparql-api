@@ -488,6 +488,10 @@ public class SparqlRx {
         Long xrowLimit = rowLimit == null ? null : rowLimit + 1;
 
         Entry<Var, Query> countQuery = QueryGenerationUtils.createQueryCountPartition(query, partitionVars, xitemLimit, xrowLimit);
+//        System.out.println("Given: " + query);
+//        System.out.println(partitionVars);
+//        System.out.println("Generated count query: " + countQuery);
+
         Var v = countQuery.getKey();
         Query q = countQuery.getValue();
 

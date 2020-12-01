@@ -207,6 +207,7 @@ public class QueryGenerationUtils {
 
             clone.setQuerySelectType();
 
+//            System.out.println("Clone: " + clone);
             if(vars.isEmpty()) {
                 //query.setQueryResultStar(true);
                 // TODO The distinct number of template instantiations if there is no var in a template is
@@ -217,6 +218,7 @@ public class QueryGenerationUtils {
                 clone.addProjectVars(vars);
                 clone.setDistinct(true);
             }
+//            System.out.println("Clone2: " + clone);
         } else {
             // TODO We need to check whether the partition variables are mapped to expressions in the projection
             Set<Var> allowedVars = partitionVars == null
