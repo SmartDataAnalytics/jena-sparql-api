@@ -3,6 +3,7 @@ package org.aksw.jena_sparql_api.utils;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Function;
@@ -14,6 +15,7 @@ import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.ext.com.google.common.collect.Maps;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
+import org.apache.jena.graph.Triple;
 import org.apache.jena.riot.out.NodeFormatterNT;
 import org.apache.jena.sparql.core.Var;
 
@@ -34,6 +36,34 @@ public class NodeUtils {
 
     public static boolean isEnvKey(Node node) {
         boolean result = getEnvKey(node) != null;
+        return result;
+    }
+
+    public static boolean isNullOrAny(Node node) {
+        return node == null || Node.ANY.equals(node);
+    }
+
+
+    /** This method is unfortunately private in {@link Triple} at least in jena 3.16 */
+    public static Node nullToAny(Node n) {
+        return n == null ? Node.ANY : n;
+    }
+
+    /**
+     * Create a logical conjunction of two nodes:
+     * - Node.ANY or null matches everything
+     * - If any argument matches everything return the other argument (convert null to ANY)
+     * - if both arguments are concrete nodes then return one if them if they are equal
+     * - otherwise return null
+     *
+     */
+    public static Node logicalAnd(Node a, Node b) {
+        Node result = NodeUtils.isNullOrAny(a)
+                ? nullToAny(b)
+                : NodeUtils.isNullOrAny(b) || Objects.equals(a, b)
+                    ? nullToAny(a)
+                    : null;
+
         return result;
     }
 

@@ -22,6 +22,26 @@ public class TripleUtils {
         return Stream.of(t.getSubject(), t.getPredicate(), t.getObject());
     }
 
+
+    /**
+     * Create a logical conjunction from two triple pattern.
+     *
+     * @param a
+     * @param b
+     * @return
+     */
+    public static Triple logicalAnd(Triple a, Triple b) {
+        Node s = NodeUtils.logicalAnd(a.getMatchSubject(), b.getMatchSubject());
+        Node p = NodeUtils.logicalAnd(a.getMatchPredicate(), b.getMatchPredicate());
+        Node o = NodeUtils.logicalAnd(a.getMatchObject(), b.getMatchObject());
+
+        Triple result = s == null || p == null || o == null
+                ? null
+                : Triple.createMatch(s, p, o);
+
+        return result;
+    }
+
 //    public static Multimap<Node, Triple> indexBySubject(Iterable<Triple> triples) {
 //        Multimap<Node, Triple> result = indexBySubject(triples.iterator());
 //        return result;
