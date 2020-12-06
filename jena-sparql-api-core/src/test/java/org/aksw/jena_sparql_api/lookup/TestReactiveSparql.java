@@ -19,6 +19,7 @@ import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.sparql.algebra.Table;
+import org.apache.jena.sys.JenaSystem;
 import org.junit.Test;
 
 import com.google.common.collect.Range;
@@ -28,6 +29,7 @@ import io.reactivex.rxjava3.schedulers.Schedulers;
 
 public class TestReactiveSparql {
 
+    static { JenaSystem.init(); }
 
 
     //@Test

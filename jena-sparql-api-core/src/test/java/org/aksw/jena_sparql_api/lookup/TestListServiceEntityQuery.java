@@ -13,11 +13,15 @@ import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.apache.jena.shared.PrefixMapping;
+import org.apache.jena.sys.JenaSystem;
 import org.junit.Test;
 
 import com.google.common.collect.Range;
 
 public class TestListServiceEntityQuery {
+
+    static { JenaSystem.init(); }
+
     @Test
     public void testListServiceFromEntityQuery() {
         SparqlQueryParser parser = SparqlQueryParserImpl.create(PrefixMapping.Extended);
