@@ -11,6 +11,11 @@ public interface TripleTableCore {
     void delete(Triple triple);
     Stream<Triple> find(Node s, Node p, Node o);
 
+    default Stream<Triple> find() {
+        return find(Node.ANY, Node.ANY, Node.ANY);
+    }
+
+
     default boolean isEmpty() {
         return !find(Node.ANY, Node.ANY, Node.ANY)
                 .findAny().isPresent();

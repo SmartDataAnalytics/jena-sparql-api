@@ -27,6 +27,7 @@ import org.aksw.jena_sparql_api.utils.VarUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.ext.com.google.common.collect.Iterables;
 import org.apache.jena.graph.Node;
+import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.SortCondition;
@@ -55,6 +56,7 @@ import org.apache.jena.sparql.syntax.ElementOptional;
 import org.apache.jena.sparql.syntax.ElementSubQuery;
 import org.apache.jena.sparql.syntax.ElementTriplesBlock;
 import org.apache.jena.sparql.syntax.PatternVars;
+import org.apache.jena.vocabulary.RDF;
 
 import com.google.common.collect.Range;
 import com.google.common.collect.Sets;
@@ -215,7 +217,7 @@ public class ConceptUtils {
         return result;
     }
 
-    public static Concept createConcept(Iterable<Node> nodes) {
+    public static Concept createConcept(Iterable<? extends Node> nodes) {
         ElementData data = new ElementData();
         data.add(Vars.s);
         for(Node node : nodes) {
@@ -321,6 +323,18 @@ public class ConceptUtils {
         Concept result = new Concept(e, Vars.s);
         return result;
     }
+
+    public static Concept createForRdfType(String iriStr) {
+        return createForRdfType(NodeFactory.createURI(iriStr));
+    }
+
+    public static Concept createForRdfType(Node type) {
+        Concept result = new Concept(
+                ElementUtils.createElementTriple(Vars.s, RDF.Nodes.type, type),
+                Vars.s);
+        return result;
+    }
+
 
     public static Map<Var, Var> createDistinctVarMap(Set<Var> workload, Set<Var> blacklist, Generator<Var> generator) {
         //Set<Var> varNames = new HashSet<String>(VarUtils.getVarNames(blacklist));

@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.core;
+package org.aksw.jena_sparql_api.core.connection;
 
 import java.util.List;
 import java.util.Set;

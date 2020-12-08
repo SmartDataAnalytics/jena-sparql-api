@@ -31,6 +31,7 @@ import org.apache.jena.query.Syntax;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.sys.JenaSystem;
 import org.apache.jena.vocabulary.OWL;
 import org.apache.jena.vocabulary.RDF;
 import org.junit.Test;
@@ -80,6 +81,9 @@ class QueryRunnable
  *         Time: 12:27 AM
  */
 public class SparqlTest {
+
+    static { JenaSystem.init(); }
+
 
 //    @BeforeClass
 //    public static void setUp() {

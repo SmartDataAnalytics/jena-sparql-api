@@ -13,22 +13,22 @@ import org.apache.jena.rdf.model.Resource;
  *
  */
 @ResourceView
-public interface MvnEntity
-    extends Resource, MvnEntityCore
+public interface MavenEntity
+    extends Resource, MavenEntityCore
 {
     @Iri("http://dataid.dbpedia.org/ns/core#group")
     String getGroupId();
-    MvnEntity setGroupId(String groupId);
+    MavenEntity setGroupId(String groupId);
 
     @Iri("http://dataid.dbpedia.org/ns/core#artifact")
     String getArtifactId();
-    MvnEntity setArtifactId(String artifactId);
+    MavenEntity setArtifactId(String artifactId);
 
     @IriNs("mvn")
     String getVersion();
-    MvnEntity setVersion(String version);
+    MavenEntity setVersion(String version);
 
     @IriNs("mvn")
     String getClassifier();
-    MvnEntity setClassifier(String classifier);
+    MavenEntity setClassifier(String classifier);
 }

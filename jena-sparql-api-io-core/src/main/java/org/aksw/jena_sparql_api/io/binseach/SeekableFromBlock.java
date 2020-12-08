@@ -11,11 +11,11 @@ import com.github.jsonldjava.shaded.com.google.common.primitives.Ints;
 
 // Combine reference to a block with a channel
 class OpenBlock{
-    public Reference<Block> blockRef;
+    public Reference<? extends Block> blockRef;
     public Block block;
     public Seekable seekable;
 
-    public OpenBlock(Reference<Block> blockRef, Seekable seekable) {
+    public OpenBlock(Reference<? extends Block> blockRef, Seekable seekable) {
         this.blockRef = blockRef;
         this.block = blockRef.get();
         this.seekable = seekable;
@@ -36,7 +36,7 @@ class OpenBlock{
 //    }
 //
 //    OpenedBlock closeAndNext() {
-//        Reference<Block> next = blockRef.get().nextBlock();
+//        Reference<? extends Block> next = blockRef.get().nextBlock();
 //        f
 //    }
 }
@@ -56,7 +56,7 @@ class OpenBlock{
 public class SeekableFromBlock
     implements Seekable
 {
-    protected Reference<Block> startBlockRef;
+    protected Reference<? extends Block> startBlockRef;
     protected int startPosInStartSegment;
 
     /**
@@ -72,17 +72,17 @@ public class SeekableFromBlock
     protected long maxPos;
     protected long minPos;
 
-    protected Reference<Block> currentBlockRef;
+    protected Reference<? extends Block> currentBlockRef;
     protected Block currentBlock; // cache of currentBlockRef.get()
     protected Seekable currentSeekable; // currentBlock.newChannel()
     protected long actualPos;
 
 
-    public SeekableFromBlock(Reference<Block> startBlockRef, int posInStartSegment, long exposedStartPos) {
+    public SeekableFromBlock(Reference<? extends Block> startBlockRef, int posInStartSegment, long exposedStartPos) {
         this(startBlockRef, posInStartSegment, exposedStartPos, Long.MIN_VALUE, Long.MAX_VALUE);
     }
 
-    public SeekableFromBlock(Reference<Block> startBlockRef, int posInStartSegment, long exposedStartPos, long minPos, long maxPos) {
+    public SeekableFromBlock(Reference<? extends Block> startBlockRef, int posInStartSegment, long exposedStartPos, long minPos, long maxPos) {
         super();
         this.startBlockRef = startBlockRef;
         this.startPosInStartSegment = posInStartSegment;
@@ -165,10 +165,23 @@ public class SeekableFromBlock
 
 
     // Replace end with the concept of a fwd horizon
+    // We would have to read the block fully if we wanted to position at the end
     @Override
     public void posToEnd() throws IOException {
         // pos = maxPos;
         throw new UnsupportedOperationException();
+//        try {
+//            currentBlockRef.close();
+//            currentBlockRef = startBlockRef.acquire(null);
+//            currentBlock = currentBlockRef.get();
+//            currentSeekable = currentBlock.newChannel();
+//            currentSeekable.posToEnd();
+//            actualPos = exposedStartPos;
+//        } catch (Exception e) {
+//            throw new RuntimeException(e);
+//        }
+//        actualPos = maxPos;
+
     }
 
 
@@ -182,8 +195,8 @@ public class SeekableFromBlock
     }
 
 
-    Reference<Block> openNextCloseCurrent(Reference<Block> current, Reference<Block> exclude) throws IOException {
-        Reference<Block> result = current.get().nextBlock();
+    Reference<? extends Block> openNextCloseCurrent(Reference<? extends Block> current, Reference<? extends Block> exclude) throws IOException {
+        Reference<? extends Block> result = current.get().nextBlock();
         try {
             if(current != exclude) {
                 current.close();
@@ -214,7 +227,7 @@ public class SeekableFromBlock
     }
 
     protected boolean loadNextBlock() throws IOException {
-        Reference<Block> nextBlockRef = currentBlockRef.get().nextBlock();
+        Reference<? extends Block> nextBlockRef = currentBlockRef.get().nextBlock();
         boolean result = nextBlockRef != null;
 
         if(result) {
@@ -234,7 +247,7 @@ public class SeekableFromBlock
     }
 
 //    protected boolean loadPrevBlock() throws Exception {
-//        Reference<Block> nextBlockRef = currentBlockRef.get().prevBlock();
+//        Reference<? extends Block> nextBlockRef = currentBlockRef.get().prevBlock();
 //        boolean result = nextBlockRef != null;
 //
 //        if(result) {
@@ -260,13 +273,13 @@ public class SeekableFromBlock
 
 
     class State {
-        public State(Reference<Block> blockRef, Seekable channel) {
+        public State(Reference<? extends Block> blockRef, Seekable channel) {
             super();
             this.blockRef = blockRef;
             this.channel = channel;
         }
 
-        Reference<Block> blockRef;
+        Reference<? extends Block> blockRef;
         Seekable channel;
     }
 
@@ -296,7 +309,7 @@ public class SeekableFromBlock
         if(contrib >= 0) {
             result = contrib;
         } else {
-            Reference<Block> tmpBlockRef = currentBlockRef;
+            Reference<? extends Block> tmpBlockRef = currentBlockRef;
             Block tmpBlock = currentBlock;
             Seekable tmpSeekable = currentSeekable;
 
@@ -305,7 +318,7 @@ public class SeekableFromBlock
                 posDelta += -contrib + 1;
 
                 // Check whether there is a successor block
-                Reference<Block> nextBlockRef = contrib > 0 ? null : tmpBlockRef.get().nextBlock();
+                Reference<? extends Block> nextBlockRef = contrib > 0 ? null : tmpBlockRef.get().nextBlock();
 
                 if(nextBlockRef == null) {
                     currentBlockRef = tmpBlockRef;
@@ -478,7 +491,7 @@ public class SeekableFromBlock
         return result;
     }
 //            int remaining = len - contrib;
-//            Reference<Block> tmpBlockRef = currentBlockRef;
+//            Reference<? extends Block> tmpBlockRef = currentBlockRef;
 //            Block tmpBlock = currentBlock;
 //            Seekable tmpSeekable = currentSeekable;
 //
@@ -487,7 +500,7 @@ public class SeekableFromBlock
 //                remaining -= contrib;
 //
 //                // Check whether there is a successor block
-//                Reference<Block> nextBlockRef = tmpBlockRef.get().nextBlock();
+//                Reference<? extends Block> nextBlockRef = tmpBlockRef.get().nextBlock();
 //
 //                if(nextBlockRef == null) {
 //                    currentBlockRef = tmpBlockRef;

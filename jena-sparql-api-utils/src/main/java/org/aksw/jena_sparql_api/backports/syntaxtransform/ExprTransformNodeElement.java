@@ -37,9 +37,10 @@ import org.apache.jena.sparql.syntax.ElementVisitor;
 import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransform;
 import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransformer;
 
-// Copied version from jena 3.11.0 and added missing transformation for aggregators 
+// Copied version from jena 3.11.0 and added missing transformation for aggregators
 //     ~ Claus, 2019 Jun 4
-
+// Added handler for case when node transform yields a variable to prevent wrapping as NodeValue
+//     ~ Claus, 2020 Dec 2
 /**
  * Special version of ExprTransform for applying a node transform on syntax
  * (Elements) only
@@ -53,8 +54,8 @@ public class ExprTransformNodeElement extends ExprTransformCopy {
     public ExprTransformNodeElement(NodeTransform nodeTransform, ElementTransform eltrans) {
         this(nodeTransform, eltrans, null, null) ;
     }
-    
-    public ExprTransformNodeElement(NodeTransform nodeTransform, ElementTransform eltrans, 
+
+    public ExprTransformNodeElement(NodeTransform nodeTransform, ElementTransform eltrans,
                                     ElementVisitor beforeVisitor, ElementVisitor afterVisitor) {
         this.nodeTransform = nodeTransform ;
         this.elementTransform = eltrans ;
@@ -79,7 +80,8 @@ public class ExprTransformNodeElement extends ExprTransformCopy {
         Node n = nodeTransform.apply(nv.asNode()) ;
         if ( n == nv.asNode() )
             return nv ;
-        return NodeValue.makeNode(n) ;
+
+        return n.isVariable() ? new ExprVar((Var)n) : NodeValue.makeNode(n) ;
     }
 
     @Override
@@ -97,10 +99,10 @@ public class ExprTransformNodeElement extends ExprTransformCopy {
             throw new InternalErrorException("Unknown ExprFunctionOp: " + funcOp.getFunctionSymbol()) ;
         }
     }
-    
+
     @Override
     public Expr transform(ExprAggregator eAgg) {
-    	Expr result = eAgg.applyNodeTransform(nodeTransform);
-    	return result;
+        Expr result = eAgg.applyNodeTransform(nodeTransform);
+        return result;
     }
 }

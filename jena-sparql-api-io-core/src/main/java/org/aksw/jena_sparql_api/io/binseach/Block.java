@@ -45,8 +45,8 @@ public interface Block
      */
     // Block getBlockSource();
 
-    Reference<Block> nextBlock() throws IOException;
-    Reference<Block> prevBlock() throws IOException;
+    Reference<? extends Block> nextBlock() throws IOException;
+    Reference<? extends Block> prevBlock() throws IOException;
 
     /**
      * Check if there is a subsequent block.

@@ -2,11 +2,14 @@ package org.aksw.jena_sparql_api.core.utils;
 
 import org.aksw.jena_sparql_api.syntax.UpdateRequestUtils;
 import org.apache.jena.query.Syntax;
+import org.apache.jena.sys.JenaSystem;
 import org.apache.jena.update.UpdateFactory;
 import org.apache.jena.update.UpdateRequest;
 import org.junit.Test;
 
 public class UpdateRequestUtilsTest {
+
+    static { JenaSystem.init(); }
 
     @Test
     public void testFixVarNames() {

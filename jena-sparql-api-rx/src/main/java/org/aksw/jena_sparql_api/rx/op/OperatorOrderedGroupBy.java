@@ -15,6 +15,7 @@ import io.reactivex.rxjava3.core.FlowableOperator;
 import io.reactivex.rxjava3.core.FlowableSubscriber;
 import io.reactivex.rxjava3.core.FlowableTransformer;
 import io.reactivex.rxjava3.internal.subscriptions.SubscriptionHelper;
+import io.reactivex.rxjava3.internal.util.BackpressureHelper;
 
 /**
  * Ordered group by; somewhat similar to .toListWhile() but with dedicated support for
@@ -115,27 +116,34 @@ public final class OperatorOrderedGroupBy<T, K, V>
 
         @Override
         public void onNext(T item) {
+//            System.out.println("ONNEXT PENDING: " + pending.get() + " " + Thread.currentThread());
+//            if (pending.get() <= 0) {
+////                System.out.println("PENDING IS ZERO " + Thread.currentThread());
+////                System.out.println("PENDING IS " + pending.get());
+//                throw new RuntimeException("Received item without any pending requests");
+//            }
             currentKey = getGroupKey.apply(item);
 
+            boolean needMore = true;
             if(currentAcc == null) {
                 // First time init
                 priorKey = currentKey;
                 currentAcc = accCtor.apply(currentKey);
 
                 Objects.requireNonNull(currentAcc, "Got null for an accumulator");
-            } else if(!groupKeyCompare.apply(priorKey, currentKey)) {//if(!Objects.equals(priorKey, currentKey)) {
+            } else if(!groupKeyCompare.apply(priorKey, currentKey)) {
 
                 Entry<K, V> e = Maps.immutableEntry(priorKey, currentAcc);
 //                System.out.println("Passing on " + e);
+                needMore = pending.decrementAndGet() > 0;
                 downstream.onNext(e);
-                pending.decrementAndGet();
 
                 currentAcc = accCtor.apply(currentKey);
             }
             accAdd.accept(currentAcc, item);
             priorKey = currentKey;
 
-            if(pending.get() > 0) {
+            if (needMore) {
                 upstream.request(1);
             }
 
@@ -149,6 +157,7 @@ public final class OperatorOrderedGroupBy<T, K, V>
         @Override
         public void onComplete() {
             if(currentAcc != null) {
+                // System.out.println("EMITTED ITEM ON COMPLETE");
                 downstream.onNext(Maps.immutableEntry(currentKey, currentAcc));
             }
 
@@ -158,8 +167,11 @@ public final class OperatorOrderedGroupBy<T, K, V>
         @Override
         public void request(long n) {
             if (SubscriptionHelper.validate(n)) {
-                pending.addAndGet(n);
+                BackpressureHelper.add(pending, n);
+//                pending.addAndGet(n);
+//                System.out.println("BEFORE REQUESTED " + n + " total pending " + pending.get() + " " + Thread.currentThread());
                 upstream.request(1);
+//                System.out.println("AFTER REQUESTED " + n + " total pending " + pending.get() + " " + Thread.currentThread());
             }
         }
 

@@ -197,6 +197,9 @@ public class QueryGenerationUtils {
         Query clone = query.cloneQuery();
 
         if(clone.isConstructType()) {
+            // Try to count the distinct number of template instantiations - i.e.
+            // the number of distinct bindings involving the variables
+            // mentioned in the template
             Template template = clone.getConstructTemplate();
             Set<Var> vars = partitionVars == null
                     ? QuadPatternUtils.getVarsMentioned(template.getQuads())
@@ -204,15 +207,18 @@ public class QueryGenerationUtils {
 
             clone.setQuerySelectType();
 
-            // TODO Vars may be empty, in case we deal with a partitioned query
+//            System.out.println("Clone: " + clone);
             if(vars.isEmpty()) {
                 //query.setQueryResultStar(true);
+                // TODO The distinct number of template instantiations if there is no var in a template is
+                // at most 1
                 throw new RuntimeException("Variables required for counting");
             } else {
                 clone.setQueryResultStar(false);
                 clone.addProjectVars(vars);
                 clone.setDistinct(true);
             }
+//            System.out.println("Clone2: " + clone);
         } else {
             // TODO We need to check whether the partition variables are mapped to expressions in the projection
             Set<Var> allowedVars = partitionVars == null
@@ -803,17 +809,16 @@ public class QueryGenerationUtils {
 
         // || query.isDistinct() || query.isReduced();
 
-          if(itemLimit != null) {
-              long queryLimit = query.getLimit();
-              long effectiveItemLimit = queryLimit == Query.NOLIMIT
-                      ? itemLimit
-                      : Math.min(queryLimit, itemLimit);
+        long tmpItemLimit = itemLimit == null ? Query.NOLIMIT : itemLimit;
+        long queryLimit = query.getLimit();
+        long effectiveLimit = queryLimit == Query.NOLIMIT
+                ? tmpItemLimit
+                : tmpItemLimit == Query.NOLIMIT
+                    ? queryLimit
+                    : Math.min(queryLimit, itemLimit);
 
-//              query.setDistinct(false);
-              query.setLimit(effectiveItemLimit);
-
-//              query = QueryGenerationUtils.wrapAsSubQuery(query);
-//              query.setDistinct(isDistinct);
+        if(effectiveLimit != Query.NOLIMIT) {
+              query.setLimit(effectiveLimit);
               needsWrapping = true;
           }
 

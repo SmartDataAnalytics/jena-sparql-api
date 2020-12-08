@@ -122,10 +122,10 @@ public class ConceptPathFinderBidirectionalUtils {
 
         UnaryRelation result;
         if(concept.isSubjectConcept()) {
-            result = Concept.parse("?t | ?s a ?t");
+            result = Concept.parse("?t { ?s a ?t }");
         } else {
 
-            Concept fragment = Concept.parse("?t | OPTIONAL { ?s a ?tmp } BIND(IF(BOUND(?tmp), ?tmp, eg:unbound) AS ?t)", PrefixMapping.Extended);
+            Concept fragment = Concept.parse("?t { OPTIONAL { ?s a ?tmp } BIND(IF(BOUND(?tmp), ?tmp, eg:unbound) AS ?t) }", PrefixMapping.Extended);
             result = fragment
                     .prependOn(Vars.s)
                     .with(concept)

@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api.io.binseach;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -102,9 +103,9 @@ public class GraphFromPrefixMatcher extends GraphBase {
         Node s = triplePattern.getSubject();
         if(s.equals(Node.ANY) || s.isVariable()) {
             prefix = "";
-        } else if(s.isBlank()) {
+        } else if (s.isBlank()) {
             prefix = "_:" + s.getBlankNodeLabel();
-        } else if(s.isURI() ){
+        } else if (s.isURI() ){
             prefix = "<" + s.getURI() + ">";
         } else {
             // Literal in subject position - skip
@@ -113,7 +114,9 @@ public class GraphFromPrefixMatcher extends GraphBase {
 
 //        System.out.println("PREFIX: " + prefix);
 
-        InputStream in = binarySearcher.search(prefix);
+        InputStream in = prefix == null
+                ? new ByteArrayInputStream(new byte[0])
+                : binarySearcher.search(prefix);
 
         Stream<Triple> baseStream = Streams.stream(
                 //RDFDataMgrRx.createIteratorTriples(in, Lang.NTRIPLES, "http://www.example.org/"));

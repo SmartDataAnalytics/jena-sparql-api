@@ -1,0 +1,47 @@
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+PREFIX rdf: <http://www.w3.org/2000/01/rdf-schema#>
+
+xsd:negativeInteger rdfs:subClassOf xsd:nonPositiveInteger .
+xsd:nonPositiveInteger rdfs:subClassOfxsd:integer .
+
+xsd:byte rdfs:subClassOf xsd:short .
+xsd:short rdfs:subClassOf xsd:int .
+xsd:int rdfs:subClassOfxsd:long .
+xsd:long rdfs:subClassOf xsd:integer .
+
+xsd:unsignedByte rdfs:subClassOf xsd:unsignedShort .
+xsd:unsignedShort rdfs:subClassOf xsd:unsignedInt .
+xsd:unsignedInt rdfs:subClassOf xsd:unsignedLong .
+xsd:unsignedLong rdfs:subClassOf xsd:nonNegativeInteger .
+
+xsd:positiveInteger rdfs:subClassOf xsd:nonNegativeInteger .
+
+xsd:nonNegativeInteger rdfs:subClassOf xsd:integer .
+xsd:integer rdfs:subClassOf xsd:decimal .
+
+xsd:string rdfs:subClassOf xsd:anySimpleType .
+xsd:boolean rdfs:subClassOf xsd:anySimpleType .
+xsd:base64Binary rdfs:subClassOf xsd:anySimpleType .
+xsd:hexBinary rdfs:subClassOf xsd:anySimpleType .
+xsd:float rdfs:subClassOf xsd:anySimpleType .
+xsd:decimal rdfs:subClassOf xsd:anySimpleType .
+xsd:double rdfs:subClassOf xsd:anySimpleType .
+xsd:anyURI rdfs:subClassOf xsd:anySimpleType .
+xsd:QName rdfs:subClassOf xsd:anySimpleType .
+xsd:NOTATION rdfs:subClassOf xsd:anySimpleType .
+
+xsd:duration rdfs:subClassOf xsd:anySimpleType .
+xsd:dateTime rdfs:subClassOf xsd:anySimpleType .
+xsd:time rdfs:subClassOf xsd:anySimpleType .
+xsd:date rdfs:subClassOf xsd:anySimpleType .
+xsd:gYearMonth rdfs:subClassOf xsd:anySimpleType .
+xsd:gYear rdfs:subClassOf xsd:anySimpleType .
+xsd:gMonthDay rdfs:subClassOf xsd:anySimpleType .
+xsd:gDay rdfs:subClassOf xsd:anySimpleType .
+xsd:gMonth rdfs:subClassOf xsd:anySimpleType .
+
+
+#xsd:double http://ld.sparqlify.org/resource/type/numeric
+#xsd:float http://ld.sparqlify.org/resource/type/numeric
+#xsd:int http://ld.sparqlify.org/resource/type/numeric
+

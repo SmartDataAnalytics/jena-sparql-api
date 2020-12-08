@@ -1,8 +1,10 @@
 package org.aksw.jena_sparql_api.mapper.proxy;
 
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.GregorianCalendar;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -16,11 +18,21 @@ import org.aksw.jena_sparql_api.mapper.annotation.RdfType;
 import org.aksw.jena_sparql_api.mapper.annotation.ResourceView;
 import org.aksw.jena_sparql_api.rdf.collections.NodeMappers;
 import org.aksw.jena_sparql_api.rdf.collections.ResourceUtils;
+import org.aksw.jena_sparql_api.utils.model.PrefixMapAdapter;
+import org.apache.jena.datatypes.xsd.XSDDateTime;
 import org.apache.jena.ext.com.google.common.collect.Sets;
+import org.apache.jena.graph.NodeFactory;
+import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.riot.RDFFormat;
+import org.apache.jena.riot.system.PrefixMap;
+import org.apache.jena.riot.system.PrefixMapExtended;
+import org.apache.jena.riot.system.RiotLib;
+import org.apache.jena.sparql.ARQConstants;
 import org.apache.jena.sys.JenaSystem;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
@@ -56,6 +68,9 @@ public class TestMapperProxyUtils {
 
 
         Map<String, Object> getSimpleMap();
+
+        XSDDateTime getDateTime();
+        TestResource setDateTime(XSDDateTime xsdDateTime);
 
 //		@Iri("eg:collection")
 //		TestResource setList(List<String> strs);
@@ -99,6 +114,10 @@ public class TestMapperProxyUtils {
 
         @Iri("eg:simpleMap")
         Map<String, Object> getSimpleMap();
+
+        @Iri("eg:dateTime")
+        XSDDateTime getDateTime();
+        TestResourceDefault setDateTime();
 
 
 //	@Iri("eg:collection")
@@ -283,5 +302,32 @@ public class TestMapperProxyUtils {
         Assert.assertEquals(sb.getSimpleMap().get("value"), 123);
     }
 
+    @Test
+    public void testDateTime() {
+        JenaSystem.init();
+        JenaPluginUtils.registerResourceClasses(TestResourceDefault.class);
+        TestResource sb = ModelFactory.createDefaultModel().createResource().as(TestResource.class);
+
+        Calendar actual = new GregorianCalendar();
+        sb.setDateTime(new XSDDateTime(actual));
+
+
+//        RDFDataMgr.write(System.out, sb.getModel(), RDFFormat.TURTLE_BLOCKS);
+        XSDDateTime tmp;
+        Assert.assertNotNull(tmp = sb.getDateTime());
+
+        sb.setDateTime(null);
+        Assert.assertNull(tmp = sb.getDateTime());
+
+        sb.getModel().getGraph().add(new Triple(
+                sb.asNode(),
+                NodeFactory.createURI("http://www.example.org/dateTime"),
+                RiotLib.parse("\"2020-10-07T13:03:58.471+00:00\"^^<http://www.w3.org/2001/XMLSchema#dateTime>")));
+
+        Assert.assertNotNull(tmp = sb.getDateTime());
+
+        //Calendar expected = tmp.asCalendar();
+
+    }
 }
 

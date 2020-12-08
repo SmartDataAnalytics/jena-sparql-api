@@ -4,20 +4,17 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Function;
+import java.util.function.Supplier;
 
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.ResultSetCloseable;
-import org.aksw.jena_sparql_api.lookup.GuavaFunctionWrapper;
 import org.aksw.jena_sparql_api.mapper.BindingMapper;
-import org.aksw.jena_sparql_api.mapper.BindingMapperProjectVar;
 import org.aksw.jena_sparql_api.mapper.BindingMapperQuad;
 import org.aksw.jena_sparql_api.mapper.BindingMapperUtils;
-import org.aksw.jena_sparql_api.mapper.FunctionBindingMapper;
 import org.aksw.jena_sparql_api.syntax.QueryGenerationUtils;
 import org.aksw.jena_sparql_api.utils.CloseableQueryExecution;
 import org.aksw.jena_sparql_api.utils.ExtendedIteratorClosable;
-import org.aksw.jena_sparql_api.utils.IteratorResultSetBinding;
+import org.aksw.jena_sparql_api.utils.ResultSetUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.atlas.lib.Closeable;
 import org.apache.jena.atlas.lib.Sink;
@@ -30,6 +27,7 @@ import org.apache.jena.query.ResultSet;
 import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.query.Syntax;
 import org.apache.jena.shared.impl.PrefixMappingImpl;
+import org.apache.jena.sparql.algebra.Table;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.binding.Binding;
@@ -40,8 +38,6 @@ import org.apache.jena.sparql.expr.aggregate.Aggregator;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementSubQuery;
 import org.apache.jena.util.iterator.ExtendedIterator;
-import org.apache.jena.util.iterator.NiceIterator;
-import org.apache.jena.util.iterator.WrappedIterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,6 +51,16 @@ public class QueryExecutionUtils {
     public static final Var vs = Var.alloc("s");
     public static final Var vp = Var.alloc("p");
     public static final Var vo = Var.alloc("o");
+
+
+    public static Table execSelectTable(Supplier<QueryExecution> qeSupp) {
+        Table result;
+        try (QueryExecution qe = qeSupp.get()) {
+            ResultSet rs = qe.execSelect();
+            result = ResultSetUtils.resultSetToTable(rs);
+        }
+        return result;
+    }
 
 
     public static void abortAfterFirstRow(QueryExecution qe) {

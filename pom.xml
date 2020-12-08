@@ -8,7 +8,7 @@
 	<artifactId>jena-sparql-api-parent</artifactId>
 
 	<packaging>pom</packaging>
-	<version>3.16.0-1</version>
+	<version>3.16.0-2</version>
 	<name>Jena SPARQL API - Parent</name>
 	<description>An RDF library for abstracting SPARQL queries.</description>
 	<url>https://github.com/SmartDataAnalytics/jena-sparql-api</url>
@@ -122,7 +122,7 @@
 
 		<spring.version>4.3.23.RELEASE</spring.version>
 		<spring.batch.version>4.0.0.RELEASE</spring.batch.version>
-		<aksw.commons.version>0.8.14</aksw.commons.version>
+		<aksw.commons.version>0.8.15</aksw.commons.version>
 
 		<!-- <atmosphere.version>2.0.0.RC3</atmosphere.version> -->
 		<!-- <atmosphere-spring.version>1.1.0.RC5</atmosphere-spring.version> -->
@@ -643,14 +643,21 @@
 				<!-- <artifactId>xercesImpl</artifactId> -->
 				<!-- </exclusion> -->
 				<!-- </exclusions> -->
+
 			</dependency>
 
-<!-- Needed by some parts of jena since 3.15.0 -->
-<dependency>
-        <groupId>commons-codec</groupId>
-        <artifactId>commons-codec</artifactId>
-        <version>1.14</version>
-</dependency>
+			<dependency>
+				<groupId>org.apache.jena</groupId>
+				<artifactId>jena-dboe-storage</artifactId>
+				<version>${jena.version}</version>
+			</dependency>
+
+			<!-- Needed by some parts of jena since 3.15.0 -->
+			<dependency>
+				<groupId>commons-codec</groupId>
+				<artifactId>commons-codec</artifactId>
+				<version>1.14</version>
+			</dependency>
 
 			<dependency>
 				<groupId>org.apache.jena</groupId>
@@ -1171,7 +1178,7 @@
 			<dependency>
 				<groupId>io.reactivex.rxjava3</groupId>
 				<artifactId>rxjava</artifactId>
-				<version>3.0.4</version>
+				<version>3.0.6</version>
 			</dependency>
 
 
@@ -1325,18 +1332,9 @@
 				<enabled>true</enabled>
 			</snapshots>
 		</repository>
-<!--
-		<repository>
-			<id>apache-repo-snapshots</id>
-			<url>https://repository.apache.org/content/repositories/snapshots/</url>
-			<releases>
-				<enabled>false</enabled>
-			</releases>
-			<snapshots>
-				<enabled>true</enabled>
-			</snapshots>
-		</repository>
--->
+		<!-- <repository> <id>apache-repo-snapshots</id> <url>https://repository.apache.org/content/repositories/snapshots/</url> 
+			<releases> <enabled>false</enabled> </releases> <snapshots> <enabled>true</enabled> 
+			</snapshots> </repository> -->
 	</repositories>
 
 </project>

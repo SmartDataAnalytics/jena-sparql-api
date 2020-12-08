@@ -20,6 +20,10 @@ public interface LookupService<K, V>
         return LookupServiceTransformValue.create(this, fn);
     }
 
+    default <I> LookupService<I, V> mapKeys(Function<? super I, ? extends K> fn) {
+        return LookupServiceTransformKey.create(this, fn);
+    }
+
     default LookupService<K, V> cache() {
         return LookupServiceCacheMem.create(this);
     }
@@ -58,4 +62,64 @@ public interface LookupService<K, V>
         return result;
     }
 
+
+    /**
+     * A convenience short-hand for fetching a map
+     * by first mapping the keys to proxy keys.
+     *
+     * Equivalent to
+     * <pre>this.<X>mapKeys(keyMapper).fetchMap(keys)</pre>
+     *
+     * @param <X>
+     * @param keys
+     * @param keyToProxy
+     * @return
+     */
+    default <X> Map<X, V> fetchMap(
+            Iterable<X> keys,
+            Function<? super X, ? extends K> keyMapper) {
+        Map<X, V> result = this.<X>mapKeys(keyMapper).fetchMap(keys);
+        return result;
+    }
+
+
+//    default <X> LookupService<X, V> fetchMapWithProxyKeys(Iterable<X> keys,
+//            Function<? super X, ? extends K> keyToProxy) {
+//        return fetchMapWithProxyKeys(keys, keyToProxy, this);
+//    }
+//
+//    default <X> Map<X, V> fetchMapWithProxyKeys(Iterable<X> keys,
+//            Function<? super X, ? extends K> keyToProxy) {
+//        return fetchMapWithProxyKeys(keys, keyToProxy, this);
+//    }
+//
+//    /**
+//     *
+//     *
+//     * @param <K>
+//     * @param <P>
+//     * @param <V>
+//     * @param keys
+//     * @param keyToProxy
+//     * @param delegate
+//     * @return
+//     */
+//    static <K, P, V> Map<K, V> fetchMapWithProxyKeys(
+//            Iterable<K> keys,
+//            Function<? super K, ? extends P> keyToProxy,
+//            LookupService<P, V> delegate) {
+//        Multimap<P, ? super K> index = Multimaps.index(keys, keyToProxy::apply);
+//
+//        Set<P> proxyKeys = index.asMap().keySet();
+//        Map<P, V> proxyKeyToValue = delegate.fetchMap(proxyKeys);
+//
+//        Map<K, V> result = Streams.stream(keys)
+//            .collect(Collectors.toMap(key -> key, key -> {
+//                P proxyKey = keyToProxy.apply(key);
+//                V r = proxyKeyToValue.get(proxyKey);
+//                return r;
+//            }));
+//
+//        return result;
+//    }
 }

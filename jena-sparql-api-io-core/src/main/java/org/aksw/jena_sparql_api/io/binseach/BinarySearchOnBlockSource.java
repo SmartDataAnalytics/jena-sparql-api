@@ -27,7 +27,7 @@ public class BinarySearchOnBlockSource
 
         long maxBlockOffset = blockSource.size();
 
-        Reference<Block> blockRef;
+        Reference<? extends Block> blockRef;
         if(prefix == null || prefix.length == 0) {
             blockRef = blockSource.contentAtOrAfter(0, true);
         } else {

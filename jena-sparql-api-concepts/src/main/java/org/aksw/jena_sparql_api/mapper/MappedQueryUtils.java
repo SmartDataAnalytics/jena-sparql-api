@@ -3,8 +3,6 @@ package org.aksw.jena_sparql_api.mapper;
 import java.util.Set;
 
 import org.aksw.jena_sparql_api.utils.QuadPatternUtils;
-import org.aksw.jena_sparql_api.utils.Vars;
-
 import org.apache.jena.query.Query;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.Quad;
@@ -16,7 +14,7 @@ import org.apache.jena.sparql.syntax.Template;
 public class MappedQueryUtils {
 
     public static MappedQuery<DatasetGraph> fromConstructQuery(Query query, Var partitionVar) {
-        PartitionedQuery1 partQuery = new PartitionedQuery1(query, partitionVar);
+        PartitionedQuery1 partQuery = new PartitionedQuery1Impl(query, partitionVar);
         MappedQuery<DatasetGraph> result = fromConstructQuery(partQuery);
         return result;
     }
@@ -53,7 +51,7 @@ public class MappedQueryUtils {
 //            qp.add(new Quad(Quad.defaultGraphNodeGenerated, Vars.s, Vars.p, Vars.o));
 //            Agg<DatasetGraph> agg = AggDatasetGraph.create(qp);
 
-            PartitionedQuery1 pq = new PartitionedQuery1(query, partVar);
+            PartitionedQuery1 pq = new PartitionedQuery1Impl(query, partVar);
 
             result = new MappedQuery<DatasetGraph>(pq, agg);
 

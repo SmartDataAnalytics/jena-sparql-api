@@ -205,7 +205,7 @@ public class RDFDataMgrRx {
     }
 
 
-    public static Iterator<Quad> createIteratorQuads(
+    public static RDFIterator<Quad> createIteratorQuads(
             InputStream in,
             Lang lang,
             String baseIRI,
@@ -223,7 +223,7 @@ public class RDFDataMgrRx {
                 th);
     }
 
-    public static Iterator<Quad> createIteratorQuads(
+    public static RDFIterator<Quad> createIteratorQuads(
             TypedInputStream in,
             UncaughtExceptionHandler eh,
             Consumer<Thread> th) {
@@ -235,7 +235,7 @@ public class RDFDataMgrRx {
                 th);
     }
 
-    public static Iterator<Triple> createIteratorTriples(
+    public static RDFIterator<Triple> createIteratorTriples(
             InputStream in,
             Lang lang,
             String baseIRI,
@@ -253,7 +253,7 @@ public class RDFDataMgrRx {
                 eh);
     }
 
-    public static Iterator<Triple> createIteratorTriples(
+    public static RDFIterator<Triple> createIteratorTriples(
             TypedInputStream in,
             UncaughtExceptionHandler eh,
             Consumer<Thread> th) {
@@ -278,7 +278,7 @@ public class RDFDataMgrRx {
      * @param baseIRI Base IRI
      * @return Iterator over the quads
      */
-    public static Iterator<Quad> createIteratorQuads(
+    public static RDFIterator<Quad> createIteratorQuads(
             InputStream input,
             Lang lang,
             String baseIRI,
@@ -288,12 +288,12 @@ public class RDFDataMgrRx {
 
         // Special case N-Quads, because the RIOT reader has a pull interface
         if ( RDFLanguages.sameLang(RDFLanguages.NQUADS, lang) ) {
-            return new IteratorResourceClosing<>(
+            return new RDFIteratorFromIterator<Quad>(new IteratorResourceClosing<>(
                 RiotParsers.createIteratorNQuads(input, null, RDFDataMgrRx.dftProfile()),
-                input);
+                input), baseIRI);
         }
         // Otherwise, we have to spin up a thread to deal with it
-        final PipedRDFIterator<Quad> it = new PipedRDFIterator<>(bufferSize, fair, pollTimeout, maxPolls);
+        final RDFIteratorFromPipedRDFIterator<Quad> it = new RDFIteratorFromPipedRDFIterator<>(bufferSize, fair, pollTimeout, maxPolls);
 
         // Upgrade triples to quads; this happens if quads are requested from a triple lang
         final PipedQuadsStream out = new PipedQuadsStream(it) {
@@ -337,7 +337,7 @@ public class RDFDataMgrRx {
      * @param baseIRI Base IRI
      * @return Iterator over the quads
      */
-    public static Iterator<Triple> createIteratorTriples(
+    public static RDFIterator<Triple> createIteratorTriples(
             InputStream input,
             Lang lang,
             String baseIRI,
@@ -346,12 +346,12 @@ public class RDFDataMgrRx {
             UncaughtExceptionHandler eh) {
         // Special case N-Quads, because the RIOT reader has a pull interface
         if ( RDFLanguages.sameLang(RDFLanguages.NTRIPLES, lang) ) {
-            return new IteratorResourceClosing<>(
+            return new RDFIteratorFromIterator<Triple>(new IteratorResourceClosing<>(
                 RiotParsers.createIteratorNTriples(input, null, RDFDataMgrRx.dftProfile()),
-                input);
+                input), baseIRI);
         }
         // Otherwise, we have to spin up a thread to deal with it
-        final PipedRDFIterator<Triple> it = new PipedRDFIterator<>(bufferSize, fair, pollTimeout, maxPolls);
+        final RDFIteratorFromPipedRDFIterator<Triple> it = new RDFIteratorFromPipedRDFIterator<>(bufferSize, fair, pollTimeout, maxPolls);
         final PipedTriplesStream out = new PipedTriplesStream(it);
 
         Thread t = new Thread(()-> {
@@ -501,14 +501,15 @@ public class RDFDataMgrRx {
 
     public static Flowable<Dataset> createFlowableDatasets(Callable<TypedInputStream> inSupplier) {
 
-        Flowable<Dataset> result = createFlowableFromInputStream(
-                inSupplier,
-                th -> eh -> in -> createIteratorQuads(
-                        in,
-                        RDFLanguages.contentTypeToLang(in.getContentType()),
-                        in.getBaseURI(),
-                        eh,
-                        th))
+//        Flowable<Dataset> result = createFlowableFromInputStream(
+//                inSupplier,
+//                th -> eh -> in -> createIteratorQuads(
+//                        in,
+//                        RDFLanguages.contentTypeToLang(in.getContentType()),
+//                        in.getBaseURI(),
+//                        eh,
+//                        th))
+        Flowable<Dataset> result = createFlowableQuads(inSupplier)
                 .compose(DatasetGraphOpsRx.datasetsFromConsecutiveQuads(
                         Quad::getGraph,
                         DatasetGraphFactoryEx::createInsertOrderPreservingDatasetGraph))
@@ -773,7 +774,8 @@ public class RDFDataMgrRx {
     public static class QuadEncoderDistinguish {
         protected Set<Node> priorGraphs = Collections.emptySet();
 
-        public synchronized Dataset encode(Dataset dataset) {
+        // Do we need synchronized? Processing should happen in order anyway!
+        public Dataset encode(Dataset dataset) {
             Set<Node> now = Sets.newHashSet(dataset.asDatasetGraph().listGraphNodes());
             List<Quad> quads = Lists.newArrayList(dataset.asDatasetGraph().find());
 
@@ -950,7 +952,7 @@ public class RDFDataMgrRx {
         // TODO Prevent emitting of redundant prefix mappings
 
         return upstream -> upstream
-                .flatMapMaybe(batch -> {
+                .concatMapMaybe(batch -> {
                     for(Dataset item : batch) {
                         Dataset encoded = encoder.encode(item);
 
@@ -985,7 +987,7 @@ public class RDFDataMgrRx {
         }
 
         return upstream -> upstream
-                .flatMapMaybe(batch -> {
+                .concatMapMaybe(batch -> {
                     RDFDataMgr.writeQuads(out, batch.iterator());
                     out.flush();
                     return Maybe.<Throwable>empty();

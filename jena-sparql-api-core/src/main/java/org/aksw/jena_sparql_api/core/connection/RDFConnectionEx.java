@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.core;
+package org.aksw.jena_sparql_api.core.connection;
 
 import org.apache.jena.rdfconnection.RDFConnection;
 

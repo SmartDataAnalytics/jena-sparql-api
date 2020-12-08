@@ -3,11 +3,7 @@ package org.aksw.jena_sparql_api.rx;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.sparql.core.DatasetGraph;
-import org.apache.jena.sparql.core.DatasetGraphFactory;
 import org.apache.jena.sparql.core.Quad;
-import org.apache.jena.sparql.core.mem.DatasetGraphInMemory;
-import org.apache.jena.sparql.core.mem.QuadTable;
-import org.apache.jena.sparql.core.mem.TripleTable;
 
 
 public class DatasetFactoryEx {

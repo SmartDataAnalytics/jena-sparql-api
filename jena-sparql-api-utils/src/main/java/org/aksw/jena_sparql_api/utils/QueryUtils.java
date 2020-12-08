@@ -1,5 +1,7 @@
 package org.aksw.jena_sparql_api.utils;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -38,6 +40,7 @@ import org.apache.jena.sparql.graph.NodeTransformLib;
 import org.apache.jena.sparql.modify.request.QuadAcc;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementFilter;
+import org.apache.jena.sparql.syntax.ElementGroup;
 import org.apache.jena.sparql.syntax.ElementNamedGraph;
 import org.apache.jena.sparql.syntax.ElementSubQuery;
 import org.apache.jena.sparql.syntax.ElementVisitorBase;
@@ -49,6 +52,7 @@ import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransformCopyBase;
 import org.apache.jena.sparql.util.ExprUtils;
 import org.apache.jena.sparql.util.PrefixMapping2;
 
+import com.google.common.collect.BoundType;
 import com.google.common.collect.DiscreteDomain;
 import com.google.common.collect.Range;
 
@@ -186,6 +190,52 @@ public class QueryUtils {
         // TODO We may want to move (named) graph URI copying to a separate function
 //		result.getGraphURIs().addAll(proto.getGraphURIs());
 //		result.getNamedGraphURIs().addAll(proto.getNamedGraphURIs());
+
+        return result;
+    }
+
+
+    /**
+     * Combine multiple construct queries into a single query whose
+     * template and query pattern is the union of those of the provided queries
+     * This method does NOT perform any renaming of variables.
+     *
+     *
+     * @param queries
+     * @return
+     */
+    public static Query unionConstruct(Query ... queries) {
+        return unionConstruct(Arrays.asList(queries));
+    }
+
+    /**
+     * Combine multiple construct queries into a single query whose
+     * template and query pattern is the union of those of the provided queries
+     * This method does NOT perform any renaming of variables.
+     *
+     *
+     * @param queries
+     * @return
+     */
+    public static Query unionConstruct(Iterable<Query> queries) {
+        Query result = new Query();
+
+        // BasicPatten bgp = new BasicPattern();
+        Set<Quad> quadPatterns = new LinkedHashSet<>();
+        Set<Element> elements = new LinkedHashSet<>();
+
+        for (Query query : queries) {
+            result.getPrefixMapping().setNsPrefixes(query.getPrefixMapping());
+
+            Template tmp = query.getConstructTemplate();
+
+            quadPatterns.addAll(tmp.getQuads());
+            elements.add(query.getQueryPattern());
+        }
+
+        result.setQueryConstructType();
+        result.setConstructTemplate(new Template(new QuadAcc(new ArrayList<>(quadPatterns))));
+        result.setQueryPattern(ElementUtils.unionIfNeeded(elements));
 
         return result;
     }
@@ -533,6 +583,31 @@ public class QueryUtils {
         return result;
     }
 
+
+    /**
+     * Transform a range w.r.t. a discrete domain such that any lower bound is closed and the upper bound
+     * is open. As a result, a zero-length range is represented by [x..x)
+     *
+     * @param <T>
+     * @param range
+     * @param domain
+     * @return
+     */
+    public static <T extends Comparable<T>> Range<T> makeClosedOpen(Range<T> range, DiscreteDomain<T> domain) {
+        T lower = closedLowerEndpointOrNull(range, domain);
+        T upper = openUpperEndpointOrNull(range, domain);
+
+        Range<T> result = lower == null
+                ? upper == null
+                    ? Range.all()
+                    : Range.upTo(upper, BoundType.OPEN)
+                : upper == null
+                    ? Range.atLeast(lower)
+                    : Range.closedOpen(lower, upper);
+
+        return result;
+    }
+
     /**
      * Limit the query to the given range, relative to its own given range
      *
@@ -586,10 +661,33 @@ public class QueryUtils {
 
     //public static LimitAndOffset rangeToLimitAndOffset(Range<Long> range)
 
-    public static long rangeToOffset(Range<Long> range) {
-        long result = range == null || !range.hasLowerBound() ? 0 : range.lowerEndpoint();
+    public static <T extends Comparable<T>> T closedLowerEndpointOrNull(Range<T> range, DiscreteDomain<T> domain) {
+        T result = !range.hasLowerBound()
+                ? null
+                : range.lowerBoundType().equals(BoundType.CLOSED)
+                    ? range.lowerEndpoint()
+                    : domain.next(range.lowerEndpoint());
 
-        result = result == 0 ? Query.NOLIMIT : result;
+        return result;
+    }
+
+    public static <T extends Comparable<T>> T openUpperEndpointOrNull(Range<T> range, DiscreteDomain<T> domain) {
+        T result = !range.hasUpperBound()
+                ? null
+                : range.upperBoundType().equals(BoundType.CLOSED)
+                    ? domain.next(range.upperEndpoint())
+                    : range.upperEndpoint();
+
+        return result;
+    }
+
+
+    public static long rangeToOffset(Range<Long> range) {
+        Long tmp = range == null
+                ? null
+                : closedLowerEndpointOrNull(range, DiscreteDomain.longs());
+
+        long result = tmp == null || tmp == 0 ? Query.NOLIMIT : tmp;
         return result;
     }
 
@@ -599,11 +697,13 @@ public class QueryUtils {
      * @return
      */
     public static long rangeToLimit(Range<Long> range) {
-        range = range == null ? null : range.canonical(DiscreteDomain.longs());
+        range = range == null ? null : makeClosedOpen(range, DiscreteDomain.longs());
 
         long result = range == null || !range.hasUpperBound()
             ? Query.NOLIMIT
-            : DiscreteDomain.longs().distance(range.lowerEndpoint(), range.upperEndpoint());
+            : DiscreteDomain.longs().distance(range.lowerEndpoint(), range.upperEndpoint())
+                // If the upper bound is closed such as [x, x] then the result is the distance plus 1
+                + (range.upperBoundType().equals(BoundType.CLOSED) ? 1 : 0);
 
         return result;
     }
@@ -625,20 +725,31 @@ public class QueryUtils {
         return result;
     }
 
-    public static Range<Long> subRange(Range<Long> parent, Range<Long> child) {
+    /**
+     * Returns the absolute range for a child range relative to a parent range
+     * Assumes that both ranges have a lower endpoint
+     *
+     * @param _parent
+     * @param _child
+     * @return
+     */
+    public static Range<Long> subRange(Range<Long> _parent, Range<Long> _child) {
+        Range<Long> parent = makeClosedOpen(_parent, DiscreteDomain.longs());
+        Range<Long> child = makeClosedOpen(_child, DiscreteDomain.longs());
+
         long newMin = parent.lowerEndpoint() + child.lowerEndpoint();
 
         Long newMax = (parent.hasUpperBound()
             ? child.hasUpperBound()
-                ? (Long)Math.min(parent.upperEndpoint(), child.upperEndpoint())
+                ? (Long)Math.min(parent.upperEndpoint(), newMin + child.upperEndpoint())
                 : parent.upperEndpoint()
             : child.hasUpperBound()
-                ? (Long)child.upperEndpoint()
+                ? newMin + (Long)child.upperEndpoint()
                 : null);
 
         Range<Long> result = newMax == null
                 ? Range.atLeast(newMin)
-                : Range.closed(newMin, newMax);
+                : Range.closedOpen(newMin, newMax);
 
         return result;
     }
@@ -691,7 +802,12 @@ public class QueryUtils {
         if (pattern == null)
             return null;
         Query query = new Query();
-        query.setQueryPattern(pattern);
+
+        Element cleanElement = pattern instanceof ElementGroup || pattern instanceof ElementSubQuery
+                ? pattern
+                : ElementUtils.createElementGroup(pattern);
+
+        query.setQueryPattern(cleanElement);
         query.setQuerySelectType();
 
         if (resultVar == null) {

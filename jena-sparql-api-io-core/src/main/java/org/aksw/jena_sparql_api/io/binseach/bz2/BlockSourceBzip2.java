@@ -106,6 +106,7 @@ public class BlockSourceBzip2
 
         if(result == null) {
             Seekable seekable = seekableSource.get(internalRequestPos);
+//            System.out.println("Size: " + seekableSource.size());
 
 
 //            SeekableMatcher matcher = bwdBlockStartMatcherFactory.newMatcher();

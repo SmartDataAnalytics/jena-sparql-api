@@ -4,18 +4,29 @@ import java.util.AbstractMap.SimpleEntry;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
-
-import com.google.common.base.Function;
+import java.util.function.Function;
 
 import io.reactivex.rxjava3.core.Flowable;
 
+/**
+ * Create a new LookupService which maps keys to a target domain
+ * before passing them to the delegate service.
+ *
+ * @author raven
+ *
+ * @param <KI>
+ * @param <KO>
+ * @param <V>
+ */
 public class LookupServiceTransformKey<KI, KO, V>
     implements LookupService<KI, V>
 {
     private LookupService<KO, V> delegate;
-    private Function<KI, KO> keyMapper;
+    private Function<? super KI, ? extends KO> keyMapper;
 
-    public LookupServiceTransformKey(LookupService<KO, V> delegate, Function<KI, KO> keyMapper) {
+    public LookupServiceTransformKey(
+            LookupService<KO, V> delegate,
+            Function<? super KI, ? extends KO> keyMapper) {
         super();
         this.delegate = delegate;
         this.keyMapper = keyMapper;
@@ -61,8 +72,10 @@ public class LookupServiceTransformKey<KI, KO, V>
         return result;
     }
 
-    public static <KI, KO, V> LookupServiceTransformKey<KI, KO, V> create(LookupService<KO, V> base, Function<KI, KO> keyMapper) {
-        LookupServiceTransformKey<KI, KO, V> result = new LookupServiceTransformKey<KI, KO, V>(base, keyMapper);
+    public static <KI, KO, V> LookupService<KI, V> create(
+            LookupService<KO, V> base,
+            Function<? super KI, ? extends KO> keyMapper) {
+        LookupService<KI, V> result = new LookupServiceTransformKey<>(base, keyMapper);
         return result;
     }
 }

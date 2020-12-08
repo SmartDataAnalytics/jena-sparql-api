@@ -6,18 +6,25 @@ import org.apache.jena.query.QueryExecution;
 import org.apache.jena.sparql.core.Transactional;
 
 public class SparqlQueryConnectionJsa
-	extends TransactionalDelegate
-	implements SparqlQueryConnectionTmp
+    extends TransactionalDelegate
+    implements SparqlQueryConnectionTmp
 {
-	protected QueryExecutionFactory queryExecutionFactory;
+    protected QueryExecutionFactory queryExecutionFactory;
+    protected Transactional transactional;
 
     public SparqlQueryConnectionJsa(QueryExecutionFactory queryExecutionFactory) {
-    	this(queryExecutionFactory, new TransactionalTmp() {});
+        this(queryExecutionFactory, new TransactionalTmp() {});
     }
 
     public SparqlQueryConnectionJsa(QueryExecutionFactory queryExecutionFactory, Transactional transactional) {
-        super(transactional);
+        super();
         this.queryExecutionFactory = queryExecutionFactory;
+        this.transactional = transactional;
+    }
+
+    @Override
+    protected Transactional getDelegate() {
+        return transactional;
     }
 
     @Override
@@ -40,4 +47,5 @@ public class SparqlQueryConnectionJsa
             throw new RuntimeException(e);
         }
     }
+
 }

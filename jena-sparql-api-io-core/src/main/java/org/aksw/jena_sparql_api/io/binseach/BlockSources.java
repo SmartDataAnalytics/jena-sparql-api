@@ -26,6 +26,19 @@ public class BlockSources {
         return result;
     }
 
+
+    public static BinarySearcher createBinarySearcherText(Path path) throws IOException {
+        FileChannel channel = FileChannel.open(path, StandardOpenOption.READ);
+        BinarySearcher result = createBinarySearcherText(channel, true);
+        return result;
+    }
+
+    public static BinarySearcher createBinarySearcherText(FileChannel fileChannel, boolean closeChannel) throws IOException {
+        PageManager pageManager = PageManagerForFileChannel.create(fileChannel);
+        BinarySearcher result = new BinarySearchOnBlockSource(pageManager, closeChannel ? fileChannel::close : null);
+        return result;
+    }
+
     /**
      * Binary search over blocks
      *
@@ -39,20 +52,20 @@ public class BlockSources {
      * @return A reference to a block that may contain the key or null if no candidate block was found
      * @throws Exception
      */
-    public static Reference<Block> binarySearch(BlockSource blockSource, long min, long max, byte delimiter, byte[] prefix) throws IOException {
+    public static Reference<? extends Block> binarySearch(BlockSource blockSource, long min, long max, byte delimiter, byte[] prefix) throws IOException {
         // System.out.println("[" + min + ", " + max + "[");
         if(min >= max) {
             return null;
         }
 
-        Reference<Block> result;
+        Reference<? extends Block> result;
 
         long middlePos = (min + max) >> 1; // fast divide by 2
 
         // Find the start of the record in the block:
         // In the first block, this is position 0
         // otherwise this is the first delimiter
-        Reference<Block> blockRef = blockSource.contentAtOrBefore(middlePos, true);
+        Reference<? extends Block> blockRef = blockSource.contentAtOrBefore(middlePos, true);
         if(blockRef == null) {
             return null; //Long.MIN_VALUE;
         }
@@ -102,7 +115,7 @@ public class BlockSources {
                 // the search key may still be contained in this block
                 // but check the upper half of the search range if there is another block
                 //long lookupPos = pos + 1;
-                try(Reference<Block> nextBlockRef = blockSource.contentAtOrAfter(pos, false)) {
+                try(Reference<? extends Block> nextBlockRef = blockSource.contentAtOrAfter(pos, false)) {
 
                     // If there is no further block it implies we are in the last block
                     if(nextBlockRef == null) {

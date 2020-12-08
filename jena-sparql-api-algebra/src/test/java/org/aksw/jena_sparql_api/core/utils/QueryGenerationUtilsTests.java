@@ -102,6 +102,7 @@ public class QueryGenerationUtilsTests {
     public void testOptimizeAggToDistinctX() {
         Query query = QueryFactory.create("SELECT (?s AS ?x) ?o { ?s ?p ?o } GROUP BY ?s ?o");
 //        QueryGenerationUtils.optimizeAggregationToDistinct(query);
+        System.out.println("TODO Validate testOptimizeAggToDistinctX");
         System.out.println(QueryGenerationUtils.analyzeDistinctVarSets(query));
         System.out.println(query);
     }
@@ -160,8 +161,6 @@ public class QueryGenerationUtilsTests {
         eval(
             "SELECT ?s ?o { ?s ?p ?o }",
             input -> {
-                Collection<Var> vars = Arrays.asList(s);
-                // Expected SELECT (COUNT(*) AS ?c_1) { ?s ?p ?o }
                 Entry<Var, Query> count = QueryGenerationUtils.createQueryCountCore(input, null, null);
                 return count.getValue();
             },
@@ -199,7 +198,6 @@ public class QueryGenerationUtilsTests {
         eval(
             "SELECT ?s (AVG(?o) AS ?c) { ?s ?p ?o } GROUP BY ?s ?p",
             input -> {
-                Collection<Var> vars = Arrays.asList(s, Var.alloc("c"));
                 Entry<Var, Query> count = QueryGenerationUtils.createQueryCountCore(input, null, null);
                 return count.getValue();
             },
@@ -303,6 +301,35 @@ public class QueryGenerationUtilsTests {
                 return count.getValue();
             },
             "SELECT (COUNT(*) AS ?c_1) { SELECT * { ?s a ?o . ?o ?p ?o2  } LIMIT 100 }"
+        );
+    }
+
+    @Test
+    public void testCountQueryGenerationForLimitBug() {
+        eval(
+            "SELECT * { ?s ?p ?o } LIMIT 100 OFFSET 5",
+            input -> {
+                Entry<Var, Query> count = QueryGenerationUtils.createQueryCountCore(input, 50l, null);
+                return count.getValue();
+            },
+            "SELECT (COUNT(*) AS ?c_1) { SELECT * { ?s ?p ?o } LIMIT 50 OFFSET 5 }"
+        );
+    }
+
+    /**
+     * Queries only with constants caused an exception in the rewrite stating that there need to be
+     * variables
+     *
+     */
+    @Test
+    public void testCountQueryGenerationForLsqBug2() {
+        eval(
+            "SELECT * { <urn:s> <urn:p> <urn:o> }",
+            input -> {
+                Entry<Var, Query> count = QueryGenerationUtils.createQueryCountCore(input, 1000l, null);
+                return count.getValue();
+            },
+            "SELECT (COUNT(*) AS ?c_1) { SELECT * { <urn:s> <urn:p> <urn:o> } LIMIT 1000 }"
         );
     }
 

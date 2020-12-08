@@ -163,14 +163,14 @@ public class MainPlaygroundScanFile {
 
         try(FileChannel fileChannel = FileChannel.open(path, StandardOpenOption.READ)) {
             PageManager pageManager = PageManagerForFileChannel.create(fileChannel);
-            long maxBlockOffset = pageManager.getEndPos();
+            long maxBlockOffset = pageManager.size();
 
             SeekableSource pagedSource = new SeekableSourceFromPageManager(pageManager);
             BlockSource blockSource = BlockSourceBzip2.create(pagedSource);
 
             byte[] prefix = "<http://linkedgeodata.org/geometry/node1583470199>".getBytes();
 
-            Reference<Block> blockRef = BlockSources.binarySearch(blockSource, 0, maxBlockOffset, (byte)'\n', prefix);
+            Reference<? extends Block> blockRef = BlockSources.binarySearch(blockSource, 0, maxBlockOffset, (byte)'\n', prefix);
             if(blockRef == null) {
                 System.out.println("No match found");
                 return;

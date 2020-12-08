@@ -13,6 +13,8 @@ import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 
 import org.aksw.jena_sparql_api.io.binseach.BinarySearchOnSortedFile;
+import org.aksw.jena_sparql_api.io.binseach.BinarySearcher;
+import org.aksw.jena_sparql_api.io.binseach.BlockSources;
 import org.aksw.jena_sparql_api.io.binseach.GraphFromPrefixMatcher;
 import org.aksw.jena_sparql_api.io.binseach.GraphFromSubjectCache;
 import org.aksw.jena_sparql_api.rx.GraphOpsRx;
@@ -96,9 +98,10 @@ public class QueryIterServiceOrFile extends QueryIterService {
                     URI effectiveUri = new URI(uriStr.replaceAll("\\?.*", ""));
 
                     path = Paths.get(effectiveUri);
-                    boolean fileExists = Files.exists(path);
+//                    boolean fileExists = Files.exists(path);
 
-                    result = fileExists ? Maps.immutableEntry(path, params) : null;
+                    // result = fileExists ? Maps.immutableEntry(path, params) : null;
+                    return Maps.immutableEntry(path, params);
                 } catch (URISyntaxException e) {
                     //throw new RuntimeException(e);
                     // Nothing todo; we simply return null if we fail
@@ -141,13 +144,18 @@ public class QueryIterServiceOrFile extends QueryIterService {
 
             boolean specialProcessingApplied = false;
 
-            String binSearchVal = params.get("binsearch");
-            if("true".equalsIgnoreCase(binSearchVal)) {
+            boolean useBinSearch = params.containsKey("binsearch");
+            String binSearchVal = params.getOrDefault("binsearch", "");
+            if(useBinSearch || "true".equalsIgnoreCase(binSearchVal)) {
                 specialProcessingApplied = true;
 
                 // Model generation wrapped as a flowable for resource management
                 Flowable<Binding> bindingFlow = Flowable.generate(() -> {
-                    Graph graph = new GraphFromPrefixMatcher(BinarySearchOnSortedFile.create(path));
+                    BinarySearcher binarySearcher = path.getFileName().toString().toLowerCase().endsWith(".bz2")
+                        ? BlockSources.createBinarySearcherBz2(path)
+                        : BlockSources.createBinarySearcherText(path);
+
+                    Graph graph = new GraphFromPrefixMatcher(binarySearcher);
                     GraphFromSubjectCache subjectCacheGraph = new GraphFromSubjectCache(graph);
                     Model model = ModelFactory.createModelForGraph(subjectCacheGraph);
                     QueryExecution qe = QueryExecutionFactory.create(query, model);

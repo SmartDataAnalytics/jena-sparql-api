@@ -23,18 +23,20 @@ import com.google.common.collect.Sets;
  * @author raven Mar 7, 2018
  *
  */
-public interface Relation {
+public interface Relation
+    extends HasElement
+{
 
     /**
-     * Return the distinguished variables of the relation
+     * Return the distinguished variables of the relation.
+     * The returned list is should be duplicate-free.
+     * The variables are NOT required to occur in the relation's element.
      *
-     * @return
+     * @return A list of variables
      */
     List<Var> getVars();
 
-    // Set<Var> getFixedVars();
 
-    Element getElement();
 
     /**
      * Return the set of mentioned variables without the distinguished ones
@@ -63,6 +65,19 @@ public interface Relation {
 
         Relation result = new RelationImpl(newElement, newVars);
         return result;
+    }
+
+    /**
+     * Rename the variables of the relation to the given variables
+     * In case of clashes, prior variables will be replaced with fresh ones.
+     * Delegates ot {@link RelationUtils#rename(Relation, List)}.
+     *
+     * @param r
+     * @param targetVars
+     * @return
+     */
+    default Relation rename(List<Var> targetVars) {
+        return RelationUtils.rename(this, targetVars);
     }
 
     default UnaryRelation toUnaryRelation() {
@@ -207,6 +222,8 @@ public interface Relation {
     default List<Element> getElements() {
         return ElementUtils.toElementList(getElement());
     }
+
+
 
 //	public static TernaryRelation from(Triple t) {
 //		new TernaryRelationImpl(ElementUtils.createElement(t), t.getSubject(), t.getPredicate(), t.getObject())

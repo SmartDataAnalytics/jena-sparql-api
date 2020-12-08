@@ -27,6 +27,24 @@ import org.apache.jena.sparql.graph.NodeTransform;
 public class VarExprListUtils {
 
     /**
+     * Add variables to an {@link VarExprList} if they are not already present in it
+     *
+     * @param varExprList
+     * @param vars
+     * @return
+     */
+    public static VarExprList addAbsentVars(VarExprList varExprList , Collection<Var> vars) {
+        for (Var var : vars) {
+            if (!varExprList.contains(var)) {
+                varExprList.add(var);
+            }
+        }
+
+        return varExprList;
+    }
+
+
+    /**
      * Invert the mapping of a var expr list and return it as a jena-shaded guava Multimap.
      * ExprVars are generated for each variable that is otherwise mapped to null.
      *

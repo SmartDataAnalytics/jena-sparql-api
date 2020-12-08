@@ -23,7 +23,7 @@ public class InputSplits {
 
         long priorOffset = -1;
         for(int i = 0; i < rawSplits.size(); ++i) {
-            try(Reference<Block> blockRef = blockSource.contentAtOrAfter(i, true)) {
+            try(Reference<? extends Block> blockRef = blockSource.contentAtOrAfter(i, true)) {
                 if(blockRef != null) {
                     // Ensure that no distinct split resolve to the same block - otherwise ignore
                     // those splits that are too close to each other
@@ -72,7 +72,7 @@ public class InputSplits {
 //		PageManager pageManager = PageManagerForFileChannel.create(fileChannel,  128 * 1024 * 1024);
 //		PageManager pageManager = new PageManagerForByteBuffer(ByteBuffer.wrap(str.getBytes()));
 
-        long size = pageManager.getEndPos();
+        long size = pageManager.size();
         //long size = fileChannel.size();
         int numChunks = 4; //32;
         boolean fwd = true;

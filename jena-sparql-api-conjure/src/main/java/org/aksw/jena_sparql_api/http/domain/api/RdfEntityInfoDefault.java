@@ -21,10 +21,9 @@ public interface RdfEntityInfoDefault
     @Override
     String getContentType();
 
-
-//	@IriNs("eg")
-//	@Override
-//	Long getContentLength();
+//    @IriNs("eg")
+//    @Override
+//    Long getContentLength();
 
     /**
      * Charset, such as UTF-8 or ISO 8859-1

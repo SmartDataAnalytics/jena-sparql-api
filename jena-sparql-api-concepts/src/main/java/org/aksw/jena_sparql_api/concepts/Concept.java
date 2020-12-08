@@ -7,6 +7,7 @@ import org.aksw.jena_sparql_api.stmt.SparqlPrologueParser;
 import org.aksw.jena_sparql_api.stmt.SparqlPrologueParserImpl;
 import org.aksw.jena_sparql_api.stmt.SparqlQueryParser;
 import org.aksw.jena_sparql_api.stmt.SparqlQueryParserImpl;
+import org.aksw.jena_sparql_api.stmt.SparqlQueryParserWrapperSelectShortForm;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query;
@@ -30,7 +31,7 @@ import org.apache.jena.sparql.syntax.ElementTriplesBlock;
  *
  */
 public class Concept
-	implements UnaryRelation
+    implements UnaryRelation
 {
     private Element element;//List<Element> elements;
     private Var var;
@@ -53,15 +54,47 @@ public class Concept
      * Util method to parse strings that use a pipe as a separator between variable and sparql string
      * ?s | ?s a ex:Airport
      *
+     * FIXME This syntax should be replaced with standard SPARQL SELECT where SELECT is omitted:
+     *       [SELECT] ?s { ?s a ex:Airport }
+     *
      * @param str
      * @return
      */
     public static Concept parse(String str) {
-        Concept result = parse(str, null);
+        return parse(str, null);
+    }
+
+    public static Concept createFromQuery(Query query) {
+        if (!query.isSelectType()) {
+            throw new RuntimeException("Query must be of select type");
+        }
+
+        if (query.getProjectVars().size() != 1) {
+            throw new RuntimeException("Query must have exactly 1 result variable");
+        }
+
+        Var var = query.getProjectVars().get(0);
+
+        // FIXME Check for aggregators and such
+
+        Concept result = new Concept(query.getQueryPattern(), var);
         return result;
     }
 
+
     public static Concept parse(String str, PrefixMapping pm) {
+        pm = pm == null ?  PrefixMapping.Extended : pm;
+
+        SparqlQueryParser parser = SparqlQueryParserWrapperSelectShortForm.wrap(
+                SparqlQueryParserImpl.create(Syntax.syntaxARQ, new Prologue(pm)));
+
+        Query query = parser.apply(str);
+
+        Concept result = createFromQuery(query);
+        return result;
+    }
+
+    public static Concept parseOld(String str, PrefixMapping pm) {
         String[] splits = str.split("\\|", 2);
         if(splits.length != 2) {
             throw new RuntimeException("Invalid string: " + str);
@@ -128,7 +161,7 @@ public class Concept
 
         return result;
     }
-    
+
     public static Element parseElement(String elementStr, PrefixMapping prefixMapping) {
         String tmp = elementStr.trim();
         boolean isEnclosed = tmp.startsWith("{") && tmp.endsWith("}");
@@ -141,7 +174,7 @@ public class Concept
 
         Query query = new Query();
         if(prefixMapping != null) {
-        	query.setPrefixMapping(prefixMapping);
+            query.setPrefixMapping(prefixMapping);
         }
         // TODO Make parser configurable
         SPARQLParser parser = new ParserSPARQL11();

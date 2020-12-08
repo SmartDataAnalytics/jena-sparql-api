@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.channels.FileChannel;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -19,6 +20,7 @@ import org.aksw.jena_sparql_api.io.binseach.BlockSources;
 import org.aksw.jena_sparql_api.rx.GraphOpsRx;
 import org.aksw.jena_sparql_api.rx.RDFDataMgrRx;
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream;
+import org.apache.commons.io.IOUtils;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.riot.Lang;
@@ -152,6 +154,17 @@ public class TestBinSearchBz2 {
         logger.debug("Needed " + (sw.elapsed(TimeUnit.MILLISECONDS) * 0.001) + " seconds for " + i + " lookups on " + path);
 
     }
+
+
+//    @Test
+    public void testLocalBinSearch() throws IOException, Exception {
+        try(BinarySearcher bs = BlockSources.createBinarySearcherBz2(Paths.get("/home/raven/tmp/sorttest/dnb-all_lds_20200213.sorted.nt.bz2"))) {
+            try (InputStream in = bs.search("<https://d-nb.info/1017454930>")) {
+                System.out.println("Output: " + IOUtils.toString(in, StandardCharsets.UTF_8));
+            }
+        }
+    }
+
 }
 
 //public static void doAssert(BinarySearcher searcher, String key, int expectedLines) throws IOException {

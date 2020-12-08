@@ -1,6 +1,9 @@
 package org.aksw.jena_sparql_api.io.binseach;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
+
+import org.aksw.jena_sparql_api.io.common.Reference;
 
 /**
  * A page is a fixed size sequence of bytes obtained from a page manager backed by a ByteBuffer.
@@ -18,8 +21,9 @@ import java.nio.ByteBuffer;
  *
  */
 public interface Page
+    extends Block
 {
-    long getId();
+    long getOffset();
 
     PageManager getPageManager();
 
@@ -33,12 +37,36 @@ public interface Page
      */
     ByteBuffer newBuffer();
 
+    default Reference<? extends Block> prevBlock() throws IOException {
+        return getPageManager().contentAtOrBefore(getOffset(), false);
+    }
+
+    default Reference<? extends Page> nextBlock() throws IOException {
+        return getPageManager().contentAtOrAfter(getOffset(), false);
+    }
+
+
     /**
-     * Release the page.
-     * No ByteBuffer obtained from this page should be used anymore
+     * Check if there is a subsequent block.
      *
+     * @return
+     * @throws IOException
      */
-//	void release();
-//
-//	boolean isReleased();
+    default boolean hasNext() throws IOException {
+        return getPageManager().hasBlockAfter(getOffset());
+    }
+
+    default boolean hasPrev() throws IOException {
+        return getPageManager().hasBlockAfter(getOffset());
+    }
+
+    default long length() throws IOException {
+        return getPageManager().getSizeOfBlock(getOffset());
+    }
+
+    @Override
+    default Seekable newChannel() {
+        ByteBuffer buf = newBuffer();
+        return new PageNavigator(new PageManagerForByteBuffer(buf));
+    }
 }

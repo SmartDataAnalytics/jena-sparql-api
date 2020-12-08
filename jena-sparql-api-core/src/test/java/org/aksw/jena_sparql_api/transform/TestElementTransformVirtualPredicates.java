@@ -27,11 +27,13 @@ import org.apache.jena.sparql.algebra.OpAsQuery;
 import org.apache.jena.sparql.core.Prologue;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.util.Context;
+import org.apache.jena.sys.JenaSystem;
 import org.apache.jena.vocabulary.RDFS;
 import org.junit.Test;
 
 public class TestElementTransformVirtualPredicates {
 
+    static { JenaSystem.init(); }
 
     public static void main(String[] args) {
         TestElementTransformVirtualPredicates x = new TestElementTransformVirtualPredicates();
@@ -40,10 +42,10 @@ public class TestElementTransformVirtualPredicates {
 
     @Test
     public void test() {
-    	// Set up some default namespaces
-    	Prologue prologue = new Prologue();
+        // Set up some default namespaces
+        Prologue prologue = new Prologue();
         prologue.setPrefixMapping(PrefixMapping.Extended);
-        
+
         // Load a simple RDF model about people and their birth date
         // Note, that there is no explicit 'age' attribute in the data
         Model model = RDFDataMgr.loadModel("virtual-predicates-example.ttl");
@@ -51,37 +53,37 @@ public class TestElementTransformVirtualPredicates {
 
 
         // Set up a map for expanding predicates with binary (sparql) relations
-    	Map<Node, BinaryRelation> virtualPredicates = new HashMap<Node, BinaryRelation>();
+        Map<Node, BinaryRelation> virtualPredicates = new HashMap<Node, BinaryRelation>();
 
-    	// Register a virtual predicate that computes the age from the current
-    	// date and birth date of a person
+        // Register a virtual predicate that computes the age from the current
+        // date and birth date of a person
         virtualPredicates.put(NodeFactory.createURI("http://www.example.org/age"),
-        		BinaryRelationImpl.create("?s a eg:Person ; eg:birthDate ?start . " + 
-        		        "BIND(NOW() AS ?end) " +
-        				"BIND(YEAR(?end) - YEAR(?start) - IF(MONTH(?end) < MONTH(?start) || (MONTH(?end) = MONTH(?start) && DAY(?end) < DAY(?start)), 1, 0) as ?age)",
+                BinaryRelationImpl.create("?s a eg:Person ; eg:birthDate ?start . " +
+                        "BIND(NOW() AS ?end) " +
+                        "BIND(YEAR(?end) - YEAR(?start) - IF(MONTH(?end) < MONTH(?start) || (MONTH(?end) = MONTH(?start) && DAY(?end) < DAY(?start)), 1, 0) as ?age)",
                         "s", "age", prologue));
 
-        
+
         // Set up some queries and run them
         SparqlQueryParser parser = SparqlQueryParserImpl.create(Syntax.syntaxARQ, prologue);
-        
+
         List<Query> queries = Arrays.asList(
             parser.apply("Select (year(NOW()) - year('1984-01-01'^^xsd:date) AS ?d) { }"),
-        	parser.apply("Select * { ?s ?p ?o  }"),
-        	parser.apply("Select * { ?s eg:age ?o  }"),
-        	parser.apply("Select * { ?s a eg:Person ; eg:age ?a }"),
-        	parser.apply("Select * { ?s a eg:Person ; ?p ?o . FILTER(?p = eg:age) }")
+            parser.apply("Select * { ?s ?p ?o  }"),
+            parser.apply("Select * { ?s eg:age ?o  }"),
+            parser.apply("Select * { ?s a eg:Person ; eg:age ?a }"),
+            parser.apply("Select * { ?s a eg:Person ; ?p ?o . FILTER(?p = eg:age) }")
         );
 
         for(Query query : queries) {
-        	if(query.isQueryResultStar()) {
-	        	query.getProjectVars().addAll(query.getResultVars().stream().map(Var::alloc).collect(Collectors.toList()));
-	        	query.setQueryResultStar(false);
-	        	System.out.println(query);
-        	}
+            if(query.isQueryResultStar()) {
+                query.getProjectVars().addAll(query.getResultVars().stream().map(Var::alloc).collect(Collectors.toList()));
+                query.setQueryResultStar(false);
+                System.out.println(query);
+            }
 
-        	Query intermediateQuery = ElementTransformVirtualPredicates.transform(query, virtualPredicates, true);
-        	
+            Query intermediateQuery = ElementTransformVirtualPredicates.transform(query, virtualPredicates, true);
+
             Op op = Algebra.compile(intermediateQuery);
 
             Context ctx = ARQ.getContext().copy();
@@ -104,13 +106,13 @@ public class TestElementTransformVirtualPredicates {
 //            ctx.put(ARQ.optFilterExpandOneOf, false);
             ctx.put(ARQ.optFilterPlacement, true);
             ctx.put(ARQ.optFilterPlacementBGP, true);
-            
+
             // TODO Implement rewrite to pull up
             //  extends over joins (join(..., extends(...), ...) -> extends(join(...))
             // Then apply merge BGP
             //ctx.put(ARQ.opt);
-            
-            
+
+
 
             //op = Optimize.optimize(op, ctx);
             System.out.println(op);
@@ -119,12 +121,12 @@ public class TestElementTransformVirtualPredicates {
             System.out.println("Rewritten query: " + finalQuery);
 
             System.out.println(ResultSetFormatter.asText(
-            		FluentQueryExecutionFactory
-            			.from(model).create().createQueryExecution(finalQuery).execSelect()));
-            
+                    FluentQueryExecutionFactory
+                        .from(model).create().createQueryExecution(finalQuery).execSelect()));
+
         }
-        
-        
+
+
         //virtualPredicates.put(NodeFactory.createURI("http://ex.org/label"), Relation.create("GRAPH ?g { ?s ?p ?o } . ?g <http://owner> ?o", "s", "o"));
         //virtualPredicates.put(NodeFactory.createURI("http://ex.org/label"), Relation.create("?s <test> ?g . ?g <http://owner> ?o", "s", "o"));
 

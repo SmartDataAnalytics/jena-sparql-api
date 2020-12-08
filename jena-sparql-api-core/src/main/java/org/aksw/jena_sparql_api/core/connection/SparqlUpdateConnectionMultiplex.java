@@ -8,38 +8,37 @@ import org.apache.jena.update.Update;
 import org.apache.jena.update.UpdateRequest;
 
 public class SparqlUpdateConnectionMultiplex
-	extends TransactionalMultiplex<SparqlUpdateConnection>
-	implements SparqlUpdateConnection
+    extends TransactionalMultiplex<SparqlUpdateConnection>
+    implements SparqlUpdateConnection
 {
 
-	public SparqlUpdateConnectionMultiplex(SparqlUpdateConnection ... delegates) {
-		this(Arrays.asList(delegates));
-	}
-	
-	public SparqlUpdateConnectionMultiplex(Collection<? extends SparqlUpdateConnection> delegates) {
-		super(delegates);
-		// TODO Auto-generated constructor stub
-	}
+    public SparqlUpdateConnectionMultiplex(SparqlUpdateConnection ... delegates) {
+        this(Arrays.asList(delegates));
+    }
 
-	@Override
-	public void update(Update update) {
-		TransactionalMultiplex.forEach(delegates, d -> d.update(update));
-	}
+    public SparqlUpdateConnectionMultiplex(Collection<? extends SparqlUpdateConnection> delegates) {
+        super(delegates);
+    }
 
-	@Override
-	public void update(UpdateRequest update) {
-		TransactionalMultiplex.forEach(delegates, d -> d.update(update));
-	}
+    @Override
+    public void update(Update update) {
+        TransactionalMultiplex.forEach(delegates, d -> d.update(update));
+    }
 
-	@Override
-	public void update(String updateString) {
-		TransactionalMultiplex.forEach(delegates, d -> d.update(updateString));
-	}
+    @Override
+    public void update(UpdateRequest update) {
+        TransactionalMultiplex.forEach(delegates, d -> d.update(update));
+    }
 
-	@Override
-	public void close() {
-		TransactionalMultiplex.forEach(delegates, d -> d.close());
-	}
+    @Override
+    public void update(String updateString) {
+        TransactionalMultiplex.forEach(delegates, d -> d.update(updateString));
+    }
+
+    @Override
+    public void close() {
+        TransactionalMultiplex.forEach(delegates, d -> d.close());
+    }
 
 
 }

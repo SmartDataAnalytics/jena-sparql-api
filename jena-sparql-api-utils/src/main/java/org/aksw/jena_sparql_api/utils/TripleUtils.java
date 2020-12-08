@@ -14,12 +14,33 @@ import org.apache.jena.graph.Triple;
 import org.apache.jena.riot.writer.NTriplesWriter;
 import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.engine.binding.BindingHashMap;
+import org.apache.jena.sparql.path.P_Path0;
 
 public class TripleUtils {
 
-	public static Stream<Node> streamNodes(Triple t) {
-		return Stream.of(t.getSubject(), t.getPredicate(), t.getObject());
-	}
+    public static Stream<Node> streamNodes(Triple t) {
+        return Stream.of(t.getSubject(), t.getPredicate(), t.getObject());
+    }
+
+
+    /**
+     * Create a logical conjunction from two triple pattern.
+     *
+     * @param a
+     * @param b
+     * @return
+     */
+    public static Triple logicalAnd(Triple a, Triple b) {
+        Node s = NodeUtils.logicalAnd(a.getMatchSubject(), b.getMatchSubject());
+        Node p = NodeUtils.logicalAnd(a.getMatchPredicate(), b.getMatchPredicate());
+        Node o = NodeUtils.logicalAnd(a.getMatchObject(), b.getMatchObject());
+
+        Triple result = s == null || p == null || o == null
+                ? null
+                : Triple.createMatch(s, p, o);
+
+        return result;
+    }
 
 //    public static Multimap<Node, Triple> indexBySubject(Iterable<Triple> triples) {
 //        Multimap<Node, Triple> result = indexBySubject(triples.iterator());
@@ -38,13 +59,52 @@ public class TripleUtils {
 //        return result;
 //    }
 
-	public static Triple create(Node s, Node p, Node o, boolean swapSO) {
-		Triple result = swapSO
-			? new Triple(o, p, s)
-			: new Triple(s, p, o);
-			
-		return result;
-	}
+    /**
+     * If isForward is true then return the triple's subject otherwise its object.
+     */
+    public static Node getSource(Triple triple, boolean isForward) {
+        return isForward ? triple.getSubject() : triple.getObject();
+    }
+
+    /**
+     * If isForward is true then return the triple's object otherwise its subject.
+     */
+    public static Node getTarget(Triple triple, boolean isForward) {
+        return isForward ? triple.getObject() : triple.getSubject();
+    }
+
+    /**
+     * Create a matcher for triples having a certain predicate and a source node.
+     * If 'isForward' is true then the subject acts as the source otherwise its the object.
+     */
+    public static Triple createMatch(Node source, P_Path0 predicate) {
+        return createMatch(source, predicate.getNode(), predicate.isForward());
+    }
+
+    /**
+     * Create a matcher for triples having a certain predicate and a source node.
+     * If 'isForward' is true then the subject acts as the source otherwise its the object.
+     */
+    public static Triple createMatch(Node source, Node predicate, boolean isForward) {
+        Triple result = isForward
+                ? Triple.createMatch(source, predicate, Node.ANY)
+                : Triple.createMatch(Node.ANY, predicate, source);
+
+        return result;
+    }
+
+    public static Triple create(Node s, P_Path0 p, Node o) {
+        Triple result = create(s, p.getNode(), o, p.isForward());
+        return result;
+    }
+
+    public static Triple create(Node s, Node p, Node o, boolean isForward) {
+        Triple result = isForward
+            ? new Triple(s, p, o)
+            : new Triple(o, p, s);
+
+        return result;
+    }
 
     public static Node[] toArray(Triple t) {
         Node[] result = new Node[] { t.getSubject(), t.getPredicate(), t.getObject() };
@@ -110,17 +170,17 @@ public class TripleUtils {
         return result;
     }
 
-	public static Triple listToTriple(List<Node> nodes) {
-	    return new Triple(nodes.get(0), nodes.get(1), nodes.get(2));
-	}
+    public static Triple listToTriple(List<Node> nodes) {
+        return new Triple(nodes.get(0), nodes.get(1), nodes.get(2));
+    }
 
-	public static List<Node> tripleToList(Triple triple)
-	{
-	    List<Node> result = new ArrayList<Node>();
-	    result.add(triple.getSubject());
-	    result.add(triple.getPredicate());
-	    result.add(triple.getObject());
-	
-	    return result;
-	}
+    public static List<Node> tripleToList(Triple triple)
+    {
+        List<Node> result = new ArrayList<Node>();
+        result.add(triple.getSubject());
+        result.add(triple.getPredicate());
+        result.add(triple.getObject());
+
+        return result;
+    }
 }
