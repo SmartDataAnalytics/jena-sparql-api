@@ -21,6 +21,26 @@ public class SetFromGraph
     }
 
     @Override
+    public boolean add(Triple e) {
+        boolean result = !contains(e);
+        if (result) {
+            graph.add(e);
+        }
+        return result;
+    }
+
+    @Override
+    public boolean remove(Object o) {
+        boolean result = contains(o);
+
+        if (result) {
+            Triple t = (Triple)o;
+            graph.delete(t);
+        }
+        return result;
+    }
+
+    @Override
     public ExtendedIterator<Triple> iterator() {
         ExtendedIterator<Triple> result = graph.find();
         return result;
