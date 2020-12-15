@@ -112,17 +112,19 @@
 	<properties>
 		<jena.version>3.17.0</jena.version>
 		<!-- <jetty.version>9.4.8.v20171121</jetty.version> -->
-		<jetty.version>9.4.18.v20190429</jetty.version>
+		<!-- <jetty.version>9.4.18.v20190429</jetty.version> -->
+		<!-- <jetty.version>11.0.0</jetty.version> this is java 11+ only -->
+		<jetty.version>9.4.35.v20201120</jetty.version>
 
 		<!-- <jgrapht.version>1.1.0</jgrapht.version> -->
 
 		<!-- 2.18 could be tried out next -->
 		<!-- <jersey.version>2.26-b03</jersey.version> -->
-		<jersey.version>2.22.2</jersey.version>
+		<jersey.version>2.30</jersey.version>
 
-		<spring.version>4.3.23.RELEASE</spring.version>
-		<spring.batch.version>4.0.0.RELEASE</spring.batch.version>
-		<aksw.commons.version>0.8.15</aksw.commons.version>
+		<spring.version>5.3.2</spring.version>
+		<spring.batch.version>4.3.1</spring.batch.version>
+		<aksw.commons.version>0.8.16-SNAPSHOT</aksw.commons.version>
 
 		<!-- <atmosphere.version>2.0.0.RC3</atmosphere.version> -->
 		<!-- <atmosphere-spring.version>1.1.0.RC5</atmosphere-spring.version> -->
@@ -757,7 +759,7 @@
 
 			<dependency>
 				<groupId>org.glassfish.jersey.ext</groupId>
-				<artifactId>jersey-spring3</artifactId>
+				<artifactId>jersey-spring5</artifactId>
 				<version>${jersey.version}</version>
 
 				<exclusions>
@@ -969,13 +971,19 @@
 			<dependency>
 				<groupId>javax.servlet</groupId>
 				<artifactId>javax.servlet-api</artifactId>
-				<version>3.1.0</version>
+				<version>4.0.1</version>
 			</dependency>
+
+<!-- 			<dependency> -->
+<!-- 				<groupId>javax.ws.rs</groupId> -->
+<!-- 				<artifactId>jsr311-api</artifactId> -->
+<!-- 				<version>1.1.1</version> -->
+<!-- 			</dependency> -->
 
 			<dependency>
 				<groupId>javax.ws.rs</groupId>
-				<artifactId>jsr311-api</artifactId>
-				<version>1.1.1</version>
+				<artifactId>javax.ws.rs-api</artifactId>
+				<version>2.1.1</version>
 			</dependency>
 
 			<dependency>
