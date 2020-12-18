@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 import org.aksw.commons.collections.MapUtils;
 import org.aksw.commons.collections.generator.Generator;
 import org.aksw.jena_sparql_api.backports.syntaxtransform.ExprTransformNodeElement;
+import org.aksw.jena_sparql_api.util.element.ElementVisitorGetSubElements;
 import org.aksw.jena_sparql_api.utils.transform.NodeTransformCollectNodes;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
@@ -33,6 +34,7 @@ import org.apache.jena.sparql.syntax.ElementFilter;
 import org.apache.jena.sparql.syntax.ElementGroup;
 import org.apache.jena.sparql.syntax.ElementNamedGraph;
 import org.apache.jena.sparql.syntax.ElementPathBlock;
+import org.apache.jena.sparql.syntax.ElementService;
 import org.apache.jena.sparql.syntax.ElementTriplesBlock;
 import org.apache.jena.sparql.syntax.ElementUnion;
 import org.apache.jena.sparql.syntax.PatternVars;
@@ -59,6 +61,10 @@ public class ElementUtils {
 //        return result;
 //    }
 
+	
+	public static List<Element> getSubElements(Element element) {
+		return ElementVisitorGetSubElements.getSubElements(element);
+	}
 
     public static Element applyOpTransform(Element elt, Function<? super Op, ? extends Op> transform) {
         Op beforeOp = Algebra.compile(elt);
@@ -97,7 +103,6 @@ public class ElementUtils {
     public static ElementTriplesBlock createElementTriple(Node s, Node p, Node o) {
         return createElement(new Triple(s, p, o));
     }
-
 
 
     public static ElementPathBlock createElementPath(Node s, Path p, Node o) {

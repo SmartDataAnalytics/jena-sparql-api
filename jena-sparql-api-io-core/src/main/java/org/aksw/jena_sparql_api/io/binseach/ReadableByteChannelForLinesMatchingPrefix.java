@@ -1,6 +1,7 @@
 package org.aksw.jena_sparql_api.io.binseach;
 
 import java.io.IOException;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
 
@@ -60,7 +61,7 @@ public class ReadableByteChannelForLinesMatchingPrefix
             }
         } else {
             ByteBuffer adjustedDst = dst.duplicate();
-            adjustedDst.limit(adjustedDst.position() + n);
+            ((Buffer)adjustedDst).limit(adjustedDst.position() + n);
 
 //            byte[] foobar = new byte[200];
 //            ByteBuffer foo = ByteBuffer.wrap(foobar);

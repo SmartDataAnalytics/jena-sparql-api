@@ -17,6 +17,7 @@ import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.rdfconnection.RDFConnectionLocal;
 import org.apache.jena.rdfconnection.RDFConnectionModular;
+import org.apache.jena.rdfconnection.RDFDatasetConnection;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.apache.jena.rdfconnection.SparqlUpdateConnection;
 import org.apache.jena.riot.WebContent;
@@ -151,6 +152,7 @@ public class RDFConnectionFactoryEx {
     }
 
 
+    /** Reflective access to an {@link RDFConnectionModular}'s queryConnection. */
     public static SparqlQueryConnection getQueryConnection(RDFConnectionModular conn) {
         SparqlQueryConnection result;
         try {
@@ -164,6 +166,7 @@ public class RDFConnectionFactoryEx {
         return result;
     }
 
+    /** Reflective access to an {@link RDFConnectionModular}'s updateConnection. */
     public static SparqlUpdateConnection getUpdateConnection(RDFConnectionModular conn) {
         SparqlUpdateConnection result;
         try {
@@ -177,6 +180,21 @@ public class RDFConnectionFactoryEx {
         return result;
     }
 
+    /** Reflective access to an {@link RDFConnectionModular}'s datasetConnection. */
+    public static RDFDatasetConnection getDatasetConnection(RDFConnectionModular conn) {
+    	RDFDatasetConnection result;
+        try {
+            Field f = RDFConnectionModular.class.getDeclaredField("datasetConnection");
+            f.setAccessible(true);
+            result = (RDFDatasetConnection)f.get(conn);
+        } catch(Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        return result;
+    }
+
+    /** Reflective access to an {@link RDFConnectionModular}'s dataset. */
     public static Dataset getDataset(RDFConnectionLocal conn) {
         Dataset result;
         try {
@@ -214,6 +232,19 @@ public class RDFConnectionFactoryEx {
         return result;
     }
 
+    public static RDFDatasetConnection unwrapDatasetConnection(RDFDatasetConnection conn) {
+    	RDFDatasetConnection result;
+        if(conn instanceof RDFConnectionModular) {
+        	RDFDatasetConnection tmp = getDatasetConnection((RDFConnectionModular)conn);
+            result = unwrapDatasetConnection(tmp);
+        } else {
+            result = conn;
+        }
+
+        return result;
+    }
+
+    
     public static RDFConnection wrapWithContext(RDFConnection rawConn) {
         return wrapWithContext(rawConn, cxt -> {});
     }
@@ -230,6 +261,7 @@ public class RDFConnectionFactoryEx {
      * @param rawConn
      * @return
      */
+    @Deprecated // Use wrapWithPostProcessor
     public static RDFConnection wrapWithContext(RDFConnection rawConn, Consumer<Context> contextHandler) {
         RDFConnection[] result = {null};
 
@@ -285,5 +317,19 @@ public class RDFConnectionFactoryEx {
         return result[0];
     }
 
+    
+    public static RDFConnectionModular wrapWithPostProcessor(
+    		RDFConnection rawConn,
+    		Function<? super QueryExecution, ? extends QueryExecution> queryExecTransform
+    		) {
+    	
+        SparqlQueryConnection queryConn = unwrapQueryConnection(rawConn);
+        SparqlUpdateConnection updateConn = unwrapUpdateConnection(rawConn);
+        RDFDatasetConnection datasetConn = unwrapDatasetConnection(rawConn);
+        
+        return new RDFConnectionModular(
+        		new SparqlQueryConnectionWithExecTransform(queryConn, queryExecTransform), updateConn, datasetConn);
+    }
+    
 
 }

@@ -105,7 +105,7 @@ public class SparqlQueryConnectionWithReconnect
     protected SparqlQueryConnection activeDelegate;
 
     @Override
-    protected Transactional getDelegate() {
+    public Transactional getDelegate() {
         return activeDelegate;
     }
 

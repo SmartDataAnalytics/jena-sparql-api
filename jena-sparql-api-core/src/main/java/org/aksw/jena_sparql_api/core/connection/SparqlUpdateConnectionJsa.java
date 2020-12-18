@@ -1,6 +1,7 @@
 package org.aksw.jena_sparql_api.core.connection;
 
 import org.aksw.jena_sparql_api.core.UpdateExecutionFactory;
+import org.apache.jena.sparql.core.Transactional;
 import org.apache.jena.update.UpdateProcessor;
 import org.apache.jena.update.UpdateRequest;
 
@@ -28,4 +29,9 @@ public class SparqlUpdateConnectionJsa
             throw new RuntimeException();
         }
     }
+
+	@Override
+	public Transactional getDelegate() {
+		return null;
+	}
 }

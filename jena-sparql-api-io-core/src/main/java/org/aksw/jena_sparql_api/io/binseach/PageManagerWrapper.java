@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api.io.binseach;
 
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 
 import org.aksw.jena_sparql_api.io.common.Reference;
@@ -67,8 +68,8 @@ public class PageManagerWrapper
 //
 //				}
 
-                resultBuffer.position(o + effIndex);
-                resultBuffer.limit(o + effEndIndex);
+                ((Buffer)resultBuffer).position(o + effIndex);
+                ((Buffer)resultBuffer).limit(o + effEndIndex);
             }
             //}
         } else {
@@ -84,15 +85,15 @@ public class PageManagerWrapper
 
                         buf = buf.duplicate();
                         int index = i == effPage ? effIndex : 0;
-                        buf.position(o + index);
+                        ((Buffer)buf).position(o + index);
 
                         //int x = buf.remaining();
                         int take = Math.min(buf.remaining(), resultBuffer.remaining());
-                        buf.limit(buf.position() + take);
+                        ((Buffer)buf).limit(buf.position() + take);
                         resultBuffer.put(buf);
 
                         if(resultBuffer.remaining() == 0) {
-                            resultBuffer.position(0);
+                            ((Buffer)resultBuffer).position(0);
                             break;
                         }
                     } else {
