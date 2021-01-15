@@ -12,10 +12,9 @@ import org.aksw.jena_sparql_api.core.SparqlServiceFactory;
 import org.aksw.jena_sparql_api.stmt.SparqlStmtParser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
-import org.springframework.stereotype.Service;
 
-@Service
-//@Path("/sparql")
+// @Service
+// @Path("/sparql")
 @Path("/")
 public class ServletSparqlServiceImpl
     extends ServletSparqlServiceBase

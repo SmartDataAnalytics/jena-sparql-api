@@ -1004,6 +1004,21 @@ public class MapperProxyUtils {
         return null;
     }
 
+    public static Object applyInModelIfApplicable(Object o, Model sourceModel) {
+    	Object result;
+    	
+    	// If the argument is an RDFNode then first create a copy of it in the
+        // model of s (where this value is about to be added)
+        if (o instanceof RDFNode) {
+        	RDFNode rdfNode = (RDFNode)o;
+        	result = rdfNode.inModel(sourceModel);
+        } else {
+        	result = o;
+        }
+    	
+        return result;
+    }
+    
     @SuppressWarnings("unchecked")
     public static BiFunction<Property, Boolean, BiConsumer<Resource, Object>> viewAsScalarSetter(
             MethodDescriptor methodDescriptor,
@@ -1019,6 +1034,8 @@ public class MapperProxyUtils {
         BiFunction<Property, Boolean, BiConsumer<Resource, Object>> result = (p, isFwd) -> (s, o) -> {
             ViewBundle viewBundle = setView.apply(p, isFwd).apply(s);
 
+            o = applyInModelIfApplicable(o, s.getModel());
+            
             Set set = (Set)viewBundle.getJavaView();
             set.clear();
             set.add(o);

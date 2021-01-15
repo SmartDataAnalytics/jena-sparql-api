@@ -9,7 +9,10 @@ import org.apache.jena.sparql.core.Transactional;
 public interface TransactionalTmp
     extends Transactional
 {
-	Transactional getDelegate();
+	/** This method needs to be overridden for transaction support */
+	default Transactional getDelegate() {
+		return null;
+	}
 	
     @Override
     default boolean isInTransaction() {

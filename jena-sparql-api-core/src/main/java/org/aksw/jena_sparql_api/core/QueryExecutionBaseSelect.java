@@ -1,6 +1,5 @@
 package org.aksw.jena_sparql_api.core;
 
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.Set;
 
@@ -334,7 +333,7 @@ public abstract class QueryExecutionBaseSelect
         */
     }
 
-    private Iterator<Triple> executeConstructStreaming(Query query) {
+    protected Iterator<Triple> executeConstructStreaming(Query query) {
         if (!query.isConstructType()) {
             throw new RuntimeException("CONSTRUCT query expected. Got: ["
                     + query.toString() + "]");
@@ -375,14 +374,9 @@ public abstract class QueryExecutionBaseSelect
         return result;
     }
 
-    private Model executeConstruct(Query query, Model result) {
-        createModel(result, executeConstructStreaming(query));
-        return result;
-    }
-
     @Override
     public Model execConstruct(Model result) {
-        return executeConstruct(this.query, result);
+        return createModel(result, execConstructTriples());
     }
 
     @Override

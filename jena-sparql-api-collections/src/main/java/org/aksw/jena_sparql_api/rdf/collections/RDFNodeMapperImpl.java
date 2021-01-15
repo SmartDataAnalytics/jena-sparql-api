@@ -137,6 +137,7 @@ public class RDFNodeMapperImpl<T>
         if(obj instanceof RDFNode) {
             RDFNode r = (RDFNode)obj;
 
+            // For the TypeDecider to work a Resource must have a non-null model
             Class<?> effectiveViewClass = r.isResource()
                     ? ResourceUtils.getMostSpecificSubclass(r.asResource(), viewClass, typeDecider)
                     : viewClass;

@@ -52,7 +52,7 @@ public class SparqlQueryConnectionWithReconnect
     protected Query healthCheckQuery = QueryFactory.create(
             "SELECT * { ?s <http://www.example.org/rdf/type> <http://www.example.org/rdf/Resource> }");
 
-    protected Supplier<HealthcheckRunner.Builder> healthCheckBuilder;
+    protected Supplier<HealthcheckRunner.Builder<?>> healthCheckBuilder;
 
     /** True indicates that a recovery process was started which eventually failed */
     // protected boolean isLost = false;
@@ -73,7 +73,7 @@ public class SparqlQueryConnectionWithReconnect
     public SparqlQueryConnectionWithReconnect(
             Callable<SparqlQueryConnection> dataConnectionSupplier,
             Callable<SparqlQueryConnection> probeConnectionSupplier,
-            Supplier<HealthcheckRunner.Builder> healthCheckBuilder,
+            Supplier<HealthcheckRunner.Builder<?>> healthCheckBuilder,
             SparqlQueryConnection activeDelegate) {
         super();
         this.dataConnectionSupplier = dataConnectionSupplier;

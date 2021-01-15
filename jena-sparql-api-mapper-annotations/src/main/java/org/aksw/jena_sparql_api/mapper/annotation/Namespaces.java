@@ -4,9 +4,6 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
 @Retention(RetentionPolicy.RUNTIME)
-public @interface Namespace {
-//    String ns();
-//    String iri();
-	String prefix();
-    String value();
+public @interface Namespaces {
+    Namespace[] value(); // TODO is the default null or empty array? should be empty array.
 }

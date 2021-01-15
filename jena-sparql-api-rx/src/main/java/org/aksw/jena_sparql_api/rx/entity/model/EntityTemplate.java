@@ -14,6 +14,18 @@ import org.apache.jena.sparql.expr.ExprList;
 import org.apache.jena.sparql.graph.NodeTransform;
 import org.apache.jena.sparql.syntax.Template;
 
+
+/**
+ * An extension of a (triple-based) construct template where:
+ * - a set of nodes can be marked as 'entity nodes' which are starting points for traversing the template.
+ * - every blank node can be mapped to a tuple of expressions whose evaluation over a binding
+ *   yields an identity of the blank node.
+ * 
+ * 
+ * 
+ * @author raven
+ *
+ */
 public interface EntityTemplate {
 
     EntityTemplate cloneTemplate();

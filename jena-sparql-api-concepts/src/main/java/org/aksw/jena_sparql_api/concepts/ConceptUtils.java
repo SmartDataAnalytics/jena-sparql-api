@@ -286,7 +286,7 @@ public class ConceptUtils {
     }
 
     // FIMXE Consolidate with QueryGenerationUtils.createQuryCount
-    public static Query createQueryCount(Concept concept, Var outputVar, Long itemLimit, Long rowLimit) {
+    public static Query createQueryCount(UnaryRelation concept, Var outputVar, Long itemLimit, Long rowLimit) {
         Query subQuery = createQueryList(concept);
 
         if(rowLimit != null) {
@@ -454,7 +454,7 @@ public class ConceptUtils {
         return result;
     }
 
-    public static Concept createRenamedConcept(Concept concept, Map<Var, Var> varMap) {
+    public static Concept createRenamedConcept(UnaryRelation concept, Map<Var, Var> varMap) {
         Var newVar = MapUtils.getOrElse(varMap, concept.getVar(), concept.getVar());
         Element newElement = ElementUtils.createRenamedElement(concept.getElement(), varMap);
 
@@ -792,12 +792,12 @@ public class ConceptUtils {
         return result;
     }
 
-    public static Var freshVar(Concept concept) {
+    public static Var freshVar(UnaryRelation concept) {
         Var result = freshVar(concept, null);
         return result;
     }
 
-    public static Var freshVar(Concept concept, String baseVarName) {
+    public static Var freshVar(UnaryRelation concept, String baseVarName) {
         baseVarName = baseVarName == null ? "c" : baseVarName;
 
         Set<Var> varsMentioned = concept.getVarsMentioned();
@@ -808,7 +808,7 @@ public class ConceptUtils {
         return result;
     }
 
-    public static Concept createRenamedConcept(Concept concept, Var attrVar) {
+    public static Concept createRenamedConcept(UnaryRelation concept, Var attrVar) {
         Var newVar = freshVar(concept);
         Map<Var, Var> varMap = new HashMap<>();
         varMap.put(attrVar, newVar);
