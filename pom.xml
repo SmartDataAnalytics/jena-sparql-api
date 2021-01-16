@@ -53,6 +53,8 @@
 
 		<module>jena-sparql-api-concepts</module>
 
+		<module>jena-sparql-api-analytics</module>
+
 		<module>jena-sparql-api-query-containment</module>
 		<module>jena-sparql-api-cache-h2</module>
 		<module>jena-sparql-api-update</module>

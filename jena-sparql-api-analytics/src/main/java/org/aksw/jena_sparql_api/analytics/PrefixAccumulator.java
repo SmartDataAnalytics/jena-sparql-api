@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.cache.tests;
+package org.aksw.jena_sparql_api.analytics;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -8,107 +8,40 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
-import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
-import org.aksw.jena_sparql_api.mapper.AccBindingTransform;
-import org.aksw.jena_sparql_api.mapper.AccCondition;
 import org.aksw.jena_sparql_api.mapper.AccStaticMultiplex;
 import org.aksw.jena_sparql_api.mapper.Accumulator;
-import org.aksw.jena_sparql_api.mapper.AggMap2;
-import org.aksw.jena_sparql_api.mapper.AggTransform2;
 import org.aksw.jena_sparql_api.mapper.Aggregator;
+import org.aksw.jena_sparql_api.mapper.AggregatorBuilder;
 import org.aksw.jena_sparql_api.utils.ResultSetUtils;
 import org.apache.commons.collections4.OrderedMapIterator;
 import org.apache.commons.collections4.trie.PatriciaTrie;
 import org.apache.jena.graph.Node;
+import org.apache.jena.query.QueryExecution;
+import org.apache.jena.query.QueryExecutionFactory;
+import org.apache.jena.query.QueryFactory;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.binding.Binding;
 
-// TODO Maybe we can use the aggregator / accumulator infrastructure
-// These classes are actually the accumulators
-interface PrefixAggregator
-{
-    Set<String> getPrefixes();
-    void add(String prefix);
-}
-
-
-
-//class AccPartition<B, T>
-//    implements Accumulator<B, T>
-//{
-//    protected Function<String, String> prefixToGroup;
-//    protected BiFunction<String, String, PrefixAggregator> aggregatorFactory;
-//    protected Map<String, PrefixAggregator> groupToAggregator;
-//
-//
-//    // pattern for matching up to the third slash
-//    public static final Pattern pattern = Pattern.compile("(^([^/]*/){3})");
-//    public static String defaultGrouper(String prefix) {
-//        Matcher m = pattern.matcher(prefix);
-//
-//        String result = m.find() ? m.group(1) : null;
-//
-//        System.out.println("group " + result + " for " + prefix);
-//        return result;
-//    }
-//
-//    public PrefixAggregatorGrouping(int targetSize) {
-//        this(
-//            PrefixAggregatorGrouping::defaultGrouper,
-//            (prefix, group) -> new PrefixAggregatorImpl(targetSize)
-//        );
-//    }
-//
-//
-//    public PrefixAggregatorGrouping(Function<String, String> prefixToGroup,
-//            BiFunction<String, String, PrefixAggregator> aggregatorFactory) {
-//        super();
-//        this.prefixToGroup = prefixToGroup;
-//        this.aggregatorFactory = aggregatorFactory;
-//        this.groupToAggregator = new HashMap<>();
-//    }
-//
-//    @Override
-//    public void accumulate(String prefix) {
-//        String group = prefixToGroup.apply(prefix);
-//
-//        PrefixAggregator agg = groupToAggregator
-//            .computeIfAbsent(group, (g) -> aggregatorFactory.apply(prefix, g));
-//
-//        agg.add(prefix);
-//    }
-//
-//    @Override
-//    public Set<String> getValue() {
-//        Set<String> result = groupToAggregator.values().stream()
-//        .flatMap(v -> v.getPrefixes().stream())
-//        .collect(Collectors.toSet());
-//
-//        return result;
-//    }
-//}
 
 /**
- * Class for aggregating a set of prefixes with a specified target size from a set of strings
+ * Class for accumulating a set of prefixes with a specified target size from a set of strings
  *
  * @author raven
  *
  */
-public class PrefixAccumulatorImpl
+public class PrefixAccumulator
     implements Accumulator<String, Set<String>>
 {
     //public NavigableSet<String> prefixes = new TreeSet<>();
     protected PatriciaTrie<Void> prefixes = new PatriciaTrie<>();
     protected int targetSize;
 
-    public PrefixAccumulatorImpl(int targetSize) {
+    public PrefixAccumulator(int targetSize) {
         this.targetSize = targetSize;
     }
 
@@ -358,9 +291,9 @@ public class PrefixAccumulatorImpl
 
     public static Aggregator<String, Set<String>> createAggregatorStringPrefixes(int targetSize) {
         Aggregator<String, Set<String>> result = AggregatorBuilder
-                .from(() -> new PrefixAccumulatorImpl(targetSize))
-                .wrapWithMap(PrefixAccumulatorImpl::defaultGrouper)
-                .wrapWithTransform(PrefixAccumulatorImpl::flatMapMapValues)
+                .from(() -> new PrefixAccumulator(targetSize))
+                .wrapWithMap(PrefixAccumulator::defaultGrouper)
+                .wrapWithTransform(PrefixAccumulator::flatMapMapValues)
                 .get();
 
         return result;
@@ -368,12 +301,14 @@ public class PrefixAccumulatorImpl
 
     public static void main(String[] args) {
 
-        QueryExecutionFactory qef = FluentQueryExecutionFactory.http("http://dbpedia.org/sparql", "http://dbpedia.org").create();
+        // QueryExecutionFactory qef = FluentQueryExecutionFactory.http("http://dbpedia.org/sparql", "http://dbpedia.org").create();
+    	
+    	try (QueryExecution qe = QueryExecutionFactory.createServiceRequest("http://dbpedia.org/sparql", QueryFactory.create("Select * { ?s a <http://dbpedia.org/ontology/Airport> } Limit 100"))) {
+    		ResultSet rs = qe.execSelect();
+            Map<Var, Set<String>> ps = analyzePrefixes(rs, 50);
+            System.out.println("Prefixes: " + ps);
+    	}
 
-        ResultSet rs = qef.createQueryExecution("Select * { ?s a <http://dbpedia.org/ontology/Airport> } Limit 100").execSelect();
-
-        Map<Var, Set<String>> ps = analyzePrefixes(rs, 50);
-        System.out.println("Prefixes: " + ps);
 
 
         // Next step: given a sparql result set,
@@ -396,64 +331,4 @@ public class PrefixAccumulatorImpl
 
         System.out.println(x.getValue());
     }
-}
-
-
-class AggregatorBuilder<B, T> {
-
-    protected Aggregator<B, T> state;
-
-    public AggregatorBuilder(Aggregator<B, T> state) {
-        super();
-        this.state = state;
-    }
-
-    public Aggregator<B, T> get() {
-        return state;
-    }
-
-    public <K> AggregatorBuilder<B, Map<K, T>> wrapWithMap(Function<B, K> bindingToKey) {
-        Aggregator<B, Map<K, T>> agg = AggMap2.create(bindingToKey, state);
-
-        return new AggregatorBuilder<>(agg);
-    }
-
-    public <O> AggregatorBuilder<B, O> wrapWithTransform(Function<? super T, O> transform) {
-        Aggregator<B, O> agg = AggTransform2.create(state, transform);
-
-        return new AggregatorBuilder<>(agg);
-    }
-
-    public AggregatorBuilder<B, T> wrapWithCondition(Predicate<B> predicate) {
-        // TODO Is this correct??? i.e. calling createAccumulator here
-        Aggregator<B, T> local = state;
-        Aggregator<B, T> agg = () -> AccCondition.create(predicate, local.createAccumulator());
-
-        return new AggregatorBuilder<>(agg);
-    }
-
-    public <U> AggregatorBuilder<U, T> wrapWithBindingTransform(Function<? super U, B> transform) {
-        Aggregator<B, T> local = state;
-        Aggregator<U, T> agg = () -> AccBindingTransform.create(transform, local.createAccumulator());
-
-        return new AggregatorBuilder<>(agg);
-    }
-
-//    public static <B, T> AggregatorBuilder<B, T> from(Supplier<Accumulator<B, T>> accSupplier) {
-//        Aggregator<B, T> agg = () -> accSupplier.get();
-//
-//        return new AggregatorBuilder<>(agg);
-//    }
-
-    public static <B, T> AggregatorBuilder<B, T> from(Aggregator<B, T> agg) {
-        return new AggregatorBuilder<>(agg);
-    }
-
-    // combine: BiFunction<I, I> -> T
-//    public static <B, T> AggregatorBuilder<B, T> from(Aggregator<B, ? extends T> a, Aggregator<B, ? extends T> b, BiFunction<? super T, ? super T, T> combiner) {
-//    	Aggregator<B, T> agg = () -> {
-//    		a.createAccumulator();
-//    		b.createAccumulator();
-//    	}
-//    }
 }
