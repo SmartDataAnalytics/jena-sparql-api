@@ -1,9 +1,11 @@
 ## jena-sparql-api-analytics
 
-A package for analytics that cannot be implemented using jena alone due to depencies on other libraries.
+A package for analytics that cannot be implemented using jena, guava, rxjava or our own small util package aksw-commons alone due to depencies on further libraries.
 
 
 ### PrefixAccumulator
+
+Depends on PatriciaTrie from org.apache.commons:commons-collections4.
 
 Accumulate prefixes up to a capped size.
 Particularly useful for query optimization over virtual knowledge graphs: The prefix metadata can be used for source selection in query federation engines.
