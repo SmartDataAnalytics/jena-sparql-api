@@ -1,6 +1,6 @@
 ## jena-sparql-api-analytics
 
-A package for analytics that cannot be implemented using jena, guava, rxjava or our own small util package aksw-commons alone due to depencies on further libraries.
+A dedicated package for analytics such that their dependencies can be separated from the rest of the jena-sparql-api project.
 
 
 ### PrefixAccumulator
