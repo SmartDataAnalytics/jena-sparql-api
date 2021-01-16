@@ -28,7 +28,7 @@ items.stream().forEach(acc::accumulate);
 
 
 System.out.println(acc.getValue());
-//  [dbr:City, dbr:Leipzig, dbr:London]
+// [dbr:City, dbr:Leipzig, dbr:London]
 
 acc.accumulate("lgd:foo");
 System.out.println(acc.getValue());
