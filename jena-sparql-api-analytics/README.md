@@ -48,4 +48,10 @@ System.out.println(result);
 
 ```
 
+Several static convenince methods to work with Jena objects are provided, such as
+
+```java
+public static Map<Var, Set<String>> analyzePrefixes(ResultSet rs, int targetSize) { }
+```
+
 
