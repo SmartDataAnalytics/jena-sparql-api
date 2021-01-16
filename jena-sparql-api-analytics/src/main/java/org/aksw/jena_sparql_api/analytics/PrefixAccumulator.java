@@ -1,6 +1,7 @@
 package org.aksw.jena_sparql_api.analytics;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -11,11 +12,13 @@ import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.aksw.jena_sparql_api.mapper.AccStaticMultiplex;
 import org.aksw.jena_sparql_api.mapper.Accumulator;
 import org.aksw.jena_sparql_api.mapper.Aggregator;
 import org.aksw.jena_sparql_api.mapper.AggregatorBuilder;
+import org.aksw.jena_sparql_api.mapper.Aggregators;
 import org.aksw.jena_sparql_api.utils.ResultSetUtils;
 import org.apache.commons.collections4.OrderedMapIterator;
 import org.apache.commons.collections4.trie.PatriciaTrie;
@@ -319,16 +322,20 @@ public class PrefixAccumulator
         //Aggregator<Binding, Map<Var, Set<String>>>
 
 
-        Accumulator<String, Set<String>> x = createAggregatorStringPrefixes(3).createAccumulator();
+//        Accumulator<String, Set<String>> x = createAggregatorStringPrefixes(3).createAccumulator();
 
-        //PrefixAggregator x = new PrefixAggregatorGrouping(3);
-        x.accumulate("http://dbpedia.org/resource/Leipzig");
-//        x.add("http://dbpedia.org/resource/");
-        x.accumulate("http://dbpedia.org/resource/London");
-        x.accumulate("http://dbpedia.org/ontology/City");
+    	List<String> items = Arrays.asList("dbr:Leipzig", "dbr:London", "dbr:City");
+
+    	PrefixAccumulator acc = new PrefixAccumulator(3);
+    	items.stream().forEach(acc::accumulate);
 //        x.add("http://dbpedia.org/resource/Litauen");
-        x.accumulate("http://linkedgeodata.org/foo");
+        System.out.println(acc.getValue());
+        acc.accumulate("lgd:foo");
 
-        System.out.println(x.getValue());
+        System.out.println(acc.getValue());
+        
+        Set<String> result = Stream.concat(items.stream(), Stream.of("lgd:foo"))
+        		.collect(Aggregators.createCollector(() -> new PrefixAccumulator(3)));
+        System.out.println(result);
     }
 }
