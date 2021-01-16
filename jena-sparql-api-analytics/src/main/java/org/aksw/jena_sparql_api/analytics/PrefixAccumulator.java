@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api.analytics;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -38,9 +39,11 @@ import org.apache.jena.sparql.engine.binding.Binding;
  *
  */
 public class PrefixAccumulator
-    implements Accumulator<String, Set<String>>
+    implements Accumulator<String, Set<String>>, Serializable
 {
-    //public NavigableSet<String> prefixes = new TreeSet<>();
+	private static final long serialVersionUID = -4653863475436646211L;
+	
+	//public NavigableSet<String> prefixes = new TreeSet<>();
     protected PatriciaTrie<Void> prefixes = new PatriciaTrie<>();
     protected int targetSize;
 
