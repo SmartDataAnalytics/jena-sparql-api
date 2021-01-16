@@ -36,7 +36,10 @@ System.out.println(acc.getValue());
 
 ```
 
-It is possible to wrap the accumulator as a Java8 Collector suitable for parallel procsessing:
+It is possible to wrap the accumulator as a Java8 Collector suitable for parallel procsessing.
+Note, that in the case of parallel processing the result will be correct but may be non-deterministic as the output of the
+combine step depends on the set of items the accumulators have seen w.r.t. the given threshold.
+
 ```java
 Set<String> result = Stream.of("dbr:Leipzig", "dbr:London", "dbr:City", "lgd:foo")
                            .collect(Aggregators.createCollector(() -> new PrefixAccumulator(3)));
