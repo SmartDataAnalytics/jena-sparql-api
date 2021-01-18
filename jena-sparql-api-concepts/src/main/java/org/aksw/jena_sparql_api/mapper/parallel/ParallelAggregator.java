@@ -4,7 +4,6 @@ import java.util.stream.Collector;
 
 import org.aksw.jena_sparql_api.mapper.Accumulator;
 import org.aksw.jena_sparql_api.mapper.Aggregator;
-import org.aksw.jena_sparql_api.mapper.Aggregators;
 
 /**
  * Aggregator suitable for parallel processing.

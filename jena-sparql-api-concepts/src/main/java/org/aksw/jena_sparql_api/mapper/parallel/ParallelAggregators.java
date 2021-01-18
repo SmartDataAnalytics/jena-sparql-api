@@ -8,6 +8,7 @@ public class ParallelAggregators {
 
 	/**
 	 * Create a java8 collector from a parallel aggregator.
+	 * 
 	 */
 	public static <I, O, ACC extends Accumulator<I,O>> Collector<I, ?, O> createCollector(ParallelAggregator<I, O, ACC> agg) {
 		return Collector.of(

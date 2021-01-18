@@ -28,8 +28,8 @@ import org.aksw.jena_sparql_api.mapper.parallel.AggTransformInput.AccTransformIn
  * 
  * @author raven
  *
- * @param <I> An current aggregator's input type
- * @param <O>  An current aggregator's output type
+ * @param <I> The current aggregator's input type
+ * @param <O>  The current aggregator's output type
  * @param <ACC> The current aggregator's accumulator type
  * @param <AGG> The current aggregator's own type
  */

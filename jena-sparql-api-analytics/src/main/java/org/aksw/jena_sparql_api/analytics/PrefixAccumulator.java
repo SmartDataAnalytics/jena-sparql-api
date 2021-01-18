@@ -112,6 +112,18 @@ public class PrefixAccumulator
         return result;
     }
 
+    /**
+     * For a given lookup string find a string in a sorted map that is the longest prefix of the lookup string. 
+     * 
+     * There is a suggestion for longest common prefix match could be performed efficiently:
+	 * https://github.com/rkapsi/patricia-trie/issues/5
+     *
+     * 
+     * @param lookup
+     * @param inclusive
+     * @param prefixes
+     * @return
+     */
     public static String longestPrefixLookup(String lookup, boolean inclusive, SortedMap<String, ?> prefixes)
     {
         String result = null;
@@ -145,6 +157,15 @@ public class PrefixAccumulator
         return result;
     }
 
+    
+	/**
+	 * There is a suggestion for longest common prefix match on
+	 * https://github.com/rkapsi/patricia-trie/issues/5:
+	 * 
+	 */
+//    public static String longestCommonPrefixOld(PatriciaTrie<?> trie) {
+//    }
+    
     /**
      * It sucks that lcp is not part of the public trie api ...
      * @param trie
@@ -188,12 +209,27 @@ public class PrefixAccumulator
     }
 
     public void removeSuperseded(String prefix) {
+    	int l = prefix.length();
         // Remove items that are more specific than the current prefix
+    	// prefixMap may include the lookup prefix so we need to filter out the
+    	// entry that has the same length as prefix
         SortedMap<String, ?> map = prefixes.prefixMap(prefix);
         List<String> superseded = new ArrayList<>(map.keySet());
         for(String item : superseded) {
-            prefixes.remove(item);
+        	if (item.length() != l) {
+        		prefixes.remove(item);
+        	}
         }
+
+        // Iterator.remove() fails with exceptions apparently due to concurrent modification
+        // TODO Investigat whether this a bug in my code or in patricia trie...
+//        Iterator<String> it = map.keySet().iterator();
+//        while (it.hasNext()) {
+//        	String str = it.next();
+//        	if (str.length() != l) {
+//        		it.remove();
+//        	}
+//        }
 
 //        System.out.println("Removals for [" + prefix + "]: " + superseded);
     }
@@ -211,9 +247,9 @@ public class PrefixAccumulator
         }
 
         // Check if the prefix set exceeds its maximum size
-        if(prefixes.size() > targetSize) {
+        if(prefixes.size() > targetSize) {        		
             String lcp = longestCommonPrefix(prefixes);
-            if(lcp != null) {
+            if (lcp != null) {
                 removeSuperseded(lcp);
                 prefixes.put(lcp, null);
             }
@@ -367,7 +403,7 @@ public class PrefixAccumulator
         System.out.println(result);
     }
     
-    public ParallelAggregator<Binding, Map<Var, Set<String>>, ?> create(int targetSize) {
+    public static ParallelAggregator<Binding, Map<Var, Set<String>>, ?> create(int targetSize) {
 
     	ParallelAggregator<Binding, Map<Var, Set<String>>, ?> result = 
     	AggBuilder.fromNaturalAccumulator(() -> new PrefixAccumulator(targetSize))

@@ -55,6 +55,7 @@ public class AggTransformInput<I, J, O,
 		public AccTransformInputImpl(SUBACC subAcc, Function<? super I, ? extends J> inputTransform) {
 			super();
 			this.subAcc = subAcc;
+			this.inputTransform = inputTransform;
 		}
 		
 		@Override

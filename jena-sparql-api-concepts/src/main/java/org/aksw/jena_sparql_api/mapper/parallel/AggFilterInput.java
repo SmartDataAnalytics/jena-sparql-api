@@ -77,6 +77,7 @@ public class AggFilterInput<
 		public AccFilterInputImpl(SUBACC subAcc, Predicate<? super I> inputFilter) {
 			super();
 			this.subAcc = subAcc;
+			this.inputFilter = inputFilter;
 		}
 		
 		@Override
