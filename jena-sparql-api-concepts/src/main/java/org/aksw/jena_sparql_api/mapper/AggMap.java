@@ -7,6 +7,14 @@ import org.apache.jena.sparql.core.Var;
 
 import com.google.common.collect.Sets;
 
+/**
+ * A less general form of AggMap2 ; this class should be removed and AggMap2 renamed to this
+ * 
+ * @author raven
+ *
+ * @param <K>
+ * @param <V>
+ */
 public class AggMap<K, V>
     implements Agg<Map<K,V>>
 {

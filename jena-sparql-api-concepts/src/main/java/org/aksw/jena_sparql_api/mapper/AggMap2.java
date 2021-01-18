@@ -4,6 +4,17 @@ import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+/**
+ * Aggregator that maps each input item to a single key and allocates
+ * a sub aggregator for that key if none exists yet.
+ * 
+ * @author raven
+ *
+ * @param <B>
+ * @param <K>
+ * @param <V>
+ * @param <C>
+ */
 public class AggMap2<B, K, V, C extends Aggregator<B, V>>
     implements Aggregator<B, Map<K,V>>
 {

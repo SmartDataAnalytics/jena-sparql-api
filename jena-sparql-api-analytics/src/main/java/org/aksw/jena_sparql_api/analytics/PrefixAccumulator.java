@@ -20,6 +20,8 @@ import org.aksw.jena_sparql_api.mapper.Accumulator;
 import org.aksw.jena_sparql_api.mapper.Aggregator;
 import org.aksw.jena_sparql_api.mapper.AggregatorBuilder;
 import org.aksw.jena_sparql_api.mapper.Aggregators;
+import org.aksw.jena_sparql_api.mapper.parallel.AggBuilder;
+import org.aksw.jena_sparql_api.mapper.parallel.ParallelAggregator;
 import org.aksw.jena_sparql_api.utils.ResultSetUtils;
 import org.apache.commons.collections4.OrderedMapIterator;
 import org.apache.commons.collections4.trie.PatriciaTrie;
@@ -30,6 +32,8 @@ import org.apache.jena.query.QueryFactory;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.binding.Binding;
+
+import com.google.common.collect.Sets;
 
 
 /**
@@ -272,6 +276,27 @@ public class PrefixAccumulator
         return result;
     }
 
+    
+    /**
+     * Aggregate over IRI strings for each binding's variable
+     * Non-IRI nodes are filtered out
+     * 
+     * @param <V>
+     * @param subAgg
+     * @return
+     */
+    public static <V> Aggregator<Binding, Map<Var, V>> createAggregatorResultSetUrisPerVar(Aggregator<String, V> subAgg) {
+        Aggregator<Binding, Map<Var, V>> result =
+        		AggregatorBuilder
+        			.from(createAggregatorNodeToUris(subAgg))
+        			.wrapWithMultiplexDynamic(Binding::vars, Binding::get)
+        			.get();
+
+        return result;
+    }
+    
+    
+    
     public static <V> Aggregator<Binding, Map<Var, V>> createAggregatorNodesPerVar(List<Var> vars, Aggregator<Node, V> subAgg) {
 
         //List<Var> vars = ResultSetUtils.getVars(rs);
@@ -341,4 +366,18 @@ public class PrefixAccumulator
         		.collect(Aggregators.createCollector(() -> new PrefixAccumulator(3)));
         System.out.println(result);
     }
+    
+    public ParallelAggregator<Binding, Map<Var, Set<String>>, ?> create(int targetSize) {
+
+    	ParallelAggregator<Binding, Map<Var, Set<String>>, ?> result = 
+    	AggBuilder.from(() -> new PrefixAccumulator(targetSize))
+    		.withInputTransform(Node::getURI)
+    		.withInputFilter(Node::isURI)
+    		.withInputSplit((Binding b) -> Sets.newHashSet(b.vars()), Binding::get)
+    		.get();
+    	
+    	return result;
+    }
+    
+    
 }
