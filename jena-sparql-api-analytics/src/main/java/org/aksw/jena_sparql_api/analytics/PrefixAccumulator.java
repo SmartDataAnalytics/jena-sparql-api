@@ -370,11 +370,11 @@ public class PrefixAccumulator
     public ParallelAggregator<Binding, Map<Var, Set<String>>, ?> create(int targetSize) {
 
     	ParallelAggregator<Binding, Map<Var, Set<String>>, ?> result = 
-    	AggBuilder.from(() -> new PrefixAccumulator(targetSize))
+    	AggBuilder.fromNaturalAccumulator(() -> new PrefixAccumulator(targetSize))
     		.withInputTransform(Node::getURI)
     		.withInputFilter(Node::isURI)
     		.withInputSplit((Binding b) -> Sets.newHashSet(b.vars()), Binding::get)
-    		.get();
+    		.getAsParallelAggregator();
     	
     	return result;
     }
