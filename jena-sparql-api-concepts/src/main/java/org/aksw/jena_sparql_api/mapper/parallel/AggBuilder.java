@@ -4,7 +4,10 @@ import java.io.Serializable;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
+import java.util.function.BinaryOperator;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -12,9 +15,10 @@ import java.util.stream.Collector;
 
 import org.aksw.jena_sparql_api.mapper.Accumulator;
 import org.aksw.jena_sparql_api.mapper.Aggregator;
-import org.aksw.jena_sparql_api.mapper.parallel.AggFilterInput.AccFilterInput;
-import org.aksw.jena_sparql_api.mapper.parallel.AggSplitInput.AccSplitInput;
-import org.aksw.jena_sparql_api.mapper.parallel.AggTransformInput.AccTransformInput;
+import org.aksw.jena_sparql_api.mapper.parallel.AggInputFilter.AccInputFilter;
+import org.aksw.jena_sparql_api.mapper.parallel.AggInputSplit.AccInputSplit;
+import org.aksw.jena_sparql_api.mapper.parallel.AggInputTransform.AccInputTransform;
+import org.aksw.jena_sparql_api.mapper.parallel.AggOutputTransform.AccOutputTransform;
 
 /**
  * Builder for parallel aggregators.
@@ -37,9 +41,12 @@ public class AggBuilder<I, O, ACC extends Accumulator<I, O>, AGG extends Paralle
 	
 	public static interface SerializableCollector<T, A, R> extends Collector<T, A, R>, Serializable {}
 	public static interface SerializablePredicate<T> extends Predicate<T>, Serializable {}
+	public static interface SerializableConsumer<T> extends Consumer<T>, Serializable {}
+	public static interface SerializableBiConsumer<T, U> extends BiConsumer<T, U>, Serializable {}
 	public static interface SerializableSupplier<T> extends Supplier<T>, Serializable {}
 	public static interface SerializableFunction<I, O> extends Function<I, O>, Serializable {}
 	public static interface SerializableBiFunction<I1, I2, O> extends BiFunction<I1, I2, O>, Serializable {}
+	public static interface SerializableBinaryOperator<T> extends BinaryOperator<T>, Serializable {}
 	
 	
 	protected AGG state;
@@ -82,22 +89,35 @@ public class AggBuilder<I, O, ACC extends Accumulator<I, O>, AGG extends Paralle
 		return fromNaturalAccumulator(() -> new AccCollection<>(colSupplier.get()));
 	}
 
-	public AggBuilder<I, O, AccFilterInput<I, O, ACC>, AggFilterInput<I, O, ACC, AGG>> withInputFilter(SerializablePredicate<? super I> inputFilter) {
-		 return from(new AggFilterInput<>(state, inputFilter));
+	public AggBuilder<I, O, AccInputFilter<I, O, ACC>, AggInputFilter<I, O, ACC, AGG>> withInputFilter(SerializablePredicate<? super I> inputFilter) {
+		 return from(new AggInputFilter<>(state, inputFilter));
 	}
 
-	public <H> AggBuilder<H, O, AccTransformInput<H, I, O, ACC>, AggTransformInput<H, I, O, ACC, AGG>>
+	public <H> AggBuilder<H, O, AccInputTransform<H, I, O, ACC>, AggInputTransform<H, I, O, ACC, AGG>>
 		withInputTransform(SerializableFunction<? super H, ? extends I> inputTransform) {
-		return from(new AggTransformInput<>(state, inputTransform));
+		return from(new AggInputTransform<>(state, inputTransform));
 	}
 
-	public <H, K> AggBuilder<H, Map<K, O>, AccSplitInput<H, K, I, O, ACC>, AggSplitInput<H, K, I, O, ACC, AGG>> withInputSplit(
+	public <H, K> AggBuilder<H, Map<K, O>, AccInputSplit<H, K, I, O, ACC>, AggInputSplit<H, K, I, O, ACC, AGG>> withInputSplit(
 			SerializableFunction<? super H, ? extends Set<? extends K>> keyMapper,
 			SerializableBiFunction<? super H, ? super K, ? extends I> valueMapper			
 	) {
-		return from(new AggSplitInput<>(state, keyMapper, valueMapper));
+		return from(new AggInputSplit<>(state, keyMapper, valueMapper));
 	}
 	
+	/**
+	 * Supply a function O -&gt; P in order to turn an Aggregator&lt;I, O&gt; into Aggregator&lt;I, P&gt; 
+	 * 
+	 * @param <P>
+	 * @param outputTransform
+	 * @return
+	 */
+	public <P> AggBuilder<I, P, AccOutputTransform<I, O, P, ACC>, AggOutputTransform<I, O, P, ACC, AGG>>
+		withOutputTransform(SerializableFunction<? super O, ? extends P> outputTransform)
+	{
+		return from(new AggOutputTransform<>(state, outputTransform));
+	}
+
 
 }
 

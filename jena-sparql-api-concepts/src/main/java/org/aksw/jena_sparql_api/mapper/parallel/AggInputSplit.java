@@ -11,7 +11,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.mapper.Accumulator;
-import org.aksw.jena_sparql_api.mapper.parallel.AggSplitInput.AccSplitInput;
+import org.aksw.jena_sparql_api.mapper.parallel.AggInputSplit.AccInputSplit;
 
 import com.google.common.collect.Sets;
 
@@ -55,15 +55,15 @@ import com.google.common.collect.Sets;
  * @param <SUBACC>
  * @param <SUBAGG>
  */
-public class AggSplitInput<I, K, J, O,
+public class AggInputSplit<I, K, J, O,
 	SUBACC extends Accumulator<J, O>, SUBAGG extends ParallelAggregator<J, O, SUBACC>>
-	implements ParallelAggregator<I, Map<K, O>, AccSplitInput<I, K, J, O, SUBACC>>,
+	implements ParallelAggregator<I, Map<K, O>, AccInputSplit<I, K, J, O, SUBACC>>,
 		Serializable
 {
 	private static final long serialVersionUID = 7584075431975571180L;
 
 
-	public static interface AccSplitInput<I, K, J, O, SUBACC extends Accumulator<J, O>>
+	public static interface AccInputSplit<I, K, J, O, SUBACC extends Accumulator<J, O>>
 		extends AccWrapper<I, Map<K, O>, Map<K, SUBACC>> {
 		}
 
@@ -76,7 +76,7 @@ public class AggSplitInput<I, K, J, O,
 
 	protected SUBAGG subAgg;
 	
-	public AggSplitInput(SUBAGG subAgg,
+	public AggInputSplit(SUBAGG subAgg,
 			Function<? super I, ? extends Set<? extends K>> keyMapper,
 			BiFunction<? super I, ? super K, ? extends J> valueMapper) {
 		super();
@@ -86,13 +86,13 @@ public class AggSplitInput<I, K, J, O,
 	}
 	
 	@Override
-	public AccSplitInput<I, K, J, O, SUBACC> createAccumulator() {
+	public AccInputSplit<I, K, J, O, SUBACC> createAccumulator() {
 		return new AccSplitInputImpl(new LinkedHashMap<>());
 	}
 	
 	@Override
-	public AccSplitInput<I, K, J, O, SUBACC> combine(AccSplitInput<I, K, J, O, SUBACC> a,
-			AccSplitInput<I, K, J, O, SUBACC> b) {
+	public AccInputSplit<I, K, J, O, SUBACC> combine(AccInputSplit<I, K, J, O, SUBACC> a,
+			AccInputSplit<I, K, J, O, SUBACC> b) {
 		Map<K, SUBACC> accA = a.getSubAcc();
 		Map<K, SUBACC> accB = b.getSubAcc();
 		
@@ -129,7 +129,7 @@ public class AggSplitInput<I, K, J, O,
 	
 
 	public class AccSplitInputImpl
-		implements AccSplitInput<I, K, J, O, SUBACC>, Serializable
+		implements AccInputSplit<I, K, J, O, SUBACC>, Serializable
 	{
 		private static final long serialVersionUID = 871477289930122459L;
 
