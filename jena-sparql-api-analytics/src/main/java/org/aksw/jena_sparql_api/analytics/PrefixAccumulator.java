@@ -403,17 +403,5 @@ public class PrefixAccumulator
         System.out.println(result);
     }
     
-    public static ParallelAggregator<Binding, Map<Var, Set<String>>, ?> createForBindings(int targetSize) {
-
-    	ParallelAggregator<Binding, Map<Var, Set<String>>, ?> result = 
-    	AggBuilder.fromNaturalAccumulator(() -> new PrefixAccumulator(targetSize))
-    		.withInputTransform(Node::getURI)
-    		.withInputFilter(Node::isURI)
-    		.withInputSplit((Binding b) -> Sets.newHashSet(b.vars()), Binding::get)
-    		.getAsParallelAggregator();
-    	
-    	return result;
-    }
-    
     
 }

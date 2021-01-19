@@ -1,74 +1,67 @@
 package org.aksw.jena_sparql_api.mapper.parallel;
 
 import java.io.Serializable;
-import java.util.Set;
+import java.util.Collection;
 import java.util.function.Supplier;
 
 import org.aksw.jena_sparql_api.mapper.Accumulator;
 import org.aksw.jena_sparql_api.mapper.parallel.AggBuilder.SerializableSupplier;
 
-public class AggSet<I, C extends Set<I>>
-	implements ParallelAggregator<I, C, Accumulator<I, C>>,
-	Serializable
-{
-	private static final long serialVersionUID = 8383392928490694149L;
 
-	protected Supplier<? extends C> collectionSupplier;
-	
-	public AggSet(SerializableSupplier<? extends C> newCollection) {
-		super();
-		this.collectionSupplier = newCollection;
-	}
-
-//	public static AggSet<I, C extends Set<I>> create(Class<I> inputType, Class<C> setType, SerializableSupplier<? extends C> newCollection) {
+/**
+ * Create a collecting aggregator from e.g. any for of collection supplier, such as
+ * Lists, Sets or Multisets.
+ * 
+ * Actually, the AccCollection can be used with AggNatural so an AggCollection is not needed.
+ * 
+ * 
+ * 
+ * @author raven
+ *
+ * @param <I>
+ * @param <C>
+ */
+//public class AggCollection<I, C extends Collection<I>>
+//	implements ParallelAggregator<I, C, Accumulator<I, C>>,
+//	Serializable
+//{
+//	private static final long serialVersionUID = 8383392928490694149L;
+//
+//	protected Supplier<? extends C> collectionSupplier;
 //	
+//	public AggCollection(SerializableSupplier<? extends C> newCollection) {
+//		super();
+//		this.collectionSupplier = newCollection;
 //	}
-
-
-	@Override
-	public Accumulator<I, C> createAccumulator() {
-		return new AccSet(collectionSupplier.get());
-	}
-
-	@Override
-	public Accumulator<I, C> combine(Accumulator<I, C> a, Accumulator<I, C> b) {
-		C ca = a.getValue();
-		C cb = b.getValue();
-		
-		Accumulator<I, C>  result;
-		if (ca.size() > cb.size()) {
-			ca.addAll(cb);
-			result = a;
-		} else {
-			cb.addAll(ca);
-			result = b;
-		}
-		
-		return result;
-	}
-
-	public class AccSet
-		implements Accumulator<I, C>, Serializable
-	{
-		private static final long serialVersionUID = -377712930606295862L;
-		protected C value;
-		
-		public AccSet(C value) {
-			super();
-			this.value = value;
-		}
-
-		@Override
-		public void accumulate(I item) {
-			value.add(item);
-		}
-	
-		@Override
-		public C getValue() {
-			return value;
-		}
-	}
-}
+//
+////	public static AggSet<I, C extends Set<I>> create(Class<I> inputType, Class<C> setType, SerializableSupplier<? extends C> newCollection) {
+////	
+////	}
+//
+//
+//	@Override
+//	public Accumulator<I, C> createAccumulator() {
+//		return new AccCollection(collectionSupplier.get());
+//	}
+//
+//	@Override
+//	public Accumulator<I, C> combine(Accumulator<I, C> a, Accumulator<I, C> b) {
+//		C ca = a.getValue();
+//		C cb = b.getValue();
+//		
+//		Accumulator<I, C>  result;
+//		if (ca.size() > cb.size()) {
+//			ca.addAll(cb);
+//			result = a;
+//		} else {
+//			cb.addAll(ca);
+//			result = b;
+//		}
+//		
+//		return result;
+//	}
+//
+//}
 
 //	
 //	public static void create() {

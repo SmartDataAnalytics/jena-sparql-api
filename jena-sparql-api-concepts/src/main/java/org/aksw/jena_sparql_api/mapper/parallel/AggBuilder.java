@@ -76,6 +76,12 @@ public class AggBuilder<I, O, ACC extends Accumulator<I, O>, AGG extends Paralle
 		return from(new AggNatural<>(accSupplier));
 	}
 
+	public static <T, C extends Collection<T>>
+	AggBuilder<T, C, Accumulator<T, C>, ParallelAggregator<T, C, Accumulator<T, C>>> fromCollectionSupplier(SerializableSupplier<C> colSupplier)
+	{
+		return fromNaturalAccumulator(() -> new AccCollection<>(colSupplier.get()));
+	}
+
 	public AggBuilder<I, O, AccFilterInput<I, O, ACC>, AggFilterInput<I, O, ACC, AGG>> withInputFilter(SerializablePredicate<? super I> inputFilter) {
 		 return from(new AggFilterInput<>(state, inputFilter));
 	}

@@ -8,6 +8,20 @@ import org.aksw.jena_sparql_api.mapper.Accumulator;
 import org.aksw.jena_sparql_api.mapper.Aggregators;
 import org.aksw.jena_sparql_api.mapper.parallel.AggBuilder.SerializableSupplier;
 
+
+/**
+ * Wrapper for a supplier of accumulators with signature I -&gt; Collection&lt;I&gt;
+ * This means, that items from the collection can be used as input. This allows
+ * for 'natural' combination of accumulators by adding the items of one accumulator to the other.
+ * 
+ * Note that this is operation always works for accumulators of that signature,
+ * yet whether it is semantically meaningful depends on the application context.
+ * 
+ * @author raven
+ *
+ * @param <I>
+ * @param <C>
+ */
 public class AggNatural<I, C extends Collection<I>>
 	implements ParallelAggregator<I, C, Accumulator<I, C>>, Serializable
 {
