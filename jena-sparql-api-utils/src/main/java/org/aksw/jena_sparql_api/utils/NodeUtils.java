@@ -226,7 +226,7 @@ public class NodeUtils {
 	 * 
 	 * @param node
 	 */
-	public String getDatatypeIri(Node node) {
+	public static String getDatatypeIri(Node node) {
 		String result;
 		if (node.isURI()) {
 			result = R2RML_IRI;
