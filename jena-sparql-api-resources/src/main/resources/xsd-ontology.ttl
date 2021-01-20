@@ -43,3 +43,6 @@ xsd:gMonthDay rdfs:subClassOf xsd:anyAtomicType .
 xsd:gDay rdfs:subClassOf xsd:anyAtomicType .
 xsd:gMonth rdfs:subClassOf xsd:anyAtomicType .
 
+xsd:anyAtomicType rdfs:subClassOf xsd:anySimpleType .
+xsd:anySimpleType rdfs:subClassOf xsd:anyType .
+

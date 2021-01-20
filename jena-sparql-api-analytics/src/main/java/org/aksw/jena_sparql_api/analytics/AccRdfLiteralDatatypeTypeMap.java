@@ -3,14 +3,15 @@ package org.aksw.jena_sparql_api.analytics;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.function.BiFunction;
 import java.util.stream.Stream;
 
 import org.aksw.jena_sparql_api.mapper.Accumulator;
-import org.aksw.jena_sparql_api.util.graph.alg.BreadthFirstSearchLib;
 import org.aksw.jena_sparql_api.util.graph.alg.GraphSuccessorFunction;
 import org.aksw.jena_sparql_api.util.graph.alg.NaiveLCAFinder;
+import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
@@ -20,7 +21,8 @@ import org.apache.jena.vocabulary.RDFS;
 import org.apache.jena.vocabulary.XSD;
 
 /**
- * 
+ * Note: The backing graph must form a tree (not a dag): There must be at most a single lca
+ * for any two nodes. 
  * 
  * @author raven
  *
@@ -34,54 +36,52 @@ public class AccRdfLiteralDatatypeTypeMap
 	protected Map<Node, Node> weakerToMightierType;
 	// protected transient LeastCommonAncestor alg = new LeastCommonAncestor(graph, gsf);
 
-	// Do not traverse through capping types when checking the type hierarchy
-	protected Set<Node> cappingTypes = Collections.singleton(NodeFactory.createURI(XSD.NS + "anyAtomicType"));
-
-	protected NaiveLCAFinder alg;
+	protected BiFunction<? super Node, ? super Node, ? extends Node> lcaFinder;
 	
-	public AccRdfLiteralDatatypeTypeMap(Map<Node, Node> state) {
+	public AccRdfLiteralDatatypeTypeMap(BiFunction<? super Node, ? super Node, ? extends Node> lcaFinder) {
 		super();
-		this.weakerToMightierType = state;
-
-		Model model = RDFDataMgr.loadModel("xsd-ontology.ttl");
-		
-		Graph graph = model.getGraph();
-		GraphSuccessorFunction gsf = GraphSuccessorFunction.create(RDFS.subClassOf.asNode(), true);
-		
-		// Filter out capping types from the successors
-		this.alg = new NaiveLCAFinder(graph, (n, g) -> gsf.apply(n, g).filter(m -> !cappingTypes.contains(m)));
-
+		this.weakerToMightierType = new LinkedHashMap<>();
+		this.lcaFinder = lcaFinder;
 	}
 	
 	@Override
 	public void accumulate(Node input) {
 
 		// Check whether the given input node is subsumed by any other node
-		
-		Map<Node, Node> newState = new LinkedHashMap<>();
-		for (Node key : weakerToMightierType.keySet()) {
-			
-			Set<Node> commonAncestors = alg.getLCASet(key, input);
 
-			if (commonAncestors.size() > 1) {
-				throw new RuntimeException("Should not happen");
-			} else {
-				Node ca = commonAncestors.isEmpty() ? null : commonAncestors.iterator().next();
-				
-				weakerToMightierType.put(key, ca);
-				weakerToMightierType.put(input, ca);
+		Node target = input;
+		
+		boolean changed = false;
+		for (Entry<Node, Node> e : weakerToMightierType.entrySet()) {
+			Node currentRemap = e.getValue();
+						
+			// Example:
+			// Given: {(short, long), (int, long), (long, long)}
+			// On accumulate(decimal): all longs become decimal
+			// On accumulate(int): nothing happens, because long
+			Node lca = lcaFinder.apply(currentRemap, input);
+			if (lca != null) {
+				if (!lca.equals(currentRemap)) {
+					target = lca;
+					changed = true;
+					weakerToMightierType.entrySet().forEach(f -> {
+						if (f.getValue().equals(currentRemap)) {
+							f.setValue(lca);
+						}
+					});
+				} else {
+					target = currentRemap;
+					break;
+				}
 			}
-			
 		}
 		
-//		Stream<Set<Node>> breadthOfParentsStream = BreadthFirstSearchLib.stream(expected, node -> gsf.apply(graph, node), Collectors::toSet);
-
+		weakerToMightierType.put(input, target);
 	}
 
 	@Override
 	public Map<Node, Node> getValue() {
-		// TODO Auto-generated method stub
-		return null;
+		return weakerToMightierType;
 	}
-
+	
 }

@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -97,7 +98,7 @@ public class NaiveLCAFinder {
 			T b,
 			Function<? super T, ? extends Stream<? extends T>> getParents) {
 
-		Set<T> result = new HashSet<>();
+		Set<T> result = new LinkedHashSet<>();
 
 		Set<? extends T> aParents = Collections.singleton(a);
 		Set<? extends T> bParents = Collections.singleton(b);
@@ -118,11 +119,11 @@ public class NaiveLCAFinder {
 			// as ancestors
 			aParents = aParents.stream().flatMap(getParents)
 					.filter(item -> !aAncestors.contains(item))
-					.collect(Collectors.toSet());
+					.collect(Collectors.toCollection(LinkedHashSet::new));
 			
 			bParents = bParents.stream().flatMap(getParents)
 					.filter(item -> !bAncestors.contains(item))
-					.collect(Collectors.toSet());
+					.collect(Collectors.toCollection(LinkedHashSet::new));
 		}
 		
 		return result;
