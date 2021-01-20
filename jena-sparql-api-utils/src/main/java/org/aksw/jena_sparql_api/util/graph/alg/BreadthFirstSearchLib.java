@@ -11,6 +11,18 @@ import com.github.jsonldjava.shaded.com.google.common.collect.Streams;
 
 public class BreadthFirstSearchLib {
 
+	/**
+	 * For a given collection of nodes return the collection of successors w.r.t.
+	 * sucessorFn.
+	 * The successor function can be used to filter items..
+	 * 
+	 * @param <T>
+	 * @param <C>
+	 * @param current
+	 * @param successorFn
+	 * @param collectorSupplier
+	 * @return
+	 */
 	public static <T, C extends Collection<T>> Stream<C> stream(
 			C current,
 			Function<? super T, ? extends Stream<? extends T>> successorFn,

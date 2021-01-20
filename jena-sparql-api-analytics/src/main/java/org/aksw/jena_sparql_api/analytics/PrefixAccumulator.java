@@ -20,8 +20,6 @@ import org.aksw.jena_sparql_api.mapper.Accumulator;
 import org.aksw.jena_sparql_api.mapper.Aggregator;
 import org.aksw.jena_sparql_api.mapper.AggregatorBuilder;
 import org.aksw.jena_sparql_api.mapper.Aggregators;
-import org.aksw.jena_sparql_api.mapper.parallel.AggBuilder;
-import org.aksw.jena_sparql_api.mapper.parallel.ParallelAggregator;
 import org.aksw.jena_sparql_api.utils.ResultSetUtils;
 import org.apache.commons.collections4.OrderedMapIterator;
 import org.apache.commons.collections4.trie.PatriciaTrie;
@@ -32,8 +30,6 @@ import org.apache.jena.query.QueryFactory;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.binding.Binding;
-
-import com.google.common.collect.Sets;
 
 
 /**
@@ -48,7 +44,7 @@ public class PrefixAccumulator
 	private static final long serialVersionUID = -4653863475436646211L;
 	
 	//public NavigableSet<String> prefixes = new TreeSet<>();
-    protected PatriciaTrie<Void> prefixes = new PatriciaTrie<>();
+    protected PatriciaTrie<Long> prefixes = new PatriciaTrie<>();
     protected int targetSize;
 
     public PrefixAccumulator(int targetSize) {

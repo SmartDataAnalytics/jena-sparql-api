@@ -41,7 +41,6 @@ import org.apache.jena.vocabulary.XSD;
  *
  */
 public class LeastCommonAncestor {
-	private static Stream<Set<Node>> stream;
 	protected Graph graph;
 	protected GraphSuccessorFunction successorFn;
 		
@@ -149,13 +148,13 @@ public class LeastCommonAncestor {
 		// Traverse the type hierarchy up until we find a type that has a corresponding java class
 		TypeMapper tm = TypeMapper.getInstance();
 		
-		Stream<Set<Node>> breadthStream = BreadthFirstSearchLib.stream(expected, node -> gsf.apply(graph, node), Collectors::toSet);
+		Stream<Set<Node>> breadthOfParentsStream = BreadthFirstSearchLib.stream(expected, node -> gsf.apply(graph, node), Collectors::toSet);
 		
 //		Node type = expected.iterator().next();
 //		RDFDatatype dtype = tm.getTypeByName(type.getURI());
 
 		// Find the first breadth for which a java type is found
-		Map<Node, RDFDatatype> javaTypeMap = breadthStream.map(set -> {
+		Map<Node, RDFDatatype> javaTypeMap = breadthOfParentsStream.map(set -> {
 			Map<Node, RDFDatatype> map = set.stream()
 				.map(node -> Maps.immutableEntry(node, tm.getTypeByName(node.getURI())))
 				.filter(e -> e.getValue() != null && e.getValue().getJavaClass() != null)

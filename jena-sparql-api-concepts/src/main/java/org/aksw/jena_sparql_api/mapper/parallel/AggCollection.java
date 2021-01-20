@@ -1,13 +1,5 @@
 package org.aksw.jena_sparql_api.mapper.parallel;
 
-import java.io.Serializable;
-import java.util.Collection;
-import java.util.function.Supplier;
-
-import org.aksw.jena_sparql_api.mapper.Accumulator;
-import org.aksw.jena_sparql_api.mapper.parallel.AggBuilder.SerializableSupplier;
-
-
 /**
  * Create a collecting aggregator from e.g. any for of collection supplier, such as
  * Lists, Sets or Multisets.

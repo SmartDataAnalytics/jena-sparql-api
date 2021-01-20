@@ -12,6 +12,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.aksw.commons.jena.jgrapht.LabeledEdge;
@@ -97,7 +98,6 @@ import org.apache.jena.sparql.path.PathParser;
 import org.apache.jena.sparql.pfunction.PropertyFunctionRegistry;
 import org.apache.jena.sparql.util.Context;
 import org.jgrapht.Graph;
-import org.jgrapht.VertexFactory;
 import org.jgrapht.graph.AsGraphUnion;
 import org.jgrapht.graph.DefaultDirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
@@ -189,7 +189,8 @@ public class MainSparqlPath2 {
 
     public static <S> Nfa<S, LabeledEdge<S, PredicateClass>> reverseNfa(Nfa<S, LabeledEdge<S, PredicateClass>> nfa) {
         EdgeFactoryLabeledEdge<S, PredicateClass> edgeFactory = new EdgeFactoryLabeledEdge<S, PredicateClass>();
-        Graph<S, LabeledEdge<S, PredicateClass>> bwdGraph = new DefaultDirectedGraph<S, LabeledEdge<S, PredicateClass>>(edgeFactory);
+        Graph<S, LabeledEdge<S, PredicateClass>> bwdGraph = new DefaultDirectedGraph<S, LabeledEdge<S, PredicateClass>>(
+        		null, () -> edgeFactory.createEdge(null, null), false);
 
 
         //DirectedGraph<S, LabeledEdge<S, PredicateClass>> bwdGraph = new SimpleDirectedGraph<>(new LabeledEdgeFactoryImpl<S, PredicateClass>());
@@ -264,9 +265,9 @@ public class MainSparqlPath2 {
         }
     }
 
-    public static <V, E> void makeConsolidated(Graph<V, E> graph, Set<V> vertices, VertexFactory<V> vertexFactory, boolean reverse) {
+    public static <V, E> void makeConsolidated(Graph<V, E> graph, Set<V> vertices, Supplier<V> vertexFactory, boolean reverse) {
         if(vertices.size() > 1) {
-            V newVertex = vertexFactory.createVertex();
+            V newVertex = vertexFactory.get();
             makeConsolidated(graph, newVertex, vertices, reverse);
         }
     }
@@ -276,7 +277,7 @@ public class MainSparqlPath2 {
      *
      * https://en.wikipedia.org/wiki/Maximum_flow_problem#Multi-source_multi-sink_maximum_flow_problem
      */
-    public static <S, T> void makeConsolidated(Nfa<S, T> nfa, VertexFactory<S> vertexFactory) {
+    public static <S, T> void makeConsolidated(Nfa<S, T> nfa, Supplier<S> vertexFactory) {
         Graph<S, T> graph = nfa.getGraph();
 
         makeConsolidated(graph, nfa.getStartStates(), vertexFactory, false);
