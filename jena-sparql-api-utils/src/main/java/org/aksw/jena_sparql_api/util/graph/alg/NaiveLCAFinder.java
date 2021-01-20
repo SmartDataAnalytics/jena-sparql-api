@@ -22,7 +22,12 @@ import org.apache.jena.vocabulary.RDFS;
 import org.apache.jena.vocabulary.XSD;
 
 /**
- * Basic least common ancestor implementation. Does not perform any indexing or caching.
+ * Note: The class and method names are aligned with jgrapht's NaiveLCAFinder. The difference is that
+ * this class supports specification of a custom successor function for nodes.
+ * (And this class only depends on jena's Graph)
+ *  
+ * 
+ * Naive least common ancestor implementation. Does not perform any indexing or caching.
  * For a given pair of nodes for which to find the lca their respective sets of ancestors are
  * alternately expanded with their parents until there is an overlap or there are no more
  * unseen parents to expand.
@@ -40,15 +45,18 @@ import org.apache.jena.vocabulary.XSD;
  * @author raven
  *
  */
-public class LeastCommonAncestor {
+public class NaiveLCAFinder {
 	protected Graph graph;
 	protected GraphSuccessorFunction successorFn;
 		
-	public LeastCommonAncestor(Graph graph) {
+	/**
+	 * Find LCAs of rdfs:subClassOf as a reasonable default
+	 */
+	public NaiveLCAFinder(Graph graph) {
 		this(graph, GraphSuccessorFunction.create(RDFS.Nodes.subClassOf, true));
 	}
 
-	public LeastCommonAncestor(Graph graph, GraphSuccessorFunction successorFn) {
+	public NaiveLCAFinder(Graph graph, GraphSuccessorFunction successorFn) {
 		super();
 		this.graph = graph;
 		this.successorFn = successorFn;
@@ -63,14 +71,28 @@ public class LeastCommonAncestor {
 	 * @param b
 	 * @return
 	 */
-	public Set<Node> leastCommonAncestors(Node a, Node b) {
-		Set<Node> result = leastCommonAncestors(a, b, node -> successorFn.apply(graph, node));
+	public Set<Node> getLCASet(Node a, Node b) {
+		Set<Node> result = computeLCA(a, b, node -> successorFn.apply(graph, node));
 		return result;
 	}
 	
+	/**
+	 * Returns the only LCA of a and b if it exists, null otherwise.
+	 * IllegalArgumentException if there are multiple lcas.
+	 */
+	public Node getLCA(Node a, Node b) {
+		Set<Node> tmp = getLCASet(a, b);
+		
+		if (tmp.size() > 1) {
+			throw new IllegalArgumentException("More than one lca found for arguments " + a + " and " + b + ": " + tmp);
+		}
+
+		Node result = tmp.isEmpty() ? null : tmp.iterator().next();
+		return result;
+	}
 	
 	/** Generic core of the algorithm */
-	public static <T> Set<T> leastCommonAncestors(
+	public static <T> Set<T> computeLCA(
 			T a,
 			T b,
 			Function<? super T, ? extends Stream<? extends T>> getParents) {
@@ -139,10 +161,10 @@ public class LeastCommonAncestor {
 		Graph graph = model.getGraph();
 		GraphSuccessorFunction gsf = GraphSuccessorFunction.create(RDFS.subClassOf.asNode(), true);
 		
-		LeastCommonAncestor alg = new LeastCommonAncestor(graph, gsf);
+		NaiveLCAFinder alg = new NaiveLCAFinder(graph, gsf);
 		
 		// Find any types that are lcas of the given ones
-		Set<Node> actual = alg.leastCommonAncestors(XSD.nonNegativeInteger.asNode(), XSD.decimal.asNode());
+		Set<Node> actual = alg.getLCASet(XSD.nonNegativeInteger.asNode(), XSD.decimal.asNode());
 		Set<Node> expected = Collections.singleton(XSD.decimal.asNode());
 
 		// Traverse the type hierarchy up until we find a type that has a corresponding java class

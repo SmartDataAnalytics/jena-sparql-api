@@ -119,6 +119,25 @@ public class AggBuilder<I, O, ACC extends Accumulator<I, O>, AGG extends Paralle
 	}
 
 
+	/*
+	 * Static constructors - allow for for a more natural read order (outer-to-inner)
+	 * but not for fluent-style chaining.
+	 */
+	
+	
+	public static <I, O, ACC extends Accumulator<I, O>, AGG extends ParallelAggregator<I, O, ACC>> AggInputFilter<I, O, ACC, AGG>
+		inputFilter(SerializablePredicate<? super I> inputFilter, AGG state) {
+		 return new AggInputFilter<>(state, inputFilter);
+	}
+	
+
+	public static <I, O, P, ACC extends Accumulator<I, O>, AGG extends ParallelAggregator<I, O, ACC>> AggOutputTransform<I, O, P, ACC, AGG>
+		outputTransform(SerializableFunction<? super O, ? extends P> outputTransform, AGG state) {
+		return new AggOutputTransform<>(state, outputTransform);
+	}
+
+
+	
 }
 
 
