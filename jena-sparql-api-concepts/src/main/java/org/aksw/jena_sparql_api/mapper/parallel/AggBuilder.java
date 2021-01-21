@@ -155,7 +155,7 @@ public class AggBuilder<I, O, ACC extends Accumulator<I, O>, AGG extends Paralle
 	
 
 	public static <I, O, P, ACC extends Accumulator<I, O>, AGG extends ParallelAggregator<I, O, ACC>> AggOutputTransform<I, O, P, ACC, AGG>
-		outputTransform(SerializableFunction<? super O, ? extends P> outputTransform, AGG state) {
+		outputTransform(AGG state, SerializableFunction<? super O, ? extends P> outputTransform) {
 		return new AggOutputTransform<>(state, outputTransform);
 	}
 

@@ -2,34 +2,24 @@ package org.aksw.jena_sparql_api.analytics;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.AbstractMap.SimpleEntry;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-import org.aksw.jena_sparql_api.mapper.parallel.AccLcaMap;
-import org.aksw.jena_sparql_api.util.graph.alg.BreadthFirstSearchLib;
+import org.aksw.jena_sparql_api.mapper.parallel.AggLcaMap.AccLcaMap;
 import org.aksw.jena_sparql_api.util.graph.alg.GraphSuccessorFunction;
 import org.aksw.jena_sparql_api.util.graph.alg.NaiveLCAFinder;
 import org.apache.jena.datatypes.RDFDatatype;
-import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.datatypes.xsd.XSDDatatype;
-import org.apache.jena.ext.com.google.common.collect.Iterables;
-import org.apache.jena.ext.com.google.common.collect.Maps;
-import org.apache.jena.ext.com.google.common.collect.Sets;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.riot.RDFDataMgr;
-import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.function.CastXSD;
 import org.apache.jena.vocabulary.RDFS;
@@ -37,59 +27,10 @@ import org.apache.jena.vocabulary.XSD;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.google.common.collect.Multiset;
-
 
 public class LcaAccumulationTest {
 
-	public static RDFDatatype pullUpType(String datatypeIri) {
-		return pullUpType(NodeFactory.createURI(datatypeIri));
-	}
 
-	public static RDFDatatype pullUpType(Node datatype) {
-		return pullUpType(Collections.singleton(datatype));
-	}
-
-	/**
-	 * Given a set of starting types (wrapped as Nodes) and a backing type hierarchy,
-	 * use breadth first search to find the first set of ancestor types which contain at least one
-	 * type with a mapping to a Java datatypes w.r.t. Jena's {@link TypeMapper}.
-	 * 
-	 * @param start The set of string types
-	 * @return
-	 */
-	public static RDFDatatype pullUpType(Set<Node> start) {
-		Model model = RDFDataMgr.loadModel("xsd-ontology.ttl");		
-		Graph graph = model.getGraph();
-		GraphSuccessorFunction gsf = GraphSuccessorFunction.create(RDFS.subClassOf.asNode(), true);
-
-		TypeMapper tm = TypeMapper.getInstance();
-		
-		Stream<Set<Node>> breadthOfParentsStream = BreadthFirstSearchLib.stream(start, node -> gsf.apply(graph, node), Collectors::toSet);
-
-		
-		Map<Node, RDFDatatype> javaTypeMap = breadthOfParentsStream.map(set -> {
-			Map<Node, RDFDatatype> map = set.stream()
-				.map(node -> Maps.immutableEntry(node, tm.getTypeByName(node.getURI())))
-				.filter(e -> e.getValue() != null && e.getValue().getJavaClass() != null)
-				.collect(Collectors.toMap(Entry::getKey, Entry::getValue));
-			return map;
-		})
-		.filter(map -> !map.isEmpty())
-		.findFirst().orElse(null);
-
-		
-		RDFDatatype result;
-		if (javaTypeMap == null) {
-			result = null;
-		} else {
-			result = Iterables.getOnlyElement(javaTypeMap.values());
-		}
-		
-		System.out.println("res: " + result);	
-		return result;
-	}
-	
 	@Test
 	public void test() {
 		Model model = RDFDataMgr.loadModel("xsd-ontology.ttl");		
@@ -124,22 +65,12 @@ public class LcaAccumulationTest {
 		expected.put(XSD.decimal.asNode(), XSD.decimal.asNode());
 		expected.put(XSD.xstring.asNode(), XSD.xstring.asNode());
 		expected.put(anyType, anyType);
-				
+
 		Assert.assertEquals(expected, actual);
 		
 		System.out.println(actual);
-		Map<Node, RDFDatatype> targetTypes = actual.values().stream()
-				.distinct()
-				.map(node -> new SimpleEntry<>(node, pullUpType(node)))
-				.filter(e -> e.getValue() != null)
-				.collect(Collectors.toMap(Entry::getKey, Entry::getValue));
-
-		Map<Node, RDFDatatype> mapping = actual.entrySet().stream()
-				.map(kv -> new SimpleEntry<>(kv.getKey(), targetTypes.get(kv.getValue())))
-				.filter(e -> e.getValue() != null)
-				.collect(Collectors.toMap(Entry::getKey, Entry::getValue));
-				
-		Set<Node> failedToMap = Sets.difference(actual.keySet(), mapping.keySet());
+		
+		
 
 		
 		// Map<Var, Multiset<String>> srcSchema = ResultSetAnalytics.usedDatatypes().asCollector();

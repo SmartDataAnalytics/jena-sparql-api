@@ -22,7 +22,7 @@ public class NodeAnalytics {
 	
 	public static ParallelAggregator<Node, Long, ?> nullCount() {
 		ParallelAggregator<Node, Long, ?> result =
-			AggBuilder.inputFilter(Objects::nonNull,
+			AggBuilder.inputFilter(x -> x == null,
 				AggBuilder.counting());
 			
 		return result;
