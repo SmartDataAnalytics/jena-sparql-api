@@ -24,4 +24,6 @@ public interface DtNode<C, V, T> {
 	default LeafNode<C, V, T> asLeafNode() {
 		return (LeafNode<C, V, T>)this;
 	}
+	
+	<X> X accept(DtVisitor<C, V, T> visitor);
 }

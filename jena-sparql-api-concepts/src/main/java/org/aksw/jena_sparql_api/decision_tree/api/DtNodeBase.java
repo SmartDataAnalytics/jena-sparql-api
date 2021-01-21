@@ -1,6 +1,6 @@
 package org.aksw.jena_sparql_api.decision_tree.api;
 
-public class DtNodeBase<C, V, T>
+public abstract class DtNodeBase<C, V, T>
 	implements DtNode<C, V, T>
 {
 	public DtNodeBase(InnerNode<C, V, T> parent, V reachingValue) {

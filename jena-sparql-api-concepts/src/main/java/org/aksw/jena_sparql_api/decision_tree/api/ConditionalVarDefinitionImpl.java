@@ -3,6 +3,7 @@ package org.aksw.jena_sparql_api.decision_tree.api;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import org.aksw.jena_sparql_api.decision_tree.impl.jena.ConditionalVarDefinition;
 import org.apache.jena.sparql.core.Var;
 
 /**
@@ -14,7 +15,9 @@ import org.apache.jena.sparql.core.Var;
  * @author raven
  *
  */
-public class ConditionalVarDefinitionImpl {
+public class ConditionalVarDefinitionImpl
+	implements ConditionalVarDefinition
+{
 	protected Map<Var, DecisionTreeSparqlExpr> definitions;
 	
 	public ConditionalVarDefinitionImpl() {
@@ -26,9 +29,15 @@ public class ConditionalVarDefinitionImpl {
 		this.definitions = definitions;
 	}
 	
+	@Override
 	public ConditionalVarDefinitionImpl put(Var var, DecisionTreeSparqlExpr definition) {
 		definitions.put(var, definition);
 		return this;
+	}
+	
+	@Override
+	public Map<Var, DecisionTreeSparqlExpr> getDefinitions() {
+		return definitions;
 	}
 
 	@Override

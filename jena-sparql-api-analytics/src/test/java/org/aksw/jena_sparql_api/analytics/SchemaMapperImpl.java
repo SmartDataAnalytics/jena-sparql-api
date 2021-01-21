@@ -1,29 +1,26 @@
 package org.aksw.jena_sparql_api.analytics;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.Map.Entry;
 import java.util.function.Function;
 
 import org.aksw.jena_sparql_api.decision_tree.api.ConditionalVarDefinitionImpl;
 import org.aksw.jena_sparql_api.decision_tree.api.DecisionTreeSparqlExpr;
-import org.aksw.jena_sparql_api.rdf.collections.NodeMapper;
-import org.aksw.jena_sparql_api.rdf.collections.NodeMappers;
+import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.sparql.core.Var;
-import org.apache.jena.sparql.engine.binding.Binding;
+import org.apache.jena.sparql.expr.E_Datatype;
+import org.apache.jena.sparql.expr.E_Equals;
 import org.apache.jena.sparql.expr.E_Function;
 import org.apache.jena.sparql.expr.E_Lang;
 import org.apache.jena.sparql.expr.ExprList;
 import org.apache.jena.sparql.expr.ExprVar;
+import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.util.SplitIRI;
 import org.apache.jena.vocabulary.RDF;
-
-import com.google.common.collect.Multiset;
+import org.apache.jena.vocabulary.XSD;
 
 
 /**
@@ -94,18 +91,20 @@ public class SchemaMapperImpl {
 		return this;
 	}
 
-	// TODO Finish implementation
-	public Map<String, String> createSchemaMapping() {
+	public SchemaMapping createSchemaMapping() {
 		ConditionalVarDefinitionImpl tgtMapping = new ConditionalVarDefinitionImpl();
 
-		Map<Var, NodeMapper<?>> columnToJavaClass = new HashMap<>();
+		// Map<Var, NodeMapper<?>> columnToJavaClass = new HashMap<>();
+		Map<Var, String> targetVarType = new HashMap<>();
 		Set<Var> nullableColumns = new HashSet<>();
+		
+		Map<Var, FieldMapping> tgtVarToMapping = new HashMap<>(); 
 		
 		for (Var srcVar : sourceVars) {
 			String srcVarName = srcVar.getName(); 
 			
 			System.out.println("Processing srcVar: " + srcVar);
-			
+			ExprVar srcExprVar = new ExprVar(srcVar);
 			
 			Set<Var> columns = new LinkedHashSet<>();
 			
@@ -133,17 +132,33 @@ public class SchemaMapperImpl {
 				DecisionTreeSparqlExpr dt = new DecisionTreeSparqlExpr();
 				
 				if (!castDatatypeIri.equals(datatypeIri)) {
-					E_Function castExpr = new E_Function(castDatatypeIri, new ExprList(new ExprVar(srcVar)));
-					dt.getRoot().getOrCreateLeafNode(null).setValue(castExpr);
-					tgtMapping.put(tgtVar, dt);	
-					columnToJavaClass.put(srcVar, NodeMappers.fromDatatypeIri(castDatatypeIri));	
-					
+					dt.getRoot()
+						.getOrCreateInnerNode(null, new E_Equals(
+								new E_Datatype(srcExprVar),
+								NodeValue.makeNode(NodeFactory.createURI(datatypeIri))))					
+						.getOrCreateLeafNode(NodeValue.TRUE.asNode())
+							.setValue(new E_Function(castDatatypeIri, new ExprList(srcExprVar)));
+
+//					tgtMapping.put(tgtVar, dt);	
+					// columnToJavaClass.put(srcVar, NodeMappers.fromDatatypeIri(castDatatypeIri));
+//					targetVarType.put(tgtVar, castDatatypeIri);
+					tgtVarToMapping.put(tgtVar, new FieldMappingImpl(tgtVar, dt, castDatatypeIri, isNullable));
+
 //					System.out.println(tgtMapping);
 
 				} else {
-					dt.getRoot().getOrCreateLeafNode(null).setValue(new ExprVar(srcVar));
-					tgtMapping.put(tgtVar, dt);	
-					columnToJavaClass.put(srcVar, NodeMappers.fromDatatypeIri(datatypeIri));		
+					dt.getRoot()
+					.getOrCreateInnerNode(null, new E_Equals(
+							new E_Datatype(srcExprVar),
+							NodeValue.makeNode(NodeFactory.createURI(datatypeIri))))					
+					.getOrCreateLeafNode(NodeValue.TRUE.asNode())
+						.setValue(srcExprVar);
+					
+//					tgtMapping.put(tgtVar, dt);	
+//					columnToJavaClass.put(srcVar, NodeMappers.fromDatatypeIri(datatypeIri));
+//					targetVarType.put(tgtVar, datatypeIri);
+					tgtVarToMapping.put(tgtVar, new FieldMappingImpl(tgtVar, dt, datatypeIri, isNullable));
+
 					
 //					System.out.println(tgtMapping);
 
@@ -153,20 +168,23 @@ public class SchemaMapperImpl {
 				if (datatypeIri.equals(RDF.langString.getURI())) {
 					Var tgtLangVar = Var.alloc(baseName + "_lang");
 					DecisionTreeSparqlExpr langDt = new DecisionTreeSparqlExpr();
-					langDt.getRoot().getOrCreateLeafNode(null).setValue(new E_Lang(new ExprVar(srcVar)));
-					tgtMapping.put(tgtLangVar, langDt);					
-					columnToJavaClass.put(srcVar, NodeMappers.from(String.class));
-					
-//					System.out.println(tgtMapping);
+					langDt.getRoot()
+						.getOrCreateInnerNode(null, new E_Equals(new E_Datatype(srcExprVar), NodeValue.makeNode(RDF.Nodes.langString)))					
+						.getOrCreateLeafNode(NodeValue.TRUE.asNode()).setValue(new E_Lang(srcExprVar));
+//					tgtMapping.put(tgtLangVar, langDt);					
+					// columnToJavaClass.put(srcVar, NodeMappers.from(String.class));
+					tgtVarToMapping.put(tgtLangVar, new FieldMappingImpl(tgtLangVar, langDt, XSD.xstring.getURI(), isNullable));
 				}
 			}
 		}
 		
 		
-		System.out.println(tgtMapping);
+		SchemaMappingImpl result = new SchemaMappingImpl(tgtVarToMapping);
+
+		System.out.println(result);
 
 		
-		return null;
+		return result;
 	}
 	
 	public static String createColumnName(String varName, String datatypeIri) {

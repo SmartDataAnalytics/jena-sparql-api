@@ -60,6 +60,7 @@ public class DecisionTreeSparqlBase<T>
 
 	@Override
 	public String toString() {
-		return "DecisionTreeSparqlBase [root=" + root + "]";
+		// return "root=" + root + "]";
+		return root.toString();		
 	}
 }

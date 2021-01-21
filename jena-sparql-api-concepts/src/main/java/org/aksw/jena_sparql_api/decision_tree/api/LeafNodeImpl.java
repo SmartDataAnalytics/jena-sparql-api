@@ -1,6 +1,7 @@
 package org.aksw.jena_sparql_api.decision_tree.api;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 public class LeafNodeImpl<C, V, T>
 	extends DtNodeBase<C, V, T>
@@ -28,6 +29,7 @@ public class LeafNodeImpl<C, V, T>
 	
 	@Override
 	public String toString() {
-		return "Leaf(" + value + ")";
+		return Objects.toString(value);
 	}
+	
 }

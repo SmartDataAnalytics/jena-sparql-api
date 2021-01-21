@@ -6,6 +6,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.aksw.jena_sparql_api.decision_tree.impl.jena.DtVisitorToString;
+
 import com.google.common.base.Optional;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
@@ -43,6 +45,12 @@ public class InnerNodeImpl<C, V, T>
 		return classifier;
 	}
 	
+	/** Get all child inner nodes */
+	@Override
+	public Collection<? extends InnerNode<C, V, T>>  getInnerNodes() {
+		return valueToConditionToInnerNode.values();
+	}
+	
 	@Override
 	public Collection<? extends InnerNode<C, V, T>> getInnerNodes(Object value) {
 		Optional<?> rowKey = Optional.fromNullable(value);
@@ -77,6 +85,11 @@ public class InnerNodeImpl<C, V, T>
 	}
 
 	@Override
+	public Collection<? extends LeafNode<C, V, T>> getLeafNodes() {
+		return valueToLeafNode.values();
+	}
+	
+	@Override
 	public LeafNode<C, V, T> getLeafNode(Object value) {
 		return valueToLeafNode.get(value);
 	}
@@ -95,7 +108,10 @@ public class InnerNodeImpl<C, V, T>
 	
 	@Override
 	public String toString() {
-		return "Inner(" + classifier + ", " + valueToLeafNode + ", " + valueToConditionToInnerNode + ")";
+		DtVisitorToString<C, V, T> visitor = new DtVisitorToString<>();
+		visitor.visit(this);
+		String result = visitor.getResult();		
+		return result;
 	}
 
 }
