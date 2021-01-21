@@ -45,9 +45,7 @@ public class TestPrefixAggregation {
 				
 		System.out.println(usedDatatypesAndNulls);
 
-		SchemaMapperImpl schemaMapper = new SchemaMapperImpl();
-		
-		schemaMapper
+		SchemaMapperImpl.newInstance()
 			.setSourceVars(resultVars)
 			.setSourceVarToDatatypes(v -> usedDatatypesAndNulls.get(v).getKey().elementSet())
 			.setSourceVarToNulls(v -> usedDatatypesAndNulls.get(v).getValue())

@@ -1,10 +1,13 @@
 package org.aksw.jena_sparql_api.analytics;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Map.Entry;
 import java.util.function.Function;
 
 import org.aksw.jena_sparql_api.decision_tree.api.ConditionalVarDefinitionImpl;
@@ -12,6 +15,7 @@ import org.aksw.jena_sparql_api.decision_tree.api.DecisionTreeSparqlExpr;
 import org.aksw.jena_sparql_api.rdf.collections.NodeMapper;
 import org.aksw.jena_sparql_api.rdf.collections.NodeMappers;
 import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.expr.E_Function;
 import org.apache.jena.sparql.expr.E_Lang;
 import org.apache.jena.sparql.expr.ExprList;
@@ -19,6 +23,40 @@ import org.apache.jena.sparql.expr.ExprVar;
 import org.apache.jena.util.SplitIRI;
 import org.apache.jena.vocabulary.RDF;
 
+import com.google.common.collect.Multiset;
+
+
+/**
+ * SchemaMapper for mapping RDF tables ("result sets") to SQL tables.
+ * The schema mapper is independent of any instance data an operates only based on
+ * a given set of source variables (column names) together with statistic providers.
+ * 
+ * As a consequence it is possible to create schema mappings for concrete SPARQL result sets
+ * as well as from schemas of virtual result sets such as obtained by rewriting a SPARQL query
+ * w.r.t. a set of R2RML mappings.
+ *
+ * Example for using this class in conjunction with {@link ResultSetAnalytics} on a concrete SPARQL result set:
+ * 
+ * <pre>
+ * {@code
+ * List<Binding> bindings = rs...;
+ * Set<Var> resultVars = rs...;
+ *
+ * Map<Var, Entry<Multiset<String>, Long>> usedDatatypesAndNulls = bindings.stream()
+ *    .collect(ResultSetAnalytics.usedDatatypesAndNullCounts(resultVars).asCollector());
+ *
+ * SchemaMapperImpl.newInstance()
+ *     .setSourceVars(resultVars)
+ *     .setSourceVarToDatatypes(v -> usedDatatypesAndNulls.get(v).getKey().elementSet())
+ *     .setSourceVarToNulls(v -> usedDatatypesAndNulls.get(v).getValue())
+ *     .setTypePromotionStrategy(TypePromoterImpl.create())
+ *     .createSchemaMapping();
+ * }
+ * </pre>
+ * 
+ * @author Claus Stadler
+ *
+ */
 public class SchemaMapperImpl {
 	
 	// The source column names
@@ -135,4 +173,8 @@ public class SchemaMapperImpl {
 		return varName + datatypeIri;
 	}
 	
+	
+	public static SchemaMapperImpl newInstance() {
+		return new SchemaMapperImpl();
+	}
 }
