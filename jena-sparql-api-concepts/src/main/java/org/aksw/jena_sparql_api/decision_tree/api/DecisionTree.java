@@ -15,8 +15,10 @@ import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.engine.binding.BindingFactory;
+import org.apache.jena.sparql.engine.binding.BindingMap;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.NodeValue;
+import org.apache.jena.sparql.expr.VariableNotBoundException;
 import org.apache.jena.sparql.util.ExprUtils;
 
 import com.google.common.base.Optional;
@@ -70,9 +72,9 @@ interface InnerNode<C, V, T>
 	/** Get the inner node for the given value and classifier; returns null if it does not exist */
 	InnerNode<C, V, T> getInnerNode(V value, C classifier);
 
-	default InnerNode<C, V, T> getOrCreateInnerNode(C classifier) {
-		return getOrCreateInnerNode(null, classifier);
-	}
+//	default InnerNode<C, V, T> getOrCreateInnerNode(C classifier) {
+//		return getOrCreateInnerNode(null, classifier);
+//	}
 
 	/** Lookup a node for a given value */
 	Collection<? extends InnerNode<C, V, T>> getInnerNodes(Object value);
@@ -260,8 +262,12 @@ class DecisionTreeSparqlBase<T>
 				eval = null;
 			} else {
 				// FIXME Check whether all mentioned variables are bound?
-				NodeValue nv = ExprUtils.eval(cond, binding);
-				eval = nv.asNode();
+				try {
+					NodeValue nv = ExprUtils.eval(cond, binding);
+					eval = nv.asNode();
+				} catch (VariableNotBoundException e) {
+					eval = null;
+				}
 			}			
 
 			LeafNode<Expr, Node, T> leaf = innerNode.getLeafNode(eval);
@@ -363,20 +369,36 @@ public class DecisionTree {// <I, C, T, N extends DtNode<C, T>> {
 	public static void main(String[] args) {
 		DecisionTreeSparqlExpr dt = new DecisionTreeSparqlExpr();
 		
-		InnerNode<Expr, Node, Expr> dn = dt.getRoot().getOrCreateInnerNode(ExprUtils.parse("BOUND(?p)"));
+		InnerNode<Expr, Node, Expr> dn = dt.getRoot().getOrCreateInnerNode(null, ExprUtils.parse("?p = 'test'"));
 		
 		
-		LeafNode<Expr, Node, Expr> yes = dn.getOrCreateLeafNode(NodeValue.TRUE.asNode());
-		yes.setValue(ExprUtils.parse("'yay'"));
+		InnerNode<Expr, Node, Expr> on = dn.getOrCreateInnerNode(NodeValue.TRUE.asNode(), ExprUtils.parse("?o = 'hello'"));
+		on.getOrCreateLeafNode(NodeValue.TRUE.asNode()).setValue(ExprUtils.parse("'oho'"));
+		
+		
+//		LeafNode<Expr, Node, Expr> yes = dn.getOrCreateLeafNode(NodeValue.TRUE.asNode());
+//		yes.setValue(ExprUtils.parse("'yay'"));
 
 		LeafNode<Expr, Node, Expr> no = dn.getOrCreateLeafNode(NodeValue.FALSE.asNode());
 		no.setValue(ExprUtils.parse("'nah'"));
 
+		LeafNode<Expr, Node, Expr> otherwise = dn.getOrCreateLeafNode(null);
+		otherwise.setValue(ExprUtils.parse("'fail'"));
+
+		
 		Node result1 = dt.eval(BindingFactory.binding(Vars.p, NodeFactory.createLiteral("test")));
 		System.out.println(result1);
 
 		Node result2 = dt.eval(BindingFactory.binding(Vars.o, NodeFactory.createLiteral("test")));
 		System.out.println(result2);
+		
+
+		BindingMap bm = BindingFactory.create();
+		bm.add(Vars.p, NodeFactory.createLiteral("test"));
+		bm.add(Vars.o, NodeFactory.createLiteral("hello"));
+		Node result3 = dt.eval(bm);
+		System.out.println(result3);
+
 
 	}
 	// Stream<> find(I input);
