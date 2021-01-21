@@ -66,6 +66,8 @@ public class SchemaMapperImpl {
 		for (Var srcVar : sourceVars) {
 			String srcVarName = srcVar.getName(); 
 			
+			System.out.println("Processing srcVar: " + srcVar);
+			
 			
 			Set<Var> columns = new LinkedHashSet<>();
 			
@@ -78,6 +80,8 @@ public class SchemaMapperImpl {
 			
 			boolean singleDatatype = datatypeIris.size() == 1;
 			for (String datatypeIri : datatypeIris) {
+
+				System.out.println("Processing datatypeIri: " + datatypeIri);
 
 				
 				String castDatatypeIri = typePromotions.getOrDefault(datatypeIri, datatypeIri);
@@ -94,11 +98,17 @@ public class SchemaMapperImpl {
 					E_Function castExpr = new E_Function(castDatatypeIri, new ExprList(new ExprVar(srcVar)));
 					dt.getRoot().getOrCreateLeafNode(null).setValue(castExpr);
 					tgtMapping.put(tgtVar, dt);	
-					columnToJavaClass.put(srcVar, NodeMappers.fromDatatypeIri(castDatatypeIri));
+					columnToJavaClass.put(srcVar, NodeMappers.fromDatatypeIri(castDatatypeIri));	
+					
+//					System.out.println(tgtMapping);
+
 				} else {
 					dt.getRoot().getOrCreateLeafNode(null).setValue(new ExprVar(srcVar));
 					tgtMapping.put(tgtVar, dt);	
-					columnToJavaClass.put(srcVar, NodeMappers.fromDatatypeIri(datatypeIri));					
+					columnToJavaClass.put(srcVar, NodeMappers.fromDatatypeIri(datatypeIri));		
+					
+//					System.out.println(tgtMapping);
+
 				}
 				
 				// Add an extra language column if langString is used
@@ -108,12 +118,15 @@ public class SchemaMapperImpl {
 					langDt.getRoot().getOrCreateLeafNode(null).setValue(new E_Lang(new ExprVar(srcVar)));
 					tgtMapping.put(tgtLangVar, langDt);					
 					columnToJavaClass.put(srcVar, NodeMappers.from(String.class));
-				}				
+					
+//					System.out.println(tgtMapping);
+				}
 			}
 		}
 		
 		
-		
+		System.out.println(tgtMapping);
+
 		
 		return null;
 	}

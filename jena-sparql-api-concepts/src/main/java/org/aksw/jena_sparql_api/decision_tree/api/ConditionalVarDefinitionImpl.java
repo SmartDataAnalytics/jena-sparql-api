@@ -30,5 +30,9 @@ public class ConditionalVarDefinitionImpl {
 		definitions.put(var, definition);
 		return this;
 	}
-	
+
+	@Override
+	public String toString() {
+		return "ConditionalVarDefinitionImpl [definitions=" + definitions + "]";
+	}
 }

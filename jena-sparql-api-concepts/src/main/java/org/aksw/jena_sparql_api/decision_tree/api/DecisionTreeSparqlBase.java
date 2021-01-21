@@ -57,4 +57,9 @@ public class DecisionTreeSparqlBase<T>
 		recursiveFind(binding, getRoot(), result);
 		return result;
 	}
+
+	@Override
+	public String toString() {
+		return "DecisionTreeSparqlBase [root=" + root + "]";
+	}
 }

@@ -69,8 +69,12 @@ public class TypePromoterImpl
 		
 		Set<String> failedToMap = Sets.difference(actual.keySet(), mapping.keySet());
 
-		if (!failedToMap.isEmpty()) {
-			throw new RuntimeException("Failed to map: " + failedToMap);
+		boolean ignoreUnknownTypes = true;
+		
+		if (!ignoreUnknownTypes) {
+			if (!failedToMap.isEmpty()) {
+				throw new RuntimeException("Failed to map: " + failedToMap);
+			}
 		}
 		
 		return result;
@@ -145,7 +149,7 @@ public class TypePromoterImpl
 			result = Iterables.getOnlyElement(javaTypeMap.values());
 		}
 		
-		System.out.println("res: " + result);	
+//		System.out.println("res: " + result);	
 		return result;
 	}
 }
