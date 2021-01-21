@@ -3,6 +3,7 @@ package org.aksw.jena_sparql_api.mapper.parallel;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
@@ -129,6 +130,28 @@ public class AggBuilder<I, O, ACC extends Accumulator<I, O>, AGG extends Paralle
 		inputFilter(SerializablePredicate<? super I> inputFilter, AGG state) {
 		 return new AggInputFilter<>(state, inputFilter);
 	}
+
+	
+	public static <I, K, J, O,
+		ACC extends Accumulator<J, O>,
+		AGG extends ParallelAggregator<J, O, ACC>> AggInputSplit<I, K, J, O, ACC, AGG>
+	inputSplit(
+			SerializableFunction<? super I, ? extends Set<? extends K>> keyMapper,
+			SerializableBiFunction<? super I, ? super K, ? extends J> valueMapper,
+			AGG state) {
+		return new AggInputSplit<>(state, keyMapper, valueMapper);
+	}
+
+//	public static <I, O, ACC extends Accumulator<I, O>, AGG extends ParallelAggregator<I, O, ACC>> AggInputFilter<I, O, ACC, AGG>
+//	inputFilter(SerializablePredicate<? super I> inputFilter, AGG state) {
+//	 return new AggInputFilter<>(state, inputFilter);
+//	}
+	
+	public static <I, J, O, ACC extends Accumulator<J, O>, AGG extends ParallelAggregator<J, O, ACC>> AggInputTransform<I, J, O, ACC, AGG>
+		inputTransform(SerializableFunction<? super I, ? extends J> inputTransform, AGG state) {
+		return new AggInputTransform<>(state, inputTransform);
+	}
+
 	
 
 	public static <I, O, P, ACC extends Accumulator<I, O>, AGG extends ParallelAggregator<I, O, ACC>> AggOutputTransform<I, O, P, ACC, AGG>
@@ -136,8 +159,33 @@ public class AggBuilder<I, O, ACC extends Accumulator<I, O>, AGG extends Paralle
 		return new AggOutputTransform<>(state, outputTransform);
 	}
 
+	public static <T, C extends Collection<T>>
+		ParallelAggregator<T, C, Accumulator<T, C>> collectionSupplier(SerializableSupplier<C> colSupplier)
+	{
+		return naturalAccumulator(() -> new AccCollection<>(colSupplier.get()));
+	}
+
+	public static <T, C extends Collection<T>>
+	ParallelAggregator<T, C, Accumulator<T, C>> naturalAccumulator(SerializableSupplier<? extends Accumulator<T, C>> accSupplier)
+	{
+		return new AggNatural<>(accSupplier);
+	}
 
 	
+	public static <I>
+	ParallelAggregator<I, Long, Accumulator<I, Long>> counting()
+	{
+		return new AggCounting<I>();
+	}
+
+	public static <I, O1, O2>
+	ParallelAggregator<I, Entry<O1, O2>, ?> inputBroadcast(
+			ParallelAggregator<I, O1, ?> agg1,
+			ParallelAggregator<I, O2, ?> agg2)
+	{
+		return new AggInputBroadcast<>(agg1, agg2);
+	}
+
 }
 
 

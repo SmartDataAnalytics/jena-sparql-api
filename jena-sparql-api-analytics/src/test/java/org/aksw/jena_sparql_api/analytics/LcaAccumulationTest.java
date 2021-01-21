@@ -141,6 +141,12 @@ public class LcaAccumulationTest {
 				
 		Set<Node> failedToMap = Sets.difference(actual.keySet(), mapping.keySet());
 
+		
+		// Map<Var, Multiset<String>> srcSchema = ResultSetAnalytics.usedDatatypes().asCollector();
+		SchemaMapperImpl schemaMapper = new SchemaMapperImpl();
+		// schemaMapper.createSchema(null, null)
+		
+		
 		Function<Node, Object> fn = createNodeToJavaConverter(XSDDatatype.XSDlong, XSDDatatype.XSDbyte);
 		Object r = fn.apply(NodeFactory.createLiteral("1", XSDDatatype.XSDlong));
 		System.out.println(r + " - " + r.getClass());
@@ -167,29 +173,7 @@ public class LcaAccumulationTest {
 		
 	}
 	
-	// TODO Finish implementation
-	public Map<String, String> createSchema(Map<Var, Multiset<String>> varToDatatypes) {
-		for (Entry<Var, Multiset<String>> e : varToDatatypes.entrySet()) {
-			Var var = e.getKey();
-			
-			Set<String> datatypeIris = e.getValue().elementSet();
-			
-			if (datatypeIris.size() == 1) {
-				
-			} else {	
-				for (String datatypeIri : e.getValue().elementSet()) {
-					String columnName = null;
-				}
-			}
-		}
-		
-		return null;
-	}
-	
-	public static String createColumnName(String varName, String datatypeIri) {
-		return varName + datatypeIri;
-	}
-	
+
 	/**
 	 * Create a lambda that converts from the given src datatype to the target one.
 	 * 
