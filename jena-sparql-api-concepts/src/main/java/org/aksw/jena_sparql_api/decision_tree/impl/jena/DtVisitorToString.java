@@ -2,6 +2,7 @@ package org.aksw.jena_sparql_api.decision_tree.impl.jena;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.Collection;
 
 import org.aksw.jena_sparql_api.decision_tree.api.DtVisitor;
 import org.aksw.jena_sparql_api.decision_tree.api.InnerNode;
@@ -33,28 +34,56 @@ public class DtVisitorToString<C, V, T>
 	@Override
 	public <X> X visit(InnerNode<C, V, T> node) {
 		
-		writer.println("SWITCH (" + (node.getClassifier()) + ") {");
+		C classifier = node.getClassifier();
+		Collection<? extends InnerNode<C, V, T>> childInnerNodes = node.getInnerNodes();
+		Collection<? extends LeafNode<C, V, T>> childLeafNodes = node.getLeafNodes();
 		
-		for (InnerNode<C, V, T> innerNode : node.getInnerNodes()) {
-			Object value = innerNode.getReachingValue();
+		// pass through: an inner node with null condition and only one child for the null outcome
+		boolean passThrough = false;
+		if (classifier == null) {
+			if (childInnerNodes.size() == 1 && childLeafNodes.isEmpty()) {
+				InnerNode<C, V, T> onlyChild = childInnerNodes.iterator().next();
+				
+				if (onlyChild.getReachingValue() == null) {
+					onlyChild.accept(this);
+					passThrough = true;
+				}			
+			} else if (childLeafNodes.size() == 1 && childInnerNodes.isEmpty()) {
+				LeafNode<C, V, T> onlyChild = childLeafNodes.iterator().next();
+				
+				if (onlyChild.getReachingValue() == null) {
+					onlyChild.accept(this);
+					passThrough = true;
+				}			
+			}
+
+		}
+
+		if (!passThrough) {
 			
-			writer.println((value == null ? "DEFAULT: " : "CASE " + value + ": ") + "{");
-			writer.incIndent();
-			innerNode.accept(this);
-			writer.decIndent();
+			writer.println("SWITCH (" + classifier + ") {");
+			
+			for (InnerNode<C, V, T> innerNode : node.getInnerNodes()) {
+				Object value = innerNode.getReachingValue();
+				
+				writer.println((value == null ? "DEFAULT: " : "CASE " + value + ": ") + "{");
+				writer.incIndent();
+				innerNode.accept(this);
+				writer.decIndent();
+				writer.println("}");
+			}
+	
+			for (LeafNode<C, V, T> leafNode : node.getLeafNodes()) {
+				Object value = leafNode.getReachingValue();
+				
+				writer.print((value == null ? "DEFAULT: " : "CASE " + value + ": ") + "{ ");
+				leafNode.accept(this);
+				writer.println(" }");
+			}
+	
 			writer.println("}");
 		}
-
-		for (LeafNode<C, V, T> leafNode : node.getLeafNodes()) {
-			Object value = leafNode.getReachingValue();
-			
-			writer.print((value == null ? "DEFAULT: " : "CASE " + value + ": ") + "{ ");
-			leafNode.accept(this);
-			writer.println(" }");
-		}
-
-		writer.println("}");
-	
+		
 		return null;
 	}
 

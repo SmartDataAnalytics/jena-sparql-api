@@ -24,8 +24,8 @@ public class TestPrefixAggregation {
 	
 	@Test
 	public void testPrefixAggregation() {
-		Model model = RDFDataMgr.loadModel("xsd-ontology.ttl");
-//		Model model = RDFDataMgr.loadModel("/home/raven/Downloads/SQCFrameWork-benchmarks/sqcfreame-swdf-benchmarks/Random-swdf-Sup15-benchmark.ttl");
+//		Model model = RDFDataMgr.loadModel("xsd-ontology.ttl");
+		Model model = RDFDataMgr.loadModel("/home/raven/Downloads/SQCFrameWork-benchmarks/sqcfreame-swdf-benchmarks/Random-swdf-Sup15-benchmark.ttl");
 		
 		List<Binding> list = new ArrayList<>();
 		Set<Var> resultVars;
