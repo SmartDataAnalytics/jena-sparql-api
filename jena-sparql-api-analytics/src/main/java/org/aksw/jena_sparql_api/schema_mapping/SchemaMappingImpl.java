@@ -1,5 +1,6 @@
-package org.aksw.jena_sparql_api.analytics;
+package org.aksw.jena_sparql_api.schema_mapping;
 
+import java.io.Serializable;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -15,8 +16,10 @@ import org.apache.jena.sparql.core.Var;
  *
  */
 public class SchemaMappingImpl
-	implements SchemaMapping
+	implements SchemaMapping, Serializable
 {
+	private static final long serialVersionUID = 6530165559931064334L;
+
 	protected Map<Var, FieldMapping> varToFieldMapping;
 	
 	public SchemaMappingImpl(Map<Var, FieldMapping> varToFieldMapping) {

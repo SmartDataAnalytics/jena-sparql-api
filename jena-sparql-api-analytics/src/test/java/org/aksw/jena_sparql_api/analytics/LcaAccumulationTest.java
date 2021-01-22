@@ -11,6 +11,7 @@ import java.util.Set;
 import java.util.function.Function;
 
 import org.aksw.jena_sparql_api.mapper.parallel.AggLcaMap.AccLcaMap;
+import org.aksw.jena_sparql_api.schema_mapping.SchemaMapperImpl;
 import org.aksw.jena_sparql_api.util.graph.alg.GraphSuccessorFunction;
 import org.aksw.jena_sparql_api.util.graph.alg.NaiveLCAFinder;
 import org.apache.jena.datatypes.RDFDatatype;

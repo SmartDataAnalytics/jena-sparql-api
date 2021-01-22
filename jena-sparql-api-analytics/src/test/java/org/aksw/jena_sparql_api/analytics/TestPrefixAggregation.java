@@ -6,6 +6,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import org.aksw.jena_sparql_api.schema_mapping.SchemaMapperImpl;
+import org.aksw.jena_sparql_api.schema_mapping.TypePromoterImpl;
 import org.aksw.jena_sparql_api.utils.IteratorResultSetBinding;
 import org.aksw.jena_sparql_api.utils.VarUtils;
 import org.apache.jena.query.QueryExecution;

@@ -1,11 +1,15 @@
-package org.aksw.jena_sparql_api.analytics;
+package org.aksw.jena_sparql_api.schema_mapping;
+
+import java.io.Serializable;
 
 import org.aksw.jena_sparql_api.decision_tree.api.DecisionTreeSparqlExpr;
 import org.apache.jena.sparql.core.Var;
 
 public class FieldMappingImpl
-	implements FieldMapping
+	implements FieldMapping, Serializable
 {
+	private static final long serialVersionUID = -7307387469369671612L;
+
 	protected Var var;
 	protected DecisionTreeSparqlExpr definition;
 	protected String datataypeIri;

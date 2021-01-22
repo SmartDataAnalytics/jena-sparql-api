@@ -7,8 +7,8 @@ import java.util.LinkedHashSet;
 import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.expr.Expr;
+import org.apache.jena.sparql.expr.ExprEvalException;
 import org.apache.jena.sparql.expr.NodeValue;
-import org.apache.jena.sparql.expr.VariableNotBoundException;
 import org.apache.jena.sparql.util.ExprUtils;
 
 public class DecisionTreeSparqlBase<T>
@@ -35,7 +35,8 @@ public class DecisionTreeSparqlBase<T>
 				try {
 					NodeValue nv = ExprUtils.eval(cond, binding);
 					eval = nv.asNode();
-				} catch (VariableNotBoundException e) {
+				// } catch (VariableNotBoundException e) {
+				} catch (ExprEvalException e) {
 					eval = null;
 				}
 			}			

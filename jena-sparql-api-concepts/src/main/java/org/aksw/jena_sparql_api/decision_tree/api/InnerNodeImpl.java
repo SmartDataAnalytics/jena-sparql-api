@@ -18,6 +18,11 @@ public class InnerNodeImpl<C, V, T>
 {
 	private static final long serialVersionUID = 7046323103753590235L;
 
+	/* For deserialization */
+//	public InnerNodeImpl() {
+//		super(null, null);
+//	}
+	
 	public InnerNodeImpl(InnerNode<C, V, T> parent, V reachingValue, C classifier) {
 		super(parent, reachingValue);
 		this.classifier = classifier;

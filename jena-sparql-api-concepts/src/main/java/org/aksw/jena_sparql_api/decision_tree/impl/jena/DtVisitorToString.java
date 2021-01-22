@@ -81,7 +81,7 @@ public class DtVisitorToString<C, V, T>
 				writer.println(" }");
 			}
 	
-			writer.println("}");
+			writer.print("}");
 		}
 		
 		return null;

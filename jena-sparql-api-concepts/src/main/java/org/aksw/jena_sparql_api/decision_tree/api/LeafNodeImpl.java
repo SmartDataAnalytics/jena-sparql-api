@@ -11,6 +11,12 @@ public class LeafNodeImpl<C, V, T>
 
 	protected T value;
 	
+	/* For deserialization */
+//	public LeafNodeImpl() {
+//		super(null, null);
+//	}
+
+	
 	public LeafNodeImpl(InnerNode<C, V, T> parent, V reachingValue) {
 		super(parent, reachingValue);
 	}

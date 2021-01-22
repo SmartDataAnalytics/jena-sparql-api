@@ -1,8 +1,12 @@
 package org.aksw.jena_sparql_api.decision_tree.api;
 
+import java.io.Serializable;
+
 public abstract class DtNodeBase<C, V, T>
-	implements DtNode<C, V, T>
+	implements DtNode<C, V, T>, Serializable
 {
+	private static final long serialVersionUID = 0L;
+
 	public DtNodeBase(InnerNode<C, V, T> parent, V reachingValue) {
 		super();
 		this.parent = parent;

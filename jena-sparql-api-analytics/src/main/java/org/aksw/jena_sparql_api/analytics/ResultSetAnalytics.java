@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api.analytics;
 
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -21,7 +22,11 @@ public class ResultSetAnalytics {
 	}
 
 	public static <O> ParallelAggregator<Binding, Map<Var, O>, ?> aggPerVar(Set<Var> staticVars, ParallelAggregator<Node, O, ?> nodeAgg) {
-		return AggBuilder.inputSplit((Binding b) -> staticVars, Binding::get,
+		// Create a copy of the set to avoid serialization issues
+		// For example, passing a immutable set from scala makes the lambda non-serializable
+		Set<Var> staticVarCopy = new LinkedHashSet<>(staticVars);
+		
+		return AggBuilder.inputSplit((Binding b) -> staticVarCopy, Binding::get,
 				nodeAgg);
 	}
 

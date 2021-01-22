@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.analytics;
+package org.aksw.jena_sparql_api.schema_mapping;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -7,14 +7,20 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 
+import org.aksw.jena_sparql_api.analytics.ResultSetAnalytics;
 import org.aksw.jena_sparql_api.decision_tree.api.ConditionalVarDefinitionImpl;
 import org.aksw.jena_sparql_api.decision_tree.api.DecisionTreeSparqlExpr;
+import org.aksw.jena_sparql_api.decision_tree.api.E_SerializableIdentity;
+import org.aksw.jena_sparql_api.utils.NodeUtils;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.E_Datatype;
 import org.apache.jena.sparql.expr.E_Equals;
 import org.apache.jena.sparql.expr.E_Function;
+import org.apache.jena.sparql.expr.E_IsBlank;
+import org.apache.jena.sparql.expr.E_IsIRI;
 import org.apache.jena.sparql.expr.E_Lang;
+import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprList;
 import org.apache.jena.sparql.expr.ExprVar;
 import org.apache.jena.sparql.expr.NodeValue;
@@ -110,12 +116,15 @@ public class SchemaMapperImpl {
 			
 			Set<String> datatypeIris = sourceVarToDatatypes.apply(srcVar);
 			Number nullStats = sourceVarToNulls.apply(srcVar);
-			boolean isNullable = nullStats.longValue() > 0;
 
 			Map<String, String> typePromotions = typePromotionStrategy.promoteTypes(datatypeIris);
 
 			
 			boolean singleDatatype = datatypeIris.size() == 1;
+			
+			boolean isNullable = nullStats.longValue() > 0 || !singleDatatype;
+			
+			
 			for (String datatypeIri : datatypeIris) {
 
 				System.out.println("Processing datatypeIri: " + datatypeIri);
@@ -133,11 +142,10 @@ public class SchemaMapperImpl {
 				
 				if (!castDatatypeIri.equals(datatypeIri)) {
 					dt.getRoot()
-						.getOrCreateInnerNode(null, new E_Equals(
-								new E_Datatype(srcExprVar),
-								NodeValue.makeNode(NodeFactory.createURI(datatypeIri))))					
+						.getOrCreateInnerNode(null, E_SerializableIdentity.wrap(
+								createDatatypeCheck(srcExprVar, castDatatypeIri)))				
 						.getOrCreateLeafNode(NodeValue.TRUE.asNode())
-							.setValue(new E_Function(castDatatypeIri, new ExprList(srcExprVar)));
+							.setValue(E_SerializableIdentity.wrap(new E_Function(castDatatypeIri, new ExprList(srcExprVar))));
 
 //					tgtMapping.put(tgtVar, dt);	
 					// columnToJavaClass.put(srcVar, NodeMappers.fromDatatypeIri(castDatatypeIri));
@@ -148,11 +156,10 @@ public class SchemaMapperImpl {
 
 				} else {
 					dt.getRoot()
-					.getOrCreateInnerNode(null, new E_Equals(
-							new E_Datatype(srcExprVar),
-							NodeValue.makeNode(NodeFactory.createURI(datatypeIri))))					
+					.getOrCreateInnerNode(null, E_SerializableIdentity.wrap(
+						createDatatypeCheck(srcExprVar, castDatatypeIri)))					
 					.getOrCreateLeafNode(NodeValue.TRUE.asNode())
-						.setValue(srcExprVar);
+						.setValue(E_SerializableIdentity.wrap(srcExprVar));
 					
 //					tgtMapping.put(tgtVar, dt);	
 //					columnToJavaClass.put(srcVar, NodeMappers.fromDatatypeIri(datatypeIri));
@@ -169,8 +176,8 @@ public class SchemaMapperImpl {
 					Var tgtLangVar = Var.alloc(baseName + "_lang");
 					DecisionTreeSparqlExpr langDt = new DecisionTreeSparqlExpr();
 					langDt.getRoot()
-						.getOrCreateInnerNode(null, new E_Equals(new E_Datatype(srcExprVar), NodeValue.makeNode(RDF.Nodes.langString)))					
-						.getOrCreateLeafNode(NodeValue.TRUE.asNode()).setValue(new E_Lang(srcExprVar));
+						.getOrCreateInnerNode(null, E_SerializableIdentity.wrap(createDatatypeCheck(srcExprVar, RDF.Nodes.langString.getURI())))					
+						.getOrCreateLeafNode(NodeValue.TRUE.asNode()).setValue(E_SerializableIdentity.wrap(new E_Lang(srcExprVar)));
 //					tgtMapping.put(tgtLangVar, langDt);					
 					// columnToJavaClass.put(srcVar, NodeMappers.from(String.class));
 					tgtVarToMapping.put(tgtLangVar, new FieldMappingImpl(tgtLangVar, langDt, XSD.xstring.getURI(), isNullable));
@@ -183,6 +190,19 @@ public class SchemaMapperImpl {
 
 		System.out.println(result);
 
+		
+		return result;
+	}
+	
+	public static Expr createDatatypeCheck(Expr expr, String datatypeIri) {
+		Expr result;
+		switch (datatypeIri) {
+		case NodeUtils.R2RML_IRI: result = new E_IsIRI(expr); break;
+		case NodeUtils.R2RML_BlankNode: result = new E_IsBlank(expr); break;
+		default: result = new E_Equals(
+				new E_Datatype(expr),
+				NodeValue.makeNode(NodeFactory.createURI(datatypeIri)));
+		}
 		
 		return result;
 	}

@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.analytics;
+package org.aksw.jena_sparql_api.schema_mapping;
 
 import java.util.Map;
 import java.util.Set;

@@ -48,8 +48,81 @@ public class AggBuilder<I, O, ACC extends Accumulator<I, O>, AGG extends Paralle
 	public static interface SerializableFunction<I, O> extends Function<I, O>, Serializable {}
 	public static interface SerializableBiFunction<I1, I2, O> extends BiFunction<I1, I2, O>, Serializable {}
 	public static interface SerializableBinaryOperator<T> extends BinaryOperator<T>, Serializable {}
+
+	/*
+	 * Static constructors - allow for for a more natural read order (outer-to-inner)
+	 * but not for fluent-style chaining.
+	 */
 	
 	
+	public static <I, O, ACC extends Accumulator<I, O>, AGG extends ParallelAggregator<I, O, ACC>> AggInputFilter<I, O, ACC, AGG>
+		inputFilter(SerializablePredicate<? super I> inputFilter, AGG state) {
+		 return new AggInputFilter<>(state, inputFilter);
+	}
+
+	
+	public static <I, K, J, O,
+		ACC extends Accumulator<J, O>,
+		AGG extends ParallelAggregator<J, O, ACC>> AggInputSplit<I, K, J, O, ACC, AGG>
+	inputSplit(
+			SerializableFunction<? super I, ? extends Set<? extends K>> keyMapper,
+			SerializableBiFunction<? super I, ? super K, ? extends J> valueMapper,
+			AGG state) {
+		return new AggInputSplit<>(state, keyMapper, valueMapper);
+	}
+
+//	public static <I, O, ACC extends Accumulator<I, O>, AGG extends ParallelAggregator<I, O, ACC>> AggInputFilter<I, O, ACC, AGG>
+//	inputFilter(SerializablePredicate<? super I> inputFilter, AGG state) {
+//	 return new AggInputFilter<>(state, inputFilter);
+//	}
+	
+	public static <I, J, O, ACC extends Accumulator<J, O>, AGG extends ParallelAggregator<J, O, ACC>> AggInputTransform<I, J, O, ACC, AGG>
+		inputTransform(SerializableFunction<? super I, ? extends J> inputTransform, AGG state) {
+		return new AggInputTransform<>(state, inputTransform);
+	}
+
+	
+
+	public static <I, O, P, ACC extends Accumulator<I, O>, AGG extends ParallelAggregator<I, O, ACC>> AggOutputTransform<I, O, P, ACC, AGG>
+		outputTransform(AGG state, SerializableFunction<? super O, ? extends P> outputTransform) {
+		return new AggOutputTransform<>(state, outputTransform);
+	}
+
+	public static <T, C extends Collection<T>>
+		ParallelAggregator<T, C, Accumulator<T, C>> collectionSupplier(SerializableSupplier<C> colSupplier)
+	{
+		return naturalAccumulator(() -> new AccCollection<>(colSupplier.get()));
+	}
+
+	public static <T, C extends Collection<T>>
+	ParallelAggregator<T, C, Accumulator<T, C>> naturalAccumulator(SerializableSupplier<? extends Accumulator<T, C>> accSupplier)
+	{
+		return new AggNatural<>(accSupplier);
+	}
+
+	
+	public static <I>
+	ParallelAggregator<I, Long, Accumulator<I, Long>> counting()
+	{
+		return new AggCounting<I>();
+	}
+
+	public static <I, O1, O2>
+	ParallelAggregator<I, Entry<O1, O2>, ?> inputBroadcast(
+			ParallelAggregator<I, O1, ?> agg1,
+			ParallelAggregator<I, O2, ?> agg2)
+	{
+		return new AggInputBroadcast<>(agg1, agg2);
+	}
+
+	
+	
+	/*
+	 * Fluent chaining - likely to be deprecated because the static constructors allow for a
+	 * top-down construction which feels much more natural than the bottom-up by the fluent style.
+	 * 
+	 */
+
 	protected AGG state;
 	
 	public AggBuilder(AGG state) {
@@ -117,73 +190,6 @@ public class AggBuilder<I, O, ACC extends Accumulator<I, O>, AGG extends Paralle
 		withOutputTransform(SerializableFunction<? super O, ? extends P> outputTransform)
 	{
 		return from(new AggOutputTransform<>(state, outputTransform));
-	}
-
-
-	/*
-	 * Static constructors - allow for for a more natural read order (outer-to-inner)
-	 * but not for fluent-style chaining.
-	 */
-	
-	
-	public static <I, O, ACC extends Accumulator<I, O>, AGG extends ParallelAggregator<I, O, ACC>> AggInputFilter<I, O, ACC, AGG>
-		inputFilter(SerializablePredicate<? super I> inputFilter, AGG state) {
-		 return new AggInputFilter<>(state, inputFilter);
-	}
-
-	
-	public static <I, K, J, O,
-		ACC extends Accumulator<J, O>,
-		AGG extends ParallelAggregator<J, O, ACC>> AggInputSplit<I, K, J, O, ACC, AGG>
-	inputSplit(
-			SerializableFunction<? super I, ? extends Set<? extends K>> keyMapper,
-			SerializableBiFunction<? super I, ? super K, ? extends J> valueMapper,
-			AGG state) {
-		return new AggInputSplit<>(state, keyMapper, valueMapper);
-	}
-
-//	public static <I, O, ACC extends Accumulator<I, O>, AGG extends ParallelAggregator<I, O, ACC>> AggInputFilter<I, O, ACC, AGG>
-//	inputFilter(SerializablePredicate<? super I> inputFilter, AGG state) {
-//	 return new AggInputFilter<>(state, inputFilter);
-//	}
-	
-	public static <I, J, O, ACC extends Accumulator<J, O>, AGG extends ParallelAggregator<J, O, ACC>> AggInputTransform<I, J, O, ACC, AGG>
-		inputTransform(SerializableFunction<? super I, ? extends J> inputTransform, AGG state) {
-		return new AggInputTransform<>(state, inputTransform);
-	}
-
-	
-
-	public static <I, O, P, ACC extends Accumulator<I, O>, AGG extends ParallelAggregator<I, O, ACC>> AggOutputTransform<I, O, P, ACC, AGG>
-		outputTransform(AGG state, SerializableFunction<? super O, ? extends P> outputTransform) {
-		return new AggOutputTransform<>(state, outputTransform);
-	}
-
-	public static <T, C extends Collection<T>>
-		ParallelAggregator<T, C, Accumulator<T, C>> collectionSupplier(SerializableSupplier<C> colSupplier)
-	{
-		return naturalAccumulator(() -> new AccCollection<>(colSupplier.get()));
-	}
-
-	public static <T, C extends Collection<T>>
-	ParallelAggregator<T, C, Accumulator<T, C>> naturalAccumulator(SerializableSupplier<? extends Accumulator<T, C>> accSupplier)
-	{
-		return new AggNatural<>(accSupplier);
-	}
-
-	
-	public static <I>
-	ParallelAggregator<I, Long, Accumulator<I, Long>> counting()
-	{
-		return new AggCounting<I>();
-	}
-
-	public static <I, O1, O2>
-	ParallelAggregator<I, Entry<O1, O2>, ?> inputBroadcast(
-			ParallelAggregator<I, O1, ?> agg1,
-			ParallelAggregator<I, O2, ?> agg2)
-	{
-		return new AggInputBroadcast<>(agg1, agg2);
 	}
 
 }

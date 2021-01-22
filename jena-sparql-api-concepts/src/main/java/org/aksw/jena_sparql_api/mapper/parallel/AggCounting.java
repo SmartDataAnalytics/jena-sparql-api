@@ -1,5 +1,7 @@
 package org.aksw.jena_sparql_api.mapper.parallel;
 
+import java.io.Serializable;
+
 import org.aksw.jena_sparql_api.mapper.Accumulator;
 
 /**
@@ -10,8 +12,11 @@ import org.aksw.jena_sparql_api.mapper.Accumulator;
  * @param <I> The input type
  */
 public class AggCounting<I>
-	implements ParallelAggregator<I, Long, Accumulator<I, Long>>
+	implements ParallelAggregator<I, Long, Accumulator<I, Long>>, Serializable
 {
+	private static final long serialVersionUID = -7006049903878454552L;
+
+
 	@Override
 	public Accumulator<I, Long> createAccumulator() {
 		return new AccCounting(0);
@@ -28,8 +33,10 @@ public class AggCounting<I>
 
 	
 	public class AccCounting
-		implements Accumulator<I, Long>
+		implements Accumulator<I, Long>, Serializable
 	{
+		private static final long serialVersionUID = 7004166774797086982L;
+
 		protected long count = 0;
 		
 		public AccCounting(long count) {
