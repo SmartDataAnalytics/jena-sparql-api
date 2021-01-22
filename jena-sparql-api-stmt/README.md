@@ -120,7 +120,7 @@ Given an `InputStream` and a `SparqlStmtParser` the utility function
 
 ```java
 PrefixMapping pm = new PrefixMappingImpl();
-List<Query> loadQueries(String "file.sparql", pm);
+List<Query> SparqlStmtMgr.loadQueries("file.sparql", pm);
 
 ```
 

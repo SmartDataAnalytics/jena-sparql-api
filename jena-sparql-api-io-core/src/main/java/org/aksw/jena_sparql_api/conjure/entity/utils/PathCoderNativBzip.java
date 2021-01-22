@@ -5,7 +5,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import org.aksw.commons.util.compress.MetaBZip2CompressorInputStream;
+import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream;
 
 import io.reactivex.rxjava3.core.Single;
 
@@ -19,7 +19,7 @@ public class PathCoderNativBzip
 
     @Override
     public Single<Integer> decode(Path input, Path output) {
-        try(InputStream in = new MetaBZip2CompressorInputStream(Files.newInputStream(input))) {
+        try(InputStream in = new BZip2CompressorInputStream(Files.newInputStream(input), true)) {
             Files.copy(in, output);
         } catch (IOException e) {
             throw new RuntimeException(e);

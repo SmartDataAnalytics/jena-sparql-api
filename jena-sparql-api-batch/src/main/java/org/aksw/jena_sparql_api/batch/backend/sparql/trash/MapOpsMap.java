@@ -4,7 +4,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.aksw.jena_sparql_api.beans.model.MapOpsBase;
+import org.aksw.commons.beans.model.MapOpsBase;
 
 
 public class MapOpsMap<K, V>

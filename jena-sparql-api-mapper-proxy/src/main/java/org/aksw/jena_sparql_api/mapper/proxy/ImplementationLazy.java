@@ -5,6 +5,15 @@ import java.util.function.Supplier;
 
 import org.apache.jena.enhanced.Implementation;
 
+/**
+ * Implementation that defers creation of a delegate to the first
+ * access to its methods. This can greatly increase application
+ * startup times when the initialization of the actual implementation
+ * performs reflection and byte code fiddling using cglib (weaving).
+ * 
+ * @author raven
+ *
+ */
 public class ImplementationLazy
     extends ImplementationDelegate
 {

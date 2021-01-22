@@ -32,6 +32,7 @@
 			<groupId>org.aksw.commons</groupId>
 			<artifactId>aksw-commons-collections</artifactId>
 		</dependency>
+
 		<dependency>
 			<groupId>org.aksw.commons</groupId>
 			<artifactId>aksw-commons-util</artifactId>

@@ -1,6 +1,6 @@
 package org.aksw.jena_sparql_api.rx.util.collection;
 
-import org.aksw.commons.util.contextual.AbstractDelegated;
+import org.aksw.commons.util.delegate.AbstractDelegated;
 
 import com.google.common.collect.Range;
 

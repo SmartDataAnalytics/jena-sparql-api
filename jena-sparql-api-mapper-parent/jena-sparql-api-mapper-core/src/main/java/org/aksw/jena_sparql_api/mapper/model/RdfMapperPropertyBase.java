@@ -4,8 +4,8 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.function.BiFunction;
 
+import org.aksw.commons.beans.model.PropertyOps;
 import org.aksw.commons.util.strings.StringUtils;
-import org.aksw.jena_sparql_api.beans.model.PropertyOps;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.rdf.model.Property;

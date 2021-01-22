@@ -9,10 +9,11 @@ import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+import org.aksw.commons.beans.model.ConversionService;
+import org.aksw.commons.beans.model.EntityModel;
+import org.aksw.commons.beans.model.EntityOps;
+import org.aksw.commons.beans.model.PropertyOps;
 import org.aksw.commons.util.strings.StringUtils;
-import org.aksw.jena_sparql_api.beans.model.EntityModel;
-import org.aksw.jena_sparql_api.beans.model.EntityOps;
-import org.aksw.jena_sparql_api.beans.model.PropertyOps;
 import org.aksw.jena_sparql_api.concept.parser.SparqlRelationParser;
 import org.aksw.jena_sparql_api.concept.parser.SparqlRelationParserImpl;
 import org.aksw.jena_sparql_api.mapper.annotation.Datatype;
@@ -47,7 +48,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.support.ConversionServiceFactoryBean;
 import org.springframework.core.annotation.AnnotationUtils;
-import org.springframework.core.convert.ConversionService;
 import org.springframework.expression.EvaluationContext;
 import org.springframework.expression.Expression;
 import org.springframework.expression.ExpressionParser;
@@ -471,11 +471,10 @@ public class RdfTypeFactoryImpl
         if(_conversionService == null) {
             ConversionServiceFactoryBean bean = new ConversionServiceFactoryBean();
             bean.afterPropertiesSet();
-            conversionService = bean.getObject();
+            conversionService = new ConversionServiceSpringAdaptor(bean.getObject());
         } else {
             conversionService = _conversionService;
         }
-
 
         entityOpsFactory = entityOpsFactory != null
                 ? entityOpsFactory

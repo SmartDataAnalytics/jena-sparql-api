@@ -2,16 +2,15 @@ package org.aksw.sparqlify.database;
 
 import java.util.List;
 import java.util.Set;
-
-import org.apache.commons.collections15.Transformer;
+import java.util.function.Function;
 
 public class PatriciaAccessorFactory
     implements MetaIndexFactory
 {
-    private Transformer<Object, Set<String>> prefixExtractor;
+    private Function<Object, Set<String>> prefixExtractor;
 
 
-    public PatriciaAccessorFactory(Transformer<Object, Set<String>> prefixExtractor) {
+    public PatriciaAccessorFactory(Function<Object, Set<String>> prefixExtractor) {
         this.prefixExtractor = prefixExtractor;
     }
 

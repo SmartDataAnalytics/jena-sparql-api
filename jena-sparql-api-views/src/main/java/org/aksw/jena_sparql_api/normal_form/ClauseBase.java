@@ -4,12 +4,11 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.apache.commons.collections.CollectionUtils;
+import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.expr.Expr;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
-import org.apache.jena.sparql.core.Var;
-import org.apache.jena.sparql.expr.Expr;
 
 /**
  * Dnf, Clauses, and Exprs should be treated as immutable!
@@ -37,9 +36,12 @@ public class ClauseBase
 		float scanFactor = 0.75f;
 		if(vars.size() > scanFactor * exprs.size()) {
 			for(Expr expr : exprs) {
-				if(CollectionUtils.containsAny(expr.getVarsMentioned(), vars)) {
+				if (expr.getVarsMentioned().stream().anyMatch(x -> vars.contains(x))) {
 					result.add(expr);
 				}
+//				if(CollectionUtils.containsAny(expr.getVarsMentioned(), vars)) {
+//					result.add(expr);
+//				}
 			}
 		} else {
 			// TODO Maybe its always faster to go with this option

@@ -7,8 +7,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.commons.lang.NotImplementedException;
-
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 
@@ -25,7 +23,7 @@ public class IndexMap<K, V> {
 
     public void setIndex(int index, K key) {
         //K old = keyToIndex.inverse().get(index);
-        throw new NotImplementedException();
+        throw new UnsupportedOperationException();
     }
 
     public void put(K key, V value) {

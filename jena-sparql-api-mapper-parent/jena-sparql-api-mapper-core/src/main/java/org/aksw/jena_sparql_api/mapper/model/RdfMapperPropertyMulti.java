@@ -7,7 +7,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.function.BiFunction;
 
-import org.aksw.jena_sparql_api.beans.model.PropertyOps;
+import org.aksw.commons.beans.model.PropertyOps;
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.RelationUtils;

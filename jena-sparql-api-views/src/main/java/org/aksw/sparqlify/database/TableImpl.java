@@ -12,10 +12,11 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 import org.aksw.commons.util.strings.StringUtils;
-import org.apache.commons.collections15.Transformer;
-import org.apache.commons.lang.time.StopWatch;
+import org.apache.jena.ext.com.google.common.base.Stopwatch;
 
 
 
@@ -101,14 +102,7 @@ public class TableImpl<T>
 		index.attach("g", "s", "p", "o");
 		*/
 		
-		Transformer<Object, Set<String>> prefixExtractor = new Transformer<Object, Set<String>>() {
-
-			@Override
-			public Set<String> transform(Object input) {
-				return Collections.singleton((String)input);
-			}
-			
-		};
+		Function<Object, Set<String>> prefixExtractor = input -> Collections.singleton((String)input);
 		
 		MetaIndexFactory factory = new PrefixIndexMetaFactory(prefixExtractor);
 		//MetaIndexFactory factory = new PatriciaAccessorFactory(prefixExtractor);
@@ -143,8 +137,7 @@ public class TableImpl<T>
 		System.out.println(rs);
 		
 
-		StopWatch sw = new StopWatch();
-		sw.start();
+		Stopwatch sw = Stopwatch.createStarted();
 		
 		for(int i = 0; i < 10000000; ++i) {
 		
@@ -152,7 +145,7 @@ public class TableImpl<T>
 		}
 		
 		sw.stop();
-		System.out.println(sw.getTime());
+		System.out.println(sw.elapsed(TimeUnit.MILLISECONDS));
 				
 		
 		//System.out.println(rs);

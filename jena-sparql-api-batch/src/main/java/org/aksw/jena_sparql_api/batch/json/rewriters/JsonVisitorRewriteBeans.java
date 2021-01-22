@@ -2,12 +2,10 @@ package org.aksw.jena_sparql_api.batch.json.rewriters;
 
 import java.util.Map.Entry;
 
-import org.aksw.gson.utils.JsonUtils;
 import org.aksw.gson.utils.JsonVisitorRewrite;
 import org.aksw.spring.json.ContextProcessorJsonUtils;
-import org.apache.commons.lang.StringUtils;
-import org.springframework.beans.factory.support.ManagedList;
 
+import com.google.common.base.Strings;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -77,7 +75,7 @@ public class JsonVisitorRewriteBeans
 
     public static JsonElement processValue(Gson gson, JsonElement json, String qualifier) {
         JsonElement result;
-        if(!StringUtils.isEmpty(qualifier) && !(json.isJsonObject() && json.getAsJsonObject().has("qualifier"))) {
+        if(!Strings.isNullOrEmpty(qualifier) && !(json.isJsonObject() && json.getAsJsonObject().has("qualifier"))) {
             JsonElement tmp = expandJava(gson, json);
             if(tmp.isJsonObject()) {
                 JsonObject o = tmp.getAsJsonObject();

@@ -5,7 +5,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.aksw.commons.util.reflect.MultiMethod;
-import org.apache.commons.lang.NotImplementedException;
 import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.core.Var;
@@ -111,7 +110,7 @@ public class NodeExprSubstitutor {
     */
 
     public Expr _transform(ExprFunctionOp funcOp, ExprList args, Op opArg) {
-        throw new NotImplementedException();
+        throw new UnsupportedOperationException();
     }
 
     public Expr _transform(NodeValue nv) {

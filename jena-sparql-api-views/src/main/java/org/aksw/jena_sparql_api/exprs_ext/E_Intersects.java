@@ -1,6 +1,5 @@
 package org.aksw.jena_sparql_api.exprs_ext;
 
-import org.apache.commons.lang.NotImplementedException;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprFunction2;
 import org.apache.jena.sparql.expr.NodeValue;
@@ -17,7 +16,7 @@ public class E_Intersects
 
 	@Override
 	public NodeValue eval(NodeValue x, NodeValue y) {
-		throw new NotImplementedException();
+		throw new UnsupportedOperationException();
 	}
 
 

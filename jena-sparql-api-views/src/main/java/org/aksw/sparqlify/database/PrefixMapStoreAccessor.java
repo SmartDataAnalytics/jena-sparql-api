@@ -7,9 +7,9 @@ import java.util.List;
 import java.util.NavigableMap;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.function.Function;
 
 import org.aksw.commons.util.strings.StringUtils;
-import org.apache.commons.collections15.Transformer;
 
 
 interface MapStoreAccessor {
@@ -78,9 +78,9 @@ public class PrefixMapStoreAccessor
 
 	
 	private int indexColumn;
-	private Transformer<Object, Set<String>> prefixExtractor;
+	private Function<Object, Set<String>> prefixExtractor;
 
-	public PrefixMapStoreAccessor(int[] indexColumns, Transformer<Object, Set<String>> prefixExtractor) {
+	public PrefixMapStoreAccessor(int[] indexColumns, Function<Object, Set<String>> prefixExtractor) {
 		if(indexColumns.length != 1) {
 			throw new RuntimeException("Prefix index can only operate on single columns");
 		}

@@ -3,8 +3,7 @@ package org.aksw.sparqlify.database;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import org.apache.commons.collections15.Transformer;
+import java.util.function.Function;
 
 public class PrefixIndexMetaFactory
     implements MetaIndexFactory
@@ -21,9 +20,9 @@ public class PrefixIndexMetaFactory
     }
 
 
-    private Transformer<Object, Set<String>> prefixExtractor;
+    private Function<Object, Set<String>> prefixExtractor;
 
-    public PrefixIndexMetaFactory(Transformer<Object, Set<String>> prefixExtractor) {
+    public PrefixIndexMetaFactory(Function<Object, Set<String>> prefixExtractor) {
         this.prefixExtractor = prefixExtractor;
     }
 

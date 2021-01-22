@@ -6,7 +6,6 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.aksw.commons.util.reflect.MultiMethod;
-import org.apache.commons.lang.NotImplementedException;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprAggregator;
 import org.apache.jena.sparql.expr.ExprFunction;
@@ -125,7 +124,7 @@ class ExprCopySlow {
     }
 
     public Expr _copy(ExprAggregator eAgg, ExprList args) {
-        throw new NotImplementedException();
+        throw new UnsupportedOperationException();
     }
 }
 

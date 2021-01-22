@@ -6,10 +6,10 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import org.aksw.jena_sparql_api.normal_form.Clause;
-import org.apache.commons.collections.CollectionUtils;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.Expr;
 
+import com.github.jsonldjava.shaded.com.google.common.collect.Sets;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 
@@ -151,9 +151,12 @@ public abstract class ExprNormalForm {
         Collection<Clause> values = varsToClauses.values();
         if(vars.size() > scanFactor * values.size()) {
             for(Clause clause : values) {
-                if(CollectionUtils.containsAny(clause.getVarsMentioned(), vars)) {
-                    result.add(clause);
-                }
+              if(clause.getVarsMentioned().stream().anyMatch(x -> vars.contains(x))) {
+            	  result.add(clause);
+              }
+//                if(CollectionUtils.containsAny(clause.getVarsMentioned(), vars)) {
+//                    result.add(clause);
+//                }
             }
         } else {
             // TODO Maybe its always faster to go with this option

@@ -5,6 +5,13 @@ import org.apache.jena.enhanced.EnhNode;
 import org.apache.jena.enhanced.Implementation;
 import org.apache.jena.graph.Node;
 
+/**
+ * Abstract base implementation of {@link Implementation}
+ * that delegates calls.
+ * 
+ * @author raven
+ *
+ */
 public abstract class ImplementationDelegate
     extends Implementation
 {

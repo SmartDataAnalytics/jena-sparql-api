@@ -10,12 +10,14 @@ import java.util.stream.Collectors;
 
 import javax.persistence.EntityManager;
 
-import org.aksw.jena_sparql_api.beans.model.EntityModel;
-import org.aksw.jena_sparql_api.beans.model.EntityOps;
-import org.aksw.jena_sparql_api.beans.model.PropertyModel;
+import org.aksw.commons.beans.model.ConversionService;
+import org.aksw.commons.beans.model.EntityModel;
+import org.aksw.commons.beans.model.EntityOps;
+import org.aksw.commons.beans.model.PropertyModel;
 import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.mapper.annotation.DefaultIri;
 import org.aksw.jena_sparql_api.mapper.annotation.Iri;
+import org.aksw.jena_sparql_api.mapper.impl.type.ConversionServiceSpringAdaptor;
 import org.aksw.jena_sparql_api.mapper.impl.type.RdfTypeFactoryImpl;
 import org.aksw.jena_sparql_api.mapper.impl.type.RdfTypeMap;
 import org.aksw.jena_sparql_api.mapper.jpa.core.SparqlEntityManagerFactory;
@@ -31,7 +33,6 @@ import org.apache.jena.rdf.model.Model;
 //import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.context.support.ConversionServiceFactoryBean;
-import org.springframework.core.convert.ConversionService;
 
 public class SpringBatchMappings {
 
@@ -57,7 +58,7 @@ public class SpringBatchMappings {
         ConversionServiceFactoryBean bean = new ConversionServiceFactoryBean();
         bean.afterPropertiesSet();
 
-        ConversionService cs = bean.getObject();
+        ConversionService cs = new ConversionServiceSpringAdaptor(bean.getObject());
 
 //		cs.convert(source, targetType);
 
@@ -97,7 +98,7 @@ public class SpringBatchMappings {
         ConversionServiceFactoryBean bean = new ConversionServiceFactoryBean();
         bean.afterPropertiesSet();
 
-        ConversionService conversionService = bean.getObject();
+        ConversionService conversionService = new ConversionServiceSpringAdaptor(bean.getObject());
 
 
 //        ExecutionContext ecx = new ExecutionContext();

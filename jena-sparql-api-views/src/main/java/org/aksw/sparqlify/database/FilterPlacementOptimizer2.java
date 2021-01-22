@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.BinaryOperator;
+import java.util.function.Predicate;
 
 import org.aksw.commons.util.reflect.MultiMethod;
 import org.aksw.jena_sparql_api.normal_form.Clause;
@@ -15,7 +16,6 @@ import org.aksw.jena_sparql_api.restriction.RestrictionImpl;
 import org.aksw.jena_sparql_api.restriction.RestrictionManagerImpl;
 import org.aksw.jena_sparql_api.views.OpViewInstanceJoin;
 import org.aksw.sparqlify.sparqlview.OpSparqlViewPattern;
-import org.apache.commons.collections15.Predicate;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.op.OpConditional;
 import org.apache.jena.sparql.algebra.op.OpDisjunction;
@@ -59,7 +59,7 @@ class PredicateInstanceOf<T>
 
 
     @Override
-    public boolean evaluate(T value) {
+    public boolean test(T value) {
         return value == null ? false : superClass.isAssignableFrom(value.getClass());
     }
 }
@@ -348,7 +348,7 @@ public class FilterPlacementOptimizer2 {
     }
 
     public static boolean evalPredicate(Expr expr, Predicate<Expr> predicate) {
-        if(predicate.evaluate(expr)) {
+        if(predicate.test(expr)) {
             return true;
         } else if(expr.isFunction()) {
             for(Expr arg : expr.getFunction().getArgs()) {

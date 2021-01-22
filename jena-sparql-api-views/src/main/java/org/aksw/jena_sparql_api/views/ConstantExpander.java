@@ -2,7 +2,6 @@ package org.aksw.jena_sparql_api.views;
 
 
 import org.aksw.commons.util.reflect.MultiMethod;
-import org.apache.commons.lang.NotImplementedException;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprAggregator;
@@ -36,7 +35,7 @@ public class ConstantExpander {
     }
 
     public static Expr _transform(ExprFunctionOp funcOp, ExprList args, Op opArg) {
-        throw new NotImplementedException();
+        throw new UnsupportedOperationException();
     }
 
     public static Expr _transform(Expr expr) {
@@ -49,6 +48,6 @@ public class ConstantExpander {
     }
 
     public static Expr _transform(ExprAggregator eAgg) {
-        throw new NotImplementedException();
+        throw new UnsupportedOperationException();
     }
 }

@@ -4,19 +4,14 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.stream.Stream;
 
 import org.aksw.commons.collections.utils.StreamUtils;
-import org.aksw.commons.util.compress.MetaBZip2CompressorInputStream;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.riot.Lang;
@@ -24,8 +19,6 @@ import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.sparql.graph.GraphFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.common.collect.Streams;
 
 
 public class VirtuosoBulkLoad {
@@ -170,7 +163,7 @@ public class VirtuosoBulkLoad {
         }
     }
 
-
+/*
     public static void main(String[] args) throws SQLException, MalformedURLException, IOException {
         //Class.forName("");
         String url = "jdbc:virtuoso://localhost:1112";
@@ -182,7 +175,7 @@ public class VirtuosoBulkLoad {
             dropGraph(conn, targetGraphIri, true);
             checkpoint(conn);
 
-            try(InputStream in = new MetaBZip2CompressorInputStream(new URL("http://downloads.linkedgeodata.org/releases/2015-11-02/2015-11-02-Abutters.way.sorted.nt.bz2").openStream())) {
+            try(InputStream in = new BZip2CompressorInputStream(new URL("http://downloads.linkedgeodata.org/releases/2015-11-02/2015-11-02-Abutters.way.sorted.nt.bz2").openStream(), true)) {
                 Stream<Triple> stream = Streams.stream(RDFDataMgr.createIteratorTriples(in, Lang.NTRIPLES, "http://example.org/"));
 
                 load(conn, stream, "http://mygraph.org/", 10000);
@@ -190,4 +183,5 @@ public class VirtuosoBulkLoad {
             }
         }
     }
+*/
 }

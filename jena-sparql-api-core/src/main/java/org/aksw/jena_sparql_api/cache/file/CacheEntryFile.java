@@ -1,13 +1,12 @@
 package org.aksw.jena_sparql_api.cache.file;
 
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import org.aksw.commons.util.compress.MetaBZip2CompressorInputStream;
 import org.aksw.jena_sparql_api.cache.extra.CacheEntry;
+import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream;
 
 public class CacheEntryFile
     implements CacheEntry
@@ -45,7 +44,7 @@ public class CacheEntryFile
         try {
             result = Files.newInputStream(file);//new FileInputStream(file);
             if(isCompressed) {
-            	result = new MetaBZip2CompressorInputStream(result);
+            	result = new BZip2CompressorInputStream(result, true);
             }
         } catch (Exception e) {
             throw new RuntimeException(e);

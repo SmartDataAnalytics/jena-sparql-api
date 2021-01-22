@@ -13,6 +13,7 @@ import java.util.NavigableMap;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import org.aksw.commons.collections.CartesianProduct;
 import org.aksw.commons.collections.stacks.NestedStack;
@@ -43,7 +44,6 @@ import org.aksw.sparqlify.database.TableBuilder;
 import org.aksw.sparqlify.database.TreeIndex;
 import org.aksw.sparqlify.database.VariableConstraint;
 import org.aksw.sparqlify.sparqlview.ViewInstanceJoin;
-import org.apache.commons.collections15.Transformer;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
 import org.apache.jena.sparql.algebra.Algebra;
@@ -138,13 +138,7 @@ public abstract class CandidateViewSelectorBase<T extends IViewDef, C>
         table = builder.create();
 
 
-        Transformer<Object, Set<String>> prefixExtractor = new Transformer<Object, Set<String>>() {
-            @Override
-            public Set<String> transform(Object input) {
-                return Collections.singleton(input.toString());
-            }
-
-        };
+        Function<Object, Set<String>> prefixExtractor = input -> Collections.singleton(input.toString());
 
 
         MetaIndexFactory factory = new PrefixIndexMetaFactory(prefixExtractor);

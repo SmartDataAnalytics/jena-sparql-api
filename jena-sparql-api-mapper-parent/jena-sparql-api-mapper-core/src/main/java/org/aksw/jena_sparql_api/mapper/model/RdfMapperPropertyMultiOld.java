@@ -1,18 +1,5 @@
 package org.aksw.jena_sparql_api.mapper.model;
 
-import java.util.Collection;
-import java.util.function.BiFunction;
-import java.util.function.Consumer;
-
-import org.aksw.jena_sparql_api.beans.model.PropertyOps;
-import org.aksw.jena_sparql_api.mapper.context.RdfEmitterContext;
-import org.aksw.jena_sparql_api.mapper.context.RdfPersistenceContext;
-import org.aksw.jena_sparql_api.mapper.context.TypedNode;
-import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
-import org.apache.jena.graph.Graph;
-import org.apache.jena.graph.Node;
-import org.apache.jena.graph.Triple;
-
 /**
  * Mapping for multiple occurrences of the same RDF predicate to
  * a collection typed bean property.

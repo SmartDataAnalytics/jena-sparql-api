@@ -3,8 +3,6 @@ package org.aksw.jena_sparql_api.rdf.collections.enhanced;
 import java.util.Collection;
 import java.util.function.Predicate;
 
-import org.aksw.commons.collections.MutableCollectionViews;
-
 import com.google.common.base.Converter;
 
 public interface CollectionEx<T>
