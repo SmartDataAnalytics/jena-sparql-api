@@ -228,13 +228,16 @@ public class NodeUtils {
 	 */
 	public static String getDatatypeIri(Node node) {
 		String result;
-		if (node.isURI()) {
+		if (node == null) {
+			result = null;
+		} else if (node.isURI()) {
 			result = R2RML_IRI;
 		} else if (node.isBlank()) {
 			result = R2RML_BlankNode;
 		} else if (node.isLiteral()) {
 			result = node.getLiteralDatatypeURI();
 		} else {
+			// Should not happen
 			result = null;
 		}
 		
