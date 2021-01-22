@@ -27,6 +27,7 @@ import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.util.SplitIRI;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.XSD;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -61,6 +62,7 @@ import org.apache.jena.vocabulary.XSD;
  *
  */
 public class SchemaMapperImpl {
+	// private static final Logger logger = LoggerFactory.getLogger(SchemaMapperImpl.class);
 	
 	// The source column names
 	protected Set<Var> sourceVars;
@@ -98,21 +100,14 @@ public class SchemaMapperImpl {
 	}
 
 	public SchemaMapping createSchemaMapping() {
-		ConditionalVarDefinitionImpl tgtMapping = new ConditionalVarDefinitionImpl();
-
-		// Map<Var, NodeMapper<?>> columnToJavaClass = new HashMap<>();
-		Map<Var, String> targetVarType = new HashMap<>();
-		Set<Var> nullableColumns = new HashSet<>();
 		
 		Map<Var, FieldMapping> tgtVarToMapping = new HashMap<>(); 
 		
 		for (Var srcVar : sourceVars) {
 			String srcVarName = srcVar.getName(); 
 			
-			System.out.println("Processing srcVar: " + srcVar);
+			// System.out.println("Processing srcVar: " + srcVar);
 			ExprVar srcExprVar = new ExprVar(srcVar);
-			
-			Set<Var> columns = new LinkedHashSet<>();
 			
 			Set<String> datatypeIris = sourceVarToDatatypes.apply(srcVar);
 			Number nullStats = sourceVarToNulls.apply(srcVar);
@@ -127,8 +122,7 @@ public class SchemaMapperImpl {
 			
 			for (String datatypeIri : datatypeIris) {
 
-				System.out.println("Processing datatypeIri: " + datatypeIri);
-
+				//System.out.println("Processing datatypeIri: " + datatypeIri);
 				
 				String castDatatypeIri = typePromotions.getOrDefault(datatypeIri, datatypeIri);
 				
@@ -188,7 +182,7 @@ public class SchemaMapperImpl {
 		
 		SchemaMappingImpl result = new SchemaMappingImpl(tgtVarToMapping);
 
-		System.out.println(result);
+		// System.out.println(result);
 
 		
 		return result;

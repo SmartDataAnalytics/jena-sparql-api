@@ -1,7 +1,6 @@
 package org.aksw.jena_sparql_api.decision_tree.impl.jena;
 
 import java.io.ByteArrayOutputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 
 import org.aksw.jena_sparql_api.decision_tree.api.DtVisitor;

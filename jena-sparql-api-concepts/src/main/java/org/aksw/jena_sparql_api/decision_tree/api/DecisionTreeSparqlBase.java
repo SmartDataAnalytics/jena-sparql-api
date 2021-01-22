@@ -14,6 +14,8 @@ import org.apache.jena.sparql.util.ExprUtils;
 public class DecisionTreeSparqlBase<T>
 	implements Serializable
 {
+	private static final long serialVersionUID = 0L;
+
 	protected InnerNode<Expr, Node, T> root = new InnerNodeImpl<>(null, null, null);
 	
 	public InnerNode<Expr, Node, T> getRoot() {
