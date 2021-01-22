@@ -1,17 +1,20 @@
 package org.aksw.jena_sparql_api.schema_mapping;
 
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.analytics.ResultSetAnalytics;
-import org.aksw.jena_sparql_api.decision_tree.api.ConditionalVarDefinitionImpl;
 import org.aksw.jena_sparql_api.decision_tree.api.DecisionTreeSparqlExpr;
 import org.aksw.jena_sparql_api.decision_tree.api.E_SerializableIdentity;
 import org.aksw.jena_sparql_api.utils.NodeUtils;
+import org.apache.jena.ext.com.google.common.collect.HashMultimap;
+import org.apache.jena.ext.com.google.common.collect.Multimaps;
+import org.apache.jena.ext.com.google.common.collect.SetMultimap;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.E_Datatype;
@@ -27,7 +30,7 @@ import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.util.SplitIRI;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.XSD;
-import org.slf4j.LoggerFactory;
+
 
 
 /**
@@ -101,7 +104,7 @@ public class SchemaMapperImpl {
 
 	public SchemaMapping createSchemaMapping() {
 		
-		Map<Var, FieldMapping> tgtVarToMapping = new HashMap<>(); 
+		Map<Var, FieldMapping> tgtVarToMapping = new LinkedHashMap<>(); 
 		
 		for (Var srcVar : sourceVars) {
 			String srcVarName = srcVar.getName(); 
@@ -109,61 +112,71 @@ public class SchemaMapperImpl {
 			// System.out.println("Processing srcVar: " + srcVar);
 			ExprVar srcExprVar = new ExprVar(srcVar);
 			
-			Set<String> datatypeIris = sourceVarToDatatypes.apply(srcVar);
+			Set<String> rawDatatypeIris = sourceVarToDatatypes.apply(srcVar);
+//			List<String> datatypeIris = new ArrayList<>(rawDatatypeIris);
+//			Collections.sort(datatypeIris);
+			
 			Number nullStats = sourceVarToNulls.apply(srcVar);
 
-			Map<String, String> typePromotions = typePromotionStrategy.promoteTypes(datatypeIris);
+			Map<String, String> typePromotions = typePromotionStrategy.promoteTypes(rawDatatypeIris);
 
+			// Enrich type promotions with reflexive mappings
+			new HashSet<>(typePromotions.values()).forEach(x -> typePromotions.put(x, x));
 			
-			boolean singleDatatype = datatypeIris.size() == 1;
+			// Add all target types to the rawDatatypeIris
+			// rawDatatypeIris.addAll(typePromotions.values());
 			
+			// Furthermore, if a type has no promotion mapping add it also as a reflexive mapping
+			rawDatatypeIris.stream().filter(dt -> !typePromotions.containsKey(dt))
+				.forEach(x -> typePromotions.put(x, x));
+			
+			SetMultimap<String, String> inverse = Multimaps.invertFrom(Multimaps.forMap(typePromotions), 
+				    HashMultimap.<String, String>create());
+			
+			List<String> promotedDatatypeIris = rawDatatypeIris.stream()
+					.map(iri -> typePromotions.getOrDefault(iri, iri))
+					.sorted()
+					.collect(Collectors.toList());
+			
+			boolean singleDatatype = promotedDatatypeIris.size() == 1;
+
 			boolean isNullable = nullStats.longValue() > 0 || !singleDatatype;
 			
 			
-			for (String datatypeIri : datatypeIris) {
+			for (String datatypeIri : promotedDatatypeIris) {
 
 				//System.out.println("Processing datatypeIri: " + datatypeIri);
 				
-				String castDatatypeIri = typePromotions.getOrDefault(datatypeIri, datatypeIri);
+				// String castDatatypeIri = typePromotions.getOrDefault(datatypeIri, datatypeIri);
 				
 				String baseName = singleDatatype
 						? srcVarName
-						: srcVarName + "_" + SplitIRI.localname(datatypeIri); // TODO Resolve name clashes such as rdf:type - custom:type
+						: srcVarName + "_" + SplitIRI.localname(datatypeIri).toLowerCase(); // TODO Resolve name clashes such as rdf:type - custom:type
 				
 				Var tgtVar = Var.alloc(baseName);
 				
+				// For each source datatype create the mapping to the promoted type
 				DecisionTreeSparqlExpr dt = new DecisionTreeSparqlExpr();
-				
-				if (!castDatatypeIri.equals(datatypeIri)) {
-					dt.getRoot()
+				for (String srcDtIri : inverse.get(datatypeIri)) {
+
+					if (!srcDtIri.equals(datatypeIri)) {
+						dt.getRoot()
+							.getOrCreateInnerNode(null, E_SerializableIdentity.wrap(
+									createDatatypeCheck(srcExprVar, srcDtIri)))				
+							.getOrCreateLeafNode(NodeValue.TRUE.asNode())
+								.setValue(E_SerializableIdentity.wrap(new E_Function(datatypeIri, new ExprList(srcExprVar))));
+	
+					} else {
+						dt.getRoot()
 						.getOrCreateInnerNode(null, E_SerializableIdentity.wrap(
-								createDatatypeCheck(srcExprVar, castDatatypeIri)))				
+							createDatatypeCheck(srcExprVar, datatypeIri)))					
 						.getOrCreateLeafNode(NodeValue.TRUE.asNode())
-							.setValue(E_SerializableIdentity.wrap(new E_Function(castDatatypeIri, new ExprList(srcExprVar))));
+							.setValue(E_SerializableIdentity.wrap(srcExprVar));
+					}
+				}					
+			
+				tgtVarToMapping.put(tgtVar, new FieldMappingImpl(tgtVar, dt, datatypeIri, isNullable));
 
-//					tgtMapping.put(tgtVar, dt);	
-					// columnToJavaClass.put(srcVar, NodeMappers.fromDatatypeIri(castDatatypeIri));
-//					targetVarType.put(tgtVar, castDatatypeIri);
-					tgtVarToMapping.put(tgtVar, new FieldMappingImpl(tgtVar, dt, castDatatypeIri, isNullable));
-
-//					System.out.println(tgtMapping);
-
-				} else {
-					dt.getRoot()
-					.getOrCreateInnerNode(null, E_SerializableIdentity.wrap(
-						createDatatypeCheck(srcExprVar, castDatatypeIri)))					
-					.getOrCreateLeafNode(NodeValue.TRUE.asNode())
-						.setValue(E_SerializableIdentity.wrap(srcExprVar));
-					
-//					tgtMapping.put(tgtVar, dt);	
-//					columnToJavaClass.put(srcVar, NodeMappers.fromDatatypeIri(datatypeIri));
-//					targetVarType.put(tgtVar, datatypeIri);
-					tgtVarToMapping.put(tgtVar, new FieldMappingImpl(tgtVar, dt, datatypeIri, isNullable));
-
-					
-//					System.out.println(tgtMapping);
-
-				}
 				
 				// Add an extra language column if langString is used
 				if (datatypeIri.equals(RDF.langString.getURI())) {
