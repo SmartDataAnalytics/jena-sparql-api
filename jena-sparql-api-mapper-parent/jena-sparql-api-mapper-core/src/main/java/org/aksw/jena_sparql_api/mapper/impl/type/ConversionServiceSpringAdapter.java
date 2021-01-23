@@ -2,12 +2,12 @@ package org.aksw.jena_sparql_api.mapper.impl.type;
 
 import org.aksw.commons.beans.model.ConversionService;
 
-public class ConversionServiceSpringAdaptor
+public class ConversionServiceSpringAdapter
 	implements ConversionService
 {
 	protected org.springframework.core.convert.ConversionService delegate;
 	
-	public ConversionServiceSpringAdaptor(org.springframework.core.convert.ConversionService delegate) {
+	public ConversionServiceSpringAdapter(org.springframework.core.convert.ConversionService delegate) {
 		super();
 		this.delegate = delegate;
 	}

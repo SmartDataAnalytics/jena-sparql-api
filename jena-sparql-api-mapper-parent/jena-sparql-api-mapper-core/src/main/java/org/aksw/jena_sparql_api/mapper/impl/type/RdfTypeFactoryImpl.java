@@ -471,7 +471,7 @@ public class RdfTypeFactoryImpl
         if(_conversionService == null) {
             ConversionServiceFactoryBean bean = new ConversionServiceFactoryBean();
             bean.afterPropertiesSet();
-            conversionService = new ConversionServiceSpringAdaptor(bean.getObject());
+            conversionService = new ConversionServiceSpringAdapter(bean.getObject());
         } else {
             conversionService = _conversionService;
         }
