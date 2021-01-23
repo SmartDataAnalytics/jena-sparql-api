@@ -28,7 +28,7 @@ import org.apache.jena.vocabulary.RDFS;
  * A specific resource in the default graph or one of the named graphs of a dataset.
  *
  * Note, that resources obtained via .as(viewClass) will retain the reference to the dataset's
- * model, but the one to the dataset itself will be lost
+ * model, but the reference to the dataset itself will be lost
  *
  * @author raven
  *
@@ -126,6 +126,10 @@ public class ResourceInDatasetImpl
         return result;
     }
 
+    /**
+     * Create a new ResourceInDataset instance backed by a blank node 
+     * in the default graph.
+     */
     public static ResourceInDataset createAnonInDefaultGraph() {
         Dataset ds = DatasetFactory.create();
         Node root = NodeFactory.createBlankNode();

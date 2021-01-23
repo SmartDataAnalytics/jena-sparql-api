@@ -11,13 +11,13 @@ import java.util.stream.Collectors;
 import javax.persistence.EntityManager;
 
 import org.aksw.commons.beans.model.ConversionService;
+import org.aksw.commons.beans.model.ConversionServiceAdapter;
 import org.aksw.commons.beans.model.EntityModel;
 import org.aksw.commons.beans.model.EntityOps;
 import org.aksw.commons.beans.model.PropertyModel;
 import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.mapper.annotation.DefaultIri;
 import org.aksw.jena_sparql_api.mapper.annotation.Iri;
-import org.aksw.jena_sparql_api.mapper.impl.type.ConversionServiceSpringAdapter;
 import org.aksw.jena_sparql_api.mapper.impl.type.RdfTypeFactoryImpl;
 import org.aksw.jena_sparql_api.mapper.impl.type.RdfTypeMap;
 import org.aksw.jena_sparql_api.mapper.jpa.core.SparqlEntityManagerFactory;
@@ -32,7 +32,7 @@ import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.rdf.model.Model;
 //import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.item.ExecutionContext;
-import org.springframework.context.support.ConversionServiceFactoryBean;
+import org.springframework.core.convert.support.DefaultConversionService;
 
 public class SpringBatchMappings {
 
@@ -55,10 +55,10 @@ public class SpringBatchMappings {
 //	    ResourceShape.fetchData(qef, rs, NodeFactory.createURI("http://ex.org/11"));
 //
 
-        ConversionServiceFactoryBean bean = new ConversionServiceFactoryBean();
-        bean.afterPropertiesSet();
 
-        ConversionService cs = new ConversionServiceSpringAdapter(bean.getObject());
+        DefaultConversionService dcs = new DefaultConversionService();
+        ConversionService cs = ConversionServiceAdapter.wrap(dcs, dcs::canConvert, dcs::convert);
+
 
 //		cs.convert(source, targetType);
 
@@ -95,10 +95,8 @@ public class SpringBatchMappings {
         EntityModel.createDefaultModel(Boolean.class, null);
 
 
-        ConversionServiceFactoryBean bean = new ConversionServiceFactoryBean();
-        bean.afterPropertiesSet();
-
-        ConversionService conversionService = new ConversionServiceSpringAdapter(bean.getObject());
+        DefaultConversionService dcs = new DefaultConversionService();
+        ConversionService conversionService = ConversionServiceAdapter.wrap(dcs, dcs::canConvert, dcs::convert);
 
 
 //        ExecutionContext ecx = new ExecutionContext();

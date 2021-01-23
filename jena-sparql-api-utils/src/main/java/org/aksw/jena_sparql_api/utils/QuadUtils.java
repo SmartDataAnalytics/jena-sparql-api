@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 import org.aksw.commons.collections.MapUtils;
 import org.apache.jena.graph.Node;
@@ -28,6 +29,10 @@ import org.apache.jena.sparql.syntax.ElementNamedGraph;
 import org.apache.jena.sparql.syntax.ElementTriplesBlock;
 
 public class QuadUtils {
+
+    public static Stream<Node> streamNodes(Quad q) {
+        return Stream.of(q.getGraph(), q.getSubject(), q.getPredicate(), q.getObject());
+    }
 
     /**
      * Replace all variable names with the same variable (?a in this case).
