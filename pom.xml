@@ -396,8 +396,7 @@
 
 
 			<!-- Modules -->
-			<!-- Make the test configuration available across all modules - especially 
-				the log4j.properties file -->
+			<!-- Make the test configuration available across all modules - especially the log4j.properties file -->
 			<dependency>
 				<groupId>org.aksw.jena-sparql-api</groupId>
 				<artifactId>jena-sparql-api-resources-test-config</artifactId>
@@ -885,6 +884,12 @@
 					</exclusion>
 				</exclusions>
 
+			</dependency>
+
+			<dependency>
+				<groupId>org.aksw.commons</groupId>
+				<artifactId>aksw-commons-collectors</artifactId>
+				<version>${aksw.commons.version}</version>
 			</dependency>
 
 			<dependency>

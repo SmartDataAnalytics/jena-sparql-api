@@ -13,7 +13,7 @@ import org.apache.jena.sparql.util.ExprUtils;
 public class DecisionTreeSparqlExpr
 	extends DecisionTreeSparqlBase<Expr>
 {
-	private static final long serialVersionUID = 4857543919330707414L;
+	private static final long serialVersionUID = 0;
 
 	public Node eval(Binding binding) {
 		Collection<LeafNode<Expr, Node, Expr>> leafs = findLeafNodes(binding);

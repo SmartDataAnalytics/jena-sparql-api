@@ -8,22 +8,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
-import java.util.function.BiFunction;
-import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.aksw.jena_sparql_api.mapper.AccStaticMultiplex;
-import org.aksw.jena_sparql_api.mapper.Accumulator;
-import org.aksw.jena_sparql_api.mapper.Aggregator;
-import org.aksw.jena_sparql_api.mapper.AggregatorBuilder;
-import org.aksw.jena_sparql_api.mapper.Aggregators;
-import org.aksw.jena_sparql_api.utils.ResultSetUtils;
+import org.aksw.commons.collector.core.AggBuilder;
+import org.aksw.commons.collector.domain.Accumulator;
+import org.aksw.jena_sparql_api.utils.IteratorResultSetBinding;
 import org.apache.commons.collections4.OrderedMapIterator;
 import org.apache.commons.collections4.trie.PatriciaTrie;
-import org.apache.jena.graph.Node;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.query.QueryFactory;
@@ -252,123 +246,16 @@ public class PrefixAccumulator
         }
     }
 
-
-
-
-    public static Map<Var, Set<String>> analyzePrefixes(ResultSet rs, int targetSize) {
-        Aggregator<String, Set<String>> subAgg = createAggregatorStringPrefixes(targetSize);
-
-        Map<Var, Set<String>> result = analyzeResultSetUrisPerVar(rs, subAgg);
-
-        return result;
-    }
-
-    public static <V> Map<Var, V> analyzeResultSetUrisPerVar(ResultSet rs, Aggregator<String, V> subAgg) {
-        List<Var> vars = ResultSetUtils.getVars(rs);
-        Aggregator<Binding, Map<Var, V>> agg = createAggregatorResultSetUrisPerVar(vars, subAgg);
-        Map<Var, V> result = aggregate(rs, agg);
-
-        return result;
-    }
-
-    // TODO Move to resultset utils
-    public static <V> V aggregate(ResultSet rs, Aggregator<? super Binding, V> agg) {
-        Accumulator<? super Binding, V> acc = agg.createAccumulator();
-        V result = aggregate(rs, acc);
-        return result;
-    }
-
-    public static <V> V aggregate(ResultSet rs, Accumulator<? super Binding, V> acc) {
-        while(rs.hasNext()) {
-            Binding binding = rs.nextBinding();
-            acc.accumulate(binding);
-        }
-
-        V result = acc.getValue();
-        return result;
-    }
-
-
-//    public static Aggregator<Binding, Map<Var, Set<String>>> createAggregatorResultSetPrefixesPerVar(List<Var> vars, int targetSize) {
-//        Aggregator<Binding, Map<Var, Set<String>>> result =
-//            createAggregatorNodesPerVar(
-//                vars,
-//                createAggregatorNodeToUris(
-//                    createAggregatorStringPrefixes(targetSize)));
-//
-//        return result;
-//    }
-
-    public static <V> Aggregator<Binding, Map<Var, V>> createAggregatorResultSetUrisPerVar(List<Var> vars, Aggregator<String, V> subAgg) {
-        Aggregator<Binding, Map<Var, V>> result =
-            createAggregatorNodesPerVar(
-                vars,
-                createAggregatorNodeToUris(subAgg));
-
-        return result;
-    }
-
-    
-    /**
-     * Aggregate over IRI strings for each binding's variable
-     * Non-IRI nodes are filtered out
-     * 
-     * @param <V>
-     * @param subAgg
-     * @return
-     */
-    public static <V> Aggregator<Binding, Map<Var, V>> createAggregatorResultSetUrisPerVar(Aggregator<String, V> subAgg) {
-        Aggregator<Binding, Map<Var, V>> result =
-        		AggregatorBuilder
-        			.from(createAggregatorNodeToUris(subAgg))
-        			.wrapWithMultiplexDynamic(Binding::vars, Binding::get)
-        			.get();
-
-        return result;
-    }
-    
-    
-    
-    public static <V> Aggregator<Binding, Map<Var, V>> createAggregatorNodesPerVar(List<Var> vars, Aggregator<Node, V> subAgg) {
-
-        //List<Var> vars = ResultSetUtils.getVars(rs);
-        Map<Var, Accumulator<Node, V>> accMap = vars.stream()
-                .collect(Collectors.toMap(v -> v, v -> subAgg.createAccumulator()));
-
-        BiFunction<Binding, Var, Node> fn = (binding, var) -> binding.get(var);
-        Aggregator<Binding, Map<Var, V>> result = () -> AccStaticMultiplex.create(fn, accMap);
-        return result;
-    }
-
-    public static <V> Aggregator<Node, V> createAggregatorNodeToUris(Aggregator<String, V> subAgg) {
-        //Aggregator<String, Set<String>> subAgg = createAggregatorStringPrefixes();
-
-        Aggregator<Node, V> result = AggregatorBuilder
-                .from(subAgg)
-                .wrapWithBindingTransform((Function<Node, String>)(node) -> node.getURI())
-                .wrapWithCondition((node) -> node.isURI())
-                .get();
-
-        return result;
-    }
-
-    public static Aggregator<String, Set<String>> createAggregatorStringPrefixes(int targetSize) {
-        Aggregator<String, Set<String>> result = AggregatorBuilder
-                .from(() -> new PrefixAccumulator(targetSize))
-                .wrapWithMap(PrefixAccumulator::defaultGrouper)
-                .wrapWithTransform(PrefixAccumulator::flatMapMapValues)
-                .get();
-
-        return result;
-    }
-
     public static void main(String[] args) {
 
         // QueryExecutionFactory qef = FluentQueryExecutionFactory.http("http://dbpedia.org/sparql", "http://dbpedia.org").create();
     	
     	try (QueryExecution qe = QueryExecutionFactory.createServiceRequest("http://dbpedia.org/sparql", QueryFactory.create("Select * { ?s a <http://dbpedia.org/ontology/Airport> } Limit 100"))) {
     		ResultSet rs = qe.execSelect();
-            Map<Var, Set<String>> ps = analyzePrefixes(rs, 50);
+    		
+			Accumulator<Binding, Map<Var, Set<String>>> acc = ResultSetAnalytics.usedPrefixes(50).createAccumulator();
+			IteratorResultSetBinding.wrap(rs).forEachRemaining(acc::accumulate);
+            Map<Var, Set<String>> ps = acc.getValue();
             System.out.println("Prefixes: " + ps);
     	}
 
@@ -395,7 +282,7 @@ public class PrefixAccumulator
         System.out.println(acc.getValue());
         
         Set<String> result = Stream.concat(items.stream(), Stream.of("lgd:foo"))
-        		.collect(Aggregators.createCollector(() -> new PrefixAccumulator(3)));
+        		.collect(AggBuilder.naturalAccumulator(() -> new PrefixAccumulator(3)).asCollector());
         System.out.println(result);
     }
     

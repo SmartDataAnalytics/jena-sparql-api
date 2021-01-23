@@ -2,11 +2,8 @@ package org.aksw.jena_sparql_api.mapper;
 
 import java.util.Collection;
 import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collector;
-
-import org.aksw.jena_sparql_api.mapper.parallel.ParallelAggregator;
 
 /**
  * Utils to bridge Aggregators with Java {@link Collector}

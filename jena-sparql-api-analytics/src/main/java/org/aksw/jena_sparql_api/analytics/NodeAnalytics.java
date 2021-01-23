@@ -4,14 +4,20 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 
-import org.aksw.jena_sparql_api.mapper.parallel.AggBuilder;
-import org.aksw.jena_sparql_api.mapper.parallel.ParallelAggregator;
+import org.aksw.commons.collector.core.AggBuilder;
+import org.aksw.commons.collector.domain.ParallelAggregator;
 import org.aksw.jena_sparql_api.utils.NodeUtils;
 import org.apache.jena.graph.Node;
 
 import com.google.common.collect.LinkedHashMultiset;
 import com.google.common.collect.Multiset;
 
+/**
+ * Aggregation utilities for Jena Nodes
+ * 
+ * @author Claus Stadler
+ *
+ */
 public class NodeAnalytics {
 
 	public static ParallelAggregator<Node, Entry<Multiset<String>, Long>, ?> usedDatatypesAndNullCounts() {

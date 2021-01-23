@@ -5,8 +5,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.aksw.jena_sparql_api.mapper.parallel.AggBuilder;
-import org.aksw.jena_sparql_api.mapper.parallel.ParallelAggregator;
+import org.aksw.commons.collector.core.AggBuilder;
+import org.aksw.commons.collector.domain.ParallelAggregator;
 import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.binding.Binding;

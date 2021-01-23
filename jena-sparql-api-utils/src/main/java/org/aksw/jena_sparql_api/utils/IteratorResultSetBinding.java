@@ -36,4 +36,9 @@ public class IteratorResultSetBinding
     public void remove() {
         throw new RuntimeException("Operation not supported");
     }
+    
+    
+    public static Iterator<Binding> wrap(ResultSet rs) {
+    	return new IteratorResultSetBinding(rs);
+    }
 }

@@ -8,10 +8,10 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.aksw.jena_sparql_api.mapper.Accumulator;
-import org.aksw.jena_sparql_api.mapper.Aggregator;
-import org.aksw.jena_sparql_api.mapper.parallel.AggBuilder;
-import org.aksw.jena_sparql_api.mapper.parallel.AggLcaMap;
+import org.aksw.commons.collector.core.AggBuilder;
+import org.aksw.commons.collector.core.AggLcaMap;
+import org.aksw.commons.collector.domain.Accumulator;
+import org.aksw.commons.collector.domain.Aggregator;
 import org.aksw.jena_sparql_api.util.graph.alg.BreadthFirstSearchLib;
 import org.aksw.jena_sparql_api.util.graph.alg.GraphSuccessorFunction;
 import org.aksw.jena_sparql_api.util.graph.alg.NaiveLCAFinder;
