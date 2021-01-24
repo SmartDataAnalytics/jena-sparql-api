@@ -121,15 +121,18 @@ public class SparqlScriptProcessor {
 
     private static final Logger logger = LoggerFactory.getLogger(SparqlScriptProcessor.class);
 
-    protected SparqlStmtParser sparqlParser ;
+    protected Function<? super Prologue, ? extends SparqlStmtParser> sparqlParserFactory; //  SparqlStmtParser sparqlParser ;
     protected PrefixMapping globalPrefixes;
     protected Path cwd = null;
     protected List<Entry<SparqlStmt, Provenance>> sparqlStmts = new ArrayList<>();
     protected List<Function<? super SparqlStmt, ? extends SparqlStmt>> postTransformers = new ArrayList<>();
 
-    public SparqlScriptProcessor(SparqlStmtParser sparqlParser, PrefixMapping globalPrefixes) {
+    public SparqlScriptProcessor(//SparqlStmtParser sparqlParser,
+    		Function<? super Prologue, ? extends SparqlStmtParser> sparqlParserFactory,
+    		PrefixMapping globalPrefixes) {
         super();
-        this.sparqlParser = sparqlParser;
+//        this.sparqlParser = sparqlParser;
+        this.sparqlParserFactory = sparqlParserFactory;
         this.globalPrefixes = globalPrefixes;
     }
 
@@ -146,10 +149,26 @@ public class SparqlScriptProcessor {
     }
 
     public SparqlStmtParser getSparqlParser() {
-        return sparqlParser;
+    	return sparqlParserFactory.apply(new Prologue(globalPrefixes));
+//        return sparqlParser;
     }
 
 
+    public static SparqlStmtParser createParserWithEnvSubstitution(Prologue prologue) {
+        SparqlQueryParser queryParser = SparqlQueryParserWrapperSelectShortForm.wrap(
+                SparqlQueryParserImpl.create(Syntax.syntaxARQ, prologue));
+
+        SparqlUpdateParser updateParser = SparqlUpdateParserImpl
+                .create(Syntax.syntaxARQ, prologue);
+
+        SparqlStmtParser sparqlParser =
+                SparqlStmtParser.wrapWithTransform(
+                        new SparqlStmtParserImpl(queryParser, updateParser, false),
+                        stmt -> SparqlStmtUtils.applyNodeTransform(stmt, x -> NodeUtils.substWithLookup(x, System::getenv)));
+
+        return sparqlParser;
+    }
+    
     /**
      * Create a script processor that substitutes references to environment variables
      * with the appropriate values.
@@ -157,20 +176,10 @@ public class SparqlScriptProcessor {
      * @param pm
      * @return
      */
-    public static SparqlScriptProcessor createWithEnvSubstitution(PrefixMapping pm) {
-        Prologue p = new Prologue(pm);
-        SparqlQueryParser queryParser = SparqlQueryParserWrapperSelectShortForm.wrap(
-                SparqlQueryParserImpl.create(Syntax.syntaxARQ, p));
-
-        SparqlUpdateParser updateParser = SparqlUpdateParserImpl
-                .create(Syntax.syntaxARQ, new Prologue(p));
-
-        SparqlStmtParser sparqlParser =
-                SparqlStmtParser.wrapWithTransform(
-                        new SparqlStmtParserImpl(queryParser, updateParser, false),
-                        stmt -> SparqlStmtUtils.applyNodeTransform(stmt, x -> NodeUtils.substWithLookup(x, System::getenv)));
-
-        SparqlScriptProcessor result = new SparqlScriptProcessor(sparqlParser, pm);
+    public static SparqlScriptProcessor createWithEnvSubstitution(PrefixMapping globalPrefixes) {
+        SparqlScriptProcessor result = new SparqlScriptProcessor(
+        		SparqlScriptProcessor::createParserWithEnvSubstitution,
+        		globalPrefixes);
         return result;
     }
 
@@ -221,7 +230,11 @@ public class SparqlScriptProcessor {
 
                 String baseIri = cwd == null ? null : cwd.toUri().toString();
                 try {
-                    Iterator<SparqlStmt> it = SparqlStmtMgr.loadSparqlStmts(filename, globalPrefixes, sparqlParser, baseIri);
+//                    Iterator<SparqlStmt> it = SparqlStmtMgr.loadSparqlStmts(filename, globalPrefixes, sparqlParser, baseIri);
+                	// globalPrefixes, 
+                	Prologue prologue = new Prologue(globalPrefixes, baseIri);
+                	SparqlStmtParser sparqlParser = sparqlParserFactory.apply(prologue);
+                	Iterator<SparqlStmt> it = SparqlStmtMgr.loadSparqlStmts(filename, sparqlParser);
 
                     if(it != null) {
                         //Path sparqlPath = Paths.get(filename).toAbsolutePath();
