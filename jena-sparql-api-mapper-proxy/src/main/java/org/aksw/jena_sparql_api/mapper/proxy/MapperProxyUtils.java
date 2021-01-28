@@ -41,6 +41,8 @@ import org.aksw.jena_sparql_api.mapper.annotation.Inverse;
 import org.aksw.jena_sparql_api.mapper.annotation.Iri;
 import org.aksw.jena_sparql_api.mapper.annotation.IriNs;
 import org.aksw.jena_sparql_api.mapper.annotation.IriType;
+import org.aksw.jena_sparql_api.mapper.annotation.Namespace;
+import org.aksw.jena_sparql_api.mapper.annotation.Namespaces;
 import org.aksw.jena_sparql_api.mapper.annotation.PolymorphicOnly;
 import org.aksw.jena_sparql_api.mapper.annotation.StringId;
 import org.aksw.jena_sparql_api.mapper.annotation.ToString;
@@ -85,6 +87,7 @@ import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.path.P_Link;
 import org.apache.jena.sparql.path.P_Path0;
 import org.apache.jena.sparql.path.PathParser;
+import org.apache.jena.sparql.util.PrefixMapping2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -1257,6 +1260,56 @@ public class MapperProxyUtils {
         return result;
     }
 
+    
+    /**
+     * Read {@link Namespaces} and {@link Namespace} annotation from this class and
+     * a super classes / interfaces.
+     * The super classes / interfaces are visited first.
+     * 
+     * TODO Add caching to avoid excessive reflection
+     * 
+     * @param cls
+     * @param out
+     * @return
+     */
+    public static PrefixMapping readPrefixesFromClass(Class<?> cls, PrefixMapping out) {
+    	Objects.requireNonNull(cls);
+    	Objects.requireNonNull(out);
+    	
+    	Class<?> superClass = cls.getSuperclass();
+    	if (superClass != null) {
+    		readPrefixesFromClass(superClass, out);
+    	}
+ 
+    	for (Class<?> i : cls.getInterfaces()) {
+    		readPrefixesFromClass(i, out);
+    	}
+    	
+    	Namespaces nss = cls.getAnnotation(Namespaces.class);    	
+    	if (nss != null && nss.value() != null) {
+    		for (Namespace ns : nss.value()) {
+        		addPrefix(cls, out, ns.prefix(), ns.value());
+    		}
+    	}
+    	
+    	Namespace ns = cls.getAnnotation(Namespace.class);
+    	if (ns != null) {
+    		addPrefix(cls, out, ns.prefix(), ns.value());
+    	}	
+
+    	return out;
+    }
+    
+    public static void addPrefix(Class<?> cls, PrefixMapping out, String prefix, String value) {
+    	logger.debug("Derived prefix " + prefix + " -> " + value
+    			+ " from annotation on " + cls.getCanonicalName());
+
+    	Objects.requireNonNull(prefix);
+    	Objects.requireNonNull(value);
+    	
+    	out.setNsPrefix(prefix, value);
+    }
+    
     /**
      * Method level annotations are processed into property level ones.
      *
@@ -1266,9 +1319,14 @@ public class MapperProxyUtils {
      */
     public static <T extends Resource> BiFunction<Node, EnhGraph, T> createProxyFactory(
             Class<T> clazz,
-            PrefixMapping pm,
+            PrefixMapping basePm,
             TypeDecider typeDecider) {
 
+    	// Shield the base prefixes from modification using PrefixMapping2 
+    	PrefixMapping2 pm = new PrefixMapping2(basePm);
+    	readPrefixesFromClass(clazz, pm);
+    	
+    	
         Metamodel metamodel = Metamodel.get();
         ClassDescriptor classDescriptor = metamodel.getOrCreate(clazz);
 
