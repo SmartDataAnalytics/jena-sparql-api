@@ -16,6 +16,10 @@ import org.apache.jena.ext.com.google.common.collect.SetMultimap;
 import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.core.VarExprList;
+import org.apache.jena.sparql.engine.ExecutionContext;
+import org.apache.jena.sparql.engine.binding.Binding;
+import org.apache.jena.sparql.engine.binding.BindingFactory;
+import org.apache.jena.sparql.engine.binding.BindingMap;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprTransform;
 import org.apache.jena.sparql.expr.ExprTransformSubstitute;
@@ -26,6 +30,26 @@ import org.apache.jena.sparql.graph.NodeTransform;
 
 public class VarExprListUtils {
 
+	/**
+	 * Note: Code taken from QueryIterGroup - unfortunately it not public there
+	 * Evaluates a VarExprList into a binding - Has many uss such as
+	 * for evaluating OpExtend or creating the group key for OpGroup
+	 **/
+    public static Binding copyProject(VarExprList vars, Binding binding, ExecutionContext execCxt) {
+        // No group vars (implicit or explicit) => working on whole result set.
+        // Still need a BindingMap to assign to later.
+        BindingMap x = BindingFactory.create();
+        for ( Var var : vars.getVars() ) {
+            Node node = vars.get(var, binding, execCxt);
+            // Null returned for unbound and error.
+            if ( node != null ) {
+                x.add(var, node);
+            }
+        }
+        return x;
+    }
+
+	
     /**
      * Add variables to an {@link VarExprList} if they are not already present in it
      *
