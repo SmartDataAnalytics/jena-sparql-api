@@ -86,7 +86,7 @@ import org.apache.jena.riot.out.NodeFmtLib;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.path.P_Link;
 import org.apache.jena.sparql.path.P_Path0;
-import org.apache.jena.sparql.path.PathParser;
+import org.apache.jena.sparql.path.PathFactory;
 import org.apache.jena.sparql.util.PrefixMapping2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -1131,9 +1131,10 @@ public class MapperProxyUtils {
             // Always expand URIs
             // FIXME This will break for general paths - perform prefix expansion using a path transformer!
             String expanded = pm.expandPrefix(rdfPropertyStr);
-            String pathStr = "<" + expanded + ">";
+            // String pathStr = "<" + expanded + ">";
 
-            result = (P_Path0)PathParser.parse(pathStr, pm);
+            // result = (P_Path0)PathParser.parse(pathStr, pm);
+            result = (P_Path0)PathFactory.pathLink(NodeFactory.createURI(expanded));
 
             //logger.debug("Parsed bean property RDF annotation " + pathStr + " into " + result + " on " + method);
             if(logger.isDebugEnabled()) {
