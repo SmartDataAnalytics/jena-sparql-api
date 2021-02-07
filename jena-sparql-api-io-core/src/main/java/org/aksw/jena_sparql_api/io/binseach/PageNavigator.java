@@ -152,7 +152,8 @@ public class PageNavigator
     }
 
     /**
-     * Limit the
+     * Limit the maxmimum position by length bytes from the current position.
+     * 
      * @param length
      * @return
      */

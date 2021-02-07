@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.SeekableByteChannel;
+import java.util.Arrays;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -14,6 +15,7 @@ import java.util.stream.IntStream;
 import javax.annotation.concurrent.ThreadSafe;
 
 import org.aksw.jena_sparql_api.io.api.ChannelFactory;
+import org.apache.commons.io.IOUtils;
 import org.junit.Assert;
 
 import com.google.common.base.Stopwatch;
@@ -74,6 +76,15 @@ public class BufferFromInputStream
     protected boolean isDataSupplierConsumed;
 
 
+    public long getKnownDataSize() {
+    	return knownDataSize;
+    }
+    
+    public boolean isDataSupplierConsumed() {
+    	return isDataSupplierConsumed;
+    }
+    
+
     /**
      * @param maxReadSize Maximum number of bytes to request form the input stream at once
      *
@@ -107,6 +118,10 @@ public class BufferFromInputStream
 
         int idx;
         int pos;
+		@Override
+		public String toString() {
+			return "BucketPointer [idx=" + idx + ", pos=" + pos + "]";
+		}
     }
 
 
@@ -214,12 +229,27 @@ public class BufferFromInputStream
             throw new UnsupportedOperationException();
         }
 
+        /**
+         * First checks whether there is at least one more byte available
+         * and afterwards returns the currently known size
+         */
         @Override
         public long size() throws IOException {
+        	// ensureCapacityInActiveBucket();
+        	checkNext(1, false);
+        	
+            // loadDataUpTo(Long.MAX_VALUE);
+            return knownDataSize;
+        }
+
+        /** Loads all data into the buffer and returns the total size */ 
+        // @Override
+        public long loadAll() throws IOException {
             loadDataUpTo(Long.MAX_VALUE);
             return knownDataSize;
         }
 
+        
         @Override
         public SeekableByteChannel truncate(long size) throws IOException {
             throw new UnsupportedOperationException();
@@ -245,6 +275,10 @@ public class BufferFromInputStream
             position(-1);
         }
 
+        /**
+         * Set the position to the end of the stream
+         * immediately loads all data.
+         */
         @Override
         public void posToEnd() throws IOException {
             loadDataUpTo(Long.MAX_VALUE);
@@ -270,6 +304,8 @@ public class BufferFromInputStream
 //            throw new UnsupportedOperationException();
 //        }
 
+        /*
+         * TODO This method does not update the pointer
         @Override
         public boolean prevPos(int len) throws IOException {
             long newPos = pos - len;
@@ -279,6 +315,7 @@ public class BufferFromInputStream
             }
             return result;
         }
+        */
 
 
 //        @Override
@@ -375,7 +412,16 @@ public class BufferFromInputStream
                 pointer = getPointer(buckets, activeEnd, pos);
             }
 
-            byte result = buckets[pointer.idx][pointer.pos];
+            // Corner case: if we are positioned at the end of the bucket
+            // we invoke read which does all this complex handling
+            byte result;
+            if (pointer.pos == buckets[pointer.idx].length) {
+            	ByteBuffer tmp = ByteBuffer.allocate(1);
+            	read(tmp);
+            	result = tmp.get(0);
+            } else {
+            	result = buckets[pointer.idx][pointer.pos];
+            }
             return result;
         }
 
@@ -538,10 +584,16 @@ public class BufferFromInputStream
     }
 
 
+    /**
+     * Preload data up to including the requested position.
+     * It is inclusive in order to allow for checking whether the requested position is in range. 
+     * 
+     * @param requestedPos
+     */
     protected void loadDataUpTo(long requestedPos) {
-        while(!isDataSupplierConsumed && knownDataSize < requestedPos) {
+        while(!isDataSupplierConsumed && knownDataSize <= requestedPos) {
             synchronized(this) {
-                if(!isDataSupplierConsumed && knownDataSize < requestedPos) {
+                if(!isDataSupplierConsumed && knownDataSize <= requestedPos) {
                     // System.out.println("load upto " + requestedPos);
                     int needed = Ints.saturatedCast(requestedPos - knownDataSize);
                     loadData(needed);
@@ -609,9 +661,40 @@ public class BufferFromInputStream
         }
     }
 
-
-
+    
     public static void main(String[] args) throws Exception {
+    	int n = 10000;
+    	byte[] data = new byte[10 * n];
+    	for (int i = 0; i < n; ++i) {
+    		for (int j = 0; j < 10; ++j) {
+    			data[i * 10 + j] = (byte)((byte)'a' + j);
+    		}
+    	}
+    	
+    	InputStream in = new ByteArrayInputStream(data);
+    	BufferFromInputStream b = BufferFromInputStream.create(in, 2);
+    	Seekable s = b.newChannel();
+    	
+    	// System.out.println("Pos changed? " + s.nextPos(10000 * 10 - 1));
+    	ByteBuffer buf = ByteBuffer.allocate(5);
+    	
+		// IOUtils.read(s, buf);
+    	s.nextPos(5001);
+    	s.read(buf);
+    	// s.read(buf);
+		System.out.println(Arrays.toString(buf.array()));
+
+    	for (int i = 0; i < 10; ++i) {
+    		
+    		long pos = s.getPos();
+    		byte ch = s.get(i);
+    		System.out.println("i: " + i + " pos: " + pos + " ch: " + ch);
+    	}
+    	
+    }
+
+
+    public static void main2(String[] args) throws Exception {
 
         // TODO Create a test case:
         // Put some data into a byte array, wrap it with a ByteArayInputStream which

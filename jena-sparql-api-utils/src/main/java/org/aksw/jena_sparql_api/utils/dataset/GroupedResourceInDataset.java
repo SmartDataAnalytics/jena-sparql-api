@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.io.json;
+package org.aksw.jena_sparql_api.utils.dataset;
 
 import java.util.LinkedHashSet;
 import java.util.Set;

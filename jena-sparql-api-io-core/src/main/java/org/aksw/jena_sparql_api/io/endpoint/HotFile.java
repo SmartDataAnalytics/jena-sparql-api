@@ -3,6 +3,8 @@ package org.aksw.jena_sparql_api.io.endpoint;
 import java.io.IOException;
 import java.io.InputStream;
 
+import org.aksw.commons.io.endpoint.FileCreation;
+
 /**
  * A hot file is a currently running file creation to by another thread or process.
  * The HotFile API allows for waiting for the final file to become ready, or to

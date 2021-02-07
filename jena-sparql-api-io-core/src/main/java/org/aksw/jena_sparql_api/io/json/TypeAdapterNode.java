@@ -2,6 +2,8 @@ package org.aksw.jena_sparql_api.io.json;
 
 import java.io.IOException;
 
+import org.aksw.jena_sparql_api.utils.dataset.GraphNameAndNode;
+import org.aksw.jena_sparql_api.utils.dataset.GroupedResourceInDataset;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;

@@ -2,7 +2,6 @@ package org.aksw.jena_sparql_api.io.binseach.bz2;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.math.BigInteger;
 import java.nio.channels.Channels;
 import java.util.concurrent.ExecutionException;
 import java.util.regex.Matcher;
@@ -11,6 +10,7 @@ import java.util.regex.Pattern;
 import org.aksw.jena_sparql_api.io.binseach.Block;
 import org.aksw.jena_sparql_api.io.binseach.BlockSource;
 import org.aksw.jena_sparql_api.io.binseach.BufferFromInputStream;
+import org.aksw.jena_sparql_api.io.binseach.BufferFromInputStream.ByteArrayChannel;
 import org.aksw.jena_sparql_api.io.binseach.CharSequenceFromSeekable;
 import org.aksw.jena_sparql_api.io.binseach.DecodedDataBlock;
 import org.aksw.jena_sparql_api.io.binseach.ReverseCharSequenceFromSeekable;
@@ -19,7 +19,6 @@ import org.aksw.jena_sparql_api.io.binseach.SeekableSource;
 import org.aksw.jena_sparql_api.io.common.Reference;
 import org.aksw.jena_sparql_api.io.common.ReferenceImpl;
 import org.aksw.jena_sparql_api.io.deprecated.MatcherFactory;
-import org.aksw.jena_sparql_api.io.deprecated.SeekableMatcher;
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream;
 
 import com.github.jsonldjava.shaded.com.google.common.primitives.Ints;
@@ -80,7 +79,6 @@ public class BlockSourceBzip2
         // The input stream now owns the seekable - closing it closes the seekable!
         InputStream rawIn = Channels.newInputStream(seekable);
         BZip2CompressorInputStream decodedIn = new BZip2CompressorInputStream(rawIn, false);
-
         BufferFromInputStream blockBuffer = new BufferFromInputStream(8192, decodedIn);
 
         // Closing the block would close the input stream -
@@ -178,9 +176,11 @@ public class BlockSourceBzip2
         // TODO The block size may be known - e.g. 900K - in that case we only need to check whether there
         // is subsequent block - only if there is none we actually have to compute the length
         long result;
-        try(Reference<Block> ref = contentAtOrAfter(pos, true)) {
-            try(Seekable channel = ref.get().newChannel()) {
-                result = channel.size();
+        try (Reference<Block> ref = contentAtOrAfter(pos, true)) {
+            try (Seekable channel = ref.get().newChannel()) {
+            	// This is super ugly code to read all data in a block
+            	// in order to get its size
+            	result = ((ByteArrayChannel)channel).loadAll();
             }
         } catch (Exception e) {
             throw new IOException(e);

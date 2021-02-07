@@ -6,6 +6,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 
+import org.aksw.commons.io.process.util.SimpleProcessExecutor;
+
 import com.google.common.util.concurrent.AbstractIdleService;
 
 public abstract class AbstractSystemService
