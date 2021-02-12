@@ -379,10 +379,8 @@ public class RxUtils {
 
     /**
      * Consume a flow by mapping it to empty maybes as long as there is no error.
-     * On error emit a maybe that hold the occurred exception.
-     * Uses blockingGet on the single result
-     *
-     *
+     * On error emit a maybe that holds the occurred exception.
+     * This method underneath uses blockingGet on the single result.
      *
      * @param flowable
      */

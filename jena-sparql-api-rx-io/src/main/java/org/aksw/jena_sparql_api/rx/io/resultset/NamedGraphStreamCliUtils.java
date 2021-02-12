@@ -6,18 +6,36 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.Callable;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
+import org.aksw.commons.io.util.StdIo;
 import org.aksw.jena_sparql_api.rx.RDFDataMgrEx;
 import org.aksw.jena_sparql_api.rx.RDFDataMgrRx;
+import org.aksw.jena_sparql_api.rx.SparqlScriptProcessor;
+import org.aksw.jena_sparql_api.rx.SparqlScriptProcessor.Provenance;
+import org.aksw.jena_sparql_api.rx.query_flow.RxUtils;
+import org.aksw.jena_sparql_api.stmt.SPARQLResultEx;
+import org.aksw.jena_sparql_api.stmt.SparqlStmt;
+import org.aksw.jena_sparql_api.stmt.SparqlStmtUtils;
 import org.aksw.jena_sparql_api.transform.result_set.QueryExecutionTransformResult;
 import org.apache.commons.io.input.CloseShieldInputStream;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.jena.atlas.web.TypedInputStream;
+import org.apache.jena.ext.com.google.common.base.Strings;
 import org.apache.jena.query.Dataset;
+import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.riot.Lang;
+import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.riot.RDFLanguages;
 import org.apache.jena.shared.PrefixMapping;
+import org.apache.jena.sparql.algebra.TransformUnionQuery;
+import org.apache.jena.sparql.algebra.Transformer;
+import org.apache.jena.sparql.engine.http.Service;
+import org.apache.jena.sparql.util.Context;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -161,4 +179,80 @@ public class NamedGraphStreamCliUtils {
 
         return result;
     }
+    
+    
+    
+    public static void execMap(
+    		PrefixMapping pm,
+    		List<String> sourceStrs,
+    		Collection<Lang> quadLangs,
+    		List<String> stmtStrs,
+    		String timeoutSpec,
+    		String outFormat,
+    		long deferCount) {
+
+        Consumer<Context> contextHandler = cxt -> {
+            if (!Strings.isNullOrEmpty(timeoutSpec)) {
+                cxt.set(Service.queryTimeout, timeoutSpec);
+            }
+        };
+
+        SparqlScriptProcessor scriptProcessor = SparqlScriptProcessor.createWithEnvSubstitution(pm);
+
+        // Register a (best-effort) union default graph transform
+        scriptProcessor.addPostTransformer(stmt -> SparqlStmtUtils.applyOpTransform(stmt,
+                op -> Transformer.transformSkipService(new TransformUnionQuery(), op)));
+
+
+        scriptProcessor.process(stmtStrs);
+        List<Entry<SparqlStmt, Provenance>> workloads = scriptProcessor.getSparqlStmts();
+
+        List<SparqlStmt> stmts = workloads.stream().map(Entry::getKey).collect(Collectors.toList());
+
+        OutputMode outputMode = OutputModes.detectOutputMode(stmts);
+
+        // This is the final output sink
+        SPARQLResultExProcessor resultProcessor = SPARQLResultExProcessorBuilder.configureProcessor(
+      	      StdIo.openStdOutWithCloseShield(), System.err,
+      	      outFormat,
+      	      stmts,
+      	      pm,
+      	      RDFFormat.TURTLE_BLOCKS,
+      	      RDFFormat.TRIG_BLOCKS,
+      	      deferCount,
+      	      false, 0, false,
+      	      () -> {});
+
+        // SPARQLResultExProcessor resultProcessor = resultProcessorBuilder.build();
+        
+        Function<RDFConnection, SPARQLResultEx> mapper = SparqlMappers.createMapperToSparqlResultEx(outputMode, stmts, resultProcessor);
+
+        Flowable<SPARQLResultEx> flow =
+                // Create a stream of Datasets
+        		NamedGraphStreamCliUtils.createNamedGraphStreamFromArgs(sourceStrs, null, pm, quadLangs)
+                    // Map the datasets in parallel
+                    .compose(RxOps.createParallelMapperOrdered(
+                        // Map the dataset to a connection
+                        SparqlMappers.mapDatasetToConnection(
+                                // Set context attributes on the connection, e.g. timeouts
+                                SparqlMappers.applyContextHandler(contextHandler)
+                                    // Finally invoke the mapper
+                                    .andThen(mapper))));
+        
+        resultProcessor.start();
+        try {
+//            for(SPARQLResultEx item : flow.blockingIterable(16)) {
+//                System.out.println(item);
+//                resultProcessor.forwardEx(item);
+//            }
+            RxUtils.consume(flow.map(item -> { resultProcessor.forwardEx(item); return item; }));
+            resultProcessor.finish();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        } finally {
+            resultProcessor.flush();
+            resultProcessor.close();
+        }
+    }
+
 }
