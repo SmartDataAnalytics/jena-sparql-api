@@ -11,7 +11,6 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.sparql.core.DatasetGraph;
-import org.apache.jena.sparql.core.DatasetGraphFactory;
 import org.apache.jena.sparql.core.Quad;
 
 import io.reactivex.rxjava3.core.FlowableTransformer;
@@ -28,7 +27,7 @@ public class DatasetGraphOpsRx {
 
     public static FlowableTransformer<Quad, Entry<Node, DatasetGraph>> groupConsecutiveQuadsRaw(
             Function<Quad, Node> grouper,
-            Supplier<DatasetGraph> graphSupplier) {
+            Supplier<? extends DatasetGraph> graphSupplier) {
 
         return OperatorOrderedGroupBy.<Quad, Node, DatasetGraph>create(
                 grouper::apply,
@@ -92,6 +91,15 @@ public class DatasetGraphOpsRx {
             Supplier<DatasetGraph> graphSupplier) {
         return upstream -> upstream
                 .compose(groupConsecutiveQuadsRaw(grouper, graphSupplier))
+                .map(Entry::getValue)
+                .map(DatasetFactory::wrap)
+                ;
+    }
+
+    public static FlowableTransformer<Quad, Dataset> datasetsFromConsecutiveQuads(
+            Supplier<? extends DatasetGraph> graphSupplier) {
+        return upstream -> upstream
+                .compose(groupConsecutiveQuadsRaw(Quad::getGraph, graphSupplier))
                 .map(Entry::getValue)
                 .map(DatasetFactory::wrap)
                 ;

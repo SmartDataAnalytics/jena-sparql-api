@@ -32,6 +32,9 @@ import org.apache.jena.sparql.syntax.Template;
  */
 public class CannedQueryUtils {
     
+    public static final Query DISTINCT_NAMED_GRAPHS = QueryFactory.create("SELECT DISTINCT ?g { GRAPH ?g { ?s ?p ?o } }");
+
+	
     private static final Var g = Var.alloc("g");
 	private static final Var s = Var.alloc("s");
 	private static final Var p = Var.alloc("p");

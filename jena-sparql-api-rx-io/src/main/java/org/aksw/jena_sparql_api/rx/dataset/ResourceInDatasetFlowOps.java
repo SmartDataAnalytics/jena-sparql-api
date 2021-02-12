@@ -18,6 +18,7 @@ import org.aksw.jena_sparql_api.rx.RDFDataMgrRx.ConsecutiveNamedGraphMergerCore;
 import org.aksw.jena_sparql_api.rx.op.OperatorOrderedGroupBy;
 import org.aksw.jena_sparql_api.rx.op.ResultSetMappers;
 import org.aksw.jena_sparql_api.stmt.SparqlQueryParser;
+import org.aksw.jena_sparql_api.utils.CannedQueryUtils;
 import org.aksw.jena_sparql_api.utils.DatasetUtils;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.aksw.jena_sparql_api.utils.dataset.GraphNameAndNode;
@@ -29,7 +30,6 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.Query;
-import org.apache.jena.query.QueryFactory;
 import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
 
@@ -231,15 +231,12 @@ public class ResourceInDatasetFlowOps {
     }
 
 
-    // TODO Move constant to a central place
-    public static final Query DISTINCT_NAMED_GRAPHS = QueryFactory.create("SELECT DISTINCT ?g { GRAPH ?g { ?s ?p ?o } }");
-
     public static FlowableTransformer<GroupedResourceInDataset, GroupedResourceInDataset> createSystemSorter(
             SysSort cmdSort,
             SparqlQueryParser keyQueryParser) {
         String keyArg = cmdSort.key;
 
-        Function<? super SparqlQueryConnection, Node> keyMapper = createKeyMapper(keyArg, keyQueryParser, DISTINCT_NAMED_GRAPHS);
+        Function<? super SparqlQueryConnection, Node> keyMapper = createKeyMapper(keyArg, keyQueryParser, CannedQueryUtils.DISTINCT_NAMED_GRAPHS);
 
 
 //		keyQueryParser = keyQueryParser != null

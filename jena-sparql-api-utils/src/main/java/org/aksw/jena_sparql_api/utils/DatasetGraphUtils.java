@@ -26,20 +26,24 @@ public class DatasetGraphUtils {
     }
 
 	
-    public static void addAll(DatasetGraph target, DatasetGraph source) {
-            Iterator<Quad> it = source.find();
-            addAll(target, it);
+    public static DatasetGraph addAll(DatasetGraph target, DatasetGraph source) {
+        Iterator<Quad> it = source.find();
+        addAll(target, it);            
+        return target;
     }
 
-    public static void addAll(DatasetGraph datasetGraph, Iterable<? extends Quad> items) {
+    public static DatasetGraph addAll(DatasetGraph datasetGraph, Iterable<? extends Quad> items) {
         addAll(datasetGraph, items.iterator());
+        return datasetGraph;
     }
 
-    public static void addAll(DatasetGraph datasetGraph, Iterator<? extends Quad> it) {
+    public static DatasetGraph addAll(DatasetGraph datasetGraph, Iterator<? extends Quad> it) {
         while(it.hasNext()) {
             Quad q = it.next();
             datasetGraph.add(q);
         }
+        
+        return datasetGraph;
     }
 
     public static DatasetGraph clone(DatasetGraph datasetGraph) {
