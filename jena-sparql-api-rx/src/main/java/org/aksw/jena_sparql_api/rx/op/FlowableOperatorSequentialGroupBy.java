@@ -4,13 +4,14 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiConsumer;
-import java.util.function.BiFunction;
+import java.util.function.BiPredicate;
 import java.util.function.Function;
 
 import org.apache.jena.ext.com.google.common.collect.Maps;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 
+import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.FlowableOperator;
 import io.reactivex.rxjava3.core.FlowableSubscriber;
 import io.reactivex.rxjava3.core.FlowableTransformer;
@@ -18,7 +19,7 @@ import io.reactivex.rxjava3.internal.subscriptions.SubscriptionHelper;
 import io.reactivex.rxjava3.internal.util.BackpressureHelper;
 
 /**
- * Ordered group by; somewhat similar to .toListWhile() but with dedicated support for
+ * Sequential group by; somewhat similar to .toListWhile() but with dedicated support for
  * group keys and accumulators
  *
  *
@@ -38,32 +39,39 @@ import io.reactivex.rxjava3.internal.util.BackpressureHelper;
  * @param <K> Group key type
  * @param <V> Accumulator type
  */
-public final class OperatorOrderedGroupBy<T, K, V>
+public final class FlowableOperatorSequentialGroupBy<T, K, V>
     implements FlowableOperator<Entry<K, V>, T> {
 
+	/* Function to derive a group key from an item in the flow */
     protected Function<? super T, ? extends K> getGroupKey;
-    protected BiFunction<? super K, ? super K, Boolean> groupKeyCompare;
+    
+    /* Comparision whether two group keys are equal */
+    protected BiPredicate<? super K, ? super K> groupKeyCompare;
+    
+    /* Constructor function for accumulators. Function argument is the group key */
     protected Function<? super K, ? extends V> accCtor;
+    
+    /* Add an item to the accumulator */
     protected BiConsumer<? super V, ? super T> accAdd;
 
-    public static <T, K, V> OperatorOrderedGroupBy<T, K, V> create(
+    public static <T, K, V> FlowableOperatorSequentialGroupBy<T, K, V> create(
             Function<? super T, ? extends K> getGroupKey,
             Function<? super K, ? extends V> accCtor,
             BiConsumer<? super V, ? super T> accAdd) {
         return create(getGroupKey, Objects::equals, accCtor, accAdd);
     }
 
-    public static <T, K, V> OperatorOrderedGroupBy<T, K, V> create(
+    public static <T, K, V> FlowableOperatorSequentialGroupBy<T, K, V> create(
             Function<? super T, ? extends K> getGroupKey,
-            BiFunction<? super K, ? super K, Boolean> groupKeyCompare,
+            BiPredicate<? super K, ? super K> groupKeyCompare,
             Function<? super K, ? extends V> accCtor,
             BiConsumer<? super V, ? super T> accAdd) {
-        return new OperatorOrderedGroupBy<>(getGroupKey, groupKeyCompare, accCtor, accAdd);
+        return new FlowableOperatorSequentialGroupBy<>(getGroupKey, groupKeyCompare, accCtor, accAdd);
     }
 
-    public OperatorOrderedGroupBy(
+    public FlowableOperatorSequentialGroupBy(
             Function<? super T, ? extends K> getGroupKey,
-            BiFunction<? super K, ? super K, Boolean> groupKeyCompare,
+            BiPredicate<? super K, ? super K> groupKeyCompare,
             Function<? super K, ? extends V> accCtor,
             BiConsumer<? super V, ? super T> accAdd) {
         super();
@@ -79,8 +87,7 @@ public final class OperatorOrderedGroupBy<T, K, V>
     }
 
     /**
-     * Deprecated; just use .lift() instead of .compose()
-     * @return
+     * Deprecated; Prefer using {@link Flowable#lift(FlowableOperator)} over {@link Flowable#compose(FlowableTransformer)}
      */
     @Deprecated
     public FlowableTransformer<T, Entry<K, V>> transformer() {
@@ -131,7 +138,7 @@ public final class OperatorOrderedGroupBy<T, K, V>
                 currentAcc = accCtor.apply(currentKey);
 
                 Objects.requireNonNull(currentAcc, "Got null for an accumulator");
-            } else if(!groupKeyCompare.apply(priorKey, currentKey)) {
+            } else if(!groupKeyCompare.test(priorKey, currentKey)) {
 
                 Entry<K, V> e = Maps.immutableEntry(priorKey, currentAcc);
 //                System.out.println("Passing on " + e);

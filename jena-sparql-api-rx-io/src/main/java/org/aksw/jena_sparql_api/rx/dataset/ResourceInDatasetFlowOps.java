@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
 import org.aksw.commons.io.syscall.SysCalls;
 import org.aksw.commons.io.syscall.sort.SysSort;
 import org.aksw.jena_sparql_api.rx.RDFDataMgrRx.ConsecutiveNamedGraphMergerCore;
-import org.aksw.jena_sparql_api.rx.op.OperatorOrderedGroupBy;
+import org.aksw.jena_sparql_api.rx.op.FlowableOperatorSequentialGroupBy;
 import org.aksw.jena_sparql_api.rx.op.ResultSetMappers;
 import org.aksw.jena_sparql_api.stmt.SparqlQueryParser;
 import org.aksw.jena_sparql_api.utils.CannedQueryUtils;
@@ -150,7 +150,7 @@ public class ResourceInDatasetFlowOps {
      */
     public static FlowableTransformer<ResourceInDataset, GroupedResourceInDataset> groupedResourceInDataset() {
         return upstream -> upstream
-                .lift(OperatorOrderedGroupBy.<ResourceInDataset, Dataset, List<ResourceInDataset>>create(
+                .lift(FlowableOperatorSequentialGroupBy.<ResourceInDataset, Dataset, List<ResourceInDataset>>create(
                         ResourceInDataset::getDataset,
                         (k1, k2) -> k1 == k2 || k1.asDatasetGraph() == k2.asDatasetGraph(),
                         key -> new ArrayList<>(),

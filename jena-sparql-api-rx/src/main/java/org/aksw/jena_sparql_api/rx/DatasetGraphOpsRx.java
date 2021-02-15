@@ -6,7 +6,7 @@ import java.util.Map.Entry;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import org.aksw.jena_sparql_api.rx.op.OperatorOrderedGroupBy;
+import org.aksw.jena_sparql_api.rx.op.FlowableOperatorSequentialGroupBy;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
@@ -18,7 +18,7 @@ import io.reactivex.rxjava3.core.FlowableTransformer;
 public class DatasetGraphOpsRx {
     public static FlowableTransformer<Quad, Entry<Node, List<Quad>>> groupToList()
     {
-        return OperatorOrderedGroupBy.<Quad, Node, List<Quad>>create(
+        return FlowableOperatorSequentialGroupBy.<Quad, Node, List<Quad>>create(
                 Quad::getGraph,
                 graph -> new ArrayList<>(),
                 (list, item) -> list.add(item)
@@ -29,7 +29,7 @@ public class DatasetGraphOpsRx {
             Function<Quad, Node> grouper,
             Supplier<? extends DatasetGraph> graphSupplier) {
 
-        return OperatorOrderedGroupBy.<Quad, Node, DatasetGraph>create(
+        return FlowableOperatorSequentialGroupBy.<Quad, Node, DatasetGraph>create(
                 grouper::apply,
                 groupKey -> graphSupplier.get(),
                 DatasetGraph::add).transformer();
