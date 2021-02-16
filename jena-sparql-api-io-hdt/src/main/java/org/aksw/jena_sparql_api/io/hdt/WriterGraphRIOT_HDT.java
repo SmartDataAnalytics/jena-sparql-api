@@ -6,6 +6,8 @@ import java.nio.charset.StandardCharsets;
 
 import org.apache.commons.io.output.WriterOutputStream;
 import org.apache.jena.graph.Graph;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.Triple;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.out.NodeFmtLib;
 import org.apache.jena.riot.system.PrefixMap;
@@ -16,6 +18,7 @@ import org.rdfhdt.hdt.hdt.HDT;
 import org.rdfhdt.hdt.hdt.HDTManager;
 import org.rdfhdt.hdt.options.HDTSpecification;
 import org.rdfhdt.hdt.triples.TripleString;
+
 
 public class WriterGraphRIOT_HDT extends
 	WriterGraphRIOTBase
@@ -31,6 +34,23 @@ public class WriterGraphRIOT_HDT extends
 		write(out, graph, prefixMap, baseURI, context);
 	}
 
+	/** Encode for HDT; IRIs do not make use of angular brackets otherwise it is turtle syntax */
+	public static String encode(Node node, String baseURI, PrefixMap prefixMap) {
+		String result = node.isURI()
+				? node.getURI()
+				: NodeFmtLib.str(node); // Not used: baseURI, prefixMap);
+		return result;
+	}
+	
+	public static TripleString encode(Triple triple, String baseURI, PrefixMap prefixMap) {
+		TripleString result = new TripleString(
+				encode(triple.getSubject(), baseURI, prefixMap),
+				encode(triple.getPredicate(), baseURI, prefixMap),
+				encode(triple.getObject(), baseURI, prefixMap));
+
+		return result;
+	}
+	
 	@Override
 	public void write(OutputStream out, Graph graph, PrefixMap prefixMap, String rawBaseURI,
 			Context context) {
@@ -38,14 +58,7 @@ public class WriterGraphRIOT_HDT extends
 		String baseURI = rawBaseURI == null ? "http://www.example.org/" : rawBaseURI;
 		
 		ExtendedIterator<TripleString> it = graph.find()
-				.mapWith(x -> new TripleString(
-						x.getSubject().toString(),
-						x.getPredicate().toString(),
-						x.getObject().toString()
-						));
-						//NodeFmtLib.str(x.getSubject(), baseURI, prefixMap),
-						//NodeFmtLib.str(x.getPredicate(), baseURI, prefixMap),
-						//NodeFmtLib.str(x.getObject(), baseURI, prefixMap)));
+				.mapWith(t -> encode(t, baseURI, prefixMap));
 
 		try {
 			HDT hdt = HDTManager.generateHDT(it, baseURI, new HDTSpecification(), null);

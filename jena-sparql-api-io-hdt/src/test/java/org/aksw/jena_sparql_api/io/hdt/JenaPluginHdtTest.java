@@ -14,13 +14,14 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.resultset.ResultSetCompare;
 import org.apache.jena.vocabulary.RDFS;
 import org.junit.Assert;
 import org.junit.Test;
 
 
-public class TestJenaPluginHdt {
+public class JenaPluginHdtTest {
 
 	public static boolean isIsomorphic(Model expected, Model actual) {
 		boolean result;
@@ -51,10 +52,11 @@ public class TestJenaPluginHdt {
 	
 	public static void testTask() {
 		Model sourceModel = ModelFactory.createDefaultModel();
+		sourceModel.setNsPrefixes(PrefixMapping.Standard);
 
 		Resource s = sourceModel.createResource();
 		long value = new Random().nextLong();
-		s.addLiteral(RDFS.label, Long.toString(value));
+		s.addLiteral(RDFS.label, value);
 		
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		RDFDataMgr.write(baos, sourceModel, JenaPluginHdt.FORMAT_HDT);
