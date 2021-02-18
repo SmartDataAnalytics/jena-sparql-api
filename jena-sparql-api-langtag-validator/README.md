@@ -1,6 +1,8 @@
 
 A validator for language tags using the [iana language subtag registry](http://www.iana.org/assignments/language-subtag-registry) as  background knowledge.
 
+Only depends on guava, jena-arq and the dataset.
+
 ```java
 import org.aksw.jena_sparql_api.langtag.validator.api.LangTagValidator;
 import org.aksw.jena_sparql_api.langtag.validator.impl.LangTagValidators;

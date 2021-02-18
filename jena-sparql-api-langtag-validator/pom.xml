@@ -20,18 +20,27 @@
 			<artifactId>iana-language-subtag-registry-resource-rdf-raw</artifactId>
 		</dependency>
 
-		<!-- For mapping the IANA language subtag registry (raw) RDF model -->
 		<dependency>
-			<groupId>org.aksw.jena-sparql-api</groupId>
-			<artifactId>jena-sparql-api-mapper-proxy</artifactId>
+			<groupId>org.apache.jena</groupId>
+			<artifactId>jena-arq</artifactId>
 		</dependency>
 
+		<dependency>
+			<groupId>com.google.guava</groupId>
+			<artifactId>guava</artifactId>
+		</dependency>
 
 		<!-- Unit Testing -->
 		<dependency>
 			<groupId>org.aksw.jena-sparql-api</groupId>
 			<artifactId>jena-sparql-api-resources-test-config</artifactId>
 			<scope>test</scope>
+		</dependency>
+
+
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
 		</dependency>
 
 		<!-- <dependency> -->
