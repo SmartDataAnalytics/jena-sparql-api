@@ -73,6 +73,8 @@
 		<module>jena-sparql-api-mapper-parent</module>
 		<module>jena-sparql-api-batch</module>
 
+		<module>jena-sparql-api-langtag-validator</module>
+
 		<module>jena-sparql-api-web</module>
 		<module>jena-sparql-api-server-utils</module>
 		<module>jena-sparql-api-server-standalone</module>
@@ -350,6 +352,13 @@
 
 	<dependencyManagement>
 		<dependencies>
+
+        <dependency>
+            <groupId>org.aksw.iana-language-subtag-registry</groupId>
+            <artifactId>iana-language-subtag-registry-resource-rdf-raw</artifactId>
+		<version>2021-02-16</version>
+        </dependency>
+
 
 			<!-- java 9+ for server-standalone -->
 			<dependency>
