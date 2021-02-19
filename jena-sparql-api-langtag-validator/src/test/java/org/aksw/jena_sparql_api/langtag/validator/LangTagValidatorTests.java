@@ -8,13 +8,13 @@ public class LangTagValidatorTests {
 
 	@Test
 	public void testKnownValidLangTag() {
-		boolean verdict = LangTagValidators.getDefault().validate("de-at");
+		boolean verdict = LangTagValidators.getDefault().check("de-at");
 		Assert.assertTrue(verdict);
 	}
 
 	@Test
 	public void testInvalidLangTag() {
-		boolean verdict = LangTagValidators.getDefault().validate("english");
+		boolean verdict = LangTagValidators.getDefault().check("english");
 		Assert.assertFalse(verdict);
 	}
 

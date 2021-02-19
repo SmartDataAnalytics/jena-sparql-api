@@ -8,5 +8,6 @@ package org.aksw.jena_sparql_api.langtag.validator.api;
  *
  */
 public interface LangTagValidator {
-	boolean validate(String langTag);
+	void validate(String langTag) throws LangTagValidationException;
+	boolean check(String langTag);
 }

@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.langtag.validator.api.LangTagValidationException;
 import org.aksw.jena_sparql_api.langtag.validator.api.LangTagValidator;
@@ -68,11 +69,16 @@ public class LangTagValidatorImpl
 	}
 
 	@Override
-	public boolean validate(String langTag) {
-		boolean result = validate(langTag, index);
+	public boolean check(String langTag) {
+		boolean result = check(langTag, index);
 		return result;
 	}
 
+	@Override
+	public void validate(String langTag) throws LangTagValidationException {
+		validate(langTag, index, true);
+	}
+	
 	public static LangTagValidatorImpl createDefault() {
 		Model langTagModel = RDFDataMgr.loadModel("iana-language-subtag-registry.2021-02-16.raw.ttl");
 		return create(langTagModel);
@@ -83,7 +89,7 @@ public class LangTagValidatorImpl
 		return new LangTagValidatorImpl(index);
 	}
 
-	public static boolean validate(
+	public static boolean check(
 			String langTag,
 			Multimap<Integer, String> index) {
 		boolean result;
@@ -96,6 +102,7 @@ public class LangTagValidatorImpl
 		
 		return result;
 	}
+
 	
 	public static boolean validate(
 			String langTag,
@@ -130,8 +137,11 @@ public class LangTagValidatorImpl
 				if (!isValidValue) {
 					result = false;
 					
+					// We could add a 'Did you mean ...?' mechanisms here; would require commons-text
+					// for levenshtein distance
+					
 					if (raiseException) {
-						throw new LangTagValidationException("Value '" + givenValue + "' is not know to be valid for part #" + partId + " valid values: " + new TreeSet<>(knownValidValues));
+						throw new LangTagValidationException("Value '" + givenValue + "' is not known to be valid for part #" + partId); // + " valid values: " + new TreeSet<>(knownValidValues));
 					}
 					
 					break;
