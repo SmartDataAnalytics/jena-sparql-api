@@ -1,10 +1,13 @@
 package org.aksw.jena_sparql_api.schema_mapping;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -12,9 +15,6 @@ import org.aksw.jena_sparql_api.analytics.ResultSetAnalytics;
 import org.aksw.jena_sparql_api.decision_tree.api.DecisionTreeSparqlExpr;
 import org.aksw.jena_sparql_api.decision_tree.api.E_SerializableIdentity;
 import org.aksw.jena_sparql_api.utils.NodeUtils;
-import org.apache.jena.ext.com.google.common.collect.HashMultimap;
-import org.apache.jena.ext.com.google.common.collect.Multimaps;
-import org.apache.jena.ext.com.google.common.collect.SetMultimap;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.E_Datatype;
@@ -30,6 +30,10 @@ import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.util.SplitIRI;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.XSD;
+
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimaps;
+import com.google.common.collect.SetMultimap;
 
 
 
@@ -73,7 +77,17 @@ public class SchemaMapperImpl {
 	// Statistic suppliers
 	protected Function<? super Var, ? extends Set<String>> sourceVarToDatatypes;
 	protected Function<? super Var, ? extends Number> sourceVarToNulls;
-
+	
+	// Function for remapping a type to a different one, such as a xsd:date to a string 
+	protected Function<String, String> typeRemap;
+	
+	// Supplier for converter functions
+	protected BiFunction<String, String, ? extends ExprRewrite> typeConversionSupplier;
+	
+	// If a variable is unbound on every result row then there is no
+	// known datatype that can be mapped to
+	// If the fallback for a variabl is null then the column is omitted
+	protected Function<? super Var, String> varToFallbackDatatype;
 	
 	protected TypePromoter typePromotionStrategy;
 
@@ -82,9 +96,17 @@ public class SchemaMapperImpl {
 //	Map<Var, Multiset<String>> varToDatatypes, // If we don't need frequences we could just use Multimap<Var, String>
 //	Map<String, String> typePromotions // casts such as xsd:int to xsd:decimal
 
+
+	/**
+	 * Set the set of columns of the source schema (represented as variables) which participate in the schema mapping.
+	 */
 	public SchemaMapperImpl setSourceVars(Set<Var> sourceVars) {
 		this.sourceVars = sourceVars;
 		return this;
+	}
+
+	public Set<Var> getSourceVars() {
+		return sourceVars;
 	}
 
 	public SchemaMapperImpl setSourceVarToDatatypes(Function<? super Var, ? extends Set<String>> sourceVarToDatatypes) {
@@ -97,12 +119,90 @@ public class SchemaMapperImpl {
 		return this;
 	}
 
+	public SchemaMapperImpl setVarToFallbackDatatype(Function<? super Var, String> varToFallbackDatatype) {
+		this.varToFallbackDatatype = varToFallbackDatatype;
+		return this;
+	}
+	
+	/**
+	 *  Sets (and overrides) the fallback for any variable to the given argument.
+	  * Calls {@link #setVarToFallbackDatatype(Function)}.
+	  */ 
+	public SchemaMapperImpl setVarToFallbackDatatype(String datatype) {
+		return setVarToFallbackDatatype(v -> datatype);
+	}
+
+	/**
+	 *  Convenience method to set (and override) the fallback datatype to xsd:string.
+	 *  Calls {@link #setVarToFallbackDatatype(Function)}.
+	 */
+	public SchemaMapperImpl setVarToFallbackDatatypeToString() {
+		return setVarToFallbackDatatype("http://www.w3.org/2001/XMLSchema#string");
+	}
+	
+	
+
+	public Function<String, String> getTypeRemap() {
+		return typeRemap;
+	}
+
+	public SchemaMapperImpl setTypeRemap(Function<String, String> typeRemap) {
+		this.typeRemap = typeRemap;
+		return this;
+	}
+	
+
+	public BiFunction<String, String, ? extends ExprRewrite> getTypeConversionSupplier() {
+		return typeConversionSupplier;
+	}
+
+	public SchemaMapperImpl setTypeConversionSupplier(BiFunction<String, String, ? extends ExprRewrite> typeConversionSupplier) {
+		this.typeConversionSupplier = typeConversionSupplier;
+		return this;
+	}
+
+	/**
+	 * The type promotion strategy. This can be used to reduce the number of columns in the target
+	 * schema by combining weaker types with mightier ones, such as by promoting short to int.
+	 * The strategy may even promote integer types to floating point ones.
+	 * 
+	 * @param typePromotionStrategy
+	 * @return
+	 */
 	public SchemaMapperImpl setTypePromotionStrategy(TypePromoter typePromotionStrategy) {
 		this.typePromotionStrategy = typePromotionStrategy;
 		return this;
 	}
 
+	public static String deriveSuffix(String datatype) {
+		String result = SplitIRI.localname(datatype).toLowerCase();
+		return result;
+	}
+	
 	public SchemaMapping createSchemaMapping() {
+		
+		Objects.requireNonNull(sourceVars, "Source Variables not set");
+		Objects.requireNonNull(sourceVarToDatatypes, "Mapping of source variables to datatypes not set");
+
+		
+		// Obtain effective components / Apply defaults
+		BiFunction<String, String, ? extends ExprRewrite> effectiveTypeConversionSupplier = typeConversionSupplier == null
+				? SchemaMapperImpl::defaultTypeConversionSupplier
+				: typeConversionSupplier;
+
+		TypePromoter effectiveTypePromoter = typePromotionStrategy == null
+				? types -> types.stream().collect(Collectors.toMap(e -> e, e -> e))
+				: typePromotionStrategy;
+
+		Function<? super Var, ? extends Number> effectiveSourceVarToNulls = sourceVarToNulls == null
+				? var -> null
+				: sourceVarToNulls;
+
+		Function<? super Var, String> effectiveVarToFallbackDatatype = varToFallbackDatatype == null
+				? var -> null
+				: varToFallbackDatatype;
+
+		
 		
 		Map<Var, FieldMapping> tgtVarToMapping = new LinkedHashMap<>(); 
 		
@@ -112,13 +212,13 @@ public class SchemaMapperImpl {
 			// System.out.println("Processing srcVar: " + srcVar);
 			ExprVar srcExprVar = new ExprVar(srcVar);
 			
-			Set<String> rawDatatypeIris = sourceVarToDatatypes.apply(srcVar);
+			Set<String> rawDatatypes = sourceVarToDatatypes.apply(srcVar);
 //			List<String> datatypeIris = new ArrayList<>(rawDatatypeIris);
 //			Collections.sort(datatypeIris);
 			
-			Number nullStats = sourceVarToNulls.apply(srcVar);
+			Number nullStats = effectiveSourceVarToNulls.apply(srcVar);
 
-			Map<String, String> typePromotions = typePromotionStrategy.promoteTypes(rawDatatypeIris);
+			Map<String, String> typePromotions = effectiveTypePromoter.promoteTypes(rawDatatypes);
 
 			// Enrich type promotions with reflexive mappings
 			new HashSet<>(typePromotions.values()).forEach(x -> typePromotions.put(x, x));
@@ -127,31 +227,53 @@ public class SchemaMapperImpl {
 			// rawDatatypeIris.addAll(typePromotions.values());
 			
 			// Furthermore, if a type has no promotion mapping add it also as a reflexive mapping
-			rawDatatypeIris.stream().filter(dt -> !typePromotions.containsKey(dt))
+			rawDatatypes.stream().filter(dt -> !typePromotions.containsKey(dt))
 				.forEach(x -> typePromotions.put(x, x));
 			
 			SetMultimap<String, String> inverse = Multimaps.invertFrom(Multimaps.forMap(typePromotions), 
 				    HashMultimap.<String, String>create());
 			
-			List<String> promotedDatatypeIris = rawDatatypeIris.stream()
+			List<String> promotedDatatypes = rawDatatypes.stream()
 					.map(iri -> typePromotions.getOrDefault(iri, iri))
 					.sorted()
 					.collect(Collectors.toList());
 			
-			boolean singleDatatype = promotedDatatypeIris.size() == 1;
+			
+			// If there is no datatype then use the fallback datatype
+			// We assume that the type promoter can handle an empty set of variables
+			if (promotedDatatypes.isEmpty()) {
+				String fallbackDatatype = effectiveVarToFallbackDatatype.apply(srcVar);
+				if (fallbackDatatype != null) {
+					promotedDatatypes.add(srcVarName);
+				}
+			}
+			
+			// Apply type remapping if applicable
+			if (typeRemap != null) {
+				promotedDatatypes = promotedDatatypes.stream()
+						.map(typeRemap)
+						.distinct()
+						.collect(Collectors.toList());
+			}
+			
+			boolean singleDatatype = promotedDatatypes.size() == 1;
 
-			boolean isNullable = nullStats.longValue() > 0 || !singleDatatype;
+			// Without statistics gracefully assume a column to be nullable
+			boolean isNullable = (nullStats == null ? true : nullStats.longValue() > 0) || !singleDatatype;
 			
+			// Sort datatypes by their suffix in order to obtain a stable order
+			Collections.sort(promotedDatatypes, (a, b) -> deriveSuffix(a).compareTo(deriveSuffix(b)));
 			
-			for (String datatypeIri : promotedDatatypeIris) {
+			for (String datatypeIri : promotedDatatypes) {
 
 				//System.out.println("Processing datatypeIri: " + datatypeIri);
 				
 				// String castDatatypeIri = typePromotions.getOrDefault(datatypeIri, datatypeIri);
 				
+				// TODO Resolve name clashes such as rdf:type - custom:type
 				String baseName = singleDatatype
 						? srcVarName
-						: srcVarName + "_" + SplitIRI.localname(datatypeIri).toLowerCase(); // TODO Resolve name clashes such as rdf:type - custom:type
+						: srcVarName + "_" + deriveSuffix(datatypeIri);
 				
 				Var tgtVar = Var.alloc(baseName);
 				
@@ -160,11 +282,15 @@ public class SchemaMapperImpl {
 				for (String srcDtIri : inverse.get(datatypeIri)) {
 
 					if (!srcDtIri.equals(datatypeIri)) {
+						
+						
+						ExprRewrite typeConversion = effectiveTypeConversionSupplier.apply(srcDtIri, datatypeIri);
+						
 						dt.getRoot()
 							.getOrCreateInnerNode(null, E_SerializableIdentity.wrap(
 									createDatatypeCheck(srcExprVar, srcDtIri)))				
 							.getOrCreateLeafNode(NodeValue.TRUE.asNode())
-								.setValue(E_SerializableIdentity.wrap(new E_Function(datatypeIri, new ExprList(srcExprVar))));
+								.setValue(E_SerializableIdentity.wrap(typeConversion.rewrite(srcExprVar)));
 	
 					} else {
 						dt.getRoot()
@@ -200,6 +326,11 @@ public class SchemaMapperImpl {
 		
 		return result;
 	}
+	
+	public static ExprRewrite defaultTypeConversionSupplier(String srcDatatypeIri, String tgtDatatypeIri) {
+		return arg -> new E_Function(tgtDatatypeIri, new ExprList(arg));
+	}
+	
 	
 	public static Expr createDatatypeCheck(Expr expr, String datatypeIri) {
 		Expr result;
