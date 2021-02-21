@@ -84,6 +84,8 @@
 		<module>jena-sparql-api-playground</module>
 
 		<module>jena-sparql-api-virtuoso</module>
+
+		<module>jena-sparql-api-file-backed-dataset</module>
 	</modules>
 
 	<issueManagement>
@@ -353,11 +355,11 @@
 	<dependencyManagement>
 		<dependencies>
 
-        <dependency>
-            <groupId>org.aksw.iana-language-subtag-registry</groupId>
-            <artifactId>iana-language-subtag-registry-resource-rdf-raw</artifactId>
-		<version>2021-02-16</version>
-        </dependency>
+			<dependency>
+				<groupId>org.aksw.iana-language-subtag-registry</groupId>
+				<artifactId>iana-language-subtag-registry-resource-rdf-raw</artifactId>
+				<version>2021-02-16</version>
+			</dependency>
 
 
 			<!-- java 9+ for server-standalone -->
@@ -925,6 +927,12 @@
 			<dependency>
 				<groupId>org.aksw.commons</groupId>
 				<artifactId>aksw-commons-io-process-pipes</artifactId>
+				<version>${aksw.commons.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.aksw.commons</groupId>
+				<artifactId>aksw-commons-io-utils</artifactId>
 				<version>${aksw.commons.version}</version>
 			</dependency>
 
