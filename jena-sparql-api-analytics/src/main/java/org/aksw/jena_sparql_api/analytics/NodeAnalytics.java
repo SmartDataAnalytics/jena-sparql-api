@@ -1,7 +1,6 @@
 package org.aksw.jena_sparql_api.analytics;
 
 import java.util.Map.Entry;
-import java.util.Objects;
 import java.util.Set;
 
 import org.aksw.commons.collector.core.AggBuilder;
@@ -36,8 +35,8 @@ public class NodeAnalytics {
 	
 	public static ParallelAggregator<Node, Multiset<String>, ?> usedDatatypes() {
 
-		ParallelAggregator<Node, Multiset<String>, ?> result = AggBuilder.inputTransform(NodeUtils::getDatatypeIri,
-			AggBuilder.inputFilter(Objects::nonNull,
+		ParallelAggregator<Node, Multiset<String>, ?> result = AggBuilder.inputTransform(node -> NodeUtils.getDatatypeIri(node),
+			AggBuilder.inputFilter(x -> x != null,
 				AggBuilder.collectionSupplier(() -> (Multiset<String>)LinkedHashMultiset.<String>create())));
 		
 		return result;
@@ -46,8 +45,8 @@ public class NodeAnalytics {
 	
 	public static ParallelAggregator<Node, Set<String>, ?> usedPrefixes(int targetSize) {
 		ParallelAggregator<Node, Set<String>, ?> result =
-			AggBuilder.inputFilter(Node::isURI,
-				AggBuilder.inputTransform(Node::getURI,
+			AggBuilder.inputFilter(node -> node.isURI(),
+				AggBuilder.inputTransform(node -> node.getURI(),
 					AggBuilder.naturalAccumulator(() -> new PrefixAccumulator(targetSize))));
 				
 		return result;

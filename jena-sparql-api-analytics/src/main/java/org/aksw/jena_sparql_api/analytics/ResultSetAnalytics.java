@@ -29,7 +29,7 @@ public class ResultSetAnalytics {
 	 * @return
 	 */
 	public static <O> ParallelAggregator<Binding, Map<Var, O>, ?> aggPerVar(ParallelAggregator<Node, O, ?> nodeAgg) {
-		return AggBuilder.inputSplit((Binding b) -> Sets.newHashSet(b.vars()), Binding::get,
+		return AggBuilder.inputSplit((Binding b) -> Sets.newHashSet(b.vars()), (Binding b, Var v) -> b.get(v),
 				nodeAgg);
 	}
 
@@ -40,7 +40,7 @@ public class ResultSetAnalytics {
 
 		// Note that the key set includes all static variables (in addition to those mentioned in the binding)
 		// in order to allow aggregation over null values!
-		return AggBuilder.inputSplit(staticVarCopy, true, (Binding b) -> Sets.union(staticVarCopy, Sets.newHashSet(b.vars())), Binding::get,
+		return AggBuilder.inputSplit(staticVarCopy, true, (Binding b) -> Sets.union(staticVarCopy, Sets.newHashSet(b.vars())), (Binding b, Var v) -> b.get(v),
 				nodeAgg);
 
 //		return AggBuilder.inputSplit(staticVarCopy, true, (Binding b) -> Sets.newHashSet(b.vars()), Binding::get,
