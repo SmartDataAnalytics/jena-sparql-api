@@ -334,7 +334,9 @@ public class RDFDataMgrRx {
      * @return
      */
     public static LabelToNode createLabelToNodeAsGivenOrRandom() {
-    	return new LabelToNode(new AllocScopePolicy(), new Alloc(new BlankNodeAllocatorAsGivenOrRandom()));
+    	return new LabelToNode(
+    			new AllocScopePolicy(),
+    			new Alloc(BlankNodeAllocatorAsGivenOrRandom.getGlobalInstance()));
     }
 
     public static ParserProfile dftProfile() {

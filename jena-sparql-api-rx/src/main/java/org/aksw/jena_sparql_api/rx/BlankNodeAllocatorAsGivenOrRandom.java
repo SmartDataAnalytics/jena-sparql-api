@@ -7,6 +7,7 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.riot.SysRIOT;
 import org.apache.jena.riot.lang.BlankNodeAllocator;
+import org.apache.jena.riot.lang.BlankNodeAllocatorLabel;
 import org.apache.jena.riot.lang.BlankNodeAllocatorLabelEncoded;
 
 /**
@@ -22,13 +23,39 @@ import org.apache.jena.riot.lang.BlankNodeAllocatorLabelEncoded;
  */
 public class BlankNodeAllocatorAsGivenOrRandom implements BlankNodeAllocator
 {
+	private static transient BlankNodeAllocatorAsGivenOrRandom GLOBAL_INSTANCE = null;
+	
+	public static BlankNodeAllocatorAsGivenOrRandom getGlobalInstance() {
+		if (GLOBAL_INSTANCE == null) {
+			synchronized (BlankNodeAllocatorAsGivenOrRandom.class) {
+				if (GLOBAL_INSTANCE == null) {
+					long globalId = Math.abs(new Random().nextLong());
+					GLOBAL_INSTANCE = new BlankNodeAllocatorAsGivenOrRandom(globalId);
+				}
+			}
+		}
+		
+		return GLOBAL_INSTANCE;
+	}
+	
+	
     /** A random per-jvm value used for blank node allocation */ 
-    protected static final long globalBnodeScope = Math.abs(new Random().nextLong());
+    protected final long globalBnodeScope;
+    protected final AtomicLong counter;
     
-    protected AtomicLong counter = new AtomicLong(0);
+    public BlankNodeAllocatorAsGivenOrRandom(long globalBnodeScope) {
+    	this(globalBnodeScope, new AtomicLong());
+    }
     
+    public BlankNodeAllocatorAsGivenOrRandom(long globalBnodeScope, AtomicLong counter) {
+		super();
+		this.globalBnodeScope = globalBnodeScope;
+		this.counter = counter;
+	}
+
+	/** Ignore reset - avoid clashes */
     @Override
-    public void reset()         { counter = new AtomicLong(0); }
+    public void reset()         { }
 
     @Override
     public Node alloc(String label) { return NodeFactory.createBlankNode(label); }
