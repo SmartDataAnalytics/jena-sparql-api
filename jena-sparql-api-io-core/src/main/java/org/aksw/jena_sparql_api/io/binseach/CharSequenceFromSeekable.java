@@ -34,9 +34,13 @@ public class CharSequenceFromSeekable
             if (index >= end) {
             	result = (char)-1;
             } else {            
-	            seekable.nextPos(p);
-	            result = (char)seekable.get();
-	            seekable.prevPos(p);
+	            if (seekable.nextPos(p)) {
+	            	result = (char)seekable.get();
+	            	seekable.prevPos(p);
+	            } else {
+	            	// Could not seek ahead; assuming having reached the end of data
+	            	result = (char)-1;
+	            }
             }
             return result;
         } catch (IOException e) {
