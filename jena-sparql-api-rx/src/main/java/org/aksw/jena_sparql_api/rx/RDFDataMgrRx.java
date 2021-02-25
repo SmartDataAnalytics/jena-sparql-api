@@ -52,6 +52,7 @@ import org.apache.jena.riot.RDFParser;
 import org.apache.jena.riot.ResultSetMgr;
 import org.apache.jena.riot.RiotException;
 import org.apache.jena.riot.RiotParseException;
+import org.apache.jena.riot.lang.LabelToNode;
 import org.apache.jena.riot.lang.PipedQuadsStream;
 import org.apache.jena.riot.lang.PipedRDFIterator;
 import org.apache.jena.riot.lang.PipedTriplesStream;
@@ -60,7 +61,6 @@ import org.apache.jena.riot.system.ErrorHandlerFactory;
 import org.apache.jena.riot.system.ParserProfile;
 import org.apache.jena.riot.system.RiotLib;
 import org.apache.jena.riot.system.StreamRDF;
-import org.apache.jena.riot.system.SyntaxLabels;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.util.Context;
@@ -322,9 +322,23 @@ public class RDFDataMgrRx {
         return it;
     }
 
+    
+    /**
+     * Label to node strategy that passes existing labels on as given
+     * but allocation of fresh nodes uses a pair comprising a jvm-global random value and an increment.
+     * (i.e. incremental numbers scoped within some random value)
+     * 
+     * This strategy is needed when processing RDF files in splits such as with Apache Spark:
+     * Any mentioned labels should be retaine globally, but fresh nodes allocated for the splits must not clash.
+     * 
+     * @return
+     */
+    public static LabelToNode createLabelToNodeAsGivenOrRandom() {
+    	return new LabelToNode(new AllocScopePolicy(), new Alloc(new BlankNodeAllocatorAsGivenOrRandom()));
+    }
 
     public static ParserProfile dftProfile() {
-        return RiotLib.createParserProfile(RiotLib.factoryRDF(SyntaxLabels.createLabelToNodeAsGiven()), ErrorHandlerFactory.errorHandlerDetailed(), true);
+        return RiotLib.createParserProfile(RiotLib.factoryRDF(createLabelToNodeAsGivenOrRandom()), ErrorHandlerFactory.errorHandlerDetailed(), true);
     }
 
     /**
@@ -382,7 +396,7 @@ public class RDFDataMgrRx {
             .lang(lang)
             .context(context)
             .errorHandler(ErrorHandlerFactory.errorHandlerDetailed())
-            .labelToNode(SyntaxLabels.createLabelToNodeAsGiven())
+            .labelToNode(createLabelToNodeAsGivenOrRandom())
             //.errorHandler(handler)
             .parse(destination);
     }
