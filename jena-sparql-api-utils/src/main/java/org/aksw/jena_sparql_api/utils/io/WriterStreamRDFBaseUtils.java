@@ -4,7 +4,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
-import org.apache.jena.riot.lang.LabelToNode;
+import org.apache.jena.riot.out.NodeToLabel;
 import org.apache.jena.riot.writer.WriterStreamRDFBase;
 
 public class WriterStreamRDFBaseUtils {
@@ -12,7 +12,7 @@ public class WriterStreamRDFBaseUtils {
      * Hack to change the value of the {@link WriterStreamRDFBase}'s final nodeToLabel field
      * Source: https://stackoverflow.com/questions/3301635/change-private-static-final-field-using-java-reflection
      */
-    public static void setLabelToNode(WriterStreamRDFBase writer, LabelToNode labelToNode) {
+    public static void setLabelToNode(WriterStreamRDFBase writer, NodeToLabel nodeToLabel) {
         try {
             Field nodeToLabelField = WriterStreamRDFBase.class.getDeclaredField("nodeToLabel");
             nodeToLabelField.setAccessible(true);
@@ -20,7 +20,7 @@ public class WriterStreamRDFBaseUtils {
             Field modifiersField = Field.class.getDeclaredField("modifiers");
             modifiersField.setAccessible(true);
             modifiersField.setInt(nodeToLabelField, nodeToLabelField.getModifiers() & ~Modifier.FINAL);
-            nodeToLabelField.set(writer, labelToNode);
+            nodeToLabelField.set(writer, nodeToLabel);
 
             Method setFormatterMethod = WriterStreamRDFBase.class.getDeclaredMethod("setFormatter");
             setFormatterMethod.setAccessible(true);
