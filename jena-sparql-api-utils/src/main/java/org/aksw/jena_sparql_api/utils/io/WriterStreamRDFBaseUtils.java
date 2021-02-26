@@ -12,7 +12,7 @@ public class WriterStreamRDFBaseUtils {
      * Hack to change the value of the {@link WriterStreamRDFBase}'s final nodeToLabel field
      * Source: https://stackoverflow.com/questions/3301635/change-private-static-final-field-using-java-reflection
      */
-    public static void setLabelToNode(WriterStreamRDFBase writer, NodeToLabel nodeToLabel) {
+    public static void setNodeToLabel(WriterStreamRDFBase writer, NodeToLabel nodeToLabel) {
         try {
             Field nodeToLabelField = WriterStreamRDFBase.class.getDeclaredField("nodeToLabel");
             nodeToLabelField.setAccessible(true);
