@@ -25,7 +25,7 @@ public class StreamRDFDeferred
 	protected Node mostRecentTripleSubject = null;
 	protected Node mostRecentQuadGraph = null;
 	
-	// allowExtendBasePrefixes: If true every value passed to prefix(...) is added to the base prefixes
+	// allowExtendBasePrefixes: If true then every value passed to prefix(...) is added to the base prefixes
 	protected boolean allowExtendBasePrefixes = true;
 	protected PrefixMapping basePrefixes;
 	

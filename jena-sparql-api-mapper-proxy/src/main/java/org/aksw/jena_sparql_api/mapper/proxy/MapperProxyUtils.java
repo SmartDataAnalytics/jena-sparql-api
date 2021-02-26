@@ -68,6 +68,7 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.apache.jena.datatypes.RDFDatatype;
 import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.enhanced.EnhGraph;
+import org.apache.jena.ext.com.google.common.base.CaseFormat;
 import org.apache.jena.ext.com.google.common.collect.Maps;
 import org.apache.jena.ext.com.google.common.collect.Sets;
 import org.apache.jena.graph.Node;
@@ -91,7 +92,6 @@ import org.apache.jena.sparql.util.PrefixMapping2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.base.CaseFormat;
 import com.google.common.base.Converter;
 import com.google.common.base.Defaults;
 import com.google.common.collect.Lists;

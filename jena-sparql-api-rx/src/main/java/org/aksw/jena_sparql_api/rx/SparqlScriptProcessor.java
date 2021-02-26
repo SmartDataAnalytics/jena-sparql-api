@@ -37,6 +37,7 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFLanguages;
+import org.apache.jena.riot.RDFParserBuilder;
 import org.apache.jena.riot.system.PrefixMap;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.core.Prologue;
@@ -290,7 +291,7 @@ public class SparqlScriptProcessor {
 //        String str = StreamManager.get().mapURI(filename);
 
         // Try as RDF file
-        try(TypedInputStream tmpIn = RDFDataMgrEx.open(filename, Arrays.asList(Lang.TRIG, Lang.NQUADS))) {
+        try(TypedInputStream tmpIn = RDFDataMgrEx.open(filename, Arrays.asList(Lang.TRIG, Lang.NQUADS, Lang.RDFXML))) {
 //            if(tmpIn == null) {
 //                throw new FileNotFoundException(filename);
 //            }

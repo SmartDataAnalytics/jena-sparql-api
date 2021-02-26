@@ -203,7 +203,10 @@ public final class OperatorLocalOrder<T, S>
 
 
     public static <T> OperatorLocalOrder<T, Long> forLong(long initiallyExpectedId, Function<? super T, ? extends Long> extractSeqId) {
-        return new OperatorLocalOrder<T, Long>(initiallyExpectedId, id -> Long.valueOf(id.longValue() + 1l), (a, b) -> a - b, extractSeqId);
+        return new OperatorLocalOrder<T, Long>(
+        		initiallyExpectedId,
+        		id -> Long.valueOf(id.longValue() + 1l),
+        		(a, b) -> a - b, extractSeqId);
     }
 
     public static <T, S extends Comparable<S>> OperatorLocalOrder<T, S> wrap(S initiallyExpectedId, Function<? super S, ? extends S> incrementSeqId, BiFunction<? super S, ? super S, ? extends Number> distanceFn, Function<? super T, ? extends S> extractSeqId) {

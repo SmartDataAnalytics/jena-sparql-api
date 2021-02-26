@@ -21,22 +21,27 @@
 			<groupId>org.aksw.jena-sparql-api</groupId>
 			<artifactId>jena-sparql-api-utils</artifactId>
 		</dependency>
-	
+
 		<dependency>
 			<groupId>org.apache.jena</groupId>
 			<artifactId>jena-base</artifactId>
 		</dependency>
 
 		<dependency>
-			<groupId>eu.wdaqua</groupId>
+			<groupId>org.rdfhdt</groupId>
 			<artifactId>hdt-jena</artifactId>
-			<!-- <exclusions> -->
-			<!-- <exclusion> -->
-			<!-- <groupId>org.apache.jena</groupId> -->
-			<!-- <artifactId>jena-base</artifactId> -->
-			<!-- </exclusion> -->
-			<!-- </exclusions> -->
 		</dependency>
+
+		<!-- <dependency> -->
+		<!-- <groupId>eu.wdaqua</groupId> -->
+		<!-- <artifactId>hdt-jena</artifactId> -->
+		<!-- <exclusions> -->
+		<!-- <exclusion> -->
+		<!-- <groupId>org.apache.jena</groupId> -->
+		<!-- <artifactId>jena-base</artifactId> -->
+		<!-- </exclusion> -->
+		<!-- </exclusions> -->
+		<!-- </dependency> -->
 
 		<!-- Unit Testing -->
 		<dependency>

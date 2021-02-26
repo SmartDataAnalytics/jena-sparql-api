@@ -10,7 +10,6 @@ import org.apache.jena.query.ResultSet;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.binding.Binding;
-import org.apache.jena.sparql.modify.TemplateLib;
 import org.apache.jena.sparql.syntax.Template;
 
 import io.reactivex.rxjava3.core.Flowable;

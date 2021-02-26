@@ -4,7 +4,7 @@ import java.io.File;
 import java.nio.file.Path;
 import java.util.function.Function;
 
-import org.aksw.jena_sparql_api.io.utils.SimpleProcessExecutor;
+import org.aksw.commons.io.process.util.SimpleProcessExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

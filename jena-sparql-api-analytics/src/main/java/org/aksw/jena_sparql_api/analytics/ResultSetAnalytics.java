@@ -16,8 +16,20 @@ import com.google.common.collect.Sets;
 
 public class ResultSetAnalytics {
 
+	/**
+	 * Given an aggregator for {@link Node} input, create a new aggregator that invokes it on-demand for each encountered variable
+	 * in bindings.
+	 *  
+	 * Important Note: This method only instantiates accumulators when encountering variables.
+	 * If e.g. a result set does not bind a variable then it won't be part of the output map.
+	 * Use {@link #aggPerVar(Set, ParallelAggregator)} to specify the set of variables for which to perform the given base aggregation.
+	 * 
+	 * @param <O>
+	 * @param nodeAgg
+	 * @return
+	 */
 	public static <O> ParallelAggregator<Binding, Map<Var, O>, ?> aggPerVar(ParallelAggregator<Node, O, ?> nodeAgg) {
-		return AggBuilder.inputSplit((Binding b) -> Sets.newHashSet(b.vars()), Binding::get,
+		return AggBuilder.inputSplit((Binding b) -> Sets.newHashSet(b.vars()), (Binding b, Var v) -> b.get(v),
 				nodeAgg);
 	}
 
@@ -25,9 +37,14 @@ public class ResultSetAnalytics {
 		// Create a copy of the set to avoid serialization issues
 		// For example, passing a immutable set from scala makes the lambda non-serializable
 		Set<Var> staticVarCopy = new LinkedHashSet<>(staticVars);
-		
-		return AggBuilder.inputSplit((Binding b) -> staticVarCopy, Binding::get,
+
+		// Note that the key set includes all static variables (in addition to those mentioned in the binding)
+		// in order to allow aggregation over null values!
+		return AggBuilder.inputSplit(staticVarCopy, true, (Binding b) -> Sets.union(staticVarCopy, Sets.newHashSet(b.vars())), (Binding b, Var v) -> b.get(v),
 				nodeAgg);
+
+//		return AggBuilder.inputSplit(staticVarCopy, true, (Binding b) -> Sets.newHashSet(b.vars()), Binding::get,
+//				nodeAgg);
 	}
 
 	

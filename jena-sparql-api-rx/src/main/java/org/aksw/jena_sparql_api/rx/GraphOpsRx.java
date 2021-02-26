@@ -4,7 +4,7 @@ import java.util.Map.Entry;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import org.aksw.jena_sparql_api.rx.op.OperatorOrderedGroupBy;
+import org.aksw.jena_sparql_api.rx.op.FlowableOperatorSequentialGroupBy;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
@@ -17,7 +17,7 @@ public class GraphOpsRx {
             Function<Triple, Node> grouper,
             Supplier<Graph> graphSupplier) {
 
-        return OperatorOrderedGroupBy.<Triple, Node, Graph>create(
+        return FlowableOperatorSequentialGroupBy.<Triple, Node, Graph>create(
                 grouper::apply,
                 groupKey -> graphSupplier.get(),
                 Graph::add).transformer();

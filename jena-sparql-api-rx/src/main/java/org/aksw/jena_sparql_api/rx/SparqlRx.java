@@ -19,7 +19,7 @@ import org.aksw.commons.collections.SetUtils;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.http.HttpExceptionUtils;
-import org.aksw.jena_sparql_api.rx.op.OperatorOrderedGroupBy;
+import org.aksw.jena_sparql_api.rx.op.FlowableOperatorSequentialGroupBy;
 import org.aksw.jena_sparql_api.syntax.QueryGenerationUtils;
 import org.aksw.jena_sparql_api.utils.IteratorResultSetBinding;
 import org.aksw.jena_sparql_api.utils.QuadPatternUtils;
@@ -390,7 +390,7 @@ public class SparqlRx {
                 .doOnNext(i -> currentValue[0] = i)
                 .doOnCancel(() -> isCancelled[0] = true)
                 .map(i -> Maps.immutableEntry((int)(i / 3), i))
-                .lift(OperatorOrderedGroupBy.<Entry<Integer, Integer>, Integer, List<Integer>>create(
+                .lift(FlowableOperatorSequentialGroupBy.<Entry<Integer, Integer>, Integer, List<Integer>>create(
                         Entry::getKey,
                         groupKey -> new ArrayList<>(),
                         (acc, e) -> acc.add(e.getValue())));
@@ -584,7 +584,7 @@ public class SparqlRx {
             // For future reference: If we get an empty results by using the query object, we probably have wrapped a variable with NodeValue.makeNode.
             .execSelectRaw(() -> qeSupp.apply(clone))
             //.groupBy(createGrouper(primaryKeyVars, false)::apply)
-            .lift(OperatorOrderedGroupBy.<Binding, Binding, AccGraph>create(
+            .lift(FlowableOperatorSequentialGroupBy.<Binding, Binding, AccGraph>create(
                     grouper::apply,
                     groupKey -> new AccGraph(template),
                     AccGraph::accumulate))

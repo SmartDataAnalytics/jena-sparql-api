@@ -147,7 +147,7 @@ public class SPARQLResultEx
     }
 
     @Override
-    public void close() throws Exception {
+    public void close() {
         if(closeAction != null) {
             closeAction.run();
         }

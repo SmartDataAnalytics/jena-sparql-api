@@ -9,14 +9,15 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.aksw.commons.io.util.UriToPathUtils;
 import org.aksw.jena_sparql_api.conjure.utils.ContentTypeUtils;
 import org.aksw.jena_sparql_api.http.domain.api.RdfEntityInfo;
 import org.aksw.jena_sparql_api.http.repository.api.HttpResourceRepositoryFromFileSystem;
@@ -26,6 +27,7 @@ import org.aksw.jena_sparql_api.http.repository.api.RdfHttpResourceFile;
 import org.aksw.jena_sparql_api.http.repository.api.ResourceStore;
 import org.apache.http.HttpRequest;
 import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.jena.ext.com.google.common.collect.Maps;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Property;
@@ -38,7 +40,6 @@ import org.apache.jena.riot.RDFFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.github.jsonldjava.shaded.com.google.common.collect.Maps;
 
 
 interface ResourceSourceFile {

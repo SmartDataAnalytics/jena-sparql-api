@@ -29,6 +29,8 @@
 		<module>jena-sparql-api-io-hdt</module>
 		<module>jena-sparql-api-io-core</module>
 
+		<module>jena-sparql-api-rx-io</module>
+
 		<module>jena-sparql-api-collections</module>
 		<!-- <module>jena-sparql-api-jgrapht</module> -->
 
@@ -71,6 +73,8 @@
 		<module>jena-sparql-api-mapper-parent</module>
 		<module>jena-sparql-api-batch</module>
 
+		<module>jena-sparql-api-langtag-validator</module>
+
 		<module>jena-sparql-api-web</module>
 		<module>jena-sparql-api-server-utils</module>
 		<module>jena-sparql-api-server-standalone</module>
@@ -80,6 +84,8 @@
 		<module>jena-sparql-api-playground</module>
 
 		<module>jena-sparql-api-virtuoso</module>
+
+		<module>jena-sparql-api-file-backed-dataset</module>
 	</modules>
 
 	<issueManagement>
@@ -349,6 +355,13 @@
 	<dependencyManagement>
 		<dependencies>
 
+			<dependency>
+				<groupId>org.aksw.iana-language-subtag-registry</groupId>
+				<artifactId>iana-language-subtag-registry-resource-rdf-raw</artifactId>
+				<version>2021-02-16</version>
+			</dependency>
+
+
 			<!-- java 9+ for server-standalone -->
 			<dependency>
 				<groupId>javax.xml.bind</groupId>
@@ -396,7 +409,8 @@
 
 
 			<!-- Modules -->
-			<!-- Make the test configuration available across all modules - especially the log4j.properties file -->
+			<!-- Make the test configuration available across all modules - especially 
+				the log4j.properties file -->
 			<dependency>
 				<groupId>org.aksw.jena-sparql-api</groupId>
 				<artifactId>jena-sparql-api-resources-test-config</artifactId>
@@ -431,10 +445,16 @@
 			</dependency>
 
 			<dependency>
-				<groupId>eu.wdaqua</groupId>
+				<groupId>org.rdfhdt</groupId>
 				<artifactId>hdt-jena</artifactId>
-				<version>2.1</version>
+				<version>2.1.2</version>
 			</dependency>
+
+			<!-- <dependency> -->
+			<!-- <groupId>eu.wdaqua</groupId> -->
+			<!-- <artifactId>hdt-jena</artifactId> -->
+			<!-- <version>2.1</version> -->
+			<!-- </dependency> -->
 
 			<dependency>
 				<groupId>org.aksw.jena-sparql-api</groupId>
@@ -901,6 +921,24 @@
 			<dependency>
 				<groupId>org.aksw.commons</groupId>
 				<artifactId>aksw-commons-collections</artifactId>
+				<version>${aksw.commons.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.aksw.commons</groupId>
+				<artifactId>aksw-commons-io-process-pipes</artifactId>
+				<version>${aksw.commons.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.aksw.commons</groupId>
+				<artifactId>aksw-commons-io-utils</artifactId>
+				<version>${aksw.commons.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.aksw.commons</groupId>
+				<artifactId>aksw-commons-io-syscalls</artifactId>
 				<version>${aksw.commons.version}</version>
 			</dependency>
 

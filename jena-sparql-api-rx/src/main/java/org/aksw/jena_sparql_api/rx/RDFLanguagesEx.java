@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api.rx;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -25,6 +26,8 @@ import org.apache.jena.riot.resultset.ResultSetWriterRegistry;
  */
 public class RDFLanguagesEx {
 
+	// public static Collection<Lang> basicQuadLangs = Arrays.asList(Lang.TRIG, Lang.NQUADS)
+	
     /**
      * Returns quad langs first followed by the triple ones.
      * Returned langs are distinct.
