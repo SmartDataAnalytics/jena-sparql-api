@@ -38,6 +38,11 @@
 		<!-- </dependency> -->
 
 		<dependency>
+			<groupId>org.aksw.commons</groupId>
+			<artifactId>aksw-commons-rx</artifactId>
+		</dependency>
+
+		<dependency>
 			<groupId>io.reactivex.rxjava3</groupId>
 			<artifactId>rxjava</artifactId>
 		</dependency>

@@ -14,8 +14,8 @@ import java.util.stream.Collectors;
 
 import org.aksw.commons.io.syscall.SysCalls;
 import org.aksw.commons.io.syscall.sort.SysSort;
+import org.aksw.commons.rx.op.FlowableOperatorSequentialGroupBy;
 import org.aksw.jena_sparql_api.rx.RDFDataMgrRx.ConsecutiveNamedGraphMergerCore;
-import org.aksw.jena_sparql_api.rx.op.FlowableOperatorSequentialGroupBy;
 import org.aksw.jena_sparql_api.rx.op.ResultSetMappers;
 import org.aksw.jena_sparql_api.stmt.SparqlQueryParser;
 import org.aksw.jena_sparql_api.utils.CannedQueryUtils;

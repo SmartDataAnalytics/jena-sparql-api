@@ -19,6 +19,7 @@ import java.util.stream.Stream;
 
 import org.aksw.commons.collections.SetUtils;
 import org.aksw.commons.collections.generator.Generator;
+import org.aksw.commons.rx.op.FlowableOperatorSequentialGroupBy;
 import org.aksw.jena_sparql_api.mapper.Accumulator;
 import org.aksw.jena_sparql_api.mapper.Aggregator;
 import org.aksw.jena_sparql_api.rx.AggCollection;
@@ -35,7 +36,6 @@ import org.aksw.jena_sparql_api.rx.entity.model.EntityTemplateImpl;
 import org.aksw.jena_sparql_api.rx.entity.model.ExprListEval;
 import org.aksw.jena_sparql_api.rx.entity.model.GraphPartitionJoin;
 import org.aksw.jena_sparql_api.rx.entity.model.GraphPartitionWithEntities;
-import org.aksw.jena_sparql_api.rx.op.FlowableOperatorSequentialGroupBy;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.NodeTransformRenameMap;
 import org.aksw.jena_sparql_api.utils.QuadPatternUtils;

@@ -5,7 +5,7 @@ import java.util.Map.Entry;
 import java.util.function.Function;
 import java.util.stream.LongStream;
 
-import org.aksw.jena_sparql_api.rx.op.OperatorLocalOrder;
+import org.aksw.commons.rx.op.OperatorLocalOrder;
 import org.apache.jena.ext.com.google.common.collect.Maps;
 
 import io.reactivex.rxjava3.core.Flowable;

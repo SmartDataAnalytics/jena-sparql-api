@@ -1,15 +1,12 @@
 package org.aksw.jena_sparql_api.rx.io.resultset;
 
-import java.util.AbstractMap.SimpleEntry;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.stream.LongStream;
 
 import org.aksw.commons.collector.domain.Accumulator;
 import org.aksw.commons.collector.domain.ParallelAggregator;
@@ -19,13 +16,11 @@ import org.aksw.jena_sparql_api.rx.ResultSetRx;
 import org.aksw.jena_sparql_api.rx.ResultSetRxImpl;
 import org.aksw.jena_sparql_api.rx.SparqlRx;
 import org.aksw.jena_sparql_api.rx.dataset.AggBuilderDataset;
-import org.aksw.jena_sparql_api.rx.op.OperatorLocalOrder;
 import org.aksw.jena_sparql_api.stmt.SPARQLResultEx;
 import org.aksw.jena_sparql_api.stmt.SparqlStmt;
 import org.aksw.jena_sparql_api.stmt.SparqlStmtUtils;
 import org.aksw.jena_sparql_api.utils.ResultSetUtils;
 import org.apache.jena.atlas.json.JsonObject;
-import org.apache.jena.ext.com.google.common.collect.Maps;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.Query;
@@ -41,11 +36,9 @@ import org.apache.jena.sparql.util.Context;
 
 import com.google.gson.JsonElement;
 
-import io.reactivex.rxjava3.annotations.NonNull;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.FlowableTransformer;
 import io.reactivex.rxjava3.functions.BiFunction;
-import io.reactivex.rxjava3.schedulers.Schedulers;
 
 /**
  * Create functions that run SPARQL statements on a given connection and yield flowables of various result items

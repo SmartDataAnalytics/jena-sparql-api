@@ -5,8 +5,8 @@ import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
+import org.aksw.commons.rx.util.RxUtils;
 import org.aksw.jena_sparql_api.rx.ResultSetRxImpl;
-import org.aksw.jena_sparql_api.rx.query_flow.RxUtils;
 import org.apache.jena.atlas.io.IO;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.ResultSet;
