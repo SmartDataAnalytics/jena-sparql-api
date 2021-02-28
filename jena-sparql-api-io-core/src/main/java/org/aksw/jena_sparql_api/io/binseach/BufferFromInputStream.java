@@ -483,9 +483,10 @@ public class BufferFromInputStream
     }
 
     protected int nextBucketSize() {
-        int activeSize = buckets[activeEnd.idx].length;
+        long activeSize = buckets[activeEnd.idx].length;
 
-        int nextSize = Ints.saturatedCast(activeSize * 2);
+        int maxBucketSize = Integer.MAX_VALUE / 2;
+        int nextSize = Math.min(Ints.saturatedCast(activeSize * 2), maxBucketSize);
         return nextSize;
 
     }
@@ -656,6 +657,7 @@ public class BufferFromInputStream
             }
 
             // Allocate a new bucket
+            // System.out.println("Allocating " + nextBucketSize);
             buckets[newEndIdx] = new byte[nextBucketSize];
             activeEnd = new BucketPointer(newEndIdx, 0);
         }
