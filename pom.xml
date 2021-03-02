@@ -984,16 +984,18 @@
 
 
 			<!-- JDBC Connection Pooling -->
+			<!--
 			<dependency>
 				<groupId>com.jolbox</groupId>
 				<artifactId>bonecp</artifactId>
 				<version>0.8.0.RELEASE</version>
 			</dependency>
+			-->
 
 			<dependency>
 				<groupId>org.apache.commons</groupId>
 				<artifactId>commons-lang3</artifactId>
-				<version>3.7</version>
+				<version>3.12.0</version>
 			</dependency>
 
 
