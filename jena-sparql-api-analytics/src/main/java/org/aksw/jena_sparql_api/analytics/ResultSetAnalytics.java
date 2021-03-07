@@ -5,14 +5,12 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import org.aksw.commons.collections.SetUtils;
 import org.aksw.commons.collector.core.AggBuilder;
 import org.aksw.commons.collector.domain.ParallelAggregator;
 import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.binding.Binding;
-
-import com.google.common.collect.Multiset;
-import com.google.common.collect.Sets;
 
 public class ResultSetAnalytics {
 
@@ -29,8 +27,10 @@ public class ResultSetAnalytics {
 	 * @return
 	 */
 	public static <O> ParallelAggregator<Binding, Map<Var, O>, ?> aggPerVar(ParallelAggregator<Node, O, ?> nodeAgg) {
-		return AggBuilder.inputSplit((Binding b) -> Sets.newHashSet(b.vars()), (Binding b, Var v) -> b.get(v),
+		return AggBuilder.inputSplit((Binding b) -> SetUtils.newLinkedHashSet(b.vars()), Binding::get,
 				nodeAgg);
+//		return AggBuilder.inputSplit((Binding b) -> Sets.newHashSet(b.vars()), (Binding b, Var v) -> b.get(v),
+//				nodeAgg);
 	}
 
 	public static <O> ParallelAggregator<Binding, Map<Var, O>, ?> aggPerVar(Set<Var> staticVars, ParallelAggregator<Node, O, ?> nodeAgg) {
@@ -40,8 +40,14 @@ public class ResultSetAnalytics {
 
 		// Note that the key set includes all static variables (in addition to those mentioned in the binding)
 		// in order to allow aggregation over null values!
-		return AggBuilder.inputSplit(staticVarCopy, true, (Binding b) -> Sets.union(staticVarCopy, Sets.newHashSet(b.vars())), (Binding b, Var v) -> b.get(v),
-				nodeAgg);
+		return AggBuilder.inputSplit(staticVarCopy, true, (Binding b) -> {
+			Set<Var> r = new LinkedHashSet<>();
+			r.addAll(staticVarCopy);
+			b.vars().forEachRemaining(r::add);
+			return r;
+		}, Binding::get, nodeAgg);
+//		return AggBuilder.inputSplit(staticVarCopy, true, (Binding b) -> Sets.union(staticVarCopy, Sets.newHashSet(b.vars())), (Binding b, Var v) -> b.get(v),
+//				nodeAgg);
 
 //		return AggBuilder.inputSplit(staticVarCopy, true, (Binding b) -> Sets.newHashSet(b.vars()), Binding::get,
 //				nodeAgg);
@@ -52,15 +58,27 @@ public class ResultSetAnalytics {
     	return aggPerVar(NodeAnalytics.usedPrefixes(targetSize));
     }
     
-    public static ParallelAggregator<Binding, Map<Var, Multiset<String>>, ?> usedDatatypes() {
+    public static ParallelAggregator<Binding, Map<Var, Set<String>>, ?> usedDatatypes() {
     	return aggPerVar(NodeAnalytics.usedDatatypes());
     }
 
 
     // Null counting only makes sense for a-priori provided variables!
-    public static ParallelAggregator<Binding, Map<Var, Entry<Multiset<String>, Long>>, ?> usedDatatypesAndNullCounts(Set<Var> staticVars) {
+    public static ParallelAggregator<Binding, Map<Var, Entry<Set<String>, Long>>, ?> usedDatatypesAndNullCounts(Set<Var> staticVars) {
     	return aggPerVar(staticVars,
     			NodeAnalytics.usedDatatypesAndNullCounts());
     }
+
+    
+//    public static ParallelAggregator<Binding, Map<Var, Multiset<String>>, ?> usedDatatypes() {
+//    	return aggPerVar(NodeAnalytics.usedDatatypes());
+//    }
+//
+//
+//    // Null counting only makes sense for a-priori provided variables!
+//    public static ParallelAggregator<Binding, Map<Var, Entry<Multiset<String>, Long>>, ?> usedDatatypesAndNullCounts(Set<Var> staticVars) {
+//    	return aggPerVar(staticVars,
+//    			NodeAnalytics.usedDatatypesAndNullCounts());
+//    }
 
 }

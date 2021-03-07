@@ -19,8 +19,6 @@ import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.binding.Binding;
 import org.junit.Test;
 
-import com.google.common.collect.Multiset;
-
 public class TestPrefixAggregation {
 	
 	
@@ -42,14 +40,14 @@ public class TestPrefixAggregation {
 		System.out.println(usedIriPrefixes);
 
 
-		Map<Var, Entry<Multiset<String>, Long>> usedDatatypesAndNulls = list.stream()
+		Map<Var, Entry<Set<String>, Long>> usedDatatypesAndNulls = list.stream()
 				.collect(ResultSetAnalytics.usedDatatypesAndNullCounts(resultVars).asCollector());
 				
 		System.out.println(usedDatatypesAndNulls);
 
 		SchemaMapperImpl.newInstance()
 			.setSourceVars(resultVars)
-			.setSourceVarToDatatypes(v -> usedDatatypesAndNulls.get(v).getKey().elementSet())
+			.setSourceVarToDatatypes(v -> usedDatatypesAndNulls.get(v).getKey())
 			.setSourceVarToNulls(v -> usedDatatypesAndNulls.get(v).getValue())
 			.setTypePromotionStrategy(TypePromoterImpl.create())
 			.createSchemaMapping();
