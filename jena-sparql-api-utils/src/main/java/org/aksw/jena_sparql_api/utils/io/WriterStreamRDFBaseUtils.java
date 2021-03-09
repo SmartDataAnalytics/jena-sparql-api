@@ -5,6 +5,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
 import org.apache.jena.riot.out.NodeToLabel;
+import org.apache.jena.riot.system.PrefixMap;
 import org.apache.jena.riot.writer.WriterStreamRDFBase;
 
 public class WriterStreamRDFBaseUtils {
@@ -28,6 +29,21 @@ public class WriterStreamRDFBaseUtils {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+    
+    /** Return the internal prefix map */
+    public static PrefixMap getPrefixMap(WriterStreamRDFBase writer) {
+    	PrefixMap result;
+    	try {
+			Field pMapField = WriterStreamRDFBase.class.getDeclaredField("pMap");
+			pMapField.setAccessible(true);
+			result = (PrefixMap)pMapField.get(writer);
+			pMapField.setAccessible(false);
+    	} catch (Exception e) {
+    		throw new RuntimeException(e);
+    	}
+    	
+    	return result;
     }
 }
 
