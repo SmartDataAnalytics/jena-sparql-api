@@ -3,6 +3,7 @@ package org.aksw.jena_sparql_api.rx.io.resultset;
 import java.io.Closeable;
 import java.io.OutputStream;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Supplier;
@@ -163,7 +164,7 @@ public class SPARQLResultExProcessorBuilder {
 	public SPARQLResultExProcessor build() {
     	return configureProcessor(
     			out.get(), err.get(),
-    			outFormat, stmts, prefixMapping,
+    			outFormat, stmts == null ? Collections.emptyList(): stmts, prefixMapping,
     			tripleFormat, quadFormat, deferCount,
     			jqMode, jqDepth, jqFlatMode, closeAction);
     }
@@ -189,8 +190,8 @@ public class SPARQLResultExProcessorBuilder {
     		.setOut(() -> StdIo.openStdOutWithCloseShield())
     		.setErr(() -> StdIo.openStdErrWithCloseShield())
     		.setDeferCount(20)
-    		.setTripleFormat(RDFFormat.TURTLE_PRETTY)
-    		.setQuadFormat(RDFFormat.TRIG_PRETTY)
+    		.setTripleFormat(RDFFormat.TURTLE_BLOCKS)
+    		.setQuadFormat(RDFFormat.TRIG_BLOCKS)
     		.setJqMode(false)
     		.setJqDepth(3)
     		.setJqFlatMode(false);

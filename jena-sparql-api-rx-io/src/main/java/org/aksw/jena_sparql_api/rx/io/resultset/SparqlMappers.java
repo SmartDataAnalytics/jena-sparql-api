@@ -212,7 +212,10 @@ public class SparqlMappers {
     			.andThen(quadFlow -> {
 					Map<Node, Dataset> groupedDatasets = quadFlow
     					.reduceWith(agg::createAccumulator, (acc, item) -> { acc.accumulate(item); return acc; })
-    					.map(Accumulator::getValue)
+    					//.map(Accumulator::getValue)
+    					// ^ this aboveraises  "Invalid receiver type class java.lang.Object; not a subtype of implementation type interface org.aksw.commons.collector.domain.Accumulator"
+    					// See also: https://stackoverflow.com/questions/33929304/weird-exception-invalid-receiver-type-class-java-lang-object-not-a-subtype-of
+    					.map(acc -> acc.getValue())
     					.blockingGet();
 					
 					return groupedDatasets.values();

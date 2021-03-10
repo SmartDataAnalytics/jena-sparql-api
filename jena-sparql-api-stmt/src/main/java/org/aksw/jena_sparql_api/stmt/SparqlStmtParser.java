@@ -26,9 +26,14 @@ public interface SparqlStmtParser
 
     public static SparqlStmtParser wrapWithTransform(Function<String, SparqlStmt> delegate, Function<? super SparqlStmt, ? extends SparqlStmt> transform) {
         return str -> {
+        	SparqlStmt r;
             SparqlStmt before = delegate.apply(str);
-            SparqlStmt after = transform.apply(before);
-            return after;
+            if (before.isParsed()) {
+            	r = transform.apply(before);
+            } else {
+            	 r = before;
+            }
+            return r;
         };
     }
 

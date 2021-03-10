@@ -37,9 +37,9 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFLanguages;
-import org.apache.jena.riot.RDFParserBuilder;
 import org.apache.jena.riot.system.PrefixMap;
 import org.apache.jena.shared.PrefixMapping;
+import org.apache.jena.shared.impl.PrefixMappingImpl;
 import org.apache.jena.sparql.core.Prologue;
 import org.apache.jena.sparql.modify.request.UpdateLoad;
 import org.apache.jena.update.UpdateRequest;
@@ -70,11 +70,17 @@ import com.google.common.base.StandardSystemProperty;
  * Relative paths are resolved against the current working directory as reported by the JVM.
  * Use "cwd=" (with an empty string) to reset the CWD to that of the JVM
  *
- * @author raven
+ * @author Claus Stadler
  *
  */
 public class SparqlScriptProcessor {
 
+	/**
+	 * Provenance of SPARQL statements - file:line:column
+	 * 
+	 * @author Claus Stadler
+	 *
+	 */
     public static class Provenance {
         public Provenance(String arg) {
             this(arg, null, null);
@@ -123,6 +129,11 @@ public class SparqlScriptProcessor {
     private static final Logger logger = LoggerFactory.getLogger(SparqlScriptProcessor.class);
 
     protected Function<? super Prologue, ? extends SparqlStmtParser> sparqlParserFactory; //  SparqlStmtParser sparqlParser ;
+    
+    /**
+     * The set of global prefixes will be extended with the prefixes of every parsed query.
+     * Set this attribute to null to disable global prefixes.
+     */
     protected PrefixMapping globalPrefixes;
     protected Path cwd = null;
     protected List<Entry<SparqlStmt, Provenance>> sparqlStmts = new ArrayList<>();
@@ -164,7 +175,7 @@ public class SparqlScriptProcessor {
 
         SparqlStmtParser sparqlParser =
                 SparqlStmtParser.wrapWithTransform(
-                        new SparqlStmtParserImpl(queryParser, updateParser, false),
+                        new SparqlStmtParserImpl(queryParser, updateParser, true),
                         stmt -> SparqlStmtUtils.applyNodeTransform(stmt, x -> NodeUtils.substWithLookup(x, System::getenv)));
 
         return sparqlParser;
@@ -233,7 +244,7 @@ public class SparqlScriptProcessor {
                 try {
 //                    Iterator<SparqlStmt> it = SparqlStmtMgr.loadSparqlStmts(filename, globalPrefixes, sparqlParser, baseIri);
                 	// globalPrefixes, 
-                	Prologue prologue = new Prologue(globalPrefixes, baseIri);
+                	Prologue prologue = new Prologue(globalPrefixes == null ? new PrefixMappingImpl() : globalPrefixes, baseIri);
                 	SparqlStmtParser sparqlParser = sparqlParserFactory.apply(prologue);
                 	Iterator<SparqlStmt> it = SparqlStmtMgr.loadSparqlStmts(filename, sparqlParser);
 
@@ -259,11 +270,13 @@ public class SparqlScriptProcessor {
 
                             SparqlStmt stmt = it.next();
 
-                            PrefixMapping stmtPrefixes = stmt.getPrefixMapping();
-                            if(stmtPrefixes != null) {
-                                globalPrefixes.setNsPrefixes(stmtPrefixes);
+                            if (globalPrefixes != null) {
+	                            PrefixMapping stmtPrefixes = stmt.getPrefixMapping();
+	                            if(stmtPrefixes != null) {
+	                                globalPrefixes.setNsPrefixes(stmtPrefixes);
+	                            }
                             }
-
+                            
                             // Move optimizePrefixes to transformers?
                             SparqlStmtUtils.optimizePrefixes(stmt);
 
