@@ -15,8 +15,6 @@ import java.util.stream.IntStream;
 import javax.annotation.concurrent.ThreadSafe;
 
 import org.aksw.jena_sparql_api.io.api.ChannelFactory;
-import org.apache.commons.io.IOUtils;
-import org.junit.Assert;
 
 import com.google.common.base.Stopwatch;
 import com.google.common.primitives.Ints;
@@ -748,7 +746,10 @@ public class BufferFromInputStream
                     }
 
 
-                    Assert.assertArrayEquals(expectedData, actualData);
+                    // Assert.assertArrayEquals(expectedData, actualData);
+                    if (expectedData.equals(actualData)) {
+                    	throw new RuntimeException("Actual and expected results differed");
+                    }
                     return "foo";
                 }).count();
 

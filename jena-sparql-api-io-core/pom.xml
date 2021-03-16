@@ -16,10 +16,10 @@
 	</parent>
 
 	<dependencies>
-<!-- 		<dependency> -->
-<!-- 			<groupId>io.reactivex.rxjava2</groupId> -->
-<!-- 			<artifactId>rxjava</artifactId> -->
-<!-- 		</dependency> -->
+		<!-- <dependency> -->
+		<!-- <groupId>io.reactivex.rxjava2</groupId> -->
+		<!-- <artifactId>rxjava</artifactId> -->
+		<!-- </dependency> -->
 
 		<!-- <dependency> -->
 		<!-- <groupId>org.apache.jena</groupId> -->
@@ -57,6 +57,12 @@
 		</dependency>
 
 		<!-- Unit Testing -->
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<scope>test</scope>
+		</dependency>
+
 		<dependency>
 			<groupId>org.aksw.jena-sparql-api</groupId>
 			<artifactId>jena-sparql-api-resources-test-config</artifactId>

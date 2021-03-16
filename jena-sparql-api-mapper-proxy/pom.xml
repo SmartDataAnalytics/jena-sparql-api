@@ -23,7 +23,8 @@
 			<artifactId>jena-sparql-api-collections</artifactId>
 		</dependency>
 
-		<!-- There are is one or two used collection implementations (one is MapFromResource) that make use of SparqlRx -->
+		<!-- There are is one or two used collection implementations (one is MapFromResource) 
+			that make use of SparqlRx -->
 		<!-- Can we get rid of all the rx stuff at this point? -->
 		<dependency>
 			<groupId>org.aksw.jena-sparql-api</groupId>
@@ -36,11 +37,20 @@
 			<artifactId>cglib-nodep</artifactId>
 		</dependency>
 
+
+		<!-- Unit Testing -->
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<scope>test</scope>
+		</dependency>
+
 		<dependency>
 			<groupId>org.aksw.jena-sparql-api</groupId>
 			<artifactId>jena-sparql-api-resources-test-config</artifactId>
 			<scope>test</scope>
 		</dependency>
+
 
 		<!-- <dependency> -->
 		<!-- <groupId>net.bytebuddy</groupId> -->
