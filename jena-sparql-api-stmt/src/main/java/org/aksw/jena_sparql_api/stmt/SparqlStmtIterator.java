@@ -10,6 +10,10 @@ import com.google.common.collect.AbstractIterator;
 /**
  * An iterator over a string that holds a sequence of SPARQL queries; uses positions reported by parse exceptions
  * to find the boundaries of queries.
+ * 
+ * The provided parser <b>must</b> operate in classifier mode - i.e. it must not throw QueryParseExceptions but report them
+ * via {@link SparqlStmt#getParseException()}.
+ * 
  * TODO Ideally, an extension to the jena sparql grammar should allow parsing such sequences of queries.
  * 
  * 
