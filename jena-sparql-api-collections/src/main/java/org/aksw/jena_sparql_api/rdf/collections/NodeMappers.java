@@ -17,6 +17,14 @@ public class NodeMappers {
 	public static final NodeMapper<String> uriString = new NodeMapperDelegating<>(String.class,
 			Node::isURI, NodeFactory::createURI, Node::getURI); 
 
+	
+	public static <T> NodeMapper<T> fromDatatypeIri(String datatypeIri) {
+		TypeMapper typeMapper = TypeMapper.getInstance();
+		RDFDatatype dtype = typeMapper.getSafeTypeByName(datatypeIri);
+		NodeMapper<T> result = new NodeMapperFromRdfDatatype<>(dtype); 
+		return result;
+	}
+
 	public static <T> NodeMapper<T> from(Class<T> clazz) {
 		TypeMapper typeMapper = TypeMapper.getInstance();
 		NodeMapper<T> result = from(clazz, typeMapper);

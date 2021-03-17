@@ -10,9 +10,9 @@ import java.util.Map.Entry;
 import java.util.NavigableMap;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.function.Function;
 
 import org.aksw.commons.util.strings.StringUtils;
-import org.apache.commons.collections15.Transformer;
 
 import com.google.common.collect.Sets;
 
@@ -40,12 +40,12 @@ public class PrefixIndex<T>
 	private int[] indexColumns;
 	private List<String> indexColumnNames;
 	
-	private Transformer<T, Set<String>> prefixExtractor;
+	private Function<T, Set<String>> prefixExtractor;
 	
 	private NavigableMap<String, Object> map = new TreeMap<String, Object>();
 
 	
-	public PrefixIndex(Table<T> table, int[] indexColumns, Transformer<T, Set<String>> prefixExtractor) {
+	public PrefixIndex(Table<T> table, int[] indexColumns, Function<T, Set<String>> prefixExtractor) {
 		this.table = table;
 		this.indexColumns = indexColumns;
 		this.prefixExtractor = prefixExtractor;
@@ -73,7 +73,7 @@ public class PrefixIndex<T>
 			int index = indexColumns[i];
 			T value = row.get(index);
 			
-			Set<String> prefixes = prefixExtractor.transform(value);
+			Set<String> prefixes = prefixExtractor.apply(value);
 			
 			for(String prefix : prefixes) {
 				Object o = current.get(prefix);
@@ -245,7 +245,7 @@ public class PrefixIndex<T>
 	}
 	
 	
-	public static <T> PrefixIndex<T> attach(Transformer<T, Set<String>> prefixExtractor, Table<T> table, String ... columnNames) {
+	public static <T> PrefixIndex<T> attach(Function<T, Set<String>> prefixExtractor, Table<T> table, String ... columnNames) {
 		List<String> names = Arrays.asList(columnNames);
 		
 		Set<String> nameSet = new HashSet<String>(names);		

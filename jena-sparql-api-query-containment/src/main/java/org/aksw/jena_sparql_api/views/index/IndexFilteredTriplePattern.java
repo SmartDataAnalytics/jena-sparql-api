@@ -22,7 +22,8 @@ public class IndexFilteredTriplePattern<K>
     protected Graph<Node, LabeledEdge<Node, Node>> graph;
 
     public IndexFilteredTriplePattern() {
-        this.graph = new SimpleGraph<>((v, e) -> new LabeledEdgeImpl<>(v, e, null));
+//        this.graph = new SimpleGraph<>((v, e) -> new LabeledEdgeImpl<>(v, e, null));
+        this.graph = new SimpleGraph<>(null, () -> new LabeledEdgeImpl<>(), false);
         this.keyToNode = new ReversibleMapImpl<>();
     }
 

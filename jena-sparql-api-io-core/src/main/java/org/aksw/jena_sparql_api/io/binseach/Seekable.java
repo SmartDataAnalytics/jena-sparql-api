@@ -4,8 +4,6 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
 
-import com.github.jsonldjava.shaded.com.google.common.primitives.Ints;
-
 /*
  *
  * checkNext(horizon, changePos); Return the number of available bytes up to the horizon.
@@ -119,20 +117,30 @@ public interface Seekable
 //    void posToAfterEnd() throws IOException;
 
 
-    default byte get(long pos) throws IOException {
-        long currentPos = getPos();
-        int delta = Ints.checkedCast(currentPos - pos);
-
+    /**
+     * Get one byte relative to the current position
+     * 
+     * @param relPos
+     * @return
+     * @throws IOException
+     */
+    default byte get(int relPos) throws IOException {
         byte result;
-        if(delta > 0) {
-            nextPos(delta);
-            result = get();
-            prevPos(delta);
-        } else if(delta < 0) {
-            int tmp = -delta;
-            prevPos(tmp);
-            result = get();
-            nextPos(tmp);
+        if(relPos > 0) {
+            if (nextPos(relPos)) {
+            	result = get();
+            	prevPos(relPos);
+            } else {
+            	throw new RuntimeException("No data " + relPos + " byte from current position " + getPos());
+            }
+        } else if(relPos < 0) {
+            int tmp = -relPos;
+            if (prevPos(tmp)) {
+            	result = get();
+            	nextPos(tmp);
+            } else {
+            	throw new RuntimeException("No data " + relPos + " byte from current position " + getPos());            	
+            }
         } else {
             result = get();
         }
@@ -650,6 +658,7 @@ public interface Seekable
     @Override
     void close() throws IOException;
 
+    /** The currently known size (of the underlying entity) */
     default long size() throws IOException {
         return -1;
     }

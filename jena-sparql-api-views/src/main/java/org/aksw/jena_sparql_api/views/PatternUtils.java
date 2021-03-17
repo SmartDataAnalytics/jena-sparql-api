@@ -5,7 +5,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.aksw.jena_sparql_api.utils.QuadUtils;
-import org.apache.commons.lang.NotImplementedException;
 import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.op.OpFilter;
@@ -52,7 +51,7 @@ public class PatternUtils
 				collectQuads(element, result);
 			}			
 		} else {
-			throw new NotImplementedException("Encountered class: " + op);
+			throw new UnsupportedOperationException("Encountered class: " + op);
 		}
 		
 		return result;

@@ -224,14 +224,14 @@ public class SparqlStmtMgr {
      */
     public static Iterator<SparqlStmt> loadSparqlStmts(
             String filenameOrStr,
-            PrefixMapping globalPrefixes,
-            SparqlStmtParser sparqlParser,
-            String baseIri) throws ParseException, IOException {
+            // PrefixMapping globalPrefixes,
+            SparqlStmtParser sparqlParser) throws ParseException, IOException {
 
         // Check whether the argument is an inline sparql statement
         Iterator<SparqlStmt> it = null;
         try {
-            it = SparqlStmtUtils.processFile(globalPrefixes, filenameOrStr, baseIri);
+//            it = SparqlStmtUtils.processFile(sparqlParser, filenameOrStr, baseIri);
+            it = SparqlStmtUtils.readStmts(filenameOrStr, sparqlParser);
         } catch(IOException e) {
 
             try {

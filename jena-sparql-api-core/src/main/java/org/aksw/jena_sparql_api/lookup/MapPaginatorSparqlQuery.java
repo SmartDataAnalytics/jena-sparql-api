@@ -2,10 +2,10 @@ package org.aksw.jena_sparql_api.lookup;
 
 import java.util.Map.Entry;
 
+import org.aksw.commons.rx.op.FlowableOperatorSequentialGroupBy;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
 import org.aksw.jena_sparql_api.rx.SparqlRx;
-import org.aksw.jena_sparql_api.rx.op.OperatorOrderedGroupBy;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
@@ -116,7 +116,7 @@ public class MapPaginatorSparqlQuery
 //      PublishProcessor<Node> boundaryIndicator = PublishProcessor.create();
 
       return SparqlRx.execSelectRaw(() -> qef.query(query))
-              .lift(OperatorOrderedGroupBy.<Binding, Node, Table>create(
+              .lift(FlowableOperatorSequentialGroupBy.<Binding, Node, Table>create(
                       b -> b.get(attrVar),
                       groupKey -> new TableN(),
                       Table::addBinding));

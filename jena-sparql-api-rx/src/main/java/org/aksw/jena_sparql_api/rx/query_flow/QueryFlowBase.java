@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api.rx.query_flow;
 
+import org.aksw.commons.rx.util.FlowBase;
 import org.apache.jena.sparql.function.FunctionEnv;
 
 import io.reactivex.rxjava3.core.FlowableEmitter;

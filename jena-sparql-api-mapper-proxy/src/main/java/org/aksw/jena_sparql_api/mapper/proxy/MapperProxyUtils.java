@@ -41,6 +41,8 @@ import org.aksw.jena_sparql_api.mapper.annotation.Inverse;
 import org.aksw.jena_sparql_api.mapper.annotation.Iri;
 import org.aksw.jena_sparql_api.mapper.annotation.IriNs;
 import org.aksw.jena_sparql_api.mapper.annotation.IriType;
+import org.aksw.jena_sparql_api.mapper.annotation.Namespace;
+import org.aksw.jena_sparql_api.mapper.annotation.Namespaces;
 import org.aksw.jena_sparql_api.mapper.annotation.PolymorphicOnly;
 import org.aksw.jena_sparql_api.mapper.annotation.StringId;
 import org.aksw.jena_sparql_api.mapper.annotation.ToString;
@@ -66,6 +68,7 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.apache.jena.datatypes.RDFDatatype;
 import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.enhanced.EnhGraph;
+import org.apache.jena.ext.com.google.common.base.CaseFormat;
 import org.apache.jena.ext.com.google.common.collect.Maps;
 import org.apache.jena.ext.com.google.common.collect.Sets;
 import org.apache.jena.graph.Node;
@@ -84,11 +87,11 @@ import org.apache.jena.riot.out.NodeFmtLib;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.path.P_Link;
 import org.apache.jena.sparql.path.P_Path0;
-import org.apache.jena.sparql.path.PathParser;
+import org.apache.jena.sparql.path.PathFactory;
+import org.apache.jena.sparql.util.PrefixMapping2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.base.CaseFormat;
 import com.google.common.base.Converter;
 import com.google.common.base.Defaults;
 import com.google.common.collect.Lists;
@@ -1004,6 +1007,21 @@ public class MapperProxyUtils {
         return null;
     }
 
+    public static Object applyInModelIfApplicable(Object o, Model sourceModel) {
+    	Object result;
+    	
+    	// If the argument is an RDFNode then first create a copy of it in the
+        // model of s (where this value is about to be added)
+        if (o instanceof RDFNode) {
+        	RDFNode rdfNode = (RDFNode)o;
+        	result = rdfNode.inModel(sourceModel);
+        } else {
+        	result = o;
+        }
+    	
+        return result;
+    }
+    
     @SuppressWarnings("unchecked")
     public static BiFunction<Property, Boolean, BiConsumer<Resource, Object>> viewAsScalarSetter(
             MethodDescriptor methodDescriptor,
@@ -1019,6 +1037,8 @@ public class MapperProxyUtils {
         BiFunction<Property, Boolean, BiConsumer<Resource, Object>> result = (p, isFwd) -> (s, o) -> {
             ViewBundle viewBundle = setView.apply(p, isFwd).apply(s);
 
+            o = applyInModelIfApplicable(o, s.getModel());
+            
             Set set = (Set)viewBundle.getJavaView();
             set.clear();
             set.add(o);
@@ -1111,9 +1131,10 @@ public class MapperProxyUtils {
             // Always expand URIs
             // FIXME This will break for general paths - perform prefix expansion using a path transformer!
             String expanded = pm.expandPrefix(rdfPropertyStr);
-            String pathStr = "<" + expanded + ">";
+            // String pathStr = "<" + expanded + ">";
 
-            result = (P_Path0)PathParser.parse(pathStr, pm);
+            // result = (P_Path0)PathParser.parse(pathStr, pm);
+            result = (P_Path0)PathFactory.pathLink(NodeFactory.createURI(expanded));
 
             //logger.debug("Parsed bean property RDF annotation " + pathStr + " into " + result + " on " + method);
             if(logger.isDebugEnabled()) {
@@ -1240,6 +1261,56 @@ public class MapperProxyUtils {
         return result;
     }
 
+    
+    /**
+     * Read {@link Namespaces} and {@link Namespace} annotation from this class and
+     * a super classes / interfaces.
+     * The super classes / interfaces are visited first.
+     * 
+     * TODO Add caching to avoid excessive reflection
+     * 
+     * @param cls
+     * @param out
+     * @return
+     */
+    public static PrefixMapping readPrefixesFromClass(Class<?> cls, PrefixMapping out) {
+    	Objects.requireNonNull(cls);
+    	Objects.requireNonNull(out);
+    	
+    	Class<?> superClass = cls.getSuperclass();
+    	if (superClass != null) {
+    		readPrefixesFromClass(superClass, out);
+    	}
+ 
+    	for (Class<?> i : cls.getInterfaces()) {
+    		readPrefixesFromClass(i, out);
+    	}
+    	
+    	Namespaces nss = cls.getAnnotation(Namespaces.class);    	
+    	if (nss != null && nss.value() != null) {
+    		for (Namespace ns : nss.value()) {
+        		addPrefix(cls, out, ns.prefix(), ns.value());
+    		}
+    	}
+    	
+    	Namespace ns = cls.getAnnotation(Namespace.class);
+    	if (ns != null) {
+    		addPrefix(cls, out, ns.prefix(), ns.value());
+    	}	
+
+    	return out;
+    }
+    
+    public static void addPrefix(Class<?> cls, PrefixMapping out, String prefix, String value) {
+    	logger.debug("Derived prefix " + prefix + " -> " + value
+    			+ " from annotation on " + cls.getCanonicalName());
+
+    	Objects.requireNonNull(prefix);
+    	Objects.requireNonNull(value);
+    	
+    	out.setNsPrefix(prefix, value);
+    }
+    
     /**
      * Method level annotations are processed into property level ones.
      *
@@ -1249,9 +1320,14 @@ public class MapperProxyUtils {
      */
     public static <T extends Resource> BiFunction<Node, EnhGraph, T> createProxyFactory(
             Class<T> clazz,
-            PrefixMapping pm,
+            PrefixMapping basePm,
             TypeDecider typeDecider) {
 
+    	// Shield the base prefixes from modification using PrefixMapping2 
+    	PrefixMapping2 pm = new PrefixMapping2(basePm);
+    	readPrefixesFromClass(clazz, pm);
+    	
+    	
         Metamodel metamodel = Metamodel.get();
         ClassDescriptor classDescriptor = metamodel.getOrCreate(clazz);
 

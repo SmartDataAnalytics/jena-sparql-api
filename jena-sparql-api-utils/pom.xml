@@ -12,7 +12,7 @@
 	<parent>
 		<groupId>org.aksw.jena-sparql-api</groupId>
 		<artifactId>jena-sparql-api-parent</artifactId>
-		<version>3.16.0-2</version>
+		<version>3.17.0-1</version>
 	</parent>
 
 	<dependencies>
@@ -32,9 +32,15 @@
 			<groupId>org.aksw.commons</groupId>
 			<artifactId>aksw-commons-collections</artifactId>
 		</dependency>
+
 		<dependency>
 			<groupId>org.aksw.commons</groupId>
 			<artifactId>aksw-commons-util</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.aksw.jena-sparql-api</groupId>
+			<artifactId>jena-sparql-api-resources</artifactId>
 		</dependency>
 
 
@@ -65,6 +71,13 @@
 		</dependency>
 
 		<!-- Unit Testing -->
+                <dependency>
+                        <groupId>junit</groupId>
+                        <artifactId>junit</artifactId>
+			<scope>test</scope>
+                </dependency>
+
+
 		<dependency>
 			<groupId>org.aksw.jena-sparql-api</groupId>
 			<artifactId>jena-sparql-api-resources-test-config</artifactId>

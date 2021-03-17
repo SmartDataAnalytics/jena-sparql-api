@@ -8,6 +8,7 @@ public class AggTransform2<B, I, O, C extends Aggregator<B, I>>
     private C subAgg;
     private Function<? super I, O> transform;
 
+    @Deprecated
     public AggTransform2(C subAgg, com.google.common.base.Function<? super I, O> transform) {
         this.subAgg = subAgg;
         this.transform = (arg) -> transform.apply(arg);

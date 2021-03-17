@@ -10,7 +10,7 @@
     <parent>
         <groupId>org.aksw.jena-sparql-api</groupId>
         <artifactId>jena-sparql-api-parent</artifactId>
-        <version>3.16.0-2</version>
+        <version>3.17.0-1</version>
     </parent>
 
     <build>
@@ -35,11 +35,6 @@
             <artifactId>subgraph-isomorphism-index-jena</artifactId>
         </dependency>
 
-        <dependency>
-            <groupId>org.aksw.jena-sparql-api</groupId>
-            <artifactId>jena-sparql-api-resources-test-config</artifactId>
-            <scope>test</scope>
-        </dependency>
 
         <dependency>
             <groupId>org.aksw.jena-sparql-api</groupId>
@@ -116,6 +111,17 @@
         <!-- </dependency> -->
 
         <!-- Unit Testing -->
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>org.aksw.jena-sparql-api</groupId>
+			<artifactId>jena-sparql-api-resources-test-config</artifactId>
+			<scope>test</scope>
+		</dependency>
 
         <dependency>
             <groupId>org.aksw.jena-sparql-api</groupId>

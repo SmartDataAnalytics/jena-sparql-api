@@ -3,7 +3,7 @@ package org.aksw.jena_sparql_api.mapper.impl.type;
 import java.util.Map;
 import java.util.function.Function;
 
-import org.aksw.jena_sparql_api.beans.model.PropertyOps;
+import org.aksw.commons.beans.model.PropertyOps;
 import org.aksw.jena_sparql_api.mapper.model.RdfMapperProperty;
 import org.aksw.jena_sparql_api.mapper.model.RdfType;
 import org.aksw.jena_sparql_api.mapper.util.ValueHolder;

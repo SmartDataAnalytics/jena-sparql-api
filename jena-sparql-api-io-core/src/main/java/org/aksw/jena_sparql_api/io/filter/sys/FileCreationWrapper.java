@@ -3,7 +3,7 @@ package org.aksw.jena_sparql_api.io.filter.sys;
 import java.nio.file.Path;
 import java.util.concurrent.CompletableFuture;
 
-import org.aksw.jena_sparql_api.io.endpoint.FileCreation;
+import org.aksw.commons.io.endpoint.FileCreation;
 
 /**
  * Wrap an existing file as a FileCreation that has completed

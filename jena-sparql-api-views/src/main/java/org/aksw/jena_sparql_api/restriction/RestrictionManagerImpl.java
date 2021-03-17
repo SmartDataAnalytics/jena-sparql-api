@@ -17,7 +17,6 @@ import org.aksw.jena_sparql_api.normal_form.NestedNormalForm;
 import org.aksw.jena_sparql_api.utils.CnfUtils;
 import org.aksw.jena_sparql_api.views.PrefixSet;
 import org.aksw.jena_sparql_api.views.RdfTermType;
-import org.apache.commons.lang.NotImplementedException;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.sparql.core.Var;
@@ -673,7 +672,7 @@ public class RestrictionManagerImpl implements RestrictionManager {
      */
     @Override
     public void stateNonEqual(Var a, Var b) {
-        throw new NotImplementedException();
+        throw new UnsupportedOperationException();
     }
 
 

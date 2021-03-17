@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
 
+import org.aksw.commons.rx.op.OperatorLocalOrder;
 import org.junit.Assert;
 import org.junit.Test;
 

@@ -1,7 +1,6 @@
 package org.aksw.jena_sparql_api.mapper.context;
 
-import org.aksw.jena_sparql_api.beans.model.EntityOps;
-import org.aksw.jena_sparql_api.beans.model.PropertyOps;
+import org.aksw.commons.beans.model.PropertyOps;
 import org.aksw.jena_sparql_api.mapper.model.RdfType;
 import org.apache.jena.graph.Node;
 

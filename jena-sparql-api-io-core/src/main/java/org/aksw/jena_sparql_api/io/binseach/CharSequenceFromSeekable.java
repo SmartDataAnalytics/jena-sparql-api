@@ -28,11 +28,20 @@ public class CharSequenceFromSeekable
 
     @Override
     public char charAt(int index) {
-        try {
+        char result;
+    	try {
             int p = offset + index;
-            seekable.nextPos(p);
-            char result = (char)seekable.get();
-            seekable.prevPos(p);
+            if (index >= end) {
+            	result = (char)-1;
+            } else {            
+	            if (seekable.nextPos(p)) {
+	            	result = (char)seekable.get();
+	            	seekable.prevPos(p);
+	            } else {
+	            	// Could not seek ahead; assuming having reached the end of data
+	            	result = (char)-1;
+	            }
+            }
             return result;
         } catch (IOException e) {
             throw new RuntimeException(e);

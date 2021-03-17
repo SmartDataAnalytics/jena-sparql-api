@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Supplier;
 
+import org.aksw.commons.io.util.UriUtils;
 import org.aksw.jena_sparql_api.conjure.datapod.api.RdfDataPod;
 import org.aksw.jena_sparql_api.conjure.dataref.core.api.PlainDataRef;
 import org.aksw.jena_sparql_api.conjure.dataref.core.api.PlainDataRefSparqlEndpoint;
@@ -20,7 +21,6 @@ import org.aksw.jena_sparql_api.conjure.dataset.engine.ExecutionUtils;
 import org.aksw.jena_sparql_api.http.repository.api.HttpResourceRepositoryFromFileSystem;
 import org.aksw.jena_sparql_api.http.repository.api.RdfHttpEntityFile;
 import org.aksw.jena_sparql_api.http.repository.impl.HttpResourceRepositoryFromFileSystemImpl;
-import org.aksw.jena_sparql_api.http.repository.impl.URIUtils;
 import org.aksw.jena_sparql_api.io.common.Reference;
 import org.aksw.jena_sparql_api.io.common.ReferenceImpl;
 import org.aksw.jena_sparql_api.io.hdt.JenaPluginHdt;
@@ -153,7 +153,7 @@ public class DataPods {
 		if(JenaPluginHdt.LANG_HDT.equals(lang)) {
 			logger.info("HDT file detected - loading using HDT graph " + url);
 			// Only allow local file URLs
-			Path path = Paths.get(URIUtils.newURI(url));
+			Path path = Paths.get(UriUtils.newURI(url));
 			String pathStr = path.toString();
 			
 			HDT hdt;

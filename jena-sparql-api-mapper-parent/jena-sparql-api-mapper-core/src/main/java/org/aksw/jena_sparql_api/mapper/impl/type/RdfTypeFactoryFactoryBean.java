@@ -2,11 +2,11 @@ package org.aksw.jena_sparql_api.mapper.impl.type;
 
 import java.util.function.Function;
 
-import org.aksw.jena_sparql_api.beans.model.EntityOps;
+import org.aksw.commons.beans.model.ConversionService;
+import org.aksw.commons.beans.model.EntityOps;
 import org.aksw.jena_sparql_api.mapper.model.RdfTypeFactory;
 import org.apache.jena.sparql.core.Prologue;
 import org.springframework.beans.factory.FactoryBean;
-import org.springframework.core.convert.ConversionService;
 
 public class RdfTypeFactoryFactoryBean
 	implements FactoryBean<RdfTypeFactory>

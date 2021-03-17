@@ -23,6 +23,7 @@ import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
+import org.apache.jena.query.ARQ;
 import org.apache.jena.rdf.model.Literal;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -36,8 +37,21 @@ import org.apache.jena.rdf.model.impl.LiteralImpl;
 import org.apache.jena.rdf.model.impl.ModelCom;
 import org.apache.jena.rdf.model.impl.PropertyImpl;
 import org.apache.jena.rdf.model.impl.ResourceImpl;
+import org.apache.jena.sparql.ARQConstants;
+import org.apache.jena.sparql.core.DatasetGraph;
+import org.apache.jena.sparql.core.DatasetGraphFactory;
+import org.apache.jena.sparql.core.TriplePath;
+import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.engine.ExecutionContext;
+import org.apache.jena.sparql.engine.QueryIterator;
+import org.apache.jena.sparql.engine.binding.BindingFactory;
+import org.apache.jena.sparql.engine.main.QC;
 import org.apache.jena.sparql.path.P_Path0;
+import org.apache.jena.sparql.path.Path;
+import org.apache.jena.sparql.path.PathLib;
+import org.apache.jena.sparql.util.Context;
 import org.apache.jena.sparql.util.ModelUtils;
+import org.apache.jena.sparql.util.NodeFactoryExtra;
 import org.apache.jena.util.iterator.ClosableIterator;
 import org.apache.jena.util.iterator.ExtendedIterator;
 
@@ -1184,6 +1198,44 @@ public class ResourceUtils {
                 result.put(src, tgt);
             }
         }
+
+        return result;
+    }
+    
+    
+    /**
+     * Obtain the stream of values reachable from a given source node and a path.
+     * 
+     * The flag 'isForward' determines whether the source takes the subject or object position
+     * of the underlying TriplePath.
+     * 
+     * 
+     * @param source
+     * @param path
+     * @param isForward
+     * @return
+     */
+    public Stream<RDFNode> getReachableValues(RDFNode source, Path path, boolean isForward) {
+    	Model model = source.getModel();
+    	
+    	Node s = source.asNode();
+    	Var o = Var.alloc("o");
+
+    	TriplePath tp = isForward
+    			? new TriplePath(s, path, o)
+    			: new TriplePath(o, path, s);
+ 
+    	DatasetGraph dsg = DatasetGraphFactory.wrap(source.getModel().getGraph());
+    	
+        Context context = ARQ.getContext().copy() ;
+        context.set(ARQConstants.sysCurrentTime, NodeFactoryExtra.nowAsDateTime()) ;
+        ExecutionContext execCxt = new ExecutionContext(context, dsg.getDefaultGraph(), dsg, QC.getFactory(context)) ;
+
+        QueryIterator it = PathLib.execTriplePath(BindingFactory.root(), tp, execCxt);
+        Stream<RDFNode> result = Streams.stream(it)
+        		.onClose(it::close)
+        		.map(qs -> qs.get(o))
+        		.map(model::asRDFNode);
 
         return result;
     }

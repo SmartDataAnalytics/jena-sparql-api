@@ -39,6 +39,7 @@ import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFLanguages;
 import org.apache.jena.riot.system.PrefixMap;
 import org.apache.jena.shared.PrefixMapping;
+import org.apache.jena.shared.impl.PrefixMappingImpl;
 import org.apache.jena.sparql.core.Prologue;
 import org.apache.jena.sparql.modify.request.UpdateLoad;
 import org.apache.jena.update.UpdateRequest;
@@ -69,11 +70,17 @@ import com.google.common.base.StandardSystemProperty;
  * Relative paths are resolved against the current working directory as reported by the JVM.
  * Use "cwd=" (with an empty string) to reset the CWD to that of the JVM
  *
- * @author raven
+ * @author Claus Stadler
  *
  */
 public class SparqlScriptProcessor {
 
+	/**
+	 * Provenance of SPARQL statements - file:line:column
+	 * 
+	 * @author Claus Stadler
+	 *
+	 */
     public static class Provenance {
         public Provenance(String arg) {
             this(arg, null, null);
@@ -121,15 +128,23 @@ public class SparqlScriptProcessor {
 
     private static final Logger logger = LoggerFactory.getLogger(SparqlScriptProcessor.class);
 
-    protected SparqlStmtParser sparqlParser ;
+    protected Function<? super Prologue, ? extends SparqlStmtParser> sparqlParserFactory; //  SparqlStmtParser sparqlParser ;
+    
+    /**
+     * The set of global prefixes will be extended with the prefixes of every parsed query.
+     * Set this attribute to null to disable global prefixes.
+     */
     protected PrefixMapping globalPrefixes;
     protected Path cwd = null;
     protected List<Entry<SparqlStmt, Provenance>> sparqlStmts = new ArrayList<>();
     protected List<Function<? super SparqlStmt, ? extends SparqlStmt>> postTransformers = new ArrayList<>();
 
-    public SparqlScriptProcessor(SparqlStmtParser sparqlParser, PrefixMapping globalPrefixes) {
+    public SparqlScriptProcessor(//SparqlStmtParser sparqlParser,
+    		Function<? super Prologue, ? extends SparqlStmtParser> sparqlParserFactory,
+    		PrefixMapping globalPrefixes) {
         super();
-        this.sparqlParser = sparqlParser;
+//        this.sparqlParser = sparqlParser;
+        this.sparqlParserFactory = sparqlParserFactory;
         this.globalPrefixes = globalPrefixes;
     }
 
@@ -146,10 +161,26 @@ public class SparqlScriptProcessor {
     }
 
     public SparqlStmtParser getSparqlParser() {
-        return sparqlParser;
+    	return sparqlParserFactory.apply(new Prologue(globalPrefixes));
+//        return sparqlParser;
     }
 
 
+    public static SparqlStmtParser createParserWithEnvSubstitution(Prologue prologue) {
+        SparqlQueryParser queryParser = SparqlQueryParserWrapperSelectShortForm.wrap(
+                SparqlQueryParserImpl.create(Syntax.syntaxARQ, prologue));
+
+        SparqlUpdateParser updateParser = SparqlUpdateParserImpl
+                .create(Syntax.syntaxARQ, prologue);
+
+        SparqlStmtParser sparqlParser =
+                SparqlStmtParser.wrapWithTransform(
+                        new SparqlStmtParserImpl(queryParser, updateParser, true),
+                        stmt -> SparqlStmtUtils.applyNodeTransform(stmt, x -> NodeUtils.substWithLookup(x, System::getenv)));
+
+        return sparqlParser;
+    }
+    
     /**
      * Create a script processor that substitutes references to environment variables
      * with the appropriate values.
@@ -157,20 +188,10 @@ public class SparqlScriptProcessor {
      * @param pm
      * @return
      */
-    public static SparqlScriptProcessor createWithEnvSubstitution(PrefixMapping pm) {
-        Prologue p = new Prologue(pm);
-        SparqlQueryParser queryParser = SparqlQueryParserWrapperSelectShortForm.wrap(
-                SparqlQueryParserImpl.create(Syntax.syntaxARQ, p));
-
-        SparqlUpdateParser updateParser = SparqlUpdateParserImpl
-                .create(Syntax.syntaxARQ, new Prologue(p));
-
-        SparqlStmtParser sparqlParser =
-                SparqlStmtParser.wrapWithTransform(
-                        new SparqlStmtParserImpl(queryParser, updateParser, false),
-                        stmt -> SparqlStmtUtils.applyNodeTransform(stmt, x -> NodeUtils.substWithLookup(x, System::getenv)));
-
-        SparqlScriptProcessor result = new SparqlScriptProcessor(sparqlParser, pm);
+    public static SparqlScriptProcessor createWithEnvSubstitution(PrefixMapping globalPrefixes) {
+        SparqlScriptProcessor result = new SparqlScriptProcessor(
+        		SparqlScriptProcessor::createParserWithEnvSubstitution,
+        		globalPrefixes);
         return result;
     }
 
@@ -221,7 +242,11 @@ public class SparqlScriptProcessor {
 
                 String baseIri = cwd == null ? null : cwd.toUri().toString();
                 try {
-                    Iterator<SparqlStmt> it = SparqlStmtMgr.loadSparqlStmts(filename, globalPrefixes, sparqlParser, baseIri);
+//                    Iterator<SparqlStmt> it = SparqlStmtMgr.loadSparqlStmts(filename, globalPrefixes, sparqlParser, baseIri);
+                	// globalPrefixes, 
+                	Prologue prologue = new Prologue(globalPrefixes == null ? new PrefixMappingImpl() : globalPrefixes, baseIri);
+                	SparqlStmtParser sparqlParser = sparqlParserFactory.apply(prologue);
+                	Iterator<SparqlStmt> it = SparqlStmtMgr.loadSparqlStmts(filename, sparqlParser);
 
                     if(it != null) {
                         //Path sparqlPath = Paths.get(filename).toAbsolutePath();
@@ -245,11 +270,13 @@ public class SparqlScriptProcessor {
 
                             SparqlStmt stmt = it.next();
 
-                            PrefixMapping stmtPrefixes = stmt.getPrefixMapping();
-                            if(stmtPrefixes != null) {
-                                globalPrefixes.setNsPrefixes(stmtPrefixes);
+                            if (globalPrefixes != null) {
+	                            PrefixMapping stmtPrefixes = stmt.getPrefixMapping();
+	                            if(stmtPrefixes != null) {
+	                                globalPrefixes.setNsPrefixes(stmtPrefixes);
+	                            }
                             }
-
+                            
                             // Move optimizePrefixes to transformers?
                             SparqlStmtUtils.optimizePrefixes(stmt);
 
@@ -277,7 +304,7 @@ public class SparqlScriptProcessor {
 //        String str = StreamManager.get().mapURI(filename);
 
         // Try as RDF file
-        try(TypedInputStream tmpIn = RDFDataMgrEx.open(filename, Arrays.asList(Lang.TRIG, Lang.NQUADS))) {
+        try(TypedInputStream tmpIn = RDFDataMgrEx.open(filename, Arrays.asList(Lang.TRIG, Lang.NQUADS, Lang.RDFXML))) {
 //            if(tmpIn == null) {
 //                throw new FileNotFoundException(filename);
 //            }

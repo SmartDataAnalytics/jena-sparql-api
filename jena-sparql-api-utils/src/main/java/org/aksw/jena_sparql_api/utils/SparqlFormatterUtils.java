@@ -6,20 +6,20 @@ import java.io.OutputStream;
 import java.io.PrintStream;
 import java.lang.reflect.Method;
 import java.util.Iterator;
+import java.util.function.Function;
 
 import org.aksw.commons.util.reflect.MultiMethod;
-import org.apache.commons.collections15.Transformer;
 import org.apache.jena.atlas.lib.Sink;
-import org.apache.jena.riot.out.SinkTripleOutput;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.riot.out.SinkTripleOutput;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.talis.rdfwriters.json.JSONJenaWriter;
 
 /**
@@ -57,11 +57,11 @@ public class SparqlFormatterUtils {
 	// public static final String FORMAT_ = "";
 	public static final String FORMAT_Json = "Json";
 
-	public static <I, O> Transformer<I, O> wrapMethod(final Method method) {
-		return method == null ? null : new Transformer<I, O>() {
+	public static <I, O> Function<I, O> wrapMethod(final Method method) {
+		return method == null ? null : new Function<I, O>() {
 			@SuppressWarnings("unchecked")
 			@Override
-			public O transform(I input) {
+			public O apply(I input) {
 				try {
 					return (O) method.invoke(null, input);
 				} catch (Exception e) {
@@ -71,19 +71,19 @@ public class SparqlFormatterUtils {
 		};
 	}
 
-	public static Transformer<Model, String> getModelFormatter(String format) {
+	public static Function<Model, String> getModelFormatter(String format) {
 		Method method = MultiMethod.findMethodByParams(
 				SparqlFormatterUtils.class, "_format" + format, Model.class);
 		return wrapMethod(method);
 	}
 
-	public static Transformer<Boolean, String> getBooleanFormatter(String format) {
+	public static Function<Boolean, String> getBooleanFormatter(String format) {
 		Method method = MultiMethod.findMethodByParams(
 				SparqlFormatterUtils.class, "_format" + format, Boolean.class);
 		return wrapMethod(method);
 	}
 
-	public static Transformer<ResultSet, String> getResultSetFormatter(
+	public static Function<ResultSet, String> getResultSetFormatter(
 			String format) {
 		Method method = MultiMethod
 				.findMethodByParams(SparqlFormatterUtils.class, "_format"

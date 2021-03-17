@@ -82,6 +82,14 @@ import org.apache.jena.sparql.util.Symbol;
 import org.apache.jena.update.Update;
 import org.apache.jena.update.UpdateRequest;
 
+/**
+ * Utility methods for processing sources of SparqlStmts
+ * 
+ * TODO Consolidate with SparqlStmtMgr
+ * 
+ * @author raven
+ *
+ */
 public class SparqlStmtUtils {
 
     // TODO Duplicate symbol definition; exists in E_Benchmark
@@ -281,6 +289,17 @@ public class SparqlStmtUtils {
         return in;
     }
 
+    public static SparqlStmtIterator readStmts(String filenameOrURI, SparqlStmtParser parser)
+    		throws IOException {
+        InputStream in = openInputStream(filenameOrURI);
+        if(in == null) {
+            throw new IOException("Could not open input stream from " + filenameOrURI);
+        }
+
+        SparqlStmtIterator result = parse(in, parser);
+        return result;
+    }
+
     /**
      *
      * @param pm A <b>modifiable<b> prefix mapping
@@ -315,6 +334,15 @@ public class SparqlStmtUtils {
         //stmts.forEach(stmt -> process(conn, stmt, sink));
     }
 
+    
+    /**
+     * Parse all queries from th given input stream using a sparql parser with
+     * namespace tracking.
+     * 
+     * This is just a convenience function which creates a sparql parser
+     * from the arguments and calls {@link #parse(InputStream, Function)} - deprecate? 
+     */
+    @Deprecated
     public static SparqlStmtIterator processInputStream(PrefixMapping pm, String baseIri, InputStream in)
             throws IOException, ParseException {
 
@@ -336,58 +364,34 @@ public class SparqlStmtUtils {
 
 
         // Wrap the parser with tracking the prefixes
-        //SparqlStmtParser sparqlStmtParser = SparqlStmtParser.wrapWithNamespaceTracking(prologue.getPrefixMapping(), rawSparqlStmtParser);
         SparqlStmtParser sparqlStmtParser = SparqlStmtParser.wrapWithNamespaceTracking(pm, rawSparqlStmtParser);
-//				Function<String, SparqlStmt> sparqlStmtParser = s -> {
-//					SparqlStmt r = rawSparqlStmtParser.apply(s);
-//					if(r.isParsed()) {
-//						PrefixMapping pm2 = null;
-//						if(r.isQuery()) {
-//							pm2 = r.getAsQueryStmt().getQuery().getPrefixMapping();
-//						} else if(r.isUpdateRequest()) {
-//							pm2 = pm.setNsPrefixes(r.getAsUpdateStmt().getUpdateRequest().getPrefixMapping());
-//						}
-//
-//						if(pm2 != null) {
-//							pm.setNsPrefixes(pm2);
-//						}
-//					}
-//					return r;
-//				};
-
-        //InputStream in = new FileInputStream(filename);
         SparqlStmtIterator stmts = SparqlStmtUtils.parse(in, sparqlStmtParser);
 
         return stmts;
     }
 
-
+    /**
+     * Parse an input stream with the given parser.
+     * Parsing happens on calling next/hasNext on the iterator so
+     * this method will not raise a ParseException on invalid input.
+     * 
+     * Because of the trial/error approach of the parser the whole input stream is
+     * immediately read into a string and closed
+     * 
+     * @param in
+     * @param parser
+     * @return
+     * @throws IOException
+     */
     public static SparqlStmtIterator parse(InputStream in, Function<String, SparqlStmt> parser)
-            throws IOException, ParseException {
-        // try(QueryExecution qe = qef.createQueryExecution(q)) {
-        // Model result = qe.execConstruct();
-        // RDFDataMgr.write(System.out, result, RDFFormat.TURTLE_PRETTY);
-        // //ResultSet rs = qe.execSelect();
-        // //System.out.println(ResultSetFormatter.asText(rs));
-        // }
-        // File file = new
-        // File("/home/raven/Projects/Eclipse/trento-bike-racks/datasets/test/test.sparql");
-        // String str = Files.asCharSource(, StandardCharsets.UTF_8).read();
-
+            throws IOException {
         String str;
         try {
             str = CharStreams.toString(new InputStreamReader(in, StandardCharsets.UTF_8));
         } finally {
             in.close();
         }
-        // ARQParser parser = new ARQParser(new FileInputStream(file));
-        // parser.setQuery(new Query());
-        // parser.
 
-        // SparqlStmtParser parser = SparqlStmtParserImpl.create(Syntax.syntaxARQ,
-        // PrefixMapping.Extended, true);
-
-        //Stream<SparqlStmt> result = Streams.stream(new SparqlStmtIterator(parser, str));
         SparqlStmtIterator result = new SparqlStmtIterator(parser, str);
         return result;
     }

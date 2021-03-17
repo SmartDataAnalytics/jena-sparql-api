@@ -5,7 +5,7 @@ import java.util.Set;
 
 import org.aksw.jena_sparql_api.sparql_path2.Nfa;
 import org.jgrapht.Graph;
-import org.jgrapht.alg.ConnectivityInspector;
+import org.jgrapht.alg.connectivity.ConnectivityInspector;
 
 /**
  *

@@ -1,6 +1,7 @@
 package org.aksw.jena_sparql_api.io.binseach;
 
 import java.io.IOException;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
 import java.util.concurrent.BlockingQueue;
@@ -130,7 +131,7 @@ public class ReadableByteChannelFromBlockingQueue
 	        int newOff = off + toRead;
 	
 	        ByteBuffer tmp = currentBuffer.duplicate();
-	        tmp.limit(newOff);
+	        ((Buffer)tmp).limit(newOff);
 	        dst.put(tmp);
 	//        System.out.println("Got:");
 	//        System.out.println(new String(dst.array(), StandardCharsets.UTF_8));

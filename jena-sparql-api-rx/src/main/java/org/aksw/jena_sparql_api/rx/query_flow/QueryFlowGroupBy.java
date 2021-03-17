@@ -3,6 +3,7 @@ package org.aksw.jena_sparql_api.rx.query_flow;
 import java.util.Collection;
 import java.util.List;
 
+import org.aksw.commons.rx.util.RxUtils;
 import org.apache.jena.atlas.lib.Pair;
 import org.apache.jena.ext.com.google.common.collect.Multimap;
 import org.apache.jena.ext.com.google.common.collect.MultimapBuilder;

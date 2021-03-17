@@ -28,7 +28,9 @@ public class BindingUtils {
 
         for(Var var : vars) {
             Node node = binding.get(var);
-            result.add(var, node);
+            if (node != null) {
+            	result.add(var, node);
+            }
         }
 
         return result;

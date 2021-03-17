@@ -12,8 +12,8 @@ import java.util.function.Function;
 import javax.persistence.metamodel.Attribute;
 import javax.persistence.metamodel.EntityType;
 
-import org.aksw.jena_sparql_api.beans.model.EntityOps;
-import org.aksw.jena_sparql_api.beans.model.PropertyOps;
+import org.aksw.commons.beans.model.EntityOps;
+import org.aksw.commons.beans.model.PropertyOps;
 
 public class MetamodelGenerator {
 	protected Function<Class<?>, EntityOps> entityOpsGenerator;

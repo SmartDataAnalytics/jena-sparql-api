@@ -14,10 +14,10 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.aksw.commons.beans.model.EntityOps;
+import org.aksw.commons.beans.model.PropertyOps;
 import org.aksw.commons.collections.diff.Diff;
 import org.aksw.commons.util.reflect.ClassUtils;
-import org.aksw.jena_sparql_api.beans.model.EntityOps;
-import org.aksw.jena_sparql_api.beans.model.PropertyOps;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.core.SparqlService;

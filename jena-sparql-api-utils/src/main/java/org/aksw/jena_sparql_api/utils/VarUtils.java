@@ -4,10 +4,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.aksw.commons.collections.generator.Generator;
@@ -119,8 +119,9 @@ public class VarUtils {
         return result;
     }
 
+    /** Convert a collection of var names into a linked hash set of Vars */
     public static Set<Var> toSet(Collection<String> varNames) {
-        Set<Var> result = new HashSet<Var>();
+        Set<Var> result = new LinkedHashSet<>();
         for(String varName : varNames) {
             Var var = Var.alloc(varName);
             result.add(var);

@@ -228,6 +228,13 @@ public class QueryExecutionUtils {
     }
 
 
+    public static long fetchBindingCount(String serviceUrl, Query query) {
+        long result;
+        try (QueryExecution qe = org.apache.jena.query.QueryExecutionFactory.createServiceRequest(serviceUrl, query)) {
+            result = ResultSetFormatter.consume(qe.execSelect());
+        }
+        return result;
+    }
 
     // TODO Consolidate with QueryGenerationUtils
     public static long countQuery(Query query, QueryExecutionFactory qef) {

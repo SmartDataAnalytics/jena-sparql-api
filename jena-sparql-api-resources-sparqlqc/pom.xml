@@ -8,7 +8,7 @@
     <parent>
         <groupId>org.aksw.jena-sparql-api</groupId>
         <artifactId>jena-sparql-api-parent</artifactId>
-        <version>3.16.0-2</version>
+        <version>3.17.0-1</version>
     </parent>
 
     <dependencies>
@@ -28,6 +28,14 @@
             <groupId>org.springframework</groupId>
             <artifactId>spring-core</artifactId>
         </dependency>
+
+
+		<!-- Unit Testing -->
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<scope>test</scope>
+		</dependency>
 
         <dependency>
             <groupId>org.aksw.jena-sparql-api</groupId>
@@ -54,6 +62,7 @@
 		</dependency>
 
     </dependencies>
+
 
     <repositories>
         <repository>

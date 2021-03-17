@@ -1,6 +1,6 @@
 package org.aksw.jena_sparql_api.mapper.model;
 
-import org.aksw.jena_sparql_api.beans.model.PropertyOps;
+import org.aksw.commons.beans.model.PropertyOps;
 import org.apache.jena.graph.Node;
 
 /**

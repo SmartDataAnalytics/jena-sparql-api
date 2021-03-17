@@ -9,9 +9,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
 
+import org.aksw.commons.beans.model.PropertyOps;
 import org.aksw.commons.collections.reversible.ReversibleMap;
 import org.aksw.commons.collections.reversible.ReversibleMapImpl;
-import org.aksw.jena_sparql_api.beans.model.PropertyOps;
 import org.aksw.jena_sparql_api.mapper.impl.engine.EntityGraphMap;
 import org.aksw.jena_sparql_api.mapper.model.RdfTypeFactory;
 import org.apache.jena.ext.com.google.common.collect.Sets;

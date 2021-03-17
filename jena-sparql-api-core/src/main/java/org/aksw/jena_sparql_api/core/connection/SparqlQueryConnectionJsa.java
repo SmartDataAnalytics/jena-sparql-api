@@ -13,7 +13,11 @@ public class SparqlQueryConnectionJsa
     protected Transactional transactional;
 
     public SparqlQueryConnectionJsa(QueryExecutionFactory queryExecutionFactory) {
-        this(queryExecutionFactory, new TransactionalTmp() {});
+        this(queryExecutionFactory, new TransactionalTmp() {
+        	@Override
+	        public Transactional getDelegate() {
+	        	return null;
+	        }});
     }
 
     public SparqlQueryConnectionJsa(QueryExecutionFactory queryExecutionFactory, Transactional transactional) {
@@ -23,7 +27,7 @@ public class SparqlQueryConnectionJsa
     }
 
     @Override
-    protected Transactional getDelegate() {
+    public Transactional getDelegate() {
         return transactional;
     }
 

@@ -7,6 +7,16 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 
+/**
+ * 
+ * 
+ * @author raven
+ *
+ * @param <B>
+ * @param <K>
+ * @param <V>
+ * @param <C>
+ */
 public class AccMap2<B, K, V, C extends Aggregator<B, V>>
     implements Accumulator<B, Map<K, V>>
 {

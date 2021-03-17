@@ -1,6 +1,7 @@
 package org.aksw.jena_sparql_api.io.binseach;
 
 import java.io.IOException;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 
 import org.aksw.jena_sparql_api.io.common.Reference;
@@ -151,7 +152,8 @@ public class PageNavigator
     }
 
     /**
-     * Limit the
+     * Limit the maxmimum position by length bytes from the current position.
+     * 
      * @param length
      * @return
      */
@@ -786,8 +788,8 @@ public class PageNavigator
         } else {
             while(dst.remaining() > 0 && (buffer = getBufferForPage(page)) != null) {
                 ByteBuffer src = buffer.duplicate();
-                src.position(displacement + index);
-                src.limit(displacement + relMaxIndexInPage);
+                ((Buffer)src).position(displacement + index);
+                ((Buffer)src).limit(displacement + relMaxIndexInPage);
                 int readContrib = readRemaining(dst, src);
                 n += readContrib;
 
@@ -806,7 +808,7 @@ public class PageNavigator
     // Copy as much as possible into dst
     public static int readRemaining(ByteBuffer dst, ByteBuffer src) {
         int n = Math.min(src.remaining(), dst.remaining());
-        src.limit(src.position() + n);
+        ((Buffer)src).limit(src.position() + n);
         dst.put(src);
 
         return n;

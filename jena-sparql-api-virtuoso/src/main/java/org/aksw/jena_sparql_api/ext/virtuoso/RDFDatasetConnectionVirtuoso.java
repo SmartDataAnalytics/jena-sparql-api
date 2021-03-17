@@ -5,9 +5,12 @@ import java.sql.Connection;
 import java.sql.SQLException;
 
 import org.apache.jena.query.Dataset;
+import org.apache.jena.query.ReadWrite;
+import org.apache.jena.query.TxnType;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdfconnection.RDFDatasetConnection;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
+import org.apache.jena.sparql.core.Transactional;
 
 public class RDFDatasetConnectionVirtuoso
     extends RDFDatasetAccessConnectionBase
@@ -131,5 +134,34 @@ public class RDFDatasetConnectionVirtuoso
             super.close();
         }
     }
+
+	@Override
+	public void begin(TxnType type) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public boolean promote(Promote mode) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public ReadWrite transactionMode() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public TxnType transactionType() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Transactional getDelegate() {
+		return null;
+	}
 
 }

@@ -1,7 +1,5 @@
 package org.aksw.sparqlify.database;
 
-import org.apache.commons.lang.NotImplementedException;
-
 interface CompareOp
 {
 	
@@ -31,6 +29,6 @@ public class CompareConstraint
 
 	@Override
 	public boolean isSatisfiedBy(Object value) {
-		throw new NotImplementedException();
+		throw new UnsupportedOperationException();
 	}	
 }

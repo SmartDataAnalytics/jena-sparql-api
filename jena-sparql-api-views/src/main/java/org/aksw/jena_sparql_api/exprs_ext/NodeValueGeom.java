@@ -1,7 +1,6 @@
 package org.aksw.jena_sparql_api.exprs_ext;
 
 import org.aksw.jena_sparql_api.views.OgcVocab;
-import org.apache.commons.lang.NotImplementedException;
 import org.apache.jena.datatypes.RDFDatatype;
 import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.graph.Node;
@@ -38,6 +37,6 @@ public class NodeValueGeom
 
     @Override
     public void visit(NodeValueVisitor visitor) {
-        throw new NotImplementedException();
+        throw new UnsupportedOperationException();
     }
 }

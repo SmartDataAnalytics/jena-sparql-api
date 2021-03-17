@@ -1,10 +1,11 @@
 package org.aksw.jena_sparql_api.retry.core;
 
 
-import com.google.common.base.Preconditions;
-import com.google.common.base.Predicate;
-import com.nurkiewicz.asyncretry.backoff.*;
-import com.nurkiewicz.asyncretry.policy.RetryPolicy;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
+
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactoryDecorator;
 import org.aksw.jena_sparql_api.http.QueryExecutionFactoryHttp;
@@ -13,10 +14,16 @@ import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.query.ResultSetFormatter;
 
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Supplier;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Predicate;
+import com.nurkiewicz.asyncretry.backoff.Backoff;
+import com.nurkiewicz.asyncretry.backoff.BoundedMaxBackoff;
+import com.nurkiewicz.asyncretry.backoff.BoundedMinBackoff;
+import com.nurkiewicz.asyncretry.backoff.ExponentialDelayBackoff;
+import com.nurkiewicz.asyncretry.backoff.FixedIntervalBackoff;
+import com.nurkiewicz.asyncretry.backoff.ProportionalRandomBackoff;
+import com.nurkiewicz.asyncretry.backoff.UniformRandomBackoff;
+import com.nurkiewicz.asyncretry.policy.RetryPolicy;
 
 public class QueryExecutionFactoryRetry
     extends QueryExecutionFactoryDecorator

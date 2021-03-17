@@ -7,5 +7,6 @@ import java.lang.annotation.RetentionPolicy;
 public @interface Namespace {
 //    String ns();
 //    String iri();
+	String prefix();
     String value();
 }

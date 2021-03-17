@@ -6,7 +6,7 @@
 	<parent>
 		<groupId>org.aksw.jena-sparql-api</groupId>
 		<artifactId>jena-sparql-api-parent</artifactId>
-		<version>3.16.0-2</version>
+		<version>3.17.0-1</version>
 	</parent>
 
 	<artifactId>jena-sparql-api-web</artifactId>
@@ -98,7 +98,7 @@
 
 		<dependency>
 			<groupId>org.glassfish.jersey.ext</groupId>
-			<artifactId>jersey-spring3</artifactId>
+			<artifactId>jersey-spring5</artifactId>
 		</dependency>
 
 		<dependency>
@@ -140,21 +140,26 @@
 		<!-- <artifactId>urlrewritefilter</artifactId> -->
 		<!-- </dependency> -->
 
-		<!-- <dependency> -->
-		<!-- <groupId>javax.servlet</groupId> -->
-		<!-- <artifactId>servlet-api</artifactId> -->
-		<!-- </dependency> -->
+		<dependency>
+			<groupId>javax.servlet</groupId>
+			<artifactId>javax.servlet-api</artifactId>
+		</dependency>
 
+<!-- 		<dependency> -->
+<!-- 			<groupId>javax.ws.rs</groupId> -->
+<!-- 			<artifactId>jsr311-api</artifactId> -->
+<!-- 		</dependency> -->
+
+		<dependency>
+			<groupId>javax.ws.rs</groupId>
+			<artifactId>javax.ws.rs-api</artifactId>
+		</dependency>
 
 		<!-- <dependency> -->
 		<!-- <groupId>javax.servlet</groupId> -->
 		<!-- <artifactId>javax.servlet-api</artifactId> -->
 		<!-- </dependency> -->
 
-		<!-- <dependency> -->
-		<!-- <groupId>javax.ws.rs</groupId> -->
-		<!-- <artifactId>jsr311-api</artifactId> -->
-		<!-- </dependency> -->
 
 		<!-- <dependency> -->
 		<!-- <groupId>org.springframework</groupId> -->

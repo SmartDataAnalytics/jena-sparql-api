@@ -3,8 +3,8 @@ package org.aksw.jena_sparql_api.utils;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 
@@ -215,6 +215,36 @@ public class NodeUtils {
     }
 
 
+    /* Constants for use with {@link #getDatatypeIri(Node)} */ 
+	public static final String R2RML_NS 					= "http://www.w3.org/ns/r2rml#";
+	public static final String R2RML_IRI 					= R2RML_NS + "IRI";
+	public static final String R2RML_BlankNode 				= R2RML_NS + "BlankNode";
+
+	/**
+	 * Return a Node's datatype. Thereby, IRIs are returned as rr:IRI and BlankNodes as rr:BlankNode
+	 * Returns null for variables and unknown node types
+	 * 
+	 * @param node
+	 */
+	public static String getDatatypeIri(Node node) {
+		String result;
+		if (node == null) {
+			result = null;
+		} else if (node.isURI()) {
+			result = R2RML_IRI;
+		} else if (node.isBlank()) {
+			result = R2RML_BlankNode;
+		} else if (node.isLiteral()) {
+			result = node.getLiteralDatatypeURI();
+		} else {
+			// Should not happen
+			result = null;
+		}
+		
+		return result;
+	}
+
+    
     @Deprecated // Use NodeFmtLib.str
     public static String toNTriplesString(Node node) {
         NodeFormatterNT formatter = new NodeFormatterNT();

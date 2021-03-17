@@ -5,7 +5,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.aksw.jena_sparql_api.beans.model.CollectionOps;
+import org.aksw.commons.beans.model.CollectionOps;
 import org.springframework.batch.item.ExecutionContext;
 
 

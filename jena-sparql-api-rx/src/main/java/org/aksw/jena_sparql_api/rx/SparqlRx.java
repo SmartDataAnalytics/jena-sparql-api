@@ -16,10 +16,10 @@ import java.util.concurrent.Callable;
 import java.util.function.Function;
 
 import org.aksw.commons.collections.SetUtils;
-import org.aksw.jena_sparql_api.concepts.Concept;
+import org.aksw.commons.rx.op.FlowableOperatorSequentialGroupBy;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
+import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.http.HttpExceptionUtils;
-import org.aksw.jena_sparql_api.rx.op.OperatorOrderedGroupBy;
 import org.aksw.jena_sparql_api.syntax.QueryGenerationUtils;
 import org.aksw.jena_sparql_api.utils.IteratorResultSetBinding;
 import org.aksw.jena_sparql_api.utils.QuadPatternUtils;
@@ -30,6 +30,7 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
+import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.query.SortCondition;
@@ -179,7 +180,7 @@ public class SparqlRx {
 //		}
 //	}
 
-    public static <T> Flowable<T> execSelect(Callable<QueryExecution> qes, Function<? super ResultSet, T> next) {
+    public static <T> Flowable<T> execSelect(Callable<? extends QueryExecution> qes, Function<? super ResultSet, T> next) {
         Flowable<T> result = RDFDataMgrRx.createFlowableFromResource(
                 qes::call,
                 QueryExecution::execSelect,
@@ -223,11 +224,11 @@ public class SparqlRx {
         return result;
     }
 
-    public static Flowable<Binding> execSelectRaw(Callable<QueryExecution> qes) {
+    public static Flowable<Binding> execSelectRaw(Callable<? extends QueryExecution> qes) {
         return execSelect(qes, ResultSet::nextBinding);
     }
 
-    public static Flowable<QuerySolution> execSelect(Callable<QueryExecution> qes) {
+    public static Flowable<QuerySolution> execSelect(Callable<? extends QueryExecution> qes) {
         return execSelect(qes, ResultSet::next);
     }
 
@@ -389,7 +390,7 @@ public class SparqlRx {
                 .doOnNext(i -> currentValue[0] = i)
                 .doOnCancel(() -> isCancelled[0] = true)
                 .map(i -> Maps.immutableEntry((int)(i / 3), i))
-                .lift(OperatorOrderedGroupBy.<Entry<Integer, Integer>, Integer, List<Integer>>create(
+                .lift(FlowableOperatorSequentialGroupBy.<Entry<Integer, Integer>, Integer, List<Integer>>create(
                         Entry::getKey,
                         groupKey -> new ArrayList<>(),
                         (acc, e) -> acc.add(e.getValue())));
@@ -441,7 +442,11 @@ public class SparqlRx {
     }
 
     public static Single<Number> fetchNumber(SparqlQueryConnection qef, Query query, Var var) {
-        return SparqlRx.execSelectRaw(() -> qef.query(query))
+    	return fetchNumber(() -> qef.query(query), var);
+    }
+    
+    public static Single<Number> fetchNumber(Callable<? extends QueryExecution> queryConnSupp, Var var) {
+        return SparqlRx.execSelectRaw(queryConnSupp)
                 .map(b -> b.get(var))
                 .map(countNode -> ((Number)countNode.getLiteralValue()))
                 .map(Optional::ofNullable)
@@ -450,7 +455,7 @@ public class SparqlRx {
     }
 
 
-    public static Single<Range<Long>> fetchCountConcept(SparqlQueryConnection qef, Concept concept, Long itemLimit, Long rowLimit) {
+    public static Single<Range<Long>> fetchCountConcept(SparqlQueryConnection qef, UnaryRelation concept, Long itemLimit, Long rowLimit) {
 
         Var outputVar = ConceptUtils.freshVar(concept);
 
@@ -499,6 +504,14 @@ public class SparqlRx {
                 .map(count -> SparqlRx.toRange(count.longValue(), xitemLimit, xrowLimit));
     }
 
+    public static Single<Long> fetchBindingCount(String serviceUrl, Query query) {
+    	Entry<Var, Query> countQuery = QueryGenerationUtils.createQueryCount(query);
+        return SparqlRx.fetchNumber(() ->
+        	QueryExecutionFactory.createServiceRequest(serviceUrl, countQuery.getValue()),
+        		countQuery.getKey())
+        		.map(Number::longValue);
+    }
+    
     public static Single<Range<Long>> fetchCountQuery(SparqlQueryConnection qef, Query query, Long itemLimit, Long rowLimit) {
         Single<Range<Long>> result = fetchCountQueryPartition(qef, query, null, itemLimit, rowLimit);
         return result;
@@ -571,7 +584,7 @@ public class SparqlRx {
             // For future reference: If we get an empty results by using the query object, we probably have wrapped a variable with NodeValue.makeNode.
             .execSelectRaw(() -> qeSupp.apply(clone))
             //.groupBy(createGrouper(primaryKeyVars, false)::apply)
-            .lift(OperatorOrderedGroupBy.<Binding, Binding, AccGraph>create(
+            .lift(FlowableOperatorSequentialGroupBy.<Binding, Binding, AccGraph>create(
                     grouper::apply,
                     groupKey -> new AccGraph(template),
                     AccGraph::accumulate))

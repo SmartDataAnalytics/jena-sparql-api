@@ -6,9 +6,11 @@ import java.util.function.Function;
 
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.TransformCopy;
+import org.apache.jena.sparql.algebra.op.Op0;
 import org.apache.jena.sparql.algebra.op.Op1;
 import org.apache.jena.sparql.algebra.op.Op2;
 import org.apache.jena.sparql.algebra.op.OpAssign;
+import org.apache.jena.sparql.algebra.op.OpBGP;
 import org.apache.jena.sparql.algebra.op.OpConditional;
 import org.apache.jena.sparql.algebra.op.OpDiff;
 import org.apache.jena.sparql.algebra.op.OpDisjunction;
@@ -28,10 +30,14 @@ import org.apache.jena.sparql.algebra.op.OpOrder;
 import org.apache.jena.sparql.algebra.op.OpProcedure;
 import org.apache.jena.sparql.algebra.op.OpProject;
 import org.apache.jena.sparql.algebra.op.OpPropFunc;
+import org.apache.jena.sparql.algebra.op.OpQuadBlock;
+import org.apache.jena.sparql.algebra.op.OpQuadPattern;
 import org.apache.jena.sparql.algebra.op.OpReduced;
 import org.apache.jena.sparql.algebra.op.OpSequence;
 import org.apache.jena.sparql.algebra.op.OpSlice;
+import org.apache.jena.sparql.algebra.op.OpTable;
 import org.apache.jena.sparql.algebra.op.OpTopN;
+import org.apache.jena.sparql.algebra.op.OpTriple;
 import org.apache.jena.sparql.algebra.op.OpUnion;
 
 /**
@@ -48,11 +54,17 @@ public class TransformCopyAdapter
         R apply(A a, B b, C c);
     }
 
-    protected <OPN extends OpN> Op transformOpN(
-            OPN op,
-            List<Op> subOps,
-            BiFunction<? super OPN, ? super List<Op>, ? extends Op> fallback) {
-        return fallback.apply(op, subOps);
+    protected <OP0 extends Op0> Op transformOp0(
+            OP0 op,
+            Function<? super OP0, ? extends Op> fallback) {
+        return fallback.apply(op);
+    }
+
+    protected <OP1 extends Op1> Op transformOp1(
+            OP1 op,
+            Op subOp,
+            BiFunction<? super OP1, ? super Op, ? extends Op> fallback) {
+        return fallback.apply(op, subOp);
     }
 
     protected <OP2 extends Op2> Op transformOp2(
@@ -63,20 +75,54 @@ public class TransformCopyAdapter
         return fallback.apply(op, left, right);
     }
 
-    protected <OP1 extends Op1> Op transformOp1(
-            OP1 op,
-            Op subOp,
-            BiFunction<? super OP1, ? super Op, ? extends Op> fallback) {
-        return fallback.apply(op, subOp);
+    protected <OPN extends OpN> Op transformOpN(
+            OPN op,
+            List<Op> subOps,
+            BiFunction<? super OPN, ? super List<Op>, ? extends Op> fallback) {
+        return fallback.apply(op, subOps);
     }
 
-    protected Op execOpExt(
-            OpExt opExt,
+    protected Op transformOpExt(
+            OpExt op,
             Function<? super OpExt, ? extends Op> fallback) {
-        return fallback.apply(opExt);
+        return fallback.apply(op);
     }
 
-    // Op1
+    
+    /*
+     * Op0
+     */
+    
+    @Override
+    public Op transform(OpTriple op) {
+        return transformOp0(op, super::transform);
+    }
+
+    @Override
+    public Op transform(OpBGP op) {
+        return transformOp0(op, super::transform);
+    }
+
+    @Override
+    public Op transform(OpQuadPattern op) {
+        return transformOp0(op, super::transform);
+    }
+
+    @Override
+    public Op transform(OpQuadBlock op) {
+        return transformOp0(op, super::transform);
+    }
+
+    @Override
+    public Op transform(OpTable op) {
+        return transformOp0(op, super::transform);
+    }
+    
+    
+    /*
+     * Op1
+     */
+
     @Override
     public Op transform(OpFilter op, Op subOp) {
         return transformOp1(op, subOp, super::transform);
@@ -112,55 +158,8 @@ public class TransformCopyAdapter
         return transformOp1(op, subOp, super::transform);
     }
 
-    // Op2
-    @Override
-    public Op transform(OpJoin op, Op left, Op right) {
-        return transformOp2(op, left, right, super::transform);
-    }
-
-    @Override
-    public Op transform(OpLeftJoin op, Op left, Op right) {
-        return transformOp2(op, left, right, super::transform);
-    }
-
-    @Override
-    public Op transform(OpDiff op, Op left, Op right) {
-        return transformOp2(op, left, right, super::transform);
-    }
-
-    @Override
-    public Op transform(OpMinus op, Op left, Op right) {
-        return transformOp2(op, left, right, super::transform);
-    }
-
-    @Override
-    public Op transform(OpUnion op, Op left, Op right) {
-        return transformOp2(op, left, right, super::transform);
-    }
-
-    @Override
-    public Op transform(OpConditional op, Op left, Op right) {
-        return transformOp2(op, left, right, super::transform);
-    }
-
-    // OpN
-    @Override
-    public Op transform(OpSequence op, List<Op> elts) {
-        return transformOpN(op, elts, super::transform);
-    }
-
-    @Override
-    public Op transform(OpDisjunction op, List<Op> elts) {
-        return transformOpN(op, elts, super::transform);
-    }
-
-    // Extensions
-    @Override
-    public Op transform(OpExt opExt) {
-        return execOpExt(opExt, super::transform);
-    }
-
-    // OpModifier
+    /* OpModifier */
+    
     @Override
     public Op transform(OpList op, Op subOp) {
         return transformOp1(op, subOp, super::transform);
@@ -199,5 +198,64 @@ public class TransformCopyAdapter
     @Override
     public Op transform(OpGroup op, Op subOp) {
         return transformOp1(op, subOp, super::transform);
+    }
+    
+    /*
+     * Op2
+     */
+    
+    @Override
+    public Op transform(OpJoin op, Op left, Op right) {
+        return transformOp2(op, left, right, super::transform);
+    }
+
+    @Override
+    public Op transform(OpLeftJoin op, Op left, Op right) {
+        return transformOp2(op, left, right, super::transform);
+    }
+
+    @Override
+    public Op transform(OpDiff op, Op left, Op right) {
+        return transformOp2(op, left, right, super::transform);
+    }
+
+    @Override
+    public Op transform(OpMinus op, Op left, Op right) {
+        return transformOp2(op, left, right, super::transform);
+    }
+
+    @Override
+    public Op transform(OpUnion op, Op left, Op right) {
+        return transformOp2(op, left, right, super::transform);
+    }
+
+    @Override
+    public Op transform(OpConditional op, Op left, Op right) {
+        return transformOp2(op, left, right, super::transform);
+    }
+
+    
+    /*
+     * OpN
+     */
+
+    @Override
+    public Op transform(OpSequence op, List<Op> elts) {
+        return transformOpN(op, elts, super::transform);
+    }
+
+    @Override
+    public Op transform(OpDisjunction op, List<Op> elts) {
+        return transformOpN(op, elts, super::transform);
+    }
+
+    
+    /*
+     * OpExt
+     */
+
+    @Override
+    public Op transform(OpExt opExt) {
+        return transformOpExt(opExt, super::transform);
     }
 }

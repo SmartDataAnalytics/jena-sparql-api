@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
  * A connection wrapper that tries to recover from loss of the underlying connection.
  * Neither replays transactions nor individual queries.
  *
- * If a query fails due to a connection loss then attempts ares made to establish a new connection.
+ * If a query fails due to a connection loss then attempts are made to establish a new connection.
  * If an attempt is successful then a ConnectionReestablishedException is raised which indicates that the
  * query failed but the connection would be ready to accept workloads again.
  *
@@ -52,7 +52,7 @@ public class SparqlQueryConnectionWithReconnect
     protected Query healthCheckQuery = QueryFactory.create(
             "SELECT * { ?s <http://www.example.org/rdf/type> <http://www.example.org/rdf/Resource> }");
 
-    protected Supplier<HealthcheckRunner.Builder> healthCheckBuilder;
+    protected Supplier<HealthcheckRunner.Builder<?>> healthCheckBuilder;
 
     /** True indicates that a recovery process was started which eventually failed */
     // protected boolean isLost = false;
@@ -73,7 +73,7 @@ public class SparqlQueryConnectionWithReconnect
     public SparqlQueryConnectionWithReconnect(
             Callable<SparqlQueryConnection> dataConnectionSupplier,
             Callable<SparqlQueryConnection> probeConnectionSupplier,
-            Supplier<HealthcheckRunner.Builder> healthCheckBuilder,
+            Supplier<HealthcheckRunner.Builder<?>> healthCheckBuilder,
             SparqlQueryConnection activeDelegate) {
         super();
         this.dataConnectionSupplier = dataConnectionSupplier;
@@ -105,7 +105,7 @@ public class SparqlQueryConnectionWithReconnect
     protected SparqlQueryConnection activeDelegate;
 
     @Override
-    protected Transactional getDelegate() {
+    public Transactional getDelegate() {
         return activeDelegate;
     }
 

@@ -18,9 +18,9 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import org.aksw.commons.io.process.util.SimpleProcessExecutor;
 import org.aksw.jena_sparql_api.io.endpoint.ConcurrentFileReader;
 import org.aksw.jena_sparql_api.io.endpoint.HotFile;
-import org.aksw.jena_sparql_api.io.utils.SimpleProcessExecutor;
 
 import com.google.common.base.Stopwatch;
 
