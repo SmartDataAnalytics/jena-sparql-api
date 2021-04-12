@@ -1,7 +1,7 @@
 package org.aksw.jena_sparql_api.stmt;
 
+import org.apache.jena.irix.IRIxResolver;
 import org.apache.jena.query.Syntax;
-import org.apache.jena.riot.system.IRIResolver;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.core.Prologue;
 
@@ -48,7 +48,7 @@ public class SparqlParserConfig
 
     public SparqlParserConfig setPrefixMapping(PrefixMapping pm) {
         if(prologue == null) {
-            prologue = new Prologue(pm, IRIResolver.createNoResolve());
+            prologue = new Prologue(pm, IRIxResolver.create().resolve(false).allowRelative(true).build());
         } else {
             prologue.setPrefixMapping(pm);
         }
@@ -88,7 +88,7 @@ public class SparqlParserConfig
         }
 
         if(prologue.getResolver() == null) {
-            prologue.setResolver(IRIResolver.createNoResolve());
+            prologue.setResolver(IRIxResolver.create().resolve(false).allowRelative(true).build());
         }
 
         return this;

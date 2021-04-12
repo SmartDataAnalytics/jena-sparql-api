@@ -8,7 +8,7 @@
 	<artifactId>jena-sparql-api-parent</artifactId>
 
 	<packaging>pom</packaging>
-	<version>3.17.0-2-SNAPSHOT</version>
+	<version>4.0.0-1-SNAPSHOT</version>
 	<name>Jena SPARQL API - Parent</name>
 	<description>An RDF library for abstracting SPARQL queries.</description>
 	<url>https://github.com/SmartDataAnalytics/jena-sparql-api</url>
@@ -118,7 +118,7 @@
 	</developers>
 
 	<properties>
-		<jena.version>3.17.0</jena.version>
+		<jena.version>4.0.0</jena.version>
 		<!-- <jetty.version>9.4.8.v20171121</jetty.version> -->
 		<!-- <jetty.version>9.4.18.v20190429</jetty.version> -->
 		<!-- <jetty.version>11.0.0</jetty.version> this is java 11+ only -->
@@ -132,7 +132,7 @@
 
 		<spring.version>5.3.2</spring.version>
 		<spring.batch.version>4.3.1</spring.batch.version>
-		<aksw.commons.version>0.9.0</aksw.commons.version>
+		<aksw.commons.version>0.9.1-SNAPSHOT</aksw.commons.version>
 
 		<!-- <atmosphere.version>2.0.0.RC3</atmosphere.version> -->
 		<!-- <atmosphere-spring.version>1.1.0.RC5</atmosphere-spring.version> -->
@@ -143,8 +143,8 @@
 		<javaee-api.version>6.0</javaee-api.version>
 
 		<!-- Project Settings -->
-		<maven.compiler.source>1.8</maven.compiler.source>
-		<maven.compiler.target>1.8</maven.compiler.target>
+		<maven.compiler.source>11</maven.compiler.source>
+		<maven.compiler.target>11</maven.compiler.target>
 		<!-- <java.version.javadoc>http://java.sun.com/javase/9/docs/api/</java.version.javadoc> -->
 		<file.encoding>UTF-8</file.encoding>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -415,7 +415,7 @@
 				<groupId>org.aksw.jena-sparql-api</groupId>
 				<artifactId>jena-sparql-api-resources-test-config</artifactId>
 				<version>${project.version}</version>
-				<scope>test</scope>
+<!-- 				<scope>test</scope> -->
 			</dependency>
 
 			<dependency>

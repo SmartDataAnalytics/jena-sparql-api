@@ -24,7 +24,6 @@ import java.util.List ;
 
 import org.apache.jena.atlas.logging.Log ;
 import org.apache.jena.graph.Node;
-import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.Expr;
@@ -39,7 +38,6 @@ import org.apache.jena.sparql.syntax.ElementData;
 import org.apache.jena.sparql.syntax.ElementDataset;
 import org.apache.jena.sparql.syntax.ElementExists;
 import org.apache.jena.sparql.syntax.ElementFilter;
-import org.apache.jena.sparql.syntax.ElementFind;
 import org.apache.jena.sparql.syntax.ElementGroup;
 import org.apache.jena.sparql.syntax.ElementMinus;
 import org.apache.jena.sparql.syntax.ElementNamedGraph;
@@ -326,13 +324,13 @@ public class ElementTransformer {
             return ExprTransformer.transform(exprTransform, expr) ;
         }
 
-        @Override
-        public void visit(ElementFind el) {
-            Var v = el.getVar() ;
-            Var v1 = TransformElementLib.applyVar(v, exprTransform) ;
-            Triple t1 = transform.transform(el.getTriple());
-            Element el2 = transform.transform(el, v1, t1);
-            push(el2) ;
-        }
+//        @Override
+//        public void visit(ElementFind el) {
+//            Var v = el.getVar() ;
+//            Var v1 = TransformElementLib.applyVar(v, exprTransform) ;
+//            Triple t1 = transform.transform(el.getTriple());
+//            Element el2 = transform.transform(el, v1, t1);
+//            push(el2) ;
+//        }
     }
 }

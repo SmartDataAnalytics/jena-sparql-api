@@ -20,7 +20,7 @@ public abstract class UpdateProcessorDelegateSimple
     }
 
     @Override
-    public DatasetGraph getGraphStore() {
+    public DatasetGraph getDatasetGraph() {
         DatasetGraph result = delegate.getDatasetGraph();
         return result;
     }

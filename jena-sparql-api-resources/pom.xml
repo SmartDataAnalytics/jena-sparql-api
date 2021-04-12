@@ -12,30 +12,30 @@
 	<parent>
 		<groupId>org.aksw.jena-sparql-api</groupId>
 		<artifactId>jena-sparql-api-parent</artifactId>
-		<version>3.17.0-2-SNAPSHOT</version>
+		<version>4.0.0-1-SNAPSHOT</version>
 	</parent>
 
 	<build>
-		<plugins>
-			<plugin>
-				<artifactId>maven-remote-resources-plugin</artifactId>
-				<version>1.5</version>
-				<executions>
-					<execution>
-						<goals>
-							<goal>bundle</goal>
-						</goals>
-					</execution>
-				</executions>
-				<configuration>
-					<includes>
-						<include>**/*.ddl</include>
-						<include>**/*.sql</include>
-					</includes>
-				</configuration>
-			</plugin>
-		</plugins>
 	</build>
+<!-- 		<plugins> -->
+<!-- 			<plugin> -->
+<!-- 				<artifactId>maven-remote-resources-plugin</artifactId> -->
+<!-- 				<version>1.5</version> -->
+<!-- 				<executions> -->
+<!-- 					<execution> -->
+<!-- 						<goals> -->
+<!-- 							<goal>bundle</goal> -->
+<!-- 						</goals> -->
+<!-- 					</execution> -->
+<!-- 				</executions> -->
+<!-- 				<configuration> -->
+<!-- 					<includes> -->
+<!-- 						<include>**/*.ddl</include> -->
+<!-- 						<include>**/*.sql</include> -->
+<!-- 					</includes> -->
+<!-- 				</configuration> -->
+<!-- 			</plugin> -->
+<!-- 		</plugins> -->
 
 	<dependencies>
 		<dependency>

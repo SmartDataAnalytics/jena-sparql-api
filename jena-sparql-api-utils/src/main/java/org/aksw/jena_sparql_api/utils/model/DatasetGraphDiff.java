@@ -72,6 +72,18 @@ public class DatasetGraphDiff
         this.addedGraphs = new TransactionalSetImpl<>();
     }
 
+    
+    public void applyChanges() {
+    	removed.find().forEachRemaining(base::delete);
+    	added.find().forEachRemaining(base::add);
+    	removed.clear();
+    	added.clear();
+    }
+
+    public void clearChanges() {
+    	removed.clear();
+    	added.clear();
+    }
 
     public DatasetGraph getBase() {
         return base;

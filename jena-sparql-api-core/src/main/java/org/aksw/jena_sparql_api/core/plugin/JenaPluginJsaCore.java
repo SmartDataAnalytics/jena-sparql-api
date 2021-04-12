@@ -5,7 +5,6 @@ import org.aksw.jena_sparql_api.mapper.proxy.JenaPluginUtils;
 import org.apache.jena.enhanced.Personality;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.sys.JenaSubsystemLifecycle;
-import org.apache.jena.sys.JenaSystem;
 
 public class JenaPluginJsaCore
     implements JenaSubsystemLifecycle

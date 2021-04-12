@@ -6,12 +6,14 @@ import java.util.Set;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
 import org.aksw.jena_sparql_api.core.utils.QueryExecutionUtils;
-import org.aksw.jena_sparql_api.lookup.MapService;
 import org.aksw.jena_sparql_api.lookup.ListServiceConcept;
+import org.aksw.jena_sparql_api.lookup.MapService;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.ReadWrite;
 import org.apache.jena.query.TxnType;
+import org.apache.jena.riot.system.PrefixMap;
+import org.apache.jena.riot.system.PrefixMapFactory;
 import org.apache.jena.sparql.core.DatasetGraphBaseFind;
 import org.apache.jena.sparql.core.Quad;
 
@@ -21,6 +23,7 @@ public class DatasetGraphSparqlService
 {
     //protected QueryExecutionFactory qef;
     protected SparqlService sparqlService;
+    protected PrefixMap prefixes = PrefixMapFactory.emptyPrefixMap();
 
     public DatasetGraphSparqlService(SparqlService sparqlService) {
         this.sparqlService = sparqlService;
@@ -139,6 +142,11 @@ public class DatasetGraphSparqlService
 	public TxnType transactionType() {
 		// TODO Auto-generated method stub
 		return null;
+	}
+
+	@Override
+	public PrefixMap prefixes() {
+		return prefixes;
 	}
 
 }

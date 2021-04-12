@@ -1,6 +1,7 @@
 package org.aksw.jena_sparql_api.utils.io;
 
 import org.apache.jena.graph.Triple;
+import org.apache.jena.irix.IRIxResolver;
 import org.apache.jena.riot.RIOT;
 import org.apache.jena.riot.lang.LangNQuads;
 import org.apache.jena.riot.lang.LangNTriples;
@@ -20,8 +21,8 @@ public class NTripleUtils {
     public static ParserProfile permissiveProfile() {
         return new ParserProfileStd(RiotLib.factoryRDF(),
                                     ErrorHandlerFactory.errorHandlerWarn,
-                                    IRIResolver.createNoResolve(),
-                                    PrefixMapFactory.createForInput(),
+                                    IRIxResolver.create().resolve(false).allowRelative(true).build(),
+                                    PrefixMapFactory.create(),
                                     RIOT.getContext().copy(),
                                     false, false);
     }

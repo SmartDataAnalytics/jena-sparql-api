@@ -38,10 +38,6 @@ public class UpdateProcessorEventSource
         return null;
     }
 
-    @Override
-    public DatasetGraph getGraphStore() {
-        return null;
-    }
 
     @Override
     public DatasetGraph getDatasetGraph() {

@@ -1,8 +1,8 @@
 package org.aksw.jena_sparql_api.core;
 
+import org.apache.jena.query.Dataset;
+import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.rdf.model.Model;
-import org.apache.jena.update.GraphStore;
-import org.apache.jena.update.GraphStoreFactory;
 import org.apache.jena.update.UpdateProcessor;
 import org.apache.jena.update.UpdateRequest;
 
@@ -19,8 +19,8 @@ public class UpdateExecutionFactoryModel
     @Override
     public UpdateProcessor createUpdateProcessor(UpdateRequest updateRequest) {
 
-        GraphStore graphStore = GraphStoreFactory.create(model);
-        UpdateProcessor result = org.apache.jena.update.UpdateExecutionFactory.create(updateRequest, graphStore);
+        Dataset dataset = DatasetFactory.wrap(model);
+        UpdateProcessor result = org.apache.jena.update.UpdateExecutionFactory.create(updateRequest, dataset);
         return result;
     }
 

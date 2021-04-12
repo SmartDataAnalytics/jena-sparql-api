@@ -207,15 +207,15 @@ public class UpdateTransformOps {
                 return TransformElementLib.apply(n, exprTransform) ;
         }
 
-        @Override
-        public Sink<Quad> createInsertDataSink() {
-            return null ;
-        }
-
-        @Override
-        public Sink<Quad> createDeleteDataSink() {
-            return null ;
-        }
+//        @Override
+//        public Sink<Quad> createInsertDataSink() {
+//            return null ;
+//        }
+//
+//        @Override
+//        public Sink<Quad> createDeleteDataSink() {
+//            return null ;
+//        }
 
     }
 

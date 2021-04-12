@@ -32,7 +32,6 @@ import org.apache.jena.sparql.syntax.ElementData;
 import org.apache.jena.sparql.syntax.ElementDataset;
 import org.apache.jena.sparql.syntax.ElementExists;
 import org.apache.jena.sparql.syntax.ElementFilter;
-import org.apache.jena.sparql.syntax.ElementFind;
 import org.apache.jena.sparql.syntax.ElementGroup;
 import org.apache.jena.sparql.syntax.ElementMinus;
 import org.apache.jena.sparql.syntax.ElementNamedGraph;
@@ -91,10 +90,10 @@ public final class ElementTransformIdentity implements ElementTransform
     @Override
     public Element transform(ElementSubQuery el, Query query) { return el ; }
 
-    @Override
-    public Element transform(ElementFind el, Var v, Triple triple2) {
-        return el;
-    }
+//    @Override
+//    public Element transform(ElementFind el, Var v, Triple triple2) {
+//        return el;
+//    }
 
     @Override
     public Triple transform(Triple triple) {

@@ -163,7 +163,8 @@ public class QueryTransformOps {
             newQuery.setSyntax(query.getSyntax()) ;
 
             if ( query.explicitlySetBaseURI() )
-                newQuery.setBaseURI(query.getPrologue().getResolver()) ;
+            	newQuery.setBaseURI(query.getPrologue().getBaseURI());
+                // newQuery.setBaseURI(query.getPrologue().getResolver()) ;
 
             newQuery.setQueryResultStar(query.isQueryResultStar()) ;
 
