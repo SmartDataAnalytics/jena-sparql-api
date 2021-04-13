@@ -11,7 +11,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 
-import org.aksw.commons.collections.sets.SetIterator;
 import org.apache.jena.ext.com.google.common.collect.Iterators;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
@@ -72,6 +71,18 @@ public class DatasetGraphDiff
         this.addedGraphs = new TransactionalSetImpl<>();
     }
 
+    
+    public void applyChanges() {
+    	removed.find().forEachRemaining(base::delete);
+    	added.find().forEachRemaining(base::add);
+    	removed.clear();
+    	added.clear();
+    }
+
+    public void clearChanges() {
+    	removed.clear();
+    	added.clear();
+    }
 
     public DatasetGraph getBase() {
         return base;
