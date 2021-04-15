@@ -72,12 +72,12 @@ public class DatasetGraphDiff
     }
 
     
-    public void applyChanges() {
-    	removed.find().forEachRemaining(base::delete);
-    	added.find().forEachRemaining(base::add);
-    	removed.clear();
-    	added.clear();
-    }
+//    public void applyChanges() {
+//    	removed.find().forEachRemaining(base::delete);
+//    	added.find().forEachRemaining(base::add);
+//    	removed.clear();
+//    	added.clear();
+//    }
 
     public void clearChanges() {
     	removed.clear();
@@ -105,25 +105,27 @@ public class DatasetGraphDiff
     }
 
     @Override
-    public Iterator<Quad> find(Node g, Node s, Node p, Node o) {
-        Iterator<Quad> itAdded = added.find(g, s, p, o);
-
-        Iterator<Quad> result = base.find(g, s, p, o);
-
-        result = Iterators.filter(result, quad -> !removed.contains(quad));
-        result = Iterators.concat(result, itAdded);
+    public boolean contains(Node g, Node s, Node p, Node o) {
+    	boolean result = !removed.contains(g, s, p, o) && (added.contains(g, s, p, o) || base.contains(g, s, p, o));
+    	return result;
+    }
+    
+    @Override
+    public Iterator<Quad> find(Node g, Node s, Node p, Node o) {    	
+        Iterator<Quad> itBase = base.find(g, s, p, o);
+        Iterator<Quad> itActualAdded = Iterators.filter(added.find(g, s, p, o), quad -> !base.contains(quad));
+        Iterator<Quad> itVisibleBase = Iterators.filter(itBase, quad -> !removed.contains(quad));
+        Iterator<Quad> result = Iterators.concat(itVisibleBase, itActualAdded);
 
         return result;
     }
 
     @Override
     public Iterator<Quad> findNG(Node g, Node s, Node p, Node o) {
-
-        Iterator<Quad> itAdded = added.findNG(g, s, p, o);
-
-        Iterator<Quad> result = base.findNG(g, s, p, o);
-        result = Iterators.filter(result, quad -> !removed.contains(quad));
-        result = Iterators.concat(result, itAdded);
+        Iterator<Quad> itBase = base.findNG(g, s, p, o);
+        Iterator<Quad> itActualAdded = Iterators.filter(added.findNG(g, s, p, o), quad -> !base.contains(quad));
+        Iterator<Quad> itVisibleBase = Iterators.filter(itBase, quad -> !removed.contains(quad));
+        Iterator<Quad> result = Iterators.concat(itVisibleBase, itActualAdded);
 
         return result;
     }
