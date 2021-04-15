@@ -10,7 +10,7 @@ import org.aksw.jena_sparql_api.dboe.TripleTableCore;
 import org.aksw.jena_sparql_api.dboe.TripleTableCoreFromNestedMapsImpl;
 import org.aksw.jena_sparql_api.dboe.TripleTableWithInsertOrderPreservation;
 import org.apache.jena.dboe.storage.StorageRDF;
-import org.apache.jena.dboe.storage.simple.StoragePrefixesMem;
+import org.apache.jena.dboe.storage.simple.StoragePrefixesSimpleMem;
 import org.apache.jena.dboe.storage.system.DatasetGraphStorage;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.TransactionalLock;
@@ -32,7 +32,7 @@ public interface DatasetGraphFactoryEx {
         }
 
         StorageRDF storage = StorageRDFBasic.createWithQuadsOnly(quadTable);
-        DatasetGraph result = new DatasetGraphStorage(storage, new StoragePrefixesMem(), TransactionalLock.createMRSW());
+        DatasetGraph result = new DatasetGraphStorage(storage, new StoragePrefixesSimpleMem(), TransactionalLock.createMRSW());
         return result;
     }
 }

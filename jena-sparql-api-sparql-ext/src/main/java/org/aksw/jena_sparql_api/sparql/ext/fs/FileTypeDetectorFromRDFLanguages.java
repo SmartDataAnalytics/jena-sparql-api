@@ -29,7 +29,7 @@ public class FileTypeDetectorFromRDFLanguages
 		ContentType contentType = RDFLanguages.guessContentType(path.toString());
 		String result = contentType == null
 				? null
-				: contentType.getContentType();
+				: contentType.getContentTypeStr();
 		return result;
 	}
 

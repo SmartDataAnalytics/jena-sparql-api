@@ -3,7 +3,6 @@ package org.aksw.jena_sparql_api.io.hdt;
 import java.io.IOException;
 
 import org.aksw.jena_sparql_api.utils.io.NTripleUtils;
-import org.apache.jena.graph.GraphStatisticsHandler;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.graph.impl.GraphBase;
 import org.apache.jena.query.ARQ;
@@ -103,10 +102,11 @@ public class HDTHeaderGraph extends GraphBase {
 	/* (non-Javadoc)
 	 * @see com.hp.hpl.jena.graph.impl.GraphBase#getStatisticsHandler()
 	 */
-	@Override
-	public GraphStatisticsHandler getStatisticsHandler() {
-		return hdtStatistics;
-	}
+// Deprecated with jena4
+//	@Override
+//	public GraphStatisticsHandler getStatisticsHandler() {
+//		return hdtStatistics;
+//	}
 	
 	/* (non-Javadoc)
 	 * @see com.hp.hpl.jena.graph.impl.GraphBase#getCapabilities()

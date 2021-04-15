@@ -5,7 +5,6 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
-import org.apache.jena.riot.SysRIOT;
 import org.apache.jena.riot.lang.BlankNodeAllocator;
 import org.apache.jena.riot.lang.BlankNodeAllocatorLabel;
 import org.apache.jena.riot.lang.BlankNodeAllocatorLabelEncoded;
@@ -23,6 +22,9 @@ import org.apache.jena.riot.lang.BlankNodeAllocatorLabelEncoded;
  */
 public class BlankNodeAllocatorAsGivenOrRandom implements BlankNodeAllocator
 {
+	/** BNodeGenIdPrefix is a copy of {@link BlankNodeAllocatorLabelEncoded}'s private attribute */
+	public static final String BNodeGenIdPrefix         = "genid" ;
+	
 	private static transient BlankNodeAllocatorAsGivenOrRandom GLOBAL_INSTANCE = null;
 	
 	public static BlankNodeAllocatorAsGivenOrRandom getGlobalInstance() {
@@ -63,7 +65,7 @@ public class BlankNodeAllocatorAsGivenOrRandom implements BlankNodeAllocator
     @Override
     public Node create() {
         long x = counter.getAndIncrement();
-        String label = SysRIOT.BNodeGenIdPrefix + "_" + globalBnodeScope + "_" + counter.getAndIncrement();
+        String label = BNodeGenIdPrefix + "_" + globalBnodeScope + "_" + counter.getAndIncrement();
         return NodeFactory.createBlankNode(label);
     }
 }

@@ -22,7 +22,7 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
-import org.apache.jena.rdf.model.RDFWriter;
+import org.apache.jena.rdf.model.RDFWriterI;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.StmtIterator;
@@ -232,7 +232,7 @@ public class ModelUtils {
         return toString(model, "N3");
     }
 
-    public static String toString(Model model, RDFWriter writer)
+    public static String toString(Model model, RDFWriterI writer)
     {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
@@ -257,7 +257,7 @@ public class ModelUtils {
         if(model == null)
             return "null";
 
-        RDFWriter writer = model.getWriter(format);
+        RDFWriterI writer = model.getWriter(format);
 
         return toString(model, writer);
     }

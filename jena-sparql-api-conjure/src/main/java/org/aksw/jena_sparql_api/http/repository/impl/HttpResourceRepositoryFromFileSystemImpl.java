@@ -766,7 +766,7 @@ public class HttpResourceRepositoryFromFileSystemImpl
         JenaSystem.init();
 
 
-        Header[] expansionTest = new Header[] { new BasicHeader(HttpHeaders.ACCEPT, WebContent.contentTypeTurtleAlt2 + ";q=0.3")};
+        Header[] expansionTest = new Header[] { new BasicHeader(HttpHeaders.ACCEPT, WebContent.contentTypeTurtleAlt1 + ";q=0.3")};
 //		Header[] expansionTest = new Header[] { new BasicHeader(HttpHeaders.ACCEPT, WebContent.contentTypeTurtleAlt2 + ",text/plain;q=0.5")};
         expansionTest = ContentTypeUtils.expandAccept(expansionTest);
         System.out.println("Expanded: " + Arrays.asList(expansionTest));
@@ -815,7 +815,7 @@ public class HttpResourceRepositoryFromFileSystemImpl
 
 
         BasicHttpRequest r = new BasicHttpRequest("GET", url);
-        r.setHeader(HttpHeaders.ACCEPT, WebContent.contentTypeTurtleAlt2);
+        r.setHeader(HttpHeaders.ACCEPT, WebContent.contentTypeTurtleAlt1);
         r.setHeader(HttpHeaders.ACCEPT_ENCODING, "gzip,identity;q=0");
 
         manager.get(r, HttpResourceRepositoryFromFileSystemImpl::resolveRequest);

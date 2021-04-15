@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api.stmt;
 
+import org.aksw.jena_sparql_api.utils.PrologueUtils;
 import org.apache.jena.irix.IRIxResolver;
 import org.apache.jena.query.Syntax;
 import org.apache.jena.shared.PrefixMapping;
@@ -88,7 +89,14 @@ public class SparqlParserConfig
         }
 
         if(prologue.getResolver() == null) {
-            prologue.setResolver(IRIxResolver.create().resolve(false).allowRelative(true).build());
+        	// Avoid creation of another prologue instance because it may be referenced from elsewhere
+        	
+//        	prologue = new Prologue(
+//        			prologue.getPrefixMapping(),
+//        			IRIxResolver.create().resolve(false).allowRelative(true).build());
+
+        	PrologueUtils.setResolver(prologue, IRIxResolver.create().resolve(false).allowRelative(true).build());
+            // prologue.setResolver(IRIxResolver.create().resolve(false).allowRelative(true).build());
         }
 
         return this;

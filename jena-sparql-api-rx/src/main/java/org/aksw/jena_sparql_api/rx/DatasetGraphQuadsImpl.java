@@ -1,7 +1,5 @@
 package org.aksw.jena_sparql_api.rx;
 
-import static org.apache.jena.system.Txn.calculateRead;
-
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.function.Supplier;
@@ -11,6 +9,8 @@ import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.ReadWrite;
 import org.apache.jena.query.TxnType;
+import org.apache.jena.riot.system.PrefixMap;
+import org.apache.jena.riot.system.PrefixMapFactory;
 import org.apache.jena.sparql.core.DatasetGraphQuads;
 import org.apache.jena.sparql.core.GraphView;
 import org.apache.jena.sparql.core.Quad;
@@ -22,6 +22,8 @@ public class DatasetGraphQuadsImpl
     extends DatasetGraphQuads
 {
     protected QuadTable table;
+    protected PrefixMap prefixes = PrefixMapFactory.create();
+    
 
     public DatasetGraphQuadsImpl() {
         this(new QuadTableFromNestedMaps());
@@ -92,7 +94,7 @@ public class DatasetGraphQuadsImpl
     }
 
     private <T> T access(final Supplier<T> source) {
-        return isInTransaction() ? source.get() : calculateRead(this, source::get);
+        return isInTransaction() ? source.get() : Txn.calculateRead(this, source::get);
     }
 
     @Override
@@ -174,4 +176,9 @@ public class DatasetGraphQuadsImpl
         //return table.listGraphNodes().count(); //
         return table.find(Node.ANY, Node.ANY, Node.ANY, Node.ANY).count();
     }
+
+	@Override
+	public PrefixMap prefixes() {
+		return prefixes;
+	}
 }

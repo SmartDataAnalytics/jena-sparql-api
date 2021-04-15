@@ -84,8 +84,6 @@
 		<module>jena-sparql-api-playground</module>
 
 		<module>jena-sparql-api-virtuoso</module>
-
-		<module>jena-sparql-api-file-backed-dataset</module>
 	</modules>
 
 	<issueManagement>

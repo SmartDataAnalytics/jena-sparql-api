@@ -201,7 +201,7 @@ public class HttpHeaderUtils {
 
     public static List<String> langToContentTypes(Lang lang) {
         List<String> result = Stream.concat(
-                Stream.of(lang.getContentType().getContentType()),
+                Stream.of(lang.getContentType().getContentTypeStr()),
                 lang.getAltContentTypes().stream())
                 .distinct()
                 .collect(Collectors.toList());

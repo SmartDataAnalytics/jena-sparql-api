@@ -1,8 +1,6 @@
 package org.aksw.jena_sparql_api.utils.model;
 
 import static org.apache.jena.query.ReadWrite.WRITE;
-import static org.apache.jena.system.Txn.calculateRead;
-import static org.apache.jena.system.Txn.executeWrite;
 
 import java.util.AbstractCollection;
 import java.util.Collection;
@@ -16,6 +14,7 @@ import org.apache.jena.query.TxnType;
 import org.apache.jena.shared.Lock;
 import org.apache.jena.shared.LockMRPlusSW;
 import org.apache.jena.sparql.JenaTransactionException;
+import org.apache.jena.system.Txn;
 
 /**
  * A wrapper for a collection that provides transactions using MRSW locking.
@@ -184,7 +183,7 @@ public class TransactionalCollectionImpl<T, C extends Collection<T>>
     private <X> X access(Function<C, X> source) {
         return isInTransaction()
                 ? source.apply(txnState.get().local)
-                : calculateRead(this, () -> source.apply(txnState.get().local));
+                : Txn.calculateRead(this, () -> source.apply(txnState.get().local));
     }
 
     protected <X, R> R mutate(Function<C, R> action) {
@@ -209,7 +208,7 @@ public class TransactionalCollectionImpl<T, C extends Collection<T>>
             }
 
             result[0] = action.apply(txnState.get().local);
-        } else executeWrite(this, () -> {
+        } else Txn.executeWrite(this, () -> {
 //            System.out.println(version.get());
             result[0] = action.apply(txnState.get().local);
         });

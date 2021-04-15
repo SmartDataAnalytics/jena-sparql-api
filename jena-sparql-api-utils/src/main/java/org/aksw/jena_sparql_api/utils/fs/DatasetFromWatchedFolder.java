@@ -54,7 +54,7 @@ public class DatasetFromWatchedFolder
     }
 
     public DatasetFromWatchedFolder(Path basePath) {
-        this(basePath, DatasetFactory.createMem());
+        this(basePath, DatasetFactory.create());
     }
 
     public DatasetFromWatchedFolder(Path basePath, Dataset dataset) {

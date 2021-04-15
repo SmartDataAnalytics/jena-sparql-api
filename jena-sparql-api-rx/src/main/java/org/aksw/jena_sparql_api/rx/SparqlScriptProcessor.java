@@ -30,6 +30,7 @@ import org.aksw.jena_sparql_api.syntax.UpdateRequestUtils;
 import org.aksw.jena_sparql_api.utils.NodeUtils;
 import org.apache.jena.atlas.web.TypedInputStream;
 import org.apache.jena.graph.Node;
+import org.apache.jena.irix.IRIxResolver;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.query.Syntax;
@@ -244,7 +245,9 @@ public class SparqlScriptProcessor {
                 try {
 //                    Iterator<SparqlStmt> it = SparqlStmtMgr.loadSparqlStmts(filename, globalPrefixes, sparqlParser, baseIri);
                 	// globalPrefixes, 
-                	Prologue prologue = new Prologue(globalPrefixes == null ? new PrefixMappingImpl() : globalPrefixes, baseIri);
+                	Prologue prologue = new Prologue(
+                			globalPrefixes == null ? new PrefixMappingImpl() : globalPrefixes,
+                			IRIxResolver.create(baseIri).build());
                 	SparqlStmtParser sparqlParser = sparqlParserFactory.apply(prologue);
                 	Iterator<SparqlStmt> it = SparqlStmtMgr.loadSparqlStmts(filename, sparqlParser);
 

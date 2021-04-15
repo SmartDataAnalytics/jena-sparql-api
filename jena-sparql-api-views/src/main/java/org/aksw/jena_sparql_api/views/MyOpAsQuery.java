@@ -49,7 +49,6 @@ import org.apache.jena.sparql.algebra.op.OpDistinct;
 import org.apache.jena.sparql.algebra.op.OpExt;
 import org.apache.jena.sparql.algebra.op.OpExtend;
 import org.apache.jena.sparql.algebra.op.OpFilter;
-import org.apache.jena.sparql.algebra.op.OpFind;
 import org.apache.jena.sparql.algebra.op.OpGraph;
 import org.apache.jena.sparql.algebra.op.OpGroup;
 import org.apache.jena.sparql.algebra.op.OpJoin;
@@ -694,10 +693,10 @@ public class MyOpAsQuery
             throw new RuntimeException("Not implemented");
         }
 
-        @Override
-        public void visit(OpFind opFind) {
-            throw new RuntimeException("Not implemented");
-        }
+//        @Override
+//        public void visit(OpFind opFind) {
+//            throw new RuntimeException("Not implemented");
+//        }
     }
 
     /**

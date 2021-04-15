@@ -2,8 +2,6 @@ package org.aksw.jena_sparql_api.syntax;
 
 import java.util.function.Function;
 
-import org.apache.jena.atlas.lib.Sink;
-import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.modify.request.UpdateAdd;
 import org.apache.jena.sparql.modify.request.UpdateClear;
 import org.apache.jena.sparql.modify.request.UpdateCopy;
@@ -91,15 +89,5 @@ public class UpdateTransformVisitor implements UpdateVisitor {
 		UpdateModify tmp = UpdateUtils.clone(update);
 		tmp.setElement(after);
 		result = tmp;
-	}
-
-	@Override
-	public Sink<Quad> createInsertDataSink() {
-		return null;
-	}
-
-	@Override
-	public Sink<Quad> createDeleteDataSink() {
-		return null;
 	}
 }

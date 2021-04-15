@@ -14,8 +14,8 @@ import org.apache.jena.query.Dataset;
 import org.apache.jena.query.Query;
 import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
-import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Table;
+import org.apache.jena.sparql.algebra.TransformUnionQuery;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.binding.Binding;
 
@@ -42,7 +42,8 @@ public class ResultSetMappers {
 	
 	
 	public static Function<? super SparqlQueryConnection, Table> createTableMapper(Query rawKeyQuery) {
-		Query keyQuery = QueryUtils.applyOpTransform(rawKeyQuery, Algebra::unionDefaultGraph);
+		// Algebra::unionDefaultGraph was deprecated in jena4 the fallback is TransformUnionQuery::transform
+		Query keyQuery = QueryUtils.applyOpTransform(rawKeyQuery, TransformUnionQuery::transform);
 	
 		List<Var> projectVars = keyQuery.getProjectVars();
 	

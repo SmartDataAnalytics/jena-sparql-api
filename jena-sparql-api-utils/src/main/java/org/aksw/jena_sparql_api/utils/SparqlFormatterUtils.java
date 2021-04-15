@@ -9,14 +9,15 @@ import java.util.Iterator;
 import java.util.function.Function;
 
 import org.aksw.commons.util.reflect.MultiMethod;
-import org.apache.jena.atlas.lib.Sink;
+import org.apache.jena.atlas.io.IO;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Statement;
-import org.apache.jena.riot.out.SinkTripleOutput;
+import org.apache.jena.riot.system.StreamRDF;
+import org.apache.jena.riot.system.StreamRDFLib;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -258,12 +259,12 @@ public class SparqlFormatterUtils {
 	}
 
 	public static void writeText(OutputStream out, Iterator<Triple> it) {
-		Sink<Triple> sink = new SinkTripleOutput(out, null, null);
+		StreamRDF sink = StreamRDFLib.writer(out);
 		while(it.hasNext()) {
 			Triple triple = it.next();
-			sink.send(triple);
+			sink.triple(triple);
 		}
-		sink.flush();
+		IO.flush(out);
 		//sink.close();
 	}
 

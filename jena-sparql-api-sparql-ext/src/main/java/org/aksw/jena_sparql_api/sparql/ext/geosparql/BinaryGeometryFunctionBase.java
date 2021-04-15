@@ -5,6 +5,7 @@ import java.util.function.Function;
 import org.apache.jena.datatypes.RDFDatatype;
 import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.graph.NodeFactory;
+import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.function.FunctionBase2;
 import org.locationtech.jts.geom.Geometry;
@@ -58,7 +59,7 @@ public abstract class BinaryGeometryFunctionBase
 			String str = g != null ? wktWriter.apply(g) : null;
 			result = str == null ? NodeValue.nvNothing : NodeValue.makeNode(NodeFactory.createLiteral(str, dtype));
 		} else {
-			result = NodeValue.nvNothing;
+			result = Expr.NONE;
 		}
 		
 		return result;

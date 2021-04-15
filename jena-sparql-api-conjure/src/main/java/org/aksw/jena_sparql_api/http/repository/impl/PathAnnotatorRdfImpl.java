@@ -10,6 +10,7 @@ import java.util.concurrent.ExecutionException;
 import org.aksw.jena_sparql_api.http.repository.api.PathAnnotatorRdf;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.RDFWriterI;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
@@ -110,7 +111,7 @@ public class PathAnnotatorRdfImpl
 					throw new RuntimeException(e);
 				}
 			} else {
-				org.apache.jena.rdf.model.RDFWriter writer = copy.getWriter("ttl-nb");
+				RDFWriterI writer = copy.getWriter("ttl-nb");
 				try {
 					try(OutputStream out = Files.newOutputStream(metadata)) {
 						writer.write(copy, out, base);

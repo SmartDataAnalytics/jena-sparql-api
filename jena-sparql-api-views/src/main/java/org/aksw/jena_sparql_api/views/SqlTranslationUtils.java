@@ -223,7 +223,7 @@ public class SqlTranslationUtils {
                 result = NodeValue.makeString(lang);
 
             } else {
-                result = NodeValue.nvNothing;
+                result = Expr.NONE; //NodeValue.nvNothing;
             }
         } else if(expr.isFunction()) {
 

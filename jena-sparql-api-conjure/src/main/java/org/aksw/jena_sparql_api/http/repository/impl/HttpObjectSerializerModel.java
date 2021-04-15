@@ -66,7 +66,7 @@ public class HttpObjectSerializerModel
 		}
 
 		RdfEntityInfo entityInfo = ModelFactory.createDefaultModel().createResource().as(RdfEntityInfo.class)
-				.setContentType(effectiveOutFormat.getLang().getContentType().getContentType());
+				.setContentType(effectiveOutFormat.getLang().getContentType().getContentTypeStr());
 		RdfHttpEntityFile result = store.putWithMove(uri, entityInfo, tmpFile);
 		HttpResourceRepositoryFromFileSystemImpl.computeHashForEntity(result, null);
 		

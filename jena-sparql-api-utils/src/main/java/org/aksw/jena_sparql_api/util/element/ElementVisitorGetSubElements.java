@@ -10,7 +10,6 @@ import org.apache.jena.sparql.syntax.ElementData;
 import org.apache.jena.sparql.syntax.ElementDataset;
 import org.apache.jena.sparql.syntax.ElementExists;
 import org.apache.jena.sparql.syntax.ElementFilter;
-import org.apache.jena.sparql.syntax.ElementFind;
 import org.apache.jena.sparql.syntax.ElementGroup;
 import org.apache.jena.sparql.syntax.ElementMinus;
 import org.apache.jena.sparql.syntax.ElementNamedGraph;
@@ -54,7 +53,7 @@ public class ElementVisitorGetSubElements
 	@Override public void visit(ElementFilter el) { result = Collections.emptyList(); }
 	@Override public void visit(ElementAssign el) { result = Collections.emptyList(); }
 	@Override public void visit(ElementBind el) { result = Collections.emptyList(); }
-	@Override public void visit(ElementFind el) { result = Collections.emptyList(); }
+//	@Override public void visit(ElementFind el) { result = Collections.emptyList(); }
 	@Override public void visit(ElementData el) { result = Collections.emptyList(); }
 	@Override public void visit(ElementUnion el) { result = el.getElements(); }
 	@Override public void visit(ElementOptional el) { result = Collections.singletonList(el.getOptionalElement()); }

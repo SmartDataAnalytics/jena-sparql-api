@@ -2,8 +2,10 @@ package org.aksw.jena_sparql_api.stmt;
 
 import java.util.function.Supplier;
 
+import org.apache.jena.irix.IRIxResolver;
 import org.apache.jena.query.Syntax;
 import org.apache.jena.riot.system.IRIResolver;
+import org.apache.jena.shared.impl.PrefixMappingImpl;
 import org.apache.jena.sparql.core.Prologue;
 import org.apache.jena.update.UpdateFactory;
 import org.apache.jena.update.UpdateRequest;
@@ -43,8 +45,8 @@ public class SparqlUpdateParserImpl
     }
 
     public static SparqlUpdateParserImpl create(Syntax syntax) {
-        Prologue prologue = new Prologue();
-        prologue.setBaseURI(IRIResolver.createNoResolve());
+        Prologue prologue = new Prologue(new PrefixMappingImpl(), IRIxResolver.create().noBase().allowRelative(true).build());
+        //prologue.setBaseURI(IRIResolver.createNoResolve());
 
         SparqlUpdateParserImpl result = create(syntax, prologue);
         return result;

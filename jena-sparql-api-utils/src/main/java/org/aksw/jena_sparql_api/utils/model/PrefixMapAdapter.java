@@ -101,4 +101,9 @@ public class PrefixMapAdapter
     public static PrefixMap wrap(PrefixMapping prefixMapping) {
         return new PrefixMapAdapter(prefixMapping);
     }
+
+	@Override
+	public String get(String prefix) {
+		return prefixMapping.getNsPrefixURI(prefix);
+	}
 }

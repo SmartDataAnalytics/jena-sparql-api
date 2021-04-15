@@ -1,25 +1,13 @@
 package org.aksw.jena_sparql_api.utils.turtle;
 
-import static org.apache.jena.riot.WebContent.contentTypeTurtle;
-
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Map;
-import java.util.Objects;
 
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.RDFWriterI;
 import org.apache.jena.riot.Lang;
-import org.apache.jena.riot.LangBuilder;
 import org.apache.jena.riot.RDFDataMgr;
-import org.apache.jena.riot.RDFFormat;
-import org.apache.jena.riot.RDFFormatVariant;
-import org.apache.jena.riot.RDFLanguages;
-import org.apache.jena.riot.RDFWriterRegistry;
-import org.apache.jena.riot.WriterGraphRIOT;
-import org.apache.jena.riot.WriterGraphRIOTFactory;
-import org.apache.jena.sys.JenaSystem;
 
 public class TurtleNoBaseTest {
 	
@@ -42,7 +30,7 @@ public class TurtleNoBaseTest {
 //		RDFDataMgr.write(System.out, m, TURTLE_NO_BASE);
 
 		// This works
-		org.apache.jena.rdf.model.RDFWriter writer = m.getWriter("ttl-nb");
+		RDFWriterI writer = m.getWriter("ttl-nb");
 		writer.write(m, System.out, base);
 		
 		

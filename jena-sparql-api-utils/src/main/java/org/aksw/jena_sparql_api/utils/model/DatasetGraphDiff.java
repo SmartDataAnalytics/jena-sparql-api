@@ -1,7 +1,6 @@
 package org.aksw.jena_sparql_api.utils.model;
 
 import static org.apache.jena.query.ReadWrite.WRITE;
-import static org.apache.jena.system.Txn.executeWrite;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -18,6 +17,7 @@ import org.apache.jena.graph.compose.Delta;
 import org.apache.jena.graph.compose.Difference;
 import org.apache.jena.query.ReadWrite;
 import org.apache.jena.query.TxnType;
+import org.apache.jena.riot.system.PrefixMap;
 import org.apache.jena.sparql.JenaTransactionException;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.DatasetGraphBase;
@@ -25,6 +25,7 @@ import org.apache.jena.sparql.core.DatasetGraphFactory;
 import org.apache.jena.sparql.core.GraphView;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.Transactional;
+import org.apache.jena.system.Txn;
 
 
 /**
@@ -326,9 +327,15 @@ public class DatasetGraphDiff
             }
 
             mutator.accept(payload);
-        } else executeWrite(target, () -> {
+        } else Txn.executeWrite(target, () -> {
             mutator.accept(payload);
         });
     }
+
+    /** TODO Consider a PrefixMapDiff/Delta object - for now we just return the base prefixes */
+	@Override
+	public PrefixMap prefixes() {
+		return base.prefixes();
+	}
 
 }

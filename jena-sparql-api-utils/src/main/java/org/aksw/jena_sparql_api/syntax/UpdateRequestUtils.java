@@ -9,6 +9,7 @@ import java.util.function.Function;
 import org.aksw.commons.collections.diff.Diff;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.PrefixUtils;
+import org.aksw.jena_sparql_api.utils.PrologueUtils;
 import org.aksw.jena_sparql_api.utils.SetFromDatasetGraph;
 import org.aksw.jena_sparql_api.utils.SetFromGraph;
 import org.aksw.jena_sparql_api.utils.transform.NodeTransformCollectNodes;
@@ -169,7 +170,8 @@ public class UpdateRequestUtils {
         UpdateRequest result = new UpdateRequest();
         result.setBaseURI(request.getBaseURI());
         result.setPrefixMapping(request.getPrefixMapping());
-        result.setResolver(request.getResolver());
+        PrologueUtils.setResolver(result, request.getResolver());
+        // result.setResolver(request.getResolver());
 
         for(Update update : request.getOperations()) {
             Update newUpdate = updateTransform.apply(update);

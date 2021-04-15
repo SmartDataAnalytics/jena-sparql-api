@@ -21,7 +21,7 @@ public class E_RdfLang
     		String iri = nv.asNode().getURI();
             Lang lang = RDFDataMgr.determineLang(iri, null, null);
             if(lang != null) {
-            	result = NodeValue.makeString(lang.getContentType().getContentType());
+            	result = NodeValue.makeString(lang.getContentType().getContentTypeStr());
             }
     	}
     	
