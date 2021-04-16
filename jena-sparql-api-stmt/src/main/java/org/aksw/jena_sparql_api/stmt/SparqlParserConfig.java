@@ -49,7 +49,7 @@ public class SparqlParserConfig
 
     public SparqlParserConfig setPrefixMapping(PrefixMapping pm) {
         if(prologue == null) {
-            prologue = new Prologue(pm, IRIxResolver.create().resolve(false).allowRelative(true).build());
+            prologue = new Prologue(pm, IRIxResolver.create().noBase().resolve(false).allowRelative(true).build());
         } else {
             prologue.setPrefixMapping(pm);
         }
@@ -95,7 +95,7 @@ public class SparqlParserConfig
 //        			prologue.getPrefixMapping(),
 //        			IRIxResolver.create().resolve(false).allowRelative(true).build());
 
-        	PrologueUtils.setResolver(prologue, IRIxResolver.create().resolve(false).allowRelative(true).build());
+        	PrologueUtils.setResolver(prologue, IRIxResolver.create().noBase().resolve(false).allowRelative(true).build());
             // prologue.setResolver(IRIxResolver.create().resolve(false).allowRelative(true).build());
         }
 

@@ -57,10 +57,12 @@ public abstract class BinaryGeometryFunctionBase
 			RDFDatatype dtype = TypeMapper.getInstance().getSafeTypeByName("http://www.opengis.net/ont/geosparql#wktLiteral");
 			
 			String str = g != null ? wktWriter.apply(g) : null;
-			result = str == null ? NodeValue.nvNothing : NodeValue.makeNode(NodeFactory.createLiteral(str, dtype));
+			result = str == null ? null : NodeValue.makeNode(NodeFactory.createLiteral(str, dtype));
 		} else {
-			result = Expr.NONE;
+			result = null;
 		}
+		
+		// if (result == null) { raise ExprEvalException().; } ?
 		
 		return result;
 	}

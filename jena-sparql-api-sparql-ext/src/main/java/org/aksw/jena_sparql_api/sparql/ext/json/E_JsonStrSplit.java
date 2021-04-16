@@ -6,6 +6,7 @@ import org.apache.jena.datatypes.RDFDatatype;
 import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
+import org.apache.jena.sparql.expr.ExprEvalException;
 import org.apache.jena.sparql.expr.ExprList;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.function.FunctionBase;
@@ -26,7 +27,7 @@ public class E_JsonStrSplit
 {
 	@Override
 	public NodeValue exec(List<NodeValue> args) {
-		NodeValue result = NodeValue.nvNothing;
+		NodeValue result = null;
 
 		NodeValue haystack = args.get(0);
 		NodeValue needle = args.get(1);
@@ -52,6 +53,10 @@ public class E_JsonStrSplit
 			result = NodeValue.makeNode(node);
 		}
 		
+		if (result == null) {
+			throw new ExprEvalException("could not split a string based on given arguments");
+		}
+
 		return result;
 	}
 

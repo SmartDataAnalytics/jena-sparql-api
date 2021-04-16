@@ -5,6 +5,7 @@ import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathFactory;
 
+import org.apache.jena.sparql.expr.ExprEvalException;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.function.FunctionBase2;
 import org.slf4j.Logger;
@@ -75,16 +76,20 @@ public class E_XPath
 		        	result = NodeValue.makeString("" + tmp);
 	            } catch(Exception e) {
 	                logger.warn(e.getLocalizedMessage());
-	                result = NodeValue.nvNothing;
+	                result = null;
 	            }
 	        } else {
-	        	result = NodeValue.nvNothing; //Expr.NONE.getConstant();
+	        	result = null; //Expr.NONE.getConstant();
 	        }
         } else {
-            result = NodeValue.nvNothing; //Expr.NONE.getConstant();
+            result = null; //Expr.NONE.getConstant();
         }
     	//System.out.println(result);
 
+    	if (result == null) {
+    		throw new ExprEvalException("xpath evaluation yeld null result");
+    	}
+    	
         return result;
     }
 

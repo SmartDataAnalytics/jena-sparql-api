@@ -15,8 +15,11 @@ import org.apache.jena.datatypes.RDFDatatype;
 import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
+import org.apache.jena.sparql.expr.ExprEvalException;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.function.FunctionBase1;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.net.MediaType;
 import com.google.gson.JsonElement;
@@ -36,6 +39,8 @@ import com.google.gson.JsonElement;
 public class E_Http
     extends FunctionBase1
 {
+	private static final Logger logger = LoggerFactory.getLogger(E_Http.class);
+	
     //public static final MimeType mtJson = new MimeType("application/json");
 
     private Supplier<HttpClient> httpClientSupplier;
@@ -77,7 +82,7 @@ public class E_Http
             Node node = nv.asNode();
             url = node.getURI();
         } else {
-            url = null;
+        	throw new ExprEvalException("Neither IRI nor string");
         }
 
         NodeValue result = null;
@@ -115,19 +120,22 @@ public class E_Http
                     }
                 }
                 EntityUtils.consume(entity);
-            } catch(Exception e) {
+            } catch(Exception e) {         
+            	logger.warn("Http request failed", e);
+                throw new ExprEvalException(e);
+            } finally {
                 if(request != null) {
                     request.releaseConnection();
                 }
-                throw new RuntimeException(e);
             }
             //EntityUtils.consume(entity);
             //entity.
 
         }
-
-        if(result == null) {
-            result = NodeValue.nvNothing;
+        
+        if (result == null) {
+        	// TODO Redirects should be followed automatically - is this actually the case?
+        	throw new ExprEvalException("Http request returned non 200 status code");
         }
 
         return result;
