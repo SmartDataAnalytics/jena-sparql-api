@@ -7,7 +7,6 @@ import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QueryExecutionFactory;
-import org.apache.jena.query.ReadWrite;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.engine.QueryEngineFactory;
 import org.apache.jena.sparql.engine.QueryEngineRegistry;
@@ -17,9 +16,17 @@ import org.apache.jena.sparql.util.Context;
 public class QueryExecutionFactoryDataset
     extends QueryExecutionFactoryBackQuery
 {
-    protected Dataset dataset;
-    protected Context context;
+	/** Functional Interface whose signature matches {@link QueryEngineRegistry#find(Query, DatasetGraph, Context)}*/
+    @FunctionalInterface
+    public static interface QueryEngineFactoryProvider {
+        QueryEngineFactory find(Query query, DatasetGraph dataset, Context context);
+    }
 
+	protected Dataset dataset;
+    protected Context context;
+    protected QueryEngineFactoryProvider queryEngineFactoryProvider;
+
+    
     public QueryExecutionFactoryDataset() {
         this(DatasetFactory.create());
     }
@@ -29,9 +36,17 @@ public class QueryExecutionFactoryDataset
     }
 
     public QueryExecutionFactoryDataset(Dataset dataset, Context context) {
-        this.dataset = dataset;
-        this.context = context;
+    	this(dataset, context, QueryEngineRegistry.get()::find);
     }
+
+    public QueryExecutionFactoryDataset(Dataset dataset, Context context, QueryEngineFactoryProvider queryEngineFactoryProvider) {
+        super();
+    	this.dataset = dataset;
+        this.context = context;
+        this.queryEngineFactoryProvider = queryEngineFactoryProvider;
+    }
+
+ // QueryEngineRegistry.get().find(query, dsg, context);
 
     public Dataset getDataset() {
         return dataset;
@@ -56,7 +71,7 @@ public class QueryExecutionFactoryDataset
         DatasetGraph dsg = null ;
         if ( dataset != null )
             dsg = dataset.asDatasetGraph() ;
-        QueryEngineFactory f = QueryEngineRegistry.get().find(query, dsg, context);
+        QueryEngineFactory f = queryEngineFactoryProvider.find(query, dsg, context);
         if ( f == null )
         {
             Log.warn(QueryExecutionFactory.class, "Failed to find a QueryEngineFactory for query: "+query) ;

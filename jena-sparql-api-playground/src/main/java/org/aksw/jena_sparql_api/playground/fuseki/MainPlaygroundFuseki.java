@@ -27,15 +27,17 @@ public class MainPlaygroundFuseki {
 //			System.out.println(ResultSetFormatter.asText(qe.execSelect()));
 //		}
 		
+		FactoryBeanS
+		
 		
 		//RDFDataMgr.write(System.out, m, RDFFormat.NTRIPLES);
 		
 //	    //DatasetGraph dsg = ...;
 		//DatasetGraph dsg = DatasetGraphFactory.createGeneral();
-	    FusekiServer server = FusekiServer.create()
-	        .port(1234)
-	        .add("/ds", dsg)
-	        .build();
-	     server.start();
+//	    FusekiServer server = FusekiServer.create()
+//	        .port(1234)
+//	        .add("/ds", dsg)
+//	        .build();
+//	     server.start();
 	}
 }
