@@ -78,7 +78,9 @@ public class QueryExecutionFactoryDataset
             return null ;
         }
         //dataset.begin(ReadWrite.WRITE);
-        return new QueryExecutionBase(query, dataset, context, f) ;
+        QueryExecutionBase tmp = new QueryExecutionBase(query, dataset, context, f) ;
+        QueryExecution result = new QueryExecutionDecoratorTxn<QueryExecution>(tmp, dsg);
+        return result;
     }
 
     @Override

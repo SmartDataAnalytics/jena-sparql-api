@@ -10,14 +10,26 @@ public class UpdateExecutionFactoryDataset
 {
     protected Dataset dataset;
     protected Context context;
+    protected UpdateProcessorFactory updateProcessorFactory;
 
+    @FunctionalInterface
+    public static interface UpdateProcessorFactory {
+    	UpdateProcessor create(UpdateRequest updateRequest, Dataset dataset, Context context);
+    }
+    
     public UpdateExecutionFactoryDataset(Dataset dataset) {
         this(dataset, null);
     }
 
     public UpdateExecutionFactoryDataset(Dataset dataset, Context context) {
-        this.dataset = dataset;
+        this(dataset, context, org.apache.jena.update.UpdateExecutionFactory::create);
+    }
+
+    public UpdateExecutionFactoryDataset(Dataset dataset, Context context, UpdateProcessorFactory updateProcessorFactory) {
+    	super();
+    	this.dataset = dataset;
         this.context = context;
+        this.updateProcessorFactory = updateProcessorFactory;
     }
 
     public Dataset getDataset() {
@@ -30,7 +42,7 @@ public class UpdateExecutionFactoryDataset
 
     @Override
     public UpdateProcessor createUpdateProcessor(UpdateRequest updateRequest) {
-        UpdateProcessor result = org.apache.jena.update.UpdateExecutionFactory.create(updateRequest, dataset, context);
+        UpdateProcessor result = updateProcessorFactory.create(updateRequest, dataset, context);
         return result;
     }
 }

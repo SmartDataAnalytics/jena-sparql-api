@@ -325,7 +325,8 @@ public abstract class SparqlEndpointBase {
                 } else {
                     logger.debug("Failed query execution");
                 }
-                qeAndType.getQueryExecution().close();
+                // Redundant close
+                // qeAndType.getQueryExecution().close();
             }
         });
 
