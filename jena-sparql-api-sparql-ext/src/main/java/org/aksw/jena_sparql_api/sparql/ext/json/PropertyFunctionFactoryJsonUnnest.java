@@ -130,14 +130,16 @@ public class PropertyFunctionFactoryJsonUnnest
     	RDFDatatype jsonDatatype = TypeMapper.getInstance().getTypeByClass(JsonElement.class);
 
         Node n = E_JsonPath.jsonToNode(item, gson, jsonDatatype);
-        NodeValue nv = NodeValue.makeNode(n);
+        // NodeValue nv = n == null ? null : NodeValue.makeNode(n);
 
-        Binding b = BindingFactory.binding(binding, outputVar, nv.asNode());
-        
-        if(indexVar != null) {
-        	b = BindingFactory.binding(b, indexVar, NodeValue.makeInteger(i).asNode());
+        if (n != null) {
+        	binding = BindingFactory.binding(binding, outputVar, n);	        
         }
-        
-        return b;
+
+        if(indexVar != null) {
+        	binding = BindingFactory.binding(binding, indexVar, NodeValue.makeInteger(i).asNode());
+        }
+
+        return binding;
     }
 }

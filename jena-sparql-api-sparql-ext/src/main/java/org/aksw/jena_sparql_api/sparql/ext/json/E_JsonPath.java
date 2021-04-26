@@ -102,6 +102,8 @@ public class E_JsonPath
             }
         } else if(e.isJsonObject() || e.isJsonArray()) { // arrays are json objects / array e.isJsonArray() ||
             result = NodeFactory.createLiteralByValue(e, jsonDatatype);//new NodeValueJson(e);
+        } else if (e.isJsonNull()) {
+        	result = null;
         } else {
             throw new RuntimeException("Datatype not supported " + e);
         }
