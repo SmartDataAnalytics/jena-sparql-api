@@ -185,10 +185,7 @@
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>3.8.1</version>
 				<configuration>
-					<!--
-					<source>${maven.compiler.source}</source>
-					<target>${maven.compiler.target}</target>
-					-->
+					<!-- <source>${maven.compiler.source}</source> <target>${maven.compiler.target}</target> -->
 					<release>11</release>
 					<encoding>${project.build.sourceEncoding}</encoding>
 				</configuration>
@@ -357,6 +354,12 @@
 		<dependencies>
 
 			<dependency>
+				<groupId>com.google.maps</groupId>
+				<artifactId>google-maps-services</artifactId>
+				<version>0.18.0</version>
+			</dependency>
+
+			<dependency>
 				<groupId>org.aksw.iana-language-subtag-registry</groupId>
 				<artifactId>iana-language-subtag-registry-resource-rdf-raw</artifactId>
 				<version>2021-02-16</version>
@@ -416,7 +419,7 @@
 				<groupId>org.aksw.jena-sparql-api</groupId>
 				<artifactId>jena-sparql-api-resources-test-config</artifactId>
 				<version>${project.version}</version>
-<!-- 				<scope>test</scope> -->
+				<!-- <scope>test</scope> -->
 			</dependency>
 
 			<dependency>
@@ -974,10 +977,10 @@
 				<artifactId>jts-io-common</artifactId>
 				<version>1.18.1</version>
 				<exclusions>
-                                        <exclusion>
-                                                <groupId>junit</groupId>
-                                                <artifactId>junit</artifactId>
-                                        </exclusion>
+					<exclusion>
+						<groupId>junit</groupId>
+						<artifactId>junit</artifactId>
+					</exclusion>
 				</exclusions>
 			</dependency>
 
@@ -991,13 +994,8 @@
 
 
 			<!-- JDBC Connection Pooling -->
-			<!--
-			<dependency>
-				<groupId>com.jolbox</groupId>
-				<artifactId>bonecp</artifactId>
-				<version>0.8.0.RELEASE</version>
-			</dependency>
-			-->
+			<!-- <dependency> <groupId>com.jolbox</groupId> <artifactId>bonecp</artifactId> 
+				<version>0.8.0.RELEASE</version> </dependency> -->
 
 			<dependency>
 				<groupId>org.apache.commons</groupId>

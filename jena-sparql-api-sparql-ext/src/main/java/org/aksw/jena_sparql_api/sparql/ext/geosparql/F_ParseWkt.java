@@ -7,20 +7,20 @@ import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.io.WKTReader;
 
 /** TODO This should either become a datatype or a real jena function */
-public class FN_ParseWkt implements Function<String, Geometry> {
-	public static final FN_ParseWkt fn = new FN_ParseWkt();
+public class F_ParseWkt implements Function<String, Geometry> {
+	public static final F_ParseWkt fn = new F_ParseWkt();
 
 	private WKTReader wktReader;
 
-	public FN_ParseWkt() {
+	public F_ParseWkt() {
 		this(new WKTReader());
 	}
 
-	public FN_ParseWkt(GeometryFactory geometryFactory) {
+	public F_ParseWkt(GeometryFactory geometryFactory) {
 		this(new WKTReader(geometryFactory));
 	}
 
-	public FN_ParseWkt(WKTReader wktReader) {
+	public F_ParseWkt(WKTReader wktReader) {
 		this.wktReader = wktReader;
 	}
 
@@ -35,15 +35,15 @@ public class FN_ParseWkt implements Function<String, Geometry> {
 		return result;
 	}
 
-	public static FN_ParseWkt create() {
-		return new FN_ParseWkt();
+	public static F_ParseWkt create() {
+		return new F_ParseWkt();
 	}
 
-	public static FN_ParseWkt create(GeometryFactory geometryFactory) {
-		return new FN_ParseWkt(geometryFactory);
+	public static F_ParseWkt create(GeometryFactory geometryFactory) {
+		return new F_ParseWkt(geometryFactory);
 	}
 
-	public static FN_ParseWkt create(WKTReader wktReader) {
-		return new FN_ParseWkt(wktReader);
+	public static F_ParseWkt create(WKTReader wktReader) {
+		return new F_ParseWkt(wktReader);
 	}
 }

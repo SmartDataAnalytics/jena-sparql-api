@@ -52,6 +52,12 @@
 	</repositories>
 
 	<dependencies>
+		<!-- Google polyline encoder/decoder for sparql extension functions -->
+		<dependency>
+			<groupId>com.google.maps</groupId>
+			<artifactId>google-maps-services</artifactId>
+		</dependency>
+
 		<!-- Used only for IteratorClosable and NodeMapperRdfDatatype; try to get 
 			rid of this dep -->
 		<!-- Possibly also used for result set comparison -->
@@ -187,12 +193,13 @@
 		<!-- <artifactId>spring-core</artifactId> -->
 		<!-- </dependency> -->
 
-		<!-- Unit Testing -->		<dependency>
+		<!-- Unit Testing -->
+		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
 			<scope>test</scope>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>org.aksw.jena-sparql-api</groupId>
 			<artifactId>jena-sparql-api-resources-test-config</artifactId>
