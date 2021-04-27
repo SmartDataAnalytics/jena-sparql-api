@@ -176,7 +176,7 @@ public class SparqlScriptProcessor {
 
         SparqlStmtParser sparqlParser =
                 SparqlStmtParser.wrapWithTransform(
-                        new SparqlStmtParserImpl(queryParser, updateParser, true),
+                        new SparqlStmtParserImpl(queryParser, updateParser, false),
                         stmt -> SparqlStmtUtils.applyNodeTransform(stmt, x -> NodeUtils.substWithLookup(x, System::getenv)));
 
         return sparqlParser;
