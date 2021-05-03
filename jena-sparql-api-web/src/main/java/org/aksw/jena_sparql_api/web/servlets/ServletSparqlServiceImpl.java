@@ -45,7 +45,8 @@ public class ServletSparqlServiceImpl
     public Response executeRequestXml()
             throws Exception {
 
-        InputStream r = new ClassPathResource("snorql/index.html").getInputStream();
+        // InputStream r = new ClassPathResource("snorql/index.html").getInputStream();
+        InputStream r = new ClassPathResource("yasgui/index.html").getInputStream();
         Response result;
         if(r == null) {
             result = Response.ok("SPARQL HTML front end not configured", MediaType.TEXT_HTML).build();

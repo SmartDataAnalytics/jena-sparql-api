@@ -1,6 +1,5 @@
 package org.aksw.jena_sparql_api.playground.fuseki;
 
-import org.apache.jena.fuseki.main.FusekiServer;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -27,7 +26,6 @@ public class MainPlaygroundFuseki {
 //			System.out.println(ResultSetFormatter.asText(qe.execSelect()));
 //		}
 		
-		FactoryBeanS
 		
 		
 		//RDFDataMgr.write(System.out, m, RDFFormat.NTRIPLES);

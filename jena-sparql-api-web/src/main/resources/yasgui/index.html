@@ -1,0 +1,41 @@
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="yasgui.min.css" rel="stylesheet" type="text/css" />
+  <script src="yasgui.min.js"></script>
+  <style>
+  .yasgui .autocompleteWrapper {
+    display: none !important;
+  }
+</style>
+</head>
+<body>
+  <div id="yasgui"></div>
+  <script>
+  var yasgui = null;
+
+      function getCurrent() {
+        if(yasgui != null) {
+          return yasgui.current();
+        }
+        return null;
+      }
+  Yasgui.Yasr.defaults.getUsedPrefixes = function() {
+        var currentPage = getCurrent();
+
+        if(currentPage != null) {
+          var prefixes = currentPage.yasqe.getPrefixesFromQuery();
+          alert(JSON.stringify(prefixes)); 
+	  return prefixes;
+	}
+	}
+   yasgui = new Yasgui(document.getElementById("yasgui"), {
+  	// requestConfig: { endpoint: "http://localhost:9999/sparql" },
+	requestConfig: { endpoint: document.location.href },
+  	copyEndpointOnNewTab: false,
+  	
+        yasre: { prefixes: {"dbo":"http://dbpedia.org/ontology/", "dbr":"http://dbpedia.org/resource/"}}
+	});
+  </script>
+</body>

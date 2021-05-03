@@ -153,10 +153,15 @@ public class ProcessQuery {
         }
         catch(Exception e) {
             if(qe != null) {
-                qe.close();
+            	try {
+            		qe.close();
+            	} catch (Exception e2) {
+            		e.addSuppressed(e2);
+            	}
             }
 
-            throw e;
+            throw new RuntimeException(e);
+            // throw e;
         }
     }
 
