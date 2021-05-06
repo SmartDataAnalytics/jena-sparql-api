@@ -66,6 +66,12 @@
 			<artifactId>jena-sparql-api-collections</artifactId>
 		</dependency>
 
+		<!-- Used for cutsom Aggregators (should probably go to jsa utls) -->
+		<dependency>
+			<groupId>org.aksw.commons</groupId>
+			<artifactId>aksw-commons-collectors</artifactId>
+		</dependency>
+
 		<!-- Used for ResultSet comparison -->
 		<dependency>
 			<groupId>org.aksw.jena-sparql-api</groupId>
