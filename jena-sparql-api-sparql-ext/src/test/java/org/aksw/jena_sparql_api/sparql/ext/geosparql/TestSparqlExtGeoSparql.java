@@ -1,7 +1,31 @@
 package org.aksw.jena_sparql_api.sparql.ext.geosparql;
 
-//public class TestSparqlExtGeoSparql {
-//
+import org.apache.jena.datatypes.TypeMapper;
+import org.apache.jena.geosparql.implementation.datatype.WKTDatatype;
+import org.apache.jena.geosparql.implementation.vocabulary.GeoSPARQL_URI;
+import org.apache.jena.shared.PrefixMapping;
+import org.apache.jena.shared.impl.PrefixMappingImpl;
+import org.apache.jena.sparql.expr.NodeValue;
+import org.apache.jena.sparql.util.ExprUtils;
+import org.apache.jena.sys.JenaSystem;
+import org.junit.Test;
+
+public class TestSparqlExtGeoSparql {
+
+	static {
+		WKTDatatype.registerDatatypes();
+		JenaSystem.init();
+	}
+	
+	@Test
+	public void testSimplify() {
+		PrefixMapping pm = new PrefixMappingImpl();
+		pm.setNsPrefixes(GeoSPARQL_URI.getPrefixes());
+
+		NodeValue nv = ExprUtils.eval(ExprUtils.parse("geof:simplifyDp('POINT (0 0)'^^geo:wktLiteral)", pm));
+		System.out.println(nv);
+	}
+
 //	@Test
 //	public void testNearestPoints() {
 //		String queryStr = "PREFIX fn: <http://www.opengis.net/ont/geosparql#> SELECT ?g { BIND(fn:nearestPoints('POINT (0 0)', 'POINT (1 1)') AS ?g) }";
@@ -13,4 +37,4 @@ package org.aksw.jena_sparql_api.sparql.ext.geosparql;
 //		String expected = "LINESTRING (0 0, 1 1)";
 //		Assert.assertEquals(expected, actual);
 //	}
-//}
+}

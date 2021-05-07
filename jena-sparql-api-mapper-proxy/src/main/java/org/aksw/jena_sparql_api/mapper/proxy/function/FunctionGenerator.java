@@ -49,12 +49,17 @@ public class FunctionGenerator {
 	 */
 	protected Map<Class<?>, Class<?>> returnTypeMap;
 
+	/* WKTDatype (subclass of RDFDatatype) as of Jena 4 lacks the info about the corresponding Java class
+	 * So we have to add support for working around missing java class declaration... */
+	protected Map<Class<?>, String> typeByClassOverrides = new HashMap<>();
 	
 	public FunctionGenerator() {
 		this(TypeMapper.getInstance(), new ConverterRegistryImpl(), new HashMap<>());
 	}
 	
-	public FunctionGenerator(TypeMapper typeMapper, ConverterRegistry converterRegistry,
+	public FunctionGenerator(
+			TypeMapper typeMapper,
+			ConverterRegistry converterRegistry,
 			Map<Class<?>, Class<?>> returnTypeMap) {
 		super();
 		this.typeMapper = typeMapper;
@@ -62,6 +67,10 @@ public class FunctionGenerator {
 		this.returnTypeMap = returnTypeMap;
 	}
 
+	public Map<Class<?>, String> getTypeByClassOverrides() {
+		return typeByClassOverrides;
+	}
+	
 	public TypeMapper getTypeMapper() {
 		return typeMapper;
 	}
@@ -70,7 +79,7 @@ public class FunctionGenerator {
 		return converterRegistry;
 	}
 
-	public Map<Class<?>, Class<?>> getReturnTypeMap() {
+	public Map<Class<?>, Class<?>> getJavaToRdfTypeMap() {
 		return returnTypeMap;
 	}
 
@@ -136,7 +145,8 @@ public class FunctionGenerator {
 			Converter internalTypeToNodeValue = createNodeValueMapper(
 					workingType,
 					converterRegistry,
-					typeMapper);
+					typeMapper,
+					typeByClassOverrides);
 
 		
 			resultConverter = preConvert == null
@@ -169,7 +179,14 @@ public class FunctionGenerator {
 			Class<?> rdfClass = inputClass != null ? inputClass : paramClass;
 			Converter inputConverter = inputClass == null ? null : getPreConvert(inputClass, paramClass);	
 
-			RDFDatatype dtype = typeMapper.getTypeByClass(rdfClass);
+			// Consult override map first because some datatypes may lack appropriate metadata
+			String datatypeIri = typeByClassOverrides.get(rdfClass);
+			
+			RDFDatatype dtype = datatypeIri != null
+					? typeMapper.getTypeByName(datatypeIri)
+					: typeMapper.getTypeByClass(rdfClass);
+			
+			// RDFDatatype dtype = typeMapper.getTypeByClass(rdfClass);
 			
 			if (dtype == null) {
 				throw new RuntimeException(String.format("TypeMapper does not contain an entry for the java class %1$s", inputClass));
@@ -211,12 +228,19 @@ public class FunctionGenerator {
 	public static Converter createNodeValueMapper(
 			Class<?> clz,
 			ConverterRegistry converterRegistry,
-			TypeMapper typeMapper) {
+			TypeMapper typeMapper,
+			Map<Class<?>, String> typeByClassOverrides) {
 		// Check the converterRegistry for a direct conversion
 		Converter result = converterRegistry.getConverter(clz, NodeValue.class);
 
 		if (result == null) {
-			RDFDatatype dtype = typeMapper.getTypeByClass(clz);
+			String datatypeIri = typeByClassOverrides.get(clz);
+			
+			RDFDatatype dtype = datatypeIri != null
+					? typeMapper.getTypeByName(datatypeIri)
+					: typeMapper.getTypeByClass(clz);
+
+			// RDFDatatype dtype = typeMapper.getTypeByClass(clz);
 			
 			if (dtype == null) {
 				throw new RuntimeException(String.format("No RDF datatype registered for %1$s", clz));

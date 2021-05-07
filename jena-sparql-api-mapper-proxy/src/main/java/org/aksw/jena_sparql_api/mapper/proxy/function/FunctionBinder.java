@@ -16,14 +16,24 @@ import org.apache.jena.sparql.function.FunctionRegistry;
  */
 public class FunctionBinder {
 	protected FunctionGenerator functionGenerator;
+	protected FunctionRegistry functionRegistry;
 	
 	public FunctionBinder() {
-		this(new FunctionGenerator());
+		this(new FunctionGenerator(), FunctionRegistry.get());
+	}
+
+	public FunctionBinder(FunctionRegistry functionRegistry) {
+		this(new FunctionGenerator(), functionRegistry);
 	}
 
 	public FunctionBinder(FunctionGenerator functionGenerator) {
+		this(functionGenerator, FunctionRegistry.get());
+	}
+
+	public FunctionBinder(FunctionGenerator functionGenerator, FunctionRegistry functionRegistry) {
 		super();
 		this.functionGenerator = functionGenerator;
+		this.functionRegistry = functionRegistry;
 	}
 
 	public FunctionGenerator getFunctionGenerator() {
@@ -37,7 +47,7 @@ public class FunctionBinder {
 
 	public void register(String uri, Method method, Object invocationTarget) {
 		FunctionFactory factory = factory(method, invocationTarget);
-		FunctionRegistry.get().put(uri, factory);
+		functionRegistry.put(uri, factory);
 	}
 
 	public void register(Method method) {

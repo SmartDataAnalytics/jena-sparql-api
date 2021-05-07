@@ -84,6 +84,13 @@
 			<artifactId>jena-sparql-api-io-core</artifactId>
 		</dependency>
 
+		<!-- Auto-binding of SPARQL and Java functions -->
+		<!-- May separate this functionality from resource proxy generation in the future -->
+		<dependency>
+			<groupId>org.aksw.jena-sparql-api</groupId>
+			<artifactId>jena-sparql-api-mapper-proxy</artifactId>
+		</dependency>
+
 		<dependency>
 			<groupId>org.apache.jena</groupId>
 			<artifactId>jena-rdfconnection</artifactId>
