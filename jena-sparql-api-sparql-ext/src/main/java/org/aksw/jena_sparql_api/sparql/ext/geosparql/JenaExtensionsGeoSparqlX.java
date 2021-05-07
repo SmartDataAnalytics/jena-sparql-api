@@ -26,6 +26,13 @@ public class JenaExtensionsGeoSparqlX {
         registry.put(GeoSPARQL_URI.GEOF_URI + "wkb2wkt", F_Wkb2Wkt.class);
         registry.put(GeoSPARQL_URI.GEOF_URI + "parsePolyline", F_ParsePolyline.class);
         
+
+        // Ensure GeoSPARQL datatypes are available
+        // TODO Our plugin should be loaded after geosparql; but I couldn't find whether the geosparql module
+        //   is loaded with JenaSubsystemLifecycle and if so what level it uses.
+		WKTDatatype.registerDatatypes();
+
+        
         FunctionBinder binder = new FunctionBinder(registry);
         FunctionGenerator generator = binder.getFunctionGenerator();
         
@@ -42,12 +49,11 @@ public class JenaExtensionsGeoSparqlX {
         // Map GeometryWrapper to the IRI of the WKT datatype
         // WKTDatatype.getJavaClass() in Jena4 incorrectly returns null instead of GeometryWrapper.class 
         generator.getTypeByClassOverrides().put(GeometryWrapper.class, WKTDatatype.URI);
-        
 
-        try {
+		try {
 			binder.register(GeoFunctionsJena.class.getMethod("simplifyDp", Geometry.class, double.class, boolean.class));
 		} catch (NoSuchMethodException | SecurityException e) {
-        	throw new RuntimeException(e);
+			throw new RuntimeException(e);
 		}
         
 		// FunctionRegistry.get().put(ns + "nearestPoints", uri -> new E_ST_NearestPoints());		

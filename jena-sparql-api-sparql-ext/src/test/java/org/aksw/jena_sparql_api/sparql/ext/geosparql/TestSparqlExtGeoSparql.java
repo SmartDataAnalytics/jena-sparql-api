@@ -1,21 +1,13 @@
 package org.aksw.jena_sparql_api.sparql.ext.geosparql;
 
-import org.apache.jena.datatypes.TypeMapper;
-import org.apache.jena.geosparql.implementation.datatype.WKTDatatype;
 import org.apache.jena.geosparql.implementation.vocabulary.GeoSPARQL_URI;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.shared.impl.PrefixMappingImpl;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.util.ExprUtils;
-import org.apache.jena.sys.JenaSystem;
 import org.junit.Test;
 
 public class TestSparqlExtGeoSparql {
-
-	static {
-		WKTDatatype.registerDatatypes();
-		JenaSystem.init();
-	}
 	
 	@Test
 	public void testSimplify() {
