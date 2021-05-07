@@ -87,7 +87,6 @@ import org.apache.jena.riot.out.NodeFmtLib;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.path.P_Link;
 import org.apache.jena.sparql.path.P_Path0;
-import org.apache.jena.sparql.path.PathFactory;
 import org.apache.jena.sparql.util.PrefixMapping2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -1120,8 +1119,9 @@ public class MapperProxyUtils {
         return result;
     }
 
-    public static P_Path0 derivePathFromMethod(Method method, PrefixMapping pm) {
-        P_Path0 result = null;
+    
+    public static String deriveIriFromMethod(Method method, PrefixMapping pm) {
+        String result = null;
 
         Iri iri = method.getAnnotation(Iri.class);
         IriNs iriNs = method.getAnnotation(IriNs.class);
@@ -1134,7 +1134,7 @@ public class MapperProxyUtils {
             // String pathStr = "<" + expanded + ">";
 
             // result = (P_Path0)PathParser.parse(pathStr, pm);
-            result = (P_Path0)PathFactory.pathLink(NodeFactory.createURI(expanded));
+            result = expanded;
 
             //logger.debug("Parsed bean property RDF annotation " + pathStr + " into " + result + " on " + method);
             if(logger.isDebugEnabled()) {
@@ -1165,7 +1165,7 @@ public class MapperProxyUtils {
 
             String localName = deriveBeanPropertyName(method.getName());
 
-            result = new P_Link(NodeFactory.createURI(uri + localName));
+            result = uri + localName;
             //result = (P_Path0)PathParser.parse(uri + localName, pm);
         }
 
@@ -1174,6 +1174,12 @@ public class MapperProxyUtils {
 //			System.out.println("style here");
 //		}
         return result;
+    }
+    
+    public static P_Path0 derivePathFromMethod(Method method, PrefixMapping pm) {
+    	String iri = deriveIriFromMethod(method, pm);
+    	P_Path0 result = iri == null ? null : new P_Link(NodeFactory.createURI(iri));
+    	return result;
     }
 
 //	public static Multimap<String, Method> indexMethodsByBeanPropertyName(Class<?> clazz) {

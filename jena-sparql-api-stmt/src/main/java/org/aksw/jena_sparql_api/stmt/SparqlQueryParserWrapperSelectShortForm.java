@@ -69,7 +69,7 @@ public class SparqlQueryParserWrapperSelectShortForm
         	}
         	
         	if(result == null) {
-				throw new QueryParseException(e, e.getLine(), e.getColumn());        		
+				throw new QueryParseException(e.getMessage(), e, e.getLine(), e.getColumn());
         	}
         }
 		

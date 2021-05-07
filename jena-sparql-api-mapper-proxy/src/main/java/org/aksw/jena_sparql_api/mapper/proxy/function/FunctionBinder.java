@@ -2,7 +2,8 @@ package org.aksw.jena_sparql_api.mapper.proxy.function;
 
 import java.lang.reflect.Method;
 
-import org.aksw.jena_sparql_api.mapper.annotation.Iri;
+import org.aksw.jena_sparql_api.common.DefaultPrefixes;
+import org.aksw.jena_sparql_api.mapper.proxy.MapperProxyUtils;
 import org.apache.jena.sparql.function.Function;
 import org.apache.jena.sparql.function.FunctionFactory;
 import org.apache.jena.sparql.function.FunctionRegistry;
@@ -56,12 +57,12 @@ public class FunctionBinder {
 	
 	/** Convenience method to register a function at Jena's default registry */
 	public void register(Method method, Object invocationTarget) {
-		Iri iriAnnotation = method.getAnnotation(Iri.class);
-		if (iriAnnotation == null) {
-			throw new RuntimeException("No @Iri(\"http://my.function\" annotation present on method");
+		String iri = MapperProxyUtils.deriveIriFromMethod(method, DefaultPrefixes.prefixes);
+		
+		if (iri == null) {
+			throw new RuntimeException("No @Iri or @IriNs annotation present on method");
 		}
 		
-		String iri = iriAnnotation.value();
 		register(iri, method);
 	}
 

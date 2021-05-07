@@ -272,6 +272,10 @@ public class SparqlScriptProcessor {
                             prov.setSparqlPath(sparqlFileName);
 
                             SparqlStmt stmt = it.next();
+                            
+                            if (!stmt.isParsed()) {
+                            	throw new RuntimeException(stmt.getParseException());
+                            }
 
                             if (globalPrefixes != null) {
 	                            PrefixMapping stmtPrefixes = stmt.getPrefixMapping();
