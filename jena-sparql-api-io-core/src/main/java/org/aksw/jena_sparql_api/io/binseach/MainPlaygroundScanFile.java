@@ -111,7 +111,7 @@ public class MainPlaygroundScanFile {
         Path path = Paths.get("/home/raven/Downloads/2015-11-02-Amenity.node.sorted.fixed.nt.bz2");
 
         try(FileChannel fileChannel = FileChannel.open(path, StandardOpenOption.READ)) {
-            BinarySearcher bs = BlockSources.createBinarySearcherBz2(fileChannel, false);
+            BinarySearcher bs = BlockSources.createBinarySearcherBz2(fileChannel, PageManagerForFileChannel.DEFAULT_PAGE_SIZE, false);
 
             System.out.println("Matches:");
             // A record in the middle of a block

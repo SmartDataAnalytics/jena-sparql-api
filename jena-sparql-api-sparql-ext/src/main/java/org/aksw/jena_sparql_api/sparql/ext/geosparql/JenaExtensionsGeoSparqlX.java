@@ -1,5 +1,7 @@
 package org.aksw.jena_sparql_api.sparql.ext.geosparql;
 
+import java.math.BigDecimal;
+
 import org.aksw.jena_sparql_api.mapper.proxy.function.FunctionBinder;
 import org.aksw.jena_sparql_api.mapper.proxy.function.FunctionGenerator;
 import org.apache.jena.datatypes.TypeMapper;
@@ -40,7 +42,20 @@ public class JenaExtensionsGeoSparqlX {
         generator.getConverterRegistry()
         	.register(Geometry.class, GeometryWrapper.class,
         			geometry -> new GeometryWrapper(geometry, WKTDatatype.URI),
-        			GeometryWrapper::getParsingGeometry);
+        			GeometryWrapper::getParsingGeometry)
+        	.register(BigDecimal.class, Long.class,
+        			BigDecimal::longValueExact, BigDecimal::new)
+        	.register(BigDecimal.class, Integer.class,
+        			BigDecimal::intValueExact, BigDecimal::new)
+        	.register(BigDecimal.class, Short.class,
+        			BigDecimal::shortValueExact, BigDecimal::new)
+        	.register(BigDecimal.class, Byte.class,
+        			BigDecimal::byteValueExact, BigDecimal::new)
+        	.register(BigDecimal.class, Double.class,
+        			BigDecimal::doubleValue, BigDecimal::new)
+        	.register(BigDecimal.class, Float.class,
+        			BigDecimal::floatValue, BigDecimal::new)
+        	;
 
         // Declare that the conversion of Geometry to GeometryWrapper
         // yields an RDF-compatible java object w.r.t. Jena's TypeMapper

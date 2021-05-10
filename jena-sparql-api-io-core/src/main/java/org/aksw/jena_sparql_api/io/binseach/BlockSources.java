@@ -10,13 +10,17 @@ import org.aksw.jena_sparql_api.io.common.Reference;
 
 public class BlockSources {
     public static BinarySearcher createBinarySearcherBz2(Path path) throws IOException {
+    	return createBinarySearcherBz2(path, PageManagerForFileChannel.DEFAULT_PAGE_SIZE);
+    }
+
+    public static BinarySearcher createBinarySearcherBz2(Path path, int pageSize) throws IOException {
         FileChannel channel = FileChannel.open(path, StandardOpenOption.READ);
-        BinarySearcher result = createBinarySearcherBz2(channel, true);
+        BinarySearcher result = createBinarySearcherBz2(channel, pageSize, true);
         return result;
     }
 
-    public static BinarySearcher createBinarySearcherBz2(FileChannel fileChannel, boolean closeChannel) throws IOException {
-        PageManager pageManager = PageManagerForFileChannel.create(fileChannel);
+    public static BinarySearcher createBinarySearcherBz2(FileChannel fileChannel, int pageSize, boolean closeChannel) throws IOException {
+        PageManager pageManager = PageManagerForFileChannel.create(fileChannel, pageSize);
         // long maxBlockOffset = pageManager.getEndPos();
 
         SeekableSource pagedSource = new SeekableSourceFromPageManager(pageManager);
@@ -28,13 +32,17 @@ public class BlockSources {
 
 
     public static BinarySearcher createBinarySearcherText(Path path) throws IOException {
+    	return createBinarySearcherText(path, PageManagerForFileChannel.DEFAULT_PAGE_SIZE);
+    }
+
+    public static BinarySearcher createBinarySearcherText(Path path, int pageSize) throws IOException {
         FileChannel channel = FileChannel.open(path, StandardOpenOption.READ);
-        BinarySearcher result = createBinarySearcherText(channel, true);
+        BinarySearcher result = createBinarySearcherText(channel, pageSize, true);
         return result;
     }
 
-    public static BinarySearcher createBinarySearcherText(FileChannel fileChannel, boolean closeChannel) throws IOException {
-        PageManager pageManager = PageManagerForFileChannel.create(fileChannel);
+    public static BinarySearcher createBinarySearcherText(FileChannel fileChannel, int pageSize, boolean closeChannel) throws IOException {
+        PageManager pageManager = PageManagerForFileChannel.create(fileChannel, pageSize);
         BinarySearcher result = new BinarySearchOnBlockSource(pageManager, closeChannel ? fileChannel::close : null);
         return result;
     }

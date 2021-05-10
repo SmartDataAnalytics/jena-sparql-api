@@ -17,6 +17,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.aksw.jena_sparql_api.io.binseach.BinarySearcher;
 import org.aksw.jena_sparql_api.io.binseach.BlockSources;
+import org.aksw.jena_sparql_api.io.binseach.PageManagerForFileChannel;
 import org.aksw.jena_sparql_api.rx.GraphOpsRx;
 import org.aksw.jena_sparql_api.rx.RDFDataMgrRx;
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream;
@@ -56,7 +57,7 @@ public class TestBinSearchBz2 {
 
         try(FileChannel fileChannel = FileChannel.open(path, StandardOpenOption.READ);
             BufferedReader expected = new BufferedReader(new InputStreamReader(new BZip2CompressorInputStream(Files.newInputStream(path, StandardOpenOption.READ), true)))) {
-            BinarySearcher bs = BlockSources.createBinarySearcherBz2(fileChannel, false);
+            BinarySearcher bs = BlockSources.createBinarySearcherBz2(fileChannel, PageManagerForFileChannel.DEFAULT_PAGE_SIZE, false);
 
             BufferedReader actual = new BufferedReader(new InputStreamReader(bs.search((String)null)));
 
@@ -109,7 +110,7 @@ public class TestBinSearchBz2 {
         sw.reset().start();
         int i = 0;
         try(FileChannel fileChannel = FileChannel.open(path, StandardOpenOption.READ)) {
-            BinarySearcher bs = BlockSources.createBinarySearcherBz2(fileChannel, false);
+            BinarySearcher bs = BlockSources.createBinarySearcherBz2(fileChannel, PageManagerForFileChannel.DEFAULT_PAGE_SIZE, false);
 
             // This key overlaps on the block boundary (byte 2700000)
 //            try(InputStream in = bs.search("<http://linkedgeodata.org/geometry/node1012767568>")) {

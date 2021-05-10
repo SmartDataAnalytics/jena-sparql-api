@@ -9,6 +9,7 @@ import org.aksw.jena_sparql_api.io.binseach.BinarySearchOnSortedFile;
 import org.aksw.jena_sparql_api.io.binseach.BinarySearcher;
 import org.aksw.jena_sparql_api.io.binseach.BlockSources;
 import org.aksw.jena_sparql_api.io.binseach.GraphFromPrefixMatcher;
+import org.aksw.jena_sparql_api.io.binseach.PageManagerForFileChannel;
 import org.apache.jena.graph.Graph;
 
 public class SpecialGraphs {
@@ -20,7 +21,7 @@ public class SpecialGraphs {
 
     public static Graph fromSortedNtriplesBzip2File(Path path) throws IOException {
         FileChannel fileChannel = FileChannel.open(path, StandardOpenOption.READ);
-        BinarySearcher binarySearcher = BlockSources.createBinarySearcherBz2(fileChannel, true);
+        BinarySearcher binarySearcher = BlockSources.createBinarySearcherBz2(fileChannel, PageManagerForFileChannel.DEFAULT_PAGE_SIZE, true);
 
         Graph result = new GraphFromPrefixMatcher(binarySearcher);
         return result;

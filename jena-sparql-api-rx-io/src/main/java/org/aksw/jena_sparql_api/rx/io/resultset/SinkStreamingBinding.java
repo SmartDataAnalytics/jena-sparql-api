@@ -75,7 +75,7 @@ public class SinkStreamingBinding
             boolean closedIncompleteResult = false;
             if (thread.isAlive()) {
                 closedIncompleteResult = !blockingQueue.isEmpty();
-                if (closedIncompleteResult) {
+//                if (closedIncompleteResult) {
                     if (!blockingQueue.contains(POISON)) {
                         try {
                             blockingQueue.put(POISON);
@@ -83,7 +83,7 @@ public class SinkStreamingBinding
                             throw new RuntimeException("Failed to put poison into queue");
                         }
                     }
-                }
+//                }
             }
 
             try {

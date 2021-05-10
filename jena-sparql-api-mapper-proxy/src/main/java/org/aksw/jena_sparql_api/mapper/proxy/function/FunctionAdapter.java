@@ -112,17 +112,23 @@ public class FunctionAdapter
 				// Attempt to convert the NodeValue's java object if its type does not match the
 				// expected parameter type
 
-				if (Expr.NONE.equals(expr)) {
-					javaArg = null;
-				} else if (expr.isConstant()) {
-					NodeValue nv = expr.getConstant();
-					Node node = nv.asNode();
-					Object intermediateObj = node.getLiteralValue();
-					
+//				if (Expr.NONE.equals(expr)) {
+//					javaArg = null;
+//				} else {
+				NodeValue arg = expr.eval(binding, env);
+
+				NodeValue nv = arg.getConstant();
+				Node node = nv.asNode();
+				Object intermediateObj = node.getLiteralValue();
+				
+//				try {
 					javaArg = convert(intermediateObj, paramType, converterRegistry);
-				} else {
-					throw new IllegalArgumentException("Constant expression expected, got: " + expr);
-				}
+//				} catch (Exception e) {
+//					throw new ExprEvalException(e);
+//				}
+//				else {
+//					throw new IllegalArgumentException("Constant expression expected, got: " + expr);
+//				}
 			} else {
 				javaArg = param.defaultValue;
 			}			

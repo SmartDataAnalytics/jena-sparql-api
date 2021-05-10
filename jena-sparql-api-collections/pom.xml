@@ -64,12 +64,6 @@
 
 		<dependency>
 			<groupId>org.aksw.jena-sparql-api</groupId>
-			<artifactId>jena-sparql-api-resources-test-config</artifactId>
-			<scope>test</scope>
-		</dependency>
-
-		<dependency>
-			<groupId>org.aksw.jena-sparql-api</groupId>
 			<artifactId>jena-sparql-api-utils</artifactId>
 			<scope>test</scope>
 		</dependency>

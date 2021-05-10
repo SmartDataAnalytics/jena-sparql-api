@@ -21,6 +21,10 @@ public class SetFromDatasetGraph
         this.datasetGraph = graph;
     }
 
+    public DatasetGraph getDatasetGraph() {
+		return datasetGraph;
+	}
+    
     @Override
     public boolean add(Quad quad) {
         boolean result = contains(quad);
