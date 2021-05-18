@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
@@ -1240,4 +1241,71 @@ public class ResourceUtils {
         return result;
     }
 
+    
+    
+    /**
+     * Update all matching resources in a model
+     *
+     * @param start
+     * @param resAndHashToIri
+     * @return
+     */
+    public static <T extends Resource> T renameResources(
+            T start,
+            Class<T> clazz,
+            Function<? super Resource, ? extends Iterator<? extends RDFNode>> listResources,
+            Function<? super T, String> resAndHashToIri) {
+        // Rename the query resources - Done outside of this method
+        T result = start;
+        //Set<Resource> qs = model.listResourcesWithProperty(LSQ.text).toSet();
+
+        Iterator<? extends RDFNode> it = listResources.apply(start);
+        while(it.hasNext()) {
+            RDFNode tmpQ = it.next();
+            T q = tmpQ.as(clazz);
+            String iri = resAndHashToIri.apply(q);
+
+            Resource newRes = org.apache.jena.util.ResourceUtils.renameResource(q, iri);
+            if(q.equals(start)) {
+                result = newRes.as(clazz);
+            }
+        }
+
+        return result;
+    }
+
+    
+    /**
+     * Rename resources based on a map of local IDs and a IRI prefix - so the resulting IRI
+     * has the pattern ${baseIri}${localId}.
+     * Returns a map of all renamed resources.
+     *
+     * @param lsqBaseIri
+     * @param renames
+     * @return
+     */
+    public static Map<Resource, Resource> renameResources(String lsqBaseIri, Map<RDFNode, String> renames) {
+        Map<Resource, Resource> result = new HashMap<>();
+
+        for(Entry<RDFNode, String> e : renames.entrySet()) {
+//                        HashCode hashCode = e.getValue();
+//                        String part = BaseEncoding.base64Url().omitPadding().encode(hashCode.asBytes());
+            String part = e.getValue();
+
+            String iri = lsqBaseIri + part;
+            RDFNode n = e.getKey();
+            if(n.isResource()) {
+                Resource src = n.asResource();
+//                            System.out.println("--- RENAME: ");
+//                            System.out.println(iri);
+//                            System.out.println(n);
+//                            System.out.println("------------------------");
+//
+                Resource tgt = org.apache.jena.util.ResourceUtils.renameResource(src, iri);
+                result.put(src, tgt);
+            }
+        }
+
+        return result;
+    }
 }

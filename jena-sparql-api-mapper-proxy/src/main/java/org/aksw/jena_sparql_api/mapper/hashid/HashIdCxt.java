@@ -3,7 +3,10 @@ package org.aksw.jena_sparql_api.mapper.hashid;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiFunction;
+import java.util.stream.Collectors;
 
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.rdf.model.RDFNode;
 
 import com.google.common.hash.HashCode;
@@ -74,4 +77,21 @@ public interface HashIdCxt {
     // TODO Consider using ImmutableMap - or even an RDF model?
     Map<RDFNode, HashCode> getHashIdMapping();
     Map<RDFNode, String> getStringIdMapping();
+    
+    
+    /**
+     * Convenience method that transforms the result of {@link #getStringIdMapping()} such that keys are Nodes.
+     * Useful for applying renaming.
+     */
+    default Map<Node, Node> getNodeMapping(String baseIri) {
+    	Map<RDFNode, String> baseMap = getStringIdMapping();
+    	
+    	Map<Node, Node> result = baseMap.entrySet().stream()
+    			.collect(Collectors.toMap(
+    					e -> e.getKey().asNode(),
+    					e -> NodeFactory.createURI(baseIri + e.getValue())));
+
+    	return result;
+    }
+    
 }

@@ -5,8 +5,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 import org.aksw.jena_sparql_api.utils.DatasetUtils;
+import org.aksw.jena_sparql_api.utils.NodeTransformLib2;
 import org.apache.jena.enhanced.EnhGraph;
 import org.apache.jena.graph.GraphUtil;
 import org.apache.jena.graph.Node;
@@ -21,6 +23,7 @@ import org.apache.jena.rdf.model.impl.ResourceImpl;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.sparql.core.Quad;
+import org.apache.jena.sparql.graph.NodeTransform;
 import org.apache.jena.util.ResourceUtils;
 import org.apache.jena.vocabulary.RDFS;
 
@@ -92,6 +95,33 @@ public class ResourceInDatasetImpl
         return result;
     }
 
+    
+    /**
+     * Rename multiple RDFterms
+     * 
+     * @param old
+     * @param renames
+     * @return
+     */
+    public static ResourceInDataset applyNodeTransform(ResourceInDataset old, NodeTransform nodeTransform) {
+        String graphName = old.getGraphName();
+        Node graphNode = NodeFactory.createURI(graphName);
+        Node newGraphNode = Optional.ofNullable(nodeTransform.apply(graphNode)).orElse(graphNode);
+        
+        Node n = old.asNode();
+        Node newNode = Optional.ofNullable(nodeTransform.apply(n)).orElse(n);
+
+        String g = newGraphNode.getURI();
+
+        Dataset dataset = old.getDataset();
+        NodeTransformLib2.applyNodeTransform(nodeTransform, dataset);
+        
+        ResourceInDataset result = new ResourceInDatasetImpl(dataset, g, newNode);
+        return result;
+    	
+    }
+    	
+    	
     public static ResourceInDataset renameResource(ResourceInDataset old, String uri) {
         Dataset dataset = old.getDataset();
         String graphName = old.getGraphName();

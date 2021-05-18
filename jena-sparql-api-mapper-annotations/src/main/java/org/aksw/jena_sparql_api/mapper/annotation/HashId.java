@@ -73,6 +73,8 @@ import java.lang.annotation.RetentionPolicy;
  */
 @Retention(RetentionPolicy.RUNTIME)
 public @interface HashId {
+	/** By default, the predicate provided by the @Iri annotation is included in hash id generation from its value.
+	 * Setting this flag to false makes hash id computation dependent only on the value for that predicate. */
     boolean excludeRdfProperty() default false;
 //    Class<? extends HashIdMergeStrategy> value() default HashIdMergeStrategy.class;
 }
