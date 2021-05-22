@@ -11,6 +11,7 @@ import com.google.common.collect.Iterators;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.query.ResultSetFactory;
+import org.apache.jena.sparql.engine.QueryIterator;
 import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.engine.iterator.QueryIter;
 import org.apache.jena.sparql.engine.iterator.QueryIterPlainWrapper;
@@ -19,7 +20,7 @@ import org.apache.jena.sparql.engine.iterator.QueryIterPlainWrapper;
 public class ResultSetUtils {
     public static ResultSetCloseable tripleIteratorToResultSet(Iterator<Triple> tripleIt, Closeable closeable) {
         Iterator<Binding> bindingIt = Iterators.transform(tripleIt, F_TripleToBinding.fn);
-        QueryIter queryIter = new QueryIterPlainWrapper(bindingIt);
+        QueryIterator queryIter = QueryIterPlainWrapper.create(bindingIt);
         List<String> varNames = Arrays.asList("s", "p", "o");
         ResultSet baseRs = ResultSetFactory.create(queryIter, varNames);
         ResultSetCloseable result = new ResultSetCloseable(baseRs, closeable);

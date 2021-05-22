@@ -97,7 +97,7 @@ public class OpExecutorViewCache
 
 //        	while(it.hasNext()) { System.out.println("item: " + it.next()); }
 
-            result = new QueryIterPlainWrapper(stream.iterator());
+            result = QueryIterPlainWrapper.create(stream.iterator());
         } else {
             result = super.exec(opService, input);
         }

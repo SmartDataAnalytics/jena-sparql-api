@@ -106,7 +106,7 @@ public class PropertyFunctionFactoryJsonUnnest
 	                            bindings.add(b);
 	                        }	
 	                    }
-                        result = new QueryIterPlainWrapper(bindings.iterator());
+                        result = QueryIterPlainWrapper.create(bindings.iterator());
                     }
                 }
 

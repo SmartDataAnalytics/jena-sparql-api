@@ -122,7 +122,7 @@ public class PropertyFunctionFactoryCsvParse
 					jsonObjStream = Collections.<JsonElement>emptySet().stream();
 				}
                 
-                QueryIterator result = new QueryIterPlainWrapper(
+                QueryIterator result = QueryIterPlainWrapper.create(
             		new IteratorClosable<>(
             				jsonObjStream
 		            		.map(RDFDatatypeJson::jsonToNode)

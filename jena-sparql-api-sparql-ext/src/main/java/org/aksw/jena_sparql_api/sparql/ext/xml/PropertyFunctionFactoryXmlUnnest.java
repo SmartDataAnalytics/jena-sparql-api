@@ -120,7 +120,7 @@ public class PropertyFunctionFactoryXmlUnnest
                                     bindings.add(b);
         	            		}
         	            	}
-                            result = new QueryIterPlainWrapper(bindings.iterator());
+                            result = QueryIterPlainWrapper.create(bindings.iterator());
         	            } catch(Exception e) {
         	                logger.warn(e.getLocalizedMessage());
         	            }

@@ -330,7 +330,7 @@ public class ResultSetUtils {
 
         Iterator<Binding> joinIterator = new IteratorJoin<List<Node>>(keys.iterator(), ma, mb);
 
-        QueryIterator queryIter = new QueryIterPlainWrapper(joinIterator);
+        QueryIterator queryIter = QueryIterPlainWrapper.create(joinIterator);
 
         ResultSet result = ResultSetFactory.create(queryIter, allVars);
         return result;
@@ -357,7 +357,7 @@ public class ResultSetUtils {
     }
 
     public static ResultSet create(List<String> varNames, Iterator<Binding> bindingIt) {
-        QueryIterator queryIter = new QueryIterPlainWrapper(bindingIt);
+        QueryIterator queryIter = QueryIterPlainWrapper.create(bindingIt);
 
         ResultSet result = ResultSetFactory.create(queryIter, varNames);
         return result;

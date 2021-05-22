@@ -129,7 +129,7 @@ public class PropertyFunctionFactoryFsFind
             	logger.warn("Error resolving node as URI: " + node, e);
             }
             
-            QueryIterator result = new QueryIterPlainWrapper(bindings);
+            QueryIterator result = QueryIterPlainWrapper.create(bindings);
             return result;
         }
     };

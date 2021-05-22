@@ -97,7 +97,7 @@ public class PropertyFunctionFactoryUrlText
 //                    }
 //                }
 
-                QueryIterator result = new QueryIterPlainWrapper(bindings.iterator());
+                QueryIterator result = QueryIterPlainWrapper.create(bindings.iterator());
                 return result;
             }
         };

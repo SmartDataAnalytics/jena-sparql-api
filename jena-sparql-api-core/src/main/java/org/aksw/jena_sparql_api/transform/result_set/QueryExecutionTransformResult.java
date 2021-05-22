@@ -22,6 +22,7 @@ import org.apache.jena.query.ResultSetFactory;
 import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.sparql.engine.QueryIterator;
 import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.engine.iterator.QueryIter;
 import org.apache.jena.sparql.engine.iterator.QueryIterPlainWrapper;
@@ -133,7 +134,7 @@ public class QueryExecutionTransformResult
 	    ExtendedIterator<Binding> it = WrappedIterator.create(new IteratorResultSetBinding(rs))
 	        .mapWith(b -> NodeTransformLib2.transformValues(b, nodeTransform));
 	
-	    QueryIter queryIter = new QueryIterPlainWrapper(it);
+	    QueryIterator queryIter = QueryIterPlainWrapper.create(it);
 	    ResultSet core = ResultSetFactory.create(queryIter, vars);
 	
 	    ResultSet result = new ResultSetCloseable(core, closeable);

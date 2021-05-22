@@ -13,6 +13,7 @@ import org.apache.jena.query.ResultSet;
 import org.apache.jena.query.ResultSetFactory;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.sparql.engine.QueryIterator;
 import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.engine.iterator.QueryIter;
 import org.apache.jena.sparql.engine.iterator.QueryIterPlainWrapper;
@@ -49,7 +50,7 @@ public class QueryExecutionResourceCore
                 F_TripleToQuad.fn);
 
         Iterator<Binding> itBinding = Iterators.transform(itTriple, fn);
-        QueryIter queryIter = new QueryIterPlainWrapper(itBinding);
+        QueryIterator queryIter = QueryIterPlainWrapper.create(itBinding);
         List<String> varNames = Arrays.asList("g", "s", "p", "o");
         ResultSet rs = ResultSetFactory.create(queryIter, varNames);
         return rs;

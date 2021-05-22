@@ -176,7 +176,7 @@ public class PropertyFunctionKShortestPaths
           return r;
         }).iterator();
 
-        QueryIter result = new QueryIterPlainWrapper(itBindings);
+        QueryIterator result = QueryIterPlainWrapper.create(itBindings);
         return result;
     }
 

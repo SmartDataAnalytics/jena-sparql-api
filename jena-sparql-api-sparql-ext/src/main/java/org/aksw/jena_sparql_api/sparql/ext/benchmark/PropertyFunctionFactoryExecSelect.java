@@ -97,7 +97,7 @@ public class PropertyFunctionFactoryExecSelect
 						}).iterator();
 			            	
 						
-						result = new QueryIterPlainWrapper(
+						result = QueryIterPlainWrapper.create(
 		                		new IteratorClosable<Binding>(it, qe::close), execCxt);
 					} catch(Exception e) {
 						if(qe != null) {

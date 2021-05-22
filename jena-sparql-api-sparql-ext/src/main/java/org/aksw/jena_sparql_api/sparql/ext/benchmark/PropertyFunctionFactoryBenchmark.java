@@ -86,7 +86,7 @@ public class PropertyFunctionFactoryBenchmark
 							E_JsonPath.jsonToNode(json.get("result")));
 	            }
 	            
-	            result = new QueryIterPlainWrapper(Iterators.singletonIterator(b), execCxt) ;
+	            result = QueryIterPlainWrapper.create(Iterators.singletonIterator(b), execCxt) ;
 			}
 			return result;
 		}

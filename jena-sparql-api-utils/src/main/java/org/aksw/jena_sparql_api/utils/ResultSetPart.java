@@ -10,6 +10,7 @@ import org.apache.jena.query.ResultSetFactory;
 import org.apache.jena.sparql.algebra.Table;
 import org.apache.jena.sparql.algebra.TableFactory;
 import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.engine.QueryIterator;
 import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.engine.iterator.QueryIter;
 import org.apache.jena.sparql.engine.iterator.QueryIterPlainWrapper;
@@ -81,7 +82,7 @@ public class ResultSetPart {
 
     public static ResultSet toResultSet(ResultSetPart rsp) {
         Iterator<Binding> it = rsp.getBindings().iterator();
-        QueryIter queryIter = new QueryIterPlainWrapper(it);
+        QueryIterator queryIter = QueryIterPlainWrapper.create(it);
         ResultSet result = ResultSetFactory.create(queryIter, rsp.getVarNames());
         return result;
         //ResultSetCloseable result = new ResultSetCloseable(baseRs, closeable);
