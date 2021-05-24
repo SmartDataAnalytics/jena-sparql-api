@@ -234,6 +234,7 @@ public class SchemaMapperImpl {
 
 			List<String> promotedDatatypes = rawDatatypes.stream()
 					.map(iri -> typePromotions.getOrDefault(iri, iri))
+					.distinct()
 					.sorted()
 					.collect(Collectors.toList());
 

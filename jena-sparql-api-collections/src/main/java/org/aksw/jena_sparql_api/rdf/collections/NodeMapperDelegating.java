@@ -6,8 +6,6 @@ import java.util.function.Predicate;
 
 import org.aksw.commons.lambda.serializable.SerializableFunction;
 import org.aksw.commons.lambda.serializable.SerializablePredicate;
-import org.aksw.commons.lambda.serializable.SerializableFunction;
-import org.aksw.commons.lambda.serializable.SerializablePredicate;
 import org.apache.jena.graph.Node;
 
 public class NodeMapperDelegating<T>
@@ -58,6 +56,7 @@ public class NodeMapperDelegating<T>
 	}
 	
 	
+	/** Experimental contructor using serializable lambdas */
 	public static <T> NodeMapperDelegating<T> create(
 			Class<?> javaClass,
 			SerializablePredicate<? super Node> canMap,
