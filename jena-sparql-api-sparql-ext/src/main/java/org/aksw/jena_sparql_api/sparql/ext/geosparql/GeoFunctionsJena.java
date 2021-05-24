@@ -20,4 +20,11 @@ public class GeoFunctionsJena {
 		return result;
 	}
 
+	@IriNs(GeoSPARQL_URI.GEOF_URI)
+	public static Geometry centroid(
+			Geometry geom) {
+		Geometry result = geom.getCentroid();
+		return result;
+	}
+
 }
