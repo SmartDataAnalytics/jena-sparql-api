@@ -2,9 +2,11 @@ package org.aksw.jena_sparql_api.schema_mapping;
 
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.BiFunction;
@@ -229,15 +231,13 @@ public class SchemaMapperImpl {
 			// Furthermore, if a type has no promotion mapping add it also as a reflexive mapping
 			rawDatatypes.stream().filter(dt -> !typePromotions.containsKey(dt))
 				.forEach(x -> typePromotions.put(x, x));
-			
-			SetMultimap<String, String> inverse = Multimaps.invertFrom(Multimaps.forMap(typePromotions), 
-				    HashMultimap.<String, String>create());
-			
+
 			List<String> promotedDatatypes = rawDatatypes.stream()
 					.map(iri -> typePromotions.getOrDefault(iri, iri))
+					.distinct()
 					.sorted()
 					.collect(Collectors.toList());
-			
+
 			
 			// If there is no datatype then use the fallback datatype
 			// We assume that the type promoter can handle an empty set of variables
@@ -247,13 +247,34 @@ public class SchemaMapperImpl {
 					promotedDatatypes.add(srcVarName);
 				}
 			}
-			
+
 			// Apply type remapping if applicable
+			// A type that is remapped to null will not have a corresponding column
 			if (typeRemap != null) {
-				promotedDatatypes = promotedDatatypes.stream()
-						.map(typeRemap)
+				// Pass all currently promoted datatypes through the remap function
+				Map<String, String> remaps = promotedDatatypes.stream()
+						.collect(Collectors.toMap(
+							x -> x,
+							x -> typeRemap.apply(x),
+							(k1, k2) -> { throw new IllegalStateException("should never happen"); },
+							LinkedHashMap::new));
+
+				promotedDatatypes = remaps.values().stream()
+						.filter(x -> x != null)
 						.distinct()
 						.collect(Collectors.toList());
+			
+				Iterator<Entry<String, String>> it = typePromotions.entrySet().iterator();
+				while (it.hasNext()) {
+					Entry<String, String> e = it.next();
+					String remappedType = remaps.get(e.getValue());
+					
+					if (remappedType == null) {
+						it.remove();
+					} else {
+						e.setValue(remappedType);
+					}					
+				}
 			}
 			
 			boolean singleDatatype = promotedDatatypes.size() == 1;
@@ -263,7 +284,11 @@ public class SchemaMapperImpl {
 			
 			// Sort datatypes by their suffix in order to obtain a stable order
 			Collections.sort(promotedDatatypes, (a, b) -> deriveSuffix(a).compareTo(deriveSuffix(b)));
-			
+
+			SetMultimap<String, String> inverse = Multimaps.invertFrom(Multimaps.forMap(typePromotions), 
+				    HashMultimap.<String, String>create());
+
+
 			for (String datatypeIri : promotedDatatypes) {
 
 				//System.out.println("Processing datatypeIri: " + datatypeIri);
