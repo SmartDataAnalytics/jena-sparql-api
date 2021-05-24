@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api.rdf.collections;
 
+import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -23,8 +24,13 @@ import org.apache.jena.graph.NodeFactory;
  * @param <T>
  */
 public class NodeMapperFromRdfDatatype<T>
-	implements NodeMapper<T>
+	implements NodeMapper<T>, Serializable
 {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
 	protected RDFDatatype dtype;
 	
 	public NodeMapperFromRdfDatatype(RDFDatatype dtype) {
