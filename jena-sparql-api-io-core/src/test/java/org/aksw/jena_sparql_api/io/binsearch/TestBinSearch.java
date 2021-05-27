@@ -10,6 +10,7 @@ import java.nio.file.StandardOpenOption;
 import java.util.Iterator;
 
 import org.aksw.commons.util.StreamUtils;
+import org.aksw.commons.util.ref.Ref;
 import org.aksw.jena_sparql_api.io.binseach.BinarySearchOnSortedFile;
 import org.aksw.jena_sparql_api.io.binseach.BinarySearcher;
 import org.aksw.jena_sparql_api.io.binseach.Block;
@@ -21,7 +22,6 @@ import org.aksw.jena_sparql_api.io.binseach.PageManagerForFileChannel;
 import org.aksw.jena_sparql_api.io.binseach.SeekableSource;
 import org.aksw.jena_sparql_api.io.binseach.SeekableSourceFromPageManager;
 import org.aksw.jena_sparql_api.io.binseach.bz2.BlockSourceBzip2;
-import org.aksw.jena_sparql_api.io.common.Reference;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
@@ -44,7 +44,7 @@ public class TestBinSearch {
 
             if(true)
             {
-                Reference<? extends Block> block = blockSource.contentAtOrAfter(21133549, true);
+                Ref<? extends Block> block = blockSource.contentAtOrAfter(21133549, true);
                 BlockIterState state = new BlockIterState(true, block, null, true);
                 while(state.hasNext()) {
                     state.advance();
@@ -64,7 +64,7 @@ public class TestBinSearch {
 //            1043168
             if(true)
             {
-                Reference<? extends Block> block = blockSource.contentAtOrBefore(162881, true);
+                Ref<? extends Block> block = blockSource.contentAtOrBefore(162881, true);
                 BlockIterState state = new BlockIterState(true, block, null, false);
                 while(state.hasNext()) {
                     state.advance();

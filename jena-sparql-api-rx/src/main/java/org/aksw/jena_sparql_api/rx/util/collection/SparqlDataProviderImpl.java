@@ -4,7 +4,9 @@ import java.util.List;
 
 import org.apache.jena.query.SortCondition;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
+import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.ExprList;
+import org.apache.jena.sparql.syntax.Element;
 
 
 interface BindingQuery {
@@ -49,9 +51,12 @@ class SparqlBindingNode {
 	
 }
 
-public class SparqlDataProvider
+public class SparqlDataProviderImpl
 {
 	protected SparqlQueryConnection conn;
+	protected Element baseElement;
+	protected List<Var> project;
+	protected ExprList filter;
 	
-	// Flowable fetch()
+	
 }

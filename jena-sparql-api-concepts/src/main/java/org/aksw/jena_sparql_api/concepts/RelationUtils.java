@@ -13,6 +13,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.aksw.commons.collections.generator.Generator;
+import org.aksw.jena_sparql_api.syntax.QueryGenerationUtils;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.QuadPatternUtils;
 import org.aksw.jena_sparql_api.utils.VarGeneratorBlacklist;
@@ -24,8 +25,11 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query;
+import org.apache.jena.query.QueryFactory;
+import org.apache.jena.query.Syntax;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.shared.PrefixMapping;
+import org.apache.jena.shared.impl.PrefixMappingImpl;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.core.VarExprList;
 import org.apache.jena.sparql.expr.E_Bound;
@@ -33,8 +37,6 @@ import org.apache.jena.sparql.expr.E_Conditional;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprVar;
 import org.apache.jena.sparql.expr.aggregate.AggCountVarDistinct;
-import org.apache.jena.sparql.lang.ParserSPARQL11;
-import org.apache.jena.sparql.lang.SPARQLParser;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementFilter;
 import org.apache.jena.sparql.syntax.ElementGroup;
@@ -213,15 +215,19 @@ public class RelationUtils {
 //    }
 
     public static Relation fromQuery(String queryStr) {
-        return fromQuery(queryStr, PrefixMapping.Extended);
+    	PrefixMapping pm = new PrefixMappingImpl();
+    	pm.setNsPrefixes(PrefixMapping.Extended);
+        return fromQuery(queryStr, pm);
     }
 
     public static Relation fromQuery(String queryStr, PrefixMapping prefixMapping) {
         Query query = new Query();
         query.setPrefixMapping(prefixMapping);
         // TODO Make parser configurable
-        SPARQLParser parser = new ParserSPARQL11();
-        parser.parse(query, queryStr);
+        // SPARQLParser parser = new ParserSPARQL11();
+        QueryFactory.parse(query, queryStr, "http://www.example.org/base/", Syntax.syntaxARQ);
+
+        // parser.parse(query, queryStr);
 
         Relation result = fromQuery(query);
         return result;
@@ -231,8 +237,13 @@ public class RelationUtils {
         Relation result;
         if(query.isSelectType()) {
             List<Var> vars = query.getProjectVars();
-            Element element = query.getQueryPattern();
-            result = new RelationImpl(element, vars);
+
+            boolean needsWrapping = QueryGenerationUtils.needsWrappingByFeatures(query);
+        	Element element = needsWrapping
+        			? new ElementSubQuery(query)
+        			: query.getQueryPattern();
+
+        	result = new RelationImpl(element, vars);
         } else if(query.isConstructType()) {
             Template template = query.getConstructTemplate();
             List<Var> vars = new ArrayList<>(QuadPatternUtils.getVarsMentioned(template.getQuads()));

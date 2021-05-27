@@ -9,6 +9,7 @@ import org.aksw.jena_sparql_api.concepts.ConceptUtils;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.rx.EntityBaseQuery;
 import org.aksw.jena_sparql_api.rx.SparqlRx;
+import org.aksw.jena_sparql_api.rx.entity.engine.EntityQueryRxBuilder;
 import org.aksw.jena_sparql_api.rx.entity.engine.EntityQueryRx;
 import org.aksw.jena_sparql_api.rx.entity.engine.EntityQueryRx.EntityQueryProcessed;
 import org.aksw.jena_sparql_api.rx.entity.model.AttributeGraphFragment;
@@ -17,8 +18,8 @@ import org.aksw.jena_sparql_api.rx.entity.model.EntityQueryImpl;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
+import org.apache.jena.query.QueryExecution;
 import org.apache.jena.rdf.model.RDFNode;
-import org.apache.jena.rdfconnection.SparqlQueryConnection;
 
 import com.google.common.collect.Range;
 
@@ -28,12 +29,12 @@ import io.reactivex.rxjava3.core.Single;
 public class ListServiceEntityQuery
     implements ListService<EntityBaseQuery, RDFNode>
 {
-    protected SparqlQueryConnection conn;
+    protected Function<? super Query, ? extends QueryExecution> qef;
     protected AttributeGraphFragment attributePart;
 
-    public ListServiceEntityQuery(SparqlQueryConnection conn, AttributeGraphFragment attributePart) {
+    public ListServiceEntityQuery(Function<? super Query, ? extends QueryExecution> qef, AttributeGraphFragment attributePart) {
         super();
-        this.conn = conn;
+        this.qef = qef;
         this.attributePart = attributePart;
     }
 
@@ -76,7 +77,11 @@ public class ListServiceEntityQuery
 
             // QueryUtils.applySlice(query, offset, limit, cloneOnChange)
 
-            Flowable<RDFNode> result = EntityQueryRx.execConstructEntities(conn, entityQuery);
+            Flowable<RDFNode> result = EntityQueryRxBuilder.create()
+            		.setQueryExecutionFactory(qef)
+            		.setQuery(entityQuery)
+            		.build();
+
             return result;
         }
 
@@ -92,7 +97,7 @@ public class ListServiceEntityQuery
 
             // Entry<Var, Query> countData = QueryGenerationUtils.createQueryCount(query);
 
-            Single<Range<Long>> result = SparqlRx.fetchCountQueryPartition(conn, query, processed.getPartitionVars(), itemLimit, rowLimit);
+            Single<Range<Long>> result = SparqlRx.fetchCountQueryPartition(qef, query, processed.getPartitionVars(), itemLimit, rowLimit);
             return result;
         }
     }

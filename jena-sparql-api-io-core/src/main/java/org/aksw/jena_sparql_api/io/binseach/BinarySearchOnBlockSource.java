@@ -5,7 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.channels.Channels;
 
-import org.aksw.jena_sparql_api.io.common.Reference;
+import org.aksw.commons.util.ref.Ref;
 
 import com.google.common.primitives.Ints;
 
@@ -27,7 +27,7 @@ public class BinarySearchOnBlockSource
 
         long maxBlockOffset = blockSource.size();
 
-        Reference<? extends Block> blockRef;
+        Ref<? extends Block> blockRef;
         if(prefix == null || prefix.length == 0) {
             blockRef = blockSource.contentAtOrAfter(0, true);
         } else {

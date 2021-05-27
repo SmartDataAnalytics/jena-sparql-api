@@ -22,6 +22,7 @@ import org.apache.jena.sparql.expr.Expr;
 import com.google.common.collect.BoundType;
 import com.google.common.collect.DiscreteDomain;
 import com.google.common.collect.Range;
+import com.google.common.collect.RangeSet;
 
 public class RangeUtils {
     public static final Range<Long> rangeStartingWithZero = Range.atLeast(0l);
@@ -237,4 +238,14 @@ public class RangeUtils {
 
         return result;
     }
+    
+	/**
+	 * Compute the set of gaps for the given request range.
+	 * This is the complement of the given ranges constrained to the request range.
+	 */
+	public static <C extends Comparable<C>> RangeSet<C> gaps(Range<C> request, RangeSet<C> ranges) {
+		RangeSet<C> gaps = ranges.complement().subRangeSet(request);
+		return gaps;
+	}
+
 }

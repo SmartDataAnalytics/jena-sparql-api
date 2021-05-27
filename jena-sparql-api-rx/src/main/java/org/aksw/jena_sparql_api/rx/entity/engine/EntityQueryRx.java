@@ -57,7 +57,7 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query;
-import org.apache.jena.query.ResultSet;
+import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.SortCondition;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -70,7 +70,6 @@ import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.core.VarExprList;
 import org.apache.jena.sparql.engine.binding.Binding;
-import org.apache.jena.sparql.engine.binding.BindingFactory;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprList;
 import org.apache.jena.sparql.expr.ExprTransformer;
@@ -100,39 +99,9 @@ import io.reactivex.rxjava3.core.FlowableTransformer;
  */
 public class EntityQueryRx {
 
-    public static Flowable<RDFNode> execConstructEntities(
-            SparqlQueryConnection conn,
-            EntityQueryImpl query) {
-
-        return execConstructEntities(
-                conn, query,
-                GraphFactory::createDefaultGraph);
-    }
-
-    public static Flowable<RDFNode> execConstructEntities(
-            SparqlQueryConnection conn,
-            EntityQueryImpl query,
-            Supplier<Graph> graphSupplier) {
-
-        return execConstructEntities(
-                conn, query,
-                GraphFactory::createDefaultGraph, EntityQueryRx::defaultEvalToNode);
-    }
-
-    public static Flowable<RDFNode> execConstructEntities(
-            SparqlQueryConnection conn,
-            EntityQueryImpl queryEx,
-            Supplier<Graph> graphSupplier,
-            ExprListEval exprListEval) {
-
-        EntityQueryBasic basicEntityQuery = assembleEntityAndAttributeParts(queryEx);
-        return execConstructEntities(conn, basicEntityQuery, graphSupplier, exprListEval);
-    }
-
-
 
     public static Flowable<Quad> execConstructEntitiesNg(
-            SparqlQueryConnection conn,
+    		Function<? super Query, ? extends QueryExecution> conn,
             EntityQueryImpl query) {
 
         return execConstructEntitiesNg(
@@ -141,7 +110,7 @@ public class EntityQueryRx {
     }
 
     public static Flowable<Quad> execConstructEntitiesNg(
-            SparqlQueryConnection conn,
+    		Function<? super Query, ? extends QueryExecution> conn,
             EntityQueryImpl query,
             Supplier<Graph> graphSupplier) {
 
@@ -151,7 +120,7 @@ public class EntityQueryRx {
     }
 
     public static Flowable<Quad> execConstructEntitiesNg(
-            SparqlQueryConnection conn,
+    		Function<? super Query, ? extends QueryExecution> conn,
             EntityQueryImpl queryEx,
             Supplier<Graph> graphSupplier,
             ExprListEval exprListEval) {
@@ -166,7 +135,9 @@ public class EntityQueryRx {
 
     /** Execute a partitioned query.
      * See {@link #execConstructEntities(SparqlQueryConnection, EntityQueryBasic, Supplier, ExprListEval)} */
-    public static Flowable<RDFNode> execConstructRooted(SparqlQueryConnection conn, EntityQueryBasic query) {
+    public static Flowable<RDFNode> execConstructRooted(
+    		Function<? super Query, ? extends QueryExecution> conn, 
+    		EntityQueryBasic query) {
         return execConstructRooted(
                 conn, query,
                 GraphFactory::createDefaultGraph);
@@ -174,7 +145,9 @@ public class EntityQueryRx {
 
     /** Execute a partitioned query.
      * See {@link #execConstructEntities(SparqlQueryConnection, EntityQueryBasic, Supplier, ExprListEval)} */
-    public static Flowable<RDFNode> execConstructRooted(SparqlQueryConnection conn, EntityQueryBasic query,
+    public static Flowable<RDFNode> execConstructRooted(
+    		Function<? super Query, ? extends QueryExecution> conn,
+    		EntityQueryBasic query,
             Supplier<Graph> graphSupplier) {
         return execConstructEntities(
                 conn, query,
@@ -459,7 +432,7 @@ public class EntityQueryRx {
      * @return
      */
     public static Flowable<Entry<Binding, Table>> execSelectPartitioned(
-            SparqlQueryConnection conn,
+    		Function<? super Query, ? extends QueryExecution> conn,
             Query selectQuery,
             List<Var> partitionVars) {
 
@@ -477,7 +450,7 @@ public class EntityQueryRx {
 
         Flowable<Entry<Binding, Table>> result = SparqlRx
                 // For future reference: If we get an empty results by using the query object, we probably have wrapped a variable with NodeValue.makeNode.
-                .execSelectRaw(() -> conn.query(selectQuery))
+                .execSelectRaw(() -> conn.apply(selectQuery))
                 .compose(aggregateConsecutiveItemsWithSameKey(bindingToKey, aggregator));
 
         return result;
@@ -485,7 +458,7 @@ public class EntityQueryRx {
 
 
     public static Flowable<GraphPartitionWithEntities> execConstructPartitionedOld(
-            SparqlQueryConnection conn,
+    		Function<? super Query, ? extends QueryExecution> conn,
             EntityQueryImpl queryEx,
             Supplier<Graph> graphSupplier,
             ExprListEval exprListEval) {
@@ -496,7 +469,7 @@ public class EntityQueryRx {
     }
 
     public static Flowable<GraphPartitionWithEntities> execConstructPartitionedOld(
-            SparqlQueryConnection conn,
+    		Function<? super Query, ? extends QueryExecution> conn,
             EntityQueryBasic queryEx,
             Supplier<Graph> graphSupplier,
             ExprListEval exprListEval) {
@@ -698,7 +671,7 @@ public class EntityQueryRx {
 
 
     public static Flowable<GraphPartitionWithEntities> execQueryActual(
-            SparqlQueryConnection conn,
+    		Function<? super Query, ? extends QueryExecution> conn,
             List<Var> partitionVars,
             Set<Node> trackedTemplateNodes,
             Query selectQuery, Function<Table,
@@ -768,7 +741,7 @@ public class EntityQueryRx {
      * @return
      */
     public static Flowable<RDFNode> execConstructEntities(
-            SparqlQueryConnection conn,
+    		Function<? super Query, ? extends QueryExecution> conn,
             EntityQueryBasic queryEx,
             Supplier<Graph> graphSupplier,
             ExprListEval exprListEval) {
@@ -786,7 +759,7 @@ public class EntityQueryRx {
     }
 
     public static Flowable<Quad> execConstructEntitiesNg(
-            SparqlQueryConnection conn,
+    		Function<? super Query, ? extends QueryExecution> conn,
             EntityQueryBasic queryEx) {
         return execConstructEntitiesNg(conn, queryEx, GraphFactory::createDefaultGraph, EntityQueryRx::defaultEvalToNode);
     }
@@ -799,7 +772,7 @@ public class EntityQueryRx {
      * @return
      */
     public static Flowable<Quad> execConstructEntitiesNg(
-            SparqlQueryConnection conn,
+    		Function<? super Query, ? extends QueryExecution> conn,
             EntityQueryBasic queryEx,
             Supplier<Graph> graphSupplier,
             ExprListEval exprListEval) {

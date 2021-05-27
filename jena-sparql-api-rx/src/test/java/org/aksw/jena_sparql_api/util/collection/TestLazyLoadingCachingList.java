@@ -16,6 +16,26 @@ import com.google.common.collect.Range;
 
 public class TestLazyLoadingCachingList {
 
+	@Test
+	public void testWithSparql() throws Exception {
+		// FIXME RangedSupplierQuery is currently part of concept_cache; it should go to the rx package!
+		
+//		Dataset dataset = RDFDataMgr.loadDataset(null);
+//		SparqlQueryConnection conn = RDFConnectionFactory.connect(dataset);
+//		// SparqlRx.execSelectRaw()
+//		
+//		Query query = QueryFactory.create("SELECT * { ?s ?p ?o }");
+//		RangedSupplier<Long, Binding> rs = new RangedSupplierQuery(conn::query, query);
+//
+//		RangeSupplier<Long, Binding> smartRs = SmartCachingRangedSupplier.wrap(rs);
+//		
+//		List<Var> resultVars = query.getProjectVars();
+//		Flowable<Binding> bindings = rs.apply(Range.open(0l, 1000l));
+		
+		
+	}
+	
+	
     @Test
     public void test() {
         //fail("Not yet implemented");

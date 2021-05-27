@@ -6,8 +6,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.concurrent.TimeUnit;
 
+import org.aksw.commons.util.ref.RefImpl;
 import org.aksw.jena_sparql_api.conjure.datapod.impl.RdfDataPodHdtImpl;
-import org.aksw.jena_sparql_api.io.common.ReferenceImpl;
 import org.aksw.jena_sparql_api.io.hdt.JenaPluginHdt;
 import org.aksw.jena_sparql_api.utils.GraphUtils;
 import org.apache.jena.ext.com.google.common.base.Stopwatch;
@@ -51,7 +51,7 @@ public class MainHdt {
 			in = new ByteArrayInputStream(out.toByteArray());
 			// in = new BufferedInputStream(Files.newInputStream(Paths.get("/home/raven/.dcat/repository/downloads/localhost/5000/data/lodlaundromat/95/95388162d1fcf14963c670b560a40028/95388162d1fcf14963c670b560a40028.hdt/_content/data.hdt")));
 			HDT hdt = HDTManager.loadHDT(in);
-			Model header = new RdfDataPodHdtImpl(ReferenceImpl.create(hdt, null, null), true).getModel();
+			Model header = new RdfDataPodHdtImpl(RefImpl.create(hdt, hdt::close, null), true).getModel();
 			RDFDataMgr.write(System.out, header, RDFFormat.TURTLE_PRETTY);
 		}
 

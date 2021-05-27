@@ -7,6 +7,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.aksw.commons.util.ref.Ref;
+import org.aksw.commons.util.ref.RefImpl;
 import org.aksw.jena_sparql_api.io.binseach.Block;
 import org.aksw.jena_sparql_api.io.binseach.BlockSource;
 import org.aksw.jena_sparql_api.io.binseach.BufferFromInputStream;
@@ -16,8 +18,6 @@ import org.aksw.jena_sparql_api.io.binseach.DecodedDataBlock;
 import org.aksw.jena_sparql_api.io.binseach.ReverseCharSequenceFromSeekable;
 import org.aksw.jena_sparql_api.io.binseach.Seekable;
 import org.aksw.jena_sparql_api.io.binseach.SeekableSource;
-import org.aksw.jena_sparql_api.io.common.Reference;
-import org.aksw.jena_sparql_api.io.common.ReferenceImpl;
 import org.aksw.jena_sparql_api.io.deprecated.MatcherFactory;
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream;
 
@@ -41,7 +41,7 @@ public class BlockSourceBzip2
 //    protected MatcherFactory fwdBlockStartMatcherFactory;
 //    protected MatcherFactory bwdBlockStartMatcherFactory;
 
-    protected Cache<Long, Reference<Block>> blockCache = CacheBuilder.newBuilder().build();
+    protected Cache<Long, Ref<Block>> blockCache = CacheBuilder.newBuilder().build();
 
 
 
@@ -73,7 +73,7 @@ public class BlockSourceBzip2
     }
 
 
-    protected Reference<Block> loadBlock(Seekable seekable) throws IOException {
+    protected Ref<Block> loadBlock(Seekable seekable) throws IOException {
         long blockStart = seekable.getPos();
 
         // The input stream now owns the seekable - closing it closes the seekable!
@@ -85,14 +85,14 @@ public class BlockSourceBzip2
         // In order to allow multiple clients, wrap the block in a reference:
         // Only if there are no more client for a block then the block itself gets closed
         Block block = new DecodedDataBlock(this, blockStart, blockBuffer);
-        Reference<Block> result = ReferenceImpl.create(block, block::close, "Root ref to block " + blockStart);
+        Ref<Block> result = RefImpl.create(block, block::close, "Root ref to block " + blockStart);
 
         return result;
     }
 
 
     @Override
-    public Reference<Block> contentAtOrBefore(long requestPos, boolean inclusive) throws IOException {
+    public Ref<Block> contentAtOrBefore(long requestPos, boolean inclusive) throws IOException {
         // If the requestPos is already in the cache, serve it from there
         // TODO Track consecutive blocks in a cache
 //        if(!inclusive) {
@@ -100,7 +100,7 @@ public class BlockSourceBzip2
 //        }
 
         long internalRequestPos = requestPos - (inclusive ? 0 : 1) + (magicStr.length() - 1);
-        Reference<Block> result = blockCache.getIfPresent(internalRequestPos);
+        Ref<Block> result = blockCache.getIfPresent(internalRequestPos);
 
         if(result == null) {
             Seekable seekable = seekableSource.get(internalRequestPos);
@@ -129,8 +129,8 @@ public class BlockSourceBzip2
         return result == null ? null : result.acquire(null);
     }
 
-    public Reference<Block> cache(long blockStart, Seekable seekable) throws IOException {
-        Reference<Block> result;
+    public Ref<Block> cache(long blockStart, Seekable seekable) throws IOException {
+        Ref<Block> result;
         try {
             result = blockCache.get(blockStart, () -> loadBlock(seekable));
         } catch (ExecutionException e) {
@@ -140,13 +140,13 @@ public class BlockSourceBzip2
     }
 
     @Override
-    public Reference<Block> contentAtOrAfter(long requestPos, boolean inclusive) throws IOException {
+    public Ref<Block> contentAtOrAfter(long requestPos, boolean inclusive) throws IOException {
         // TODO Track consecutive blocks in a cache
 //        if(!inclusive) {
 //            inclusive = true;
 //        }
         long internalRequestPos = requestPos + (inclusive ? 0 : 1);
-        Reference<Block> result = blockCache.getIfPresent(internalRequestPos);
+        Ref<Block> result = blockCache.getIfPresent(internalRequestPos);
 
         if(result == null) {
             Seekable seekable = seekableSource.get(internalRequestPos);
@@ -176,7 +176,7 @@ public class BlockSourceBzip2
         // TODO The block size may be known - e.g. 900K - in that case we only need to check whether there
         // is subsequent block - only if there is none we actually have to compute the length
         long result;
-        try (Reference<Block> ref = contentAtOrAfter(pos, true)) {
+        try (Ref<Block> ref = contentAtOrAfter(pos, true)) {
             try (Seekable channel = ref.get().newChannel()) {
             	// This is super ugly code to read all data in a block
             	// in order to get its size

@@ -1,7 +1,7 @@
 package org.aksw.jena_sparql_api.conjure.datapod.impl;
 
+import org.aksw.commons.util.ref.Ref;
 import org.aksw.jena_sparql_api.conjure.datapod.api.RdfDataPod;
-import org.aksw.jena_sparql_api.io.common.Reference;
 import org.aksw.jena_sparql_api.io.hdt.HDTHeaderGraph;
 import org.aksw.jena_sparql_api.utils.GraphUtils;
 import org.apache.jena.graph.Graph;
@@ -23,11 +23,11 @@ public class RdfDataPodHdtImpl
      * so that if the HDTGraph only needs to be initialized once for
      * any number of requests
      */
-    protected Reference<HDT> hdtRef;
+    protected Ref<HDT> hdtRef;
     protected boolean isHeaderPod;
 
 
-    public RdfDataPodHdtImpl(Reference<HDT> hdtRef, boolean isHeaderPod) {
+    public RdfDataPodHdtImpl(Ref<HDT> hdtRef, boolean isHeaderPod) {
         super();
         this.hdtRef = hdtRef;
         this.isHeaderPod = isHeaderPod;
@@ -72,7 +72,7 @@ public class RdfDataPodHdtImpl
 
     @Override
     public RdfDataPod headerPod() {
-        Reference<HDT> freshRef = hdtRef.acquire(this);
+        Ref<HDT> freshRef = hdtRef.acquire(this);
         if(isHeaderPod) {
             throw new RuntimeException("Cannot get header of a header");
         } else {

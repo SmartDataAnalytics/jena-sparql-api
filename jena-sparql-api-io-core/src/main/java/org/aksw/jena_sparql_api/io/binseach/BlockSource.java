@@ -2,11 +2,11 @@ package org.aksw.jena_sparql_api.io.binseach;
 
 import java.io.IOException;
 
-import org.aksw.jena_sparql_api.io.common.Reference;
+import org.aksw.commons.util.ref.Ref;
 
 public interface BlockSource {
-    Reference<? extends Block> contentAtOrBefore(long pos, boolean inclusive) throws IOException;
-    Reference<? extends Block> contentAtOrAfter(long pos, boolean inclusive) throws IOException;
+    Ref<? extends Block> contentAtOrBefore(long pos, boolean inclusive) throws IOException;
+    Ref<? extends Block> contentAtOrAfter(long pos, boolean inclusive) throws IOException;
 
     boolean hasBlockAfter(long pos) throws IOException;
     boolean hasBlockBefore(long pos) throws IOException;

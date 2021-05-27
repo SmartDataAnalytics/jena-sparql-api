@@ -7,8 +7,8 @@ import java.nio.channels.FileChannel.MapMode;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
-import org.aksw.jena_sparql_api.io.common.Reference;
-import org.aksw.jena_sparql_api.io.common.ReferenceImpl;
+import org.aksw.commons.util.ref.Ref;
+import org.aksw.commons.util.ref.RefImpl;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
@@ -25,10 +25,10 @@ public class PageManagerForFileChannel
      * OutOfMemory error.
      *
      */
-    protected Cache<Long, Reference<Page>> pageCache = CacheBuilder.newBuilder()
+    protected Cache<Long, Ref<Page>> pageCache = CacheBuilder.newBuilder()
             .expireAfterAccess(10, TimeUnit.SECONDS)
             .maximumSize(64)
-            .<Long, Reference<Page>>removalListener(notification -> {
+            .<Long, Ref<Page>>removalListener(notification -> {
                 try {
                     notification.getValue().close();
                 } catch (Exception e) {
@@ -72,8 +72,8 @@ public class PageManagerForFileChannel
     }
 
     @Override
-    public Reference<Page> requestBufferForPage(long page) {
-        Reference<Page> result;
+    public Ref<Page> requestBufferForPage(long page) {
+        Ref<Page> result;
         try {
             result = getRefForPage(page);
         } catch (Exception e) {
@@ -110,12 +110,12 @@ public class PageManagerForFileChannel
     	return result;
     }
     
-    public synchronized Reference<Page> getRefForPage(long page) throws IOException {
+    public synchronized Ref<Page> getRefForPage(long page) throws IOException {
         long start = page * pageSize;
         long end = Math.min(channelSize, start + pageSize);
         long length = end - start;
 
-        Reference<Page> parentRef;
+        Ref<Page> parentRef;
         try {
             parentRef = page < 0 || length <= 0
                     ? null
@@ -126,7 +126,7 @@ public class PageManagerForFileChannel
 //						System.err.println("Allocated page " + page);
                         Page p = new PageBase(this, page, b);
 
-                        Reference<Page> r = ReferenceImpl.create(p, () -> {
+                        Ref<Page> r = RefImpl.create(p, () -> {
                             // System.err.println("Released primary ref to page " + page);
                         }, "Primary ref to page " + page);
                         //Page r = new PageBase(this, page, b);
@@ -143,7 +143,7 @@ public class PageManagerForFileChannel
             throw new IOException(e);
         }
 
-        Reference<Page> result = parentRef == null
+        Ref<Page> result = parentRef == null
                 ? null
                 : parentRef.acquire("Secondary ref to page " + page);
 

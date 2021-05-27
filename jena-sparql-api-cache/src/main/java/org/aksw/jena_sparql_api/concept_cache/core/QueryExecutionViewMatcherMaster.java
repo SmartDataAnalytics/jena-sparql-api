@@ -256,7 +256,7 @@ public class QueryExecutionViewMatcherMaster
 
                 logger.info("Root query:\n" + qq);
 
-                RangedSupplier<Long, Binding> s3 = new RangedSupplierQuery(parentFactory, qq);
+                RangedSupplier<Long, Binding> s3 = new RangedSupplierQuery(parentFactory::createQueryExecution, qq);
 
                 VarInfo varInfo = new VarInfo(new LinkedHashSet<>(qq.getProjectVars()), isDistinct ? 2 : 0);
                 StorageEntry se = new StorageEntry(s3, varInfo); // The var info is not used

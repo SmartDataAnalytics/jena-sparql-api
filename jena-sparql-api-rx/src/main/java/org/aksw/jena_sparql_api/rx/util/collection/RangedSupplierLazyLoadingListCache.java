@@ -34,25 +34,6 @@ public class RangedSupplierLazyLoadingListCache<T>
     implements CacheRangeInfo<Long> // TODO Turn into a list service - but then we have to change packages...
 {
 
-    /**
-     * RangeMap's .subRangeMap method may modify the first and last range due to
-     * intersection with the requested range. Hence, we need to keep a copy
-     * of the original range object
-     * @author raven
-     *
-     * @param <T>
-     */
-    public static class CacheEntry<T> {
-        Range<Long> range;
-        Cache<T> cache;
-
-        public CacheEntry(Range<Long> range, Cache<T> cache) {
-            super();
-            this.range = range;
-            this.cache = cache;
-        }
-    }
-
     static class RangeInfo<T> {
         Range<Long> range;
         boolean isGap;
@@ -90,7 +71,7 @@ public class RangedSupplierLazyLoadingListCache<T>
 
     protected RangeCostModel costModel;
 
-    protected RangeMap<Long, CacheEntry<T>> rangesToData;
+    protected RangeMap<Long, CacheRangeEntry<T>> rangesToData;
 
     // We may dynamically discover that after certain offsets there is no more data
     protected Long dataThreshold = null;
@@ -122,14 +103,14 @@ public class RangedSupplierLazyLoadingListCache<T>
         //dataThreshold;
 
 
-        RangeMap<Long, CacheEntry<T>> subRangeMap = rangesToData.subRangeMap(range);
-        Map<Range<Long>, CacheEntry<T>> x = subRangeMap.asMapOfRanges();
+        RangeMap<Long, CacheRangeEntry<T>> subRangeMap = rangesToData.subRangeMap(range);
+        Map<Range<Long>, CacheRangeEntry<T>> x = subRangeMap.asMapOfRanges();
 
         boolean result;
         if(x.size() == 1) {
             // Check if the range is covered AND the cache data is complete
-            Entry<Range<Long>, CacheEntry<T>> entry = x.entrySet().iterator().next();
-            CacheEntry<T> ce = entry.getValue();
+            Entry<Range<Long>, CacheRangeEntry<T>> entry = x.entrySet().iterator().next();
+            CacheRangeEntry<T> ce = entry.getValue();
 
             boolean isEnclosing = ce.range.encloses(range);
             // TODO Actually we do not need the whole range to be complete, but only the requested section has to be loaded yet
@@ -170,14 +151,14 @@ public class RangedSupplierLazyLoadingListCache<T>
             // Prevent changes to the map while we check its content
             synchronized(rangesToData) {
                 Range<Long> lookupRange = range.intersection(cacheRange);
-                RangeMap<Long, CacheEntry<T>> subMap = rangesToData.subRangeMap(lookupRange);
+                RangeMap<Long, CacheRangeEntry<T>> subMap = rangesToData.subRangeMap(lookupRange);
 
                 List<RangeInfo<T>> rangeInfos = new ArrayList<>();
                 // Determine the first offset of the query
                 //Iterator<Entry<Range<Long>, CacheEntry<T>>> it = subMap.asMapOfRanges().entrySet().iterator();
 
                 Long offset = range.lowerEndpoint();
-                for(Entry<Range<Long>, CacheEntry<T>> e : subMap.asMapOfRanges().entrySet()) {
+                for(Entry<Range<Long>, CacheRangeEntry<T>> e : subMap.asMapOfRanges().entrySet()) {
     //                Entry<Range<Long>, CacheEntry<T>> e = it.next();
                     Range<Long> eRange = e.getKey();
                     Cache<T> cache = e.getValue().cache;
@@ -231,7 +212,7 @@ public class RangedSupplierLazyLoadingListCache<T>
         return result;
     }
 
-    public void fetchGaps(RangeMap<Long, CacheEntry<T>> subMap, List<RangeInfo<T>> rangeInfos) {
+    public void fetchGaps(RangeMap<Long, CacheRangeEntry<T>> subMap, List<RangeInfo<T>> rangeInfos) {
         for(RangeInfo<T> rangeInfo : rangeInfos) {
             if(rangeInfo.isGap) {
                 fetchGap(subMap, rangeInfo.range);
@@ -241,7 +222,7 @@ public class RangedSupplierLazyLoadingListCache<T>
 
     // If we are requesting the last gap, we need to fetch one more item in order to decide whether
     // the cache is complete
-    public void fetchGap(RangeMap<Long, CacheEntry<T>> subMap, Range<Long> range) {
+    public void fetchGap(RangeMap<Long, CacheRangeEntry<T>> subMap, Range<Long> range) {
         //System.out.println("GAP: " + range);
 //
 //
@@ -253,7 +234,7 @@ public class RangedSupplierLazyLoadingListCache<T>
 
         List<T> cacheData = new ArrayList<>();
         Cache<T> cache = new CacheImpl<>(cacheData);
-        CacheEntry<T> cacheEntry = new CacheEntry<>(range, cache);
+        CacheRangeEntry<T> cacheEntry = new CacheRangeEntry<>(range, cache);
         subMap.put(range, cacheEntry);
 
 

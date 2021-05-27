@@ -2,8 +2,8 @@ package org.aksw.jena_sparql_api.io.binseach;
 
 import java.nio.ByteBuffer;
 
-import org.aksw.jena_sparql_api.io.common.Reference;
-import org.aksw.jena_sparql_api.io.common.ReferenceImpl;
+import org.aksw.commons.util.ref.Ref;
+import org.aksw.commons.util.ref.RefImpl;
 
 /**
  * PageManager wrapper for a static buffer
@@ -25,9 +25,9 @@ public class PageManagerForByteBuffer
     }
 
     @Override
-    public Reference<Page> requestBufferForPage(long page) {
+    public Ref<Page> requestBufferForPage(long page) {
         Page staticPage = new PageBase(this, 0, staticBuffer);
-        return ReferenceImpl.create(staticPage, null, "Reference to static page");
+        return RefImpl.create(staticPage, null, "Reference to static page");
     }
 
     @Override

@@ -441,8 +441,19 @@ public class SparqlRx {
         // NOTE This way, the main thread will terminate before the queries are processed
     }
 
-    public static Single<Number> fetchNumber(SparqlQueryConnection qef, Query query, Var var) {
-    	return fetchNumber(() -> qef.query(query), var);
+    public static Single<Number> fetchNumber(
+    		SparqlQueryConnection conn,
+    		Query query,
+    		Var var) {
+    	return fetchNumber(conn::query, query, var);
+    }
+
+    
+    public static Single<Number> fetchNumber(
+    		Function<? super Query, ? extends QueryExecution> qef,
+    		Query query,
+    		Var var) {
+    	return fetchNumber(() -> qef.apply(query), var);
     }
     
     public static Single<Number> fetchNumber(Callable<? extends QueryExecution> queryConnSupp, Var var) {
@@ -454,8 +465,13 @@ public class SparqlRx {
                 .map(Optional::get); // Should never be null here
     }
 
+    
+    public static Single<Range<Long>> fetchCountConcept(SparqlQueryConnection conn, UnaryRelation concept, Long itemLimit, Long rowLimit) {
+    	return fetchCountConcept(conn::query, concept, itemLimit, rowLimit);
+    }
+    
 
-    public static Single<Range<Long>> fetchCountConcept(SparqlQueryConnection qef, UnaryRelation concept, Long itemLimit, Long rowLimit) {
+    public static Single<Range<Long>> fetchCountConcept(Function<? super Query, ? extends QueryExecution> qef, UnaryRelation concept, Long itemLimit, Long rowLimit) {
 
         Var outputVar = ConceptUtils.freshVar(concept);
 
@@ -484,8 +500,23 @@ public class SparqlRx {
 //    	Single<Range<Long>> result = fetchCountQuery(conn, query, itemLimit, rowLimit);
 //    	return result;
 //    }
+    
+    
+    public static Single<Range<Long>> fetchCountQueryPartition(
+    		SparqlQueryConnection conn,
+    		Query query,
+    		Collection<Var> partitionVars,
+    		Long itemLimit, 
+    		Long rowLimit) {
+    	return fetchCountQueryPartition(conn::query, query, partitionVars, itemLimit, rowLimit);
+    }
 
-    public static Single<Range<Long>> fetchCountQueryPartition(SparqlQueryConnection qef, Query query, Collection<Var> partitionVars, Long itemLimit, Long rowLimit) {
+    public static Single<Range<Long>> fetchCountQueryPartition(
+    		Function<? super Query, ? extends QueryExecution> qef,
+    		Query query,
+    		Collection<Var> partitionVars,
+    		Long itemLimit, 
+    		Long rowLimit) {
 
         //Var outputVar = Var.alloc("_count_"); //ConceptUtils.freshVar(concept);
 
@@ -511,8 +542,21 @@ public class SparqlRx {
         		countQuery.getKey())
         		.map(Number::longValue);
     }
+
+    public static Single<Range<Long>> fetchCountQuery(
+    		SparqlQueryConnection conn,
+    		Query query,
+    		Long itemLimit,
+    		Long rowLimit) {
+        Single<Range<Long>> result = fetchCountQuery(conn::query, query, itemLimit, rowLimit);
+        return result;
+    }
     
-    public static Single<Range<Long>> fetchCountQuery(SparqlQueryConnection qef, Query query, Long itemLimit, Long rowLimit) {
+    public static Single<Range<Long>> fetchCountQuery(
+    		Function<? super Query, ? extends QueryExecution> qef,
+    		Query query,
+    		Long itemLimit,
+    		Long rowLimit) {
         Single<Range<Long>> result = fetchCountQueryPartition(qef, query, null, itemLimit, rowLimit);
         return result;
     }

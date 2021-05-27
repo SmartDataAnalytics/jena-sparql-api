@@ -2,7 +2,7 @@ package org.aksw.jena_sparql_api.io.binseach;
 
 import java.io.IOException;
 
-import org.aksw.jena_sparql_api.io.common.Reference;
+import org.aksw.commons.util.ref.Ref;
 
 /**
  * A block is a sub-sequence of bytes with a fixed finite length which
@@ -45,8 +45,8 @@ public interface Block
      */
     // Block getBlockSource();
 
-    Reference<? extends Block> nextBlock() throws IOException;
-    Reference<? extends Block> prevBlock() throws IOException;
+    Ref<? extends Block> nextBlock() throws IOException;
+    Ref<? extends Block> prevBlock() throws IOException;
 
     /**
      * Check if there is a subsequent block.
