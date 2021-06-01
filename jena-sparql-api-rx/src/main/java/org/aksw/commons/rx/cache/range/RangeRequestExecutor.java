@@ -2,6 +2,10 @@ package org.aksw.commons.rx.cache.range;
 
 import java.time.Duration;
 import java.util.Iterator;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import org.aksw.commons.util.ref.Ref;
 import org.aksw.commons.util.sink.BulkingSink;
@@ -9,6 +13,7 @@ import org.aksw.jena_sparql_api.rx.util.collection.RangedSupplier;
 
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.Range;
+import com.google.common.math.LongMath;
 import com.google.common.primitives.Ints;
 
 import io.reactivex.rxjava3.core.Flowable;
@@ -41,18 +46,30 @@ public class RangeRequestExecutor<T> {
 	/** Whether processing is aborted */
 	protected boolean isAborted = false;
 
+
+	protected ReentrantReadWriteLock pauseLock = new ReentrantReadWriteLock(true);
+	protected volatile boolean isPaused = false;
+
 	/** The pages claimed by the executor */
 	// protected Set<Ref<Page<T>>> claimedPages;
 	
 	/** The page the executor is currently writing to */
-	protected Ref<RangeBuffer<T>> currentPageRef;
-	
-		
+	protected Ref<RangeBuffer<T>> currentPageRef;	
 	
 	protected long requestOffset;
 	
+	
+	// The endpoints of the requests being served by this executor
+	protected Map<Object, Long> contextToEndpoint;
+
+	// The effective endpoint; the maximum value in contextToEndpoint
+	protected long effectiveEndpoint;
+	
+	
+	
 	/** The requestLimit must take result-set-limit on the backend into account! */
 	protected long requestLimit;
+	
 	
 	// protected Map<Long, >
 	
@@ -98,6 +115,8 @@ public class RangeRequestExecutor<T> {
 	protected long processingTimeInNanos = 0;
 	
 	
+	protected ReentrantReadWriteLock executorCreationLock = new ReentrantReadWriteLock();
+	
 	
 	/** Time in seconds it took to obtain the first item */
 	public Duration getFirstItemTime() {
@@ -109,17 +128,29 @@ public class RangeRequestExecutor<T> {
 		return numItemsProcessed / (float)(processingTimeInNanos / 1e9);
 	}
 	
+
 	
-	
-	/** Pause processing of items */
-	public void pause() {
-		
+	/**
+	 * A call to this method acquires a lock that causes the executor to pause
+	 * at the next checkpoint. The client must eventually call .unlock() on the returned lock.
+	 * 
+	 * The method only returns when the executor has reached that checkpoint.
+	 * 
+	 * Note that the returned lock is a read lock from a ReentrantReadWriteLock.
+	 * These locks do not support testing for ownership, so the client code must take care
+	 * of properly releasing any acquired locks.
+	 * 
+	 * https://bugs.java.com/bugdatabase/view_bug.do?bug_id=6207928
+	 */
+	public CompletableFuture<Runnable> pause() throws InterruptedException {
+		// RefImpl.create(null, backend, currentPageRef)
+		Lock result = pauseLock.readLock();
+		result.lock();
+		return CompletableFuture.completedFuture(() -> result.unlock());
 	}
-	
-	public void resume() {
-		
-	}
-	
+
+
+
 	/**
 	 * Estimated time of arrival at the given index in seconds
 	 * Index must be greater or equal to offset
@@ -181,29 +212,57 @@ public class RangeRequestExecutor<T> {
 		iterator.hasNext();
 		Duration firstItemTime = firstItemTimer.elapsed();
 
-		while (true) {
-			process(reportingInterval);
+		Lock writeLock = pauseLock.writeLock();		
+		writeLock.lock();
+
+		try {
 			
-			
-			
-			if (iterator.hasNext()) {
-				
-				// Shut down if there is no pending request for further data
-				try {
-					Thread.sleep(terminationDelay);
-				} catch (InterruptedException e) {
-					
+			// pauseLock.writeLock().newCondition();
+			while (true) {
+				while (pauseLock.hasQueuedThreads()) {
+					isPaused = true;
+					writeLock.unlock();				
+					writeLock.lock();
 				}
+				isPaused = false;
 				
-				if (currentLimit < numItemsRead) {
+				process(reportingInterval);
+					
+				
+				if (iterator.hasNext()) {
+					
+					// Shut down if there is no pending request for further data
+					try {
+						Thread.sleep(terminationDelay);
+					} catch (InterruptedException e) {
+						
+					}
+					
+					if (currentLimit < numItemsRead) {
+						break;
+					}
+				} else {				
 					break;
 				}
-			} else {				
-				break;
 			}
+		} finally {
+			writeLock.unlock();
 		}
 	}
+	
+	public long getCurrentOffset() {
+		return offset;
+	}
 
+	
+	public long getEndOffset() {
+		return 	LongMath.saturatedAdd(requestOffset, requestLimit);
+	}
+	
+	public Range<Long> getWorkingRange() {
+		return Range.closedOpen(offset, getEndOffset());
+	}
+	
 
 	/**
 	 * 
@@ -286,8 +345,38 @@ public class RangeRequestExecutor<T> {
 
 	}
 	
-	public void extendLimit(long newLimit) {
-		
+	
+	protected void updateEffectiveEndpoint() {
+		effectiveEndpoint = contextToEndpoint.values().stream()
+				.mapToLong(x -> x).reduce(-1l,Math::max);
 	}
+	
+	/**
+	 * Add or update the endpoint for the given context object.
+	 * 
+	 * 
+	 * @param context
+	 * @param newLimit
+	 * @return A runnable that unregisters the endpoint for this executor. Unregistering the last endpoint
+	 *         may pause or cancel the executor.
+	 */
+	public Runnable requestEndpoint(Object context, long endpoint) {
+		synchronized (this) {
+			Range<Long> workingRange = getWorkingRange();
+			if (!workingRange.contains(endpoint)) {
+				throw new IllegalArgumentException(String.format("Request for endpoint %d is outside of working range %s", endpoint, workingRange));
+			}
+			contextToEndpoint.put(context, endpoint);
+			updateEffectiveEndpoint();
+		}
+		
+		return () -> {
+			synchronized (this) {
+				contextToEndpoint.remove(context);
+				updateEffectiveEndpoint();
+			}
+		};
+	}
+	
 }
 

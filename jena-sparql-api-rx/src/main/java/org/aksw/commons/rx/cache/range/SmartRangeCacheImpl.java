@@ -6,17 +6,21 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.BiConsumer;
 
 import org.aksw.commons.util.ref.Ref;
+import org.aksw.jena_sparql_api.lookup.ListPaginator;
+import org.aksw.jena_sparql_api.rx.util.collection.RangedSupplier;
 
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.collect.Range;
 import com.google.common.collect.Sets;
-import com.google.common.collect.TreeMultimap;
 
 import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Single;
 
 interface PageManager<T> {
 	// Reference<? extends Page<T>>
@@ -68,17 +72,27 @@ class ExecutorPool {
 }
 
 
-public class SmartRangeCacheImpl<T> {
+public class SmartRangeCacheImpl<T>
+	implements ListPaginator<T>
+{
+	protected RangedSupplier<Long, T> backend;
 	
 	protected int pageSize;
 	protected ClaimingCache<Long, RangeBuffer<T>> pageCache;
 	// protected SortedCache<Long, RangeBuffer<T>> pageCache;
 
+	protected Set<RangeRequestExecutor<T>> executors = Collections.synchronizedSet(Sets.newIdentityHashSet());
+
 	
 	protected Set<RequestIterator<T>> activeRequests = Collections.synchronizedSet(Sets.newIdentityHashSet());
 	
+	protected ReentrantReadWriteLock executorCreationLock = new ReentrantReadWriteLock(true);
+
+	protected volatile long knownSize = -1;
 	
-	public SmartRangeCacheImpl() {
+	public SmartRangeCacheImpl(RangedSupplier<Long, T> backend) {
+		this.backend = backend;
+		
 		pageSize = 1024;
 		
 		pageCache = new ClaimingCache<>(
@@ -96,6 +110,10 @@ public class SmartRangeCacheImpl<T> {
 		);
 	}
 	
+	public int getPageSize() {
+		return pageSize;
+	}
+	
 	
 	/**
 	 * Listener on page loads that auto-claims pages to RequestIterators
@@ -106,6 +124,22 @@ public class SmartRangeCacheImpl<T> {
 		
 	}
 	
+	
+	public Set<RangeRequestExecutor<T>> getExecutors() {
+		return executors;
+	}
+
+	
+	Lock getExecutorCreationReadLock() {
+		return executorCreationLock.readLock();
+	}
+
+	
+	public long getPageIdForOffset(long offset) {
+		long result = offset % pageSize;
+		return result;
+	}
+
 	/**
 	 * This method should only be called by producers.
 	 * 
@@ -198,7 +232,7 @@ public class SmartRangeCacheImpl<T> {
 	 */
 	public RequestIterator<T> request(Range<Long> requestRange) {
 
-		RequestIterator<T> result = null; //new RequestIterator<>(this);
+		RequestIterator<T> result = new RequestIterator<>(this);
 
 		return result;
 //		
@@ -241,5 +275,24 @@ public class SmartRangeCacheImpl<T> {
 			RequestIterator::abort);
 	}
 	
+	
+	public static <V> ListPaginator<V> wrap(ListPaginator<V> backend) {
+		return new SmartRangeCacheImpl<V>(backend);
+	}
+
+	@Override
+	public Single<Range<Long>> fetchCount(Long itemLimit, Long rowLimit) {
+		// If the size is known then return it - otherwise send at most one query to the backend for counting
+		// and return the result.
+		// Extension: If the count becomes known before the query returns then we could abort the count-request
+		// and return the newly known value instead
+		throw new UnsupportedOperationException("not implemented yet");
+//		if (knownSize < 0) {
+//			return
+//		} else {
+//			back
+//		}
+		
+	}
 
 }

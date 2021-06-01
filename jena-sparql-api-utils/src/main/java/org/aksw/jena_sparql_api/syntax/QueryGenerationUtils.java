@@ -915,7 +915,6 @@ public class QueryGenerationUtils {
         // we can also use count distinct
 
 
-
         Aggregator agg = useCountDistinct
                 ? singleResultVar == null
                     ? new AggCountDistinct()

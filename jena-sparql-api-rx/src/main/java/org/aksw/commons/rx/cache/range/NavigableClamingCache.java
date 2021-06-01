@@ -90,6 +90,7 @@ public class NavigableClamingCache<C extends Comparable<C>, V> {
 		return result;
 	}
 	
+	
 	/** Create a set view over a navigable set with items filtered to the given range */
 	public static <T extends Comparable<T>> NavigableSet<T> filterByRange(NavigableSet<T> set, Range<T> range) {
 		NavigableSet<T> result = set;

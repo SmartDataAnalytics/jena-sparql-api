@@ -2,7 +2,11 @@ package org.aksw.commons.rx.cache.range;
 
 import java.lang.reflect.Array;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import com.google.common.collect.Range;
 import com.google.common.collect.RangeMap;
@@ -32,8 +36,10 @@ public class RangeBuffer<T> {
 	 * If a throwable is present then there was an error processing the range
 	 */
 	protected RangeMap<Integer, Throwable> loadedRanges;
-	protected int knownSize;
+	protected volatile int knownSize;
 
+	protected ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
+	
 	public T[] getBuffer() {
 		return buffer;
 	}
@@ -52,6 +58,14 @@ public class RangeBuffer<T> {
 		this.buffer = buffer;
 		this.loadedRanges = loadedRanges;
 		this.knownSize = knownSize;
+	}
+	
+	public ReadWriteLock getReadWriteLock() {
+		return readWriteLock;
+	}
+	
+	public Iterator<T> get(int offset) {
+		return new RangeBufferIterator<>(this, offset);
 	}
 	
 	public int getKnownSize() {
@@ -78,18 +92,26 @@ public class RangeBuffer<T> {
 	}
 	
 	public void put(int pageOffset, Object arrayWithItemsOfTypeT, int arrOffset, int arrLength) {
-		synchronized (this) {
+		Lock writeLock = readWriteLock.writeLock();
+		writeLock.lock();
+
+		try {
 			System.arraycopy(arrayWithItemsOfTypeT, arrOffset, buffer, pageOffset, arrLength);
 			loadedRanges.put(Range.closedOpen(pageOffset, pageOffset + arrLength), null);
+		} finally {
+			writeLock.unlock();
 		}
-		notifyAll();
 	}
 	
 	/** Sets the known size thereby synchronizing on 'this' */
 	public void setKnownSize(int size) {
 		if (knownSize < 0) {
-			synchronized (this) {
+			Lock writeLock = readWriteLock.writeLock();
+			writeLock.lock();
+			try {
 				this.knownSize = size;
+			} finally {
+				writeLock.unlock();
 			}
 		}
 	}

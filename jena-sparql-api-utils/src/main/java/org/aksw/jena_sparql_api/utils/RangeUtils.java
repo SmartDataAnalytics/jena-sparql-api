@@ -9,6 +9,7 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.apache.jena.graph.Node;
@@ -20,12 +21,25 @@ import org.apache.jena.sparql.expr.E_LessThanOrEqual;
 import org.apache.jena.sparql.expr.Expr;
 
 import com.google.common.collect.BoundType;
+import com.google.common.collect.ContiguousSet;
 import com.google.common.collect.DiscreteDomain;
 import com.google.common.collect.Range;
 import com.google.common.collect.RangeSet;
 
 public class RangeUtils {
     public static final Range<Long> rangeStartingWithZero = Range.atLeast(0l);
+
+	public static <T> List<T> subList(List<T> list, Range<Integer> subRange) {
+		// Subrange's offset must be equal-or-greater-than 0
+		
+		Range<Integer> listRange = Range.lessThan(list.size());
+		Range<Integer> effectiveRange = listRange.intersection(subRange);
+		ContiguousSet<Integer> set = ContiguousSet.create(effectiveRange, DiscreteDomain.integers());
+		int first = set.first();
+		int last = set.last();
+		List<T> result = list.subList(first, last + 1);
+		return result;
+	}
 
     // Note: This method is tied to Jena, whereas all other RangeUtils only depend on Java/Guava.
     // So we should separate these utils
@@ -184,18 +198,43 @@ public class RangeUtils {
         return result;
     }
 
-    public static Range<Long> multiplyByPageSize(Range<Long> range, long pageSize) {
-        Range<Long> result;
+    /**
+     * Apply a binary operator (e.g. multiplication, addition, ...) to any endpoint of the range and a given value.
+     * 
+     * @param <I>
+     * @param range
+     * @param value
+     * @param op
+     * @return
+     */
+    public static <I extends Comparable<I>, O extends Comparable<O>, V> Range<O> apply(
+    		Range<I> range,
+    		V value,
+    	BiFunction<? super I, ? super V, ? extends O> op)
+    {
+    	Range<O> result = transform(range, endpoint -> op.apply(endpoint, value));
+    	
+        return result;
+    }
+
+    /**
+     * Return a new range with each concrete endpoint of the input range passed through a transformation function
+     */
+    public static <I extends Comparable<I>, O extends Comparable<O>> Range<O> transform(
+    		Range<I> range,
+    		Function<? super I, ? extends O> fn)
+    {
+        Range<O> result;
 
         if(range.hasLowerBound()) {
             if(range.hasUpperBound()) {
-                result = Range.closedOpen(range.lowerEndpoint() * pageSize, range.upperEndpoint() * pageSize);
+                result = Range.closedOpen(fn.apply(range.lowerEndpoint()), fn.apply(range.upperEndpoint()));
             } else {
-                result = Range.atLeast(range.lowerEndpoint() * pageSize);
+                result = Range.atLeast(fn.apply(range.lowerEndpoint()));
             }
         } else {
             if(range.hasUpperBound()) {
-                result = Range.lessThan(range.upperEndpoint() * pageSize);
+                result = Range.lessThan(fn.apply(range.upperEndpoint()));
             } else {
                 result = Range.all();
             }
@@ -203,6 +242,32 @@ public class RangeUtils {
         }
 
         return result;
+    }
+    
+    
+    public static Range<Long> multiplyByPageSize(Range<Long> range, long pageSize) {
+    	Range<Long> result = apply(range, pageSize, (endpoint, value) -> endpoint * value);
+        return result;
+
+// The following code was converted to the method apply(range, value, op)
+//    	
+//      Range<Long> result;
+//
+//      if(range.hasLowerBound()) {
+//          if(range.hasUpperBound()) {
+//              result = Range.closedOpen(range.lowerEndpoint() * pageSize, range.upperEndpoint() * pageSize);
+//          } else {
+//              result = Range.atLeast(range.lowerEndpoint() * pageSize);
+//          }
+//      } else {
+//          if(range.hasUpperBound()) {
+//              result = Range.lessThan(range.upperEndpoint() * pageSize);
+//          } else {
+//              result = Range.all();
+//          }
+//
+//      }
+
     }
 
     public static PageInfo<Long> computeRange(Range<Long> range, long pageSize) {

@@ -26,6 +26,8 @@ public abstract class RangedSupplierDelegated<I extends Comparable<I>, P>
     public Flowable<P> apply(Range<I> t) {
         return delegate.apply(t);
     }
+    
+    
 //	@Override
 //	public ClosableIterator<O> apply(Range<I> t) {
 //		// TODO Auto-generated method stub

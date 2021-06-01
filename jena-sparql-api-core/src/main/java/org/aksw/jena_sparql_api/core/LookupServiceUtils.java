@@ -1,10 +1,13 @@
-package org.aksw.jena_sparql_api.lookup;
+package org.aksw.jena_sparql_api.core;
 
 import java.util.List;
 
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.RelationUtils;
+import org.aksw.jena_sparql_api.lookup.LookupService;
+import org.aksw.jena_sparql_api.lookup.LookupServiceSparqlQuery;
+import org.aksw.jena_sparql_api.lookup.LookupServiceTransformValue;
 import org.aksw.jena_sparql_api.mapper.Agg;
 import org.aksw.jena_sparql_api.mapper.AggList;
 import org.aksw.jena_sparql_api.mapper.AggLiteral;

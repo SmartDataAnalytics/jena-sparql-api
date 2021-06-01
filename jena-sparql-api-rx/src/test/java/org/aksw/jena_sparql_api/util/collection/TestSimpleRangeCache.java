@@ -1,15 +1,13 @@
 package org.aksw.jena_sparql_api.util.collection;
 
-import org.aksw.commons.rx.cache.range.SmartRangeCacheImpl;
+import org.aksw.commons.rx.cache.range.SimpleRangeCache;
 import org.aksw.jena_sparql_api.lookup.ListPaginator;
-import org.junit.Ignore;
 
-@Ignore // Not done yet
-public class TestSmartRangeCache
+public class TestSimpleRangeCache
 	extends RangeCacheTestSuite
 {
 	@Override
 	protected <T> ListPaginator<T> wrapWithCache(ListPaginator<T> backend) {
-		return SmartRangeCacheImpl.wrap(backend);
+		return SimpleRangeCache.wrap(backend);
 	}
 }

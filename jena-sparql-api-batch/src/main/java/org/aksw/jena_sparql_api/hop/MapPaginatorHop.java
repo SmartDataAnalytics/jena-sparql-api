@@ -9,11 +9,11 @@ import java.util.Set;
 
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.concepts.Concept;
+import org.aksw.jena_sparql_api.core.LookupServiceUtils;
 import org.aksw.jena_sparql_api.core.utils.ServiceUtils;
 import org.aksw.jena_sparql_api.lookup.LookupService;
 import org.aksw.jena_sparql_api.lookup.LookupServiceListService;
 import org.aksw.jena_sparql_api.lookup.LookupServicePartition;
-import org.aksw.jena_sparql_api.lookup.LookupServiceUtils;
 import org.aksw.jena_sparql_api.lookup.MapPaginator;
 import org.aksw.jena_sparql_api.lookup.MapService;
 import org.aksw.jena_sparql_api.lookup.MapServiceUtils;
