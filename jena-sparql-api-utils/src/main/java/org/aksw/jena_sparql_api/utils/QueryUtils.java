@@ -53,6 +53,7 @@ import org.apache.jena.sparql.util.ExprUtils;
 import org.apache.jena.sparql.util.PrefixMapping2;
 
 import com.google.common.collect.BoundType;
+import com.google.common.collect.ContiguousSet;
 import com.google.common.collect.DiscreteDomain;
 import com.google.common.collect.Range;
 
@@ -594,16 +595,22 @@ public class QueryUtils {
      * @return
      */
     public static <T extends Comparable<T>> Range<T> makeClosedOpen(Range<T> range, DiscreteDomain<T> domain) {
-        T lower = closedLowerEndpointOrNull(range, domain);
-        T upper = openUpperEndpointOrNull(range, domain);
-
-        Range<T> result = lower == null
-                ? upper == null
-                    ? Range.all()
-                    : Range.upTo(upper, BoundType.OPEN)
-                : upper == null
-                    ? Range.atLeast(lower)
-                    : Range.closedOpen(lower, upper);
+    	ContiguousSet<T> set = ContiguousSet.create(range, domain);
+    	
+    	Range<T> result = set.isEmpty()
+    			? Range.closedOpen(range.lowerEndpoint(), range.lowerEndpoint())
+    			: ContiguousSet.create(range, domain).range(BoundType.CLOSED, BoundType.OPEN);
+//    	
+//        T lower = closedLowerEndpointOrNull(range, domain);
+//        T upper = openUpperEndpointOrNull(range, domain);
+//
+//        Range<T> result = lower == null
+//                ? upper == null
+//                    ? Range.all()
+//                    : Range.upTo(upper, BoundType.OPEN)
+//                : upper == null
+//                    ? Range.atLeast(lower)
+//                    : Range.closedOpen(lower, upper);
 
         return result;
     }
@@ -622,10 +629,10 @@ public class QueryUtils {
         Range<Long> child = toRange(offset, limit);
         Range<Long> subRange = subRange(parent, child);
 
-        boolean isUnchanged =
-                parent.lowerEndpoint().equals(subRange.lowerEndpoint()) &&
-                parent.hasUpperBound() == subRange.hasUpperBound() &&
-                (parent.hasUpperBound() ? parent.upperEndpoint().equals(subRange.upperEndpoint()) : true);
+        boolean isUnchanged = subRange.equals(parent);
+//                parent.lowerEndpoint().equals(subRange.lowerEndpoint()) &&
+//                parent.hasUpperBound() == subRange.hasUpperBound() &&
+//                (parent.hasUpperBound() ? parent.upperEndpoint().equals(subRange.upperEndpoint()) : true);
 
         boolean hasChanged = !isUnchanged;
 
@@ -737,20 +744,23 @@ public class QueryUtils {
         Range<Long> parent = makeClosedOpen(_parent, DiscreteDomain.longs());
         Range<Long> child = makeClosedOpen(_child, DiscreteDomain.longs());
 
-        long newMin = parent.lowerEndpoint() + child.lowerEndpoint();
-
-        Long newMax = (parent.hasUpperBound()
-            ? child.hasUpperBound()
-                ? (Long)Math.min(parent.upperEndpoint(), newMin + child.upperEndpoint())
-                : parent.upperEndpoint()
-            : child.hasUpperBound()
-                ? newMin + (Long)child.upperEndpoint()
-                : null);
-
-        Range<Long> result = newMax == null
-                ? Range.atLeast(newMin)
-                : Range.closedOpen(newMin, newMax);
-
+        Range<Long> shiftedChild = RangeUtils.transform(child, e -> e + parent.lowerEndpoint());
+        
+        Range<Long> result = shiftedChild.intersection(parent);
+//        long newMin = parent.lowerEndpoint() + child.lowerEndpoint();
+//
+//        Long newMax = (parent.hasUpperBound()
+//            ? child.hasUpperBound()
+//                ? (Long)Math.min(parent.upperEndpoint(), newMin + child.upperEndpoint())
+//                : parent.upperEndpoint()
+//            : child.hasUpperBound()
+//                ? newMin + (Long)child.upperEndpoint()
+//                : null);
+//
+//        Range<Long> result = newMax == null
+//                ? Range.atLeast(newMin)
+//                : Range.closedOpen(newMin, newMax);
+//
         return result;
     }
 
