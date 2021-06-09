@@ -27,7 +27,8 @@ RDFDataMgr.write(System.out, x.getModel(), RDFFormat.NTRIPLES);
 ```
 
 Output:
+
 ```
-subject <http://www.w3.org/2000/01/rdf-schema#comment> "This is a subject" .
+"subject" <http://www.w3.org/2000/01/rdf-schema#comment> "This is a subject" .
 ```
 

@@ -741,70 +741,71 @@ public class QueryGenerationUtils {
         return Maps.immutableEntry(resultVar, query);
     }
 
-    
+
     /**
      * Returns true if the query uses features that prevents it from being
      * represented as a pair of graph pattern + projection
-     * 
+     *
      * @param query
      * @return
      */
     public static boolean needsWrappingByFeatures(Query query) {
-    	return needsWrappingByFeatures(query, true);
+        return needsWrappingByFeatures(query, true) || VarExprListUtils.hasExprs(query.getProject());
     }
-    
+
+
     /**
      * Similar to {@link #needsWrapping(Query)} but includes a flag
      * whether to include slice information (limit / offset).
-     * 
+     *
      * @param query
      * @return
      */
     public static boolean needsWrappingByFeatures(Query query, boolean includeSlice) {
         boolean result
-	        =  query.hasGroupBy()
-	        || query.hasAggregators()
-	        || query.hasHaving()
-	        || query.hasValues();
-        
+             = query.hasGroupBy()
+            || query.hasAggregators()
+            || query.hasHaving()
+            || query.hasValues();
+
         if (includeSlice) {
-        	result = result
-        		|| query.hasLimit()
-        		|| query.hasOffset()
-        		;        		
+            result = result
+                || query.hasLimit()
+                || query.hasOffset()
+                ;
         }
-	    
+
         // Order is ignored
 
         return result;
     }
-    
+
     /**
      * A stricter version of {@link #needsWrappingByFeatures(Query)}.
-     * Returns true if the query uses features that cannot be represented 
-     * 
+     * TODO Probably too specific such that it can be removed
+     *
      * @param query
      * @return
      */
-    public static boolean needsWrapping(Query query) {
+//    public static boolean needsWrapping(Query query) {
+//
+//        boolean needsWrappingByFeatures = needsWrappingByFeatures(query, true);
+//
+//        boolean isDistinct = query.isDistinct();
+//        // If the query uses distinct and there is just a single projected variable
+//        // then we can transform 'DISTINCT ?s' to 'COUNT(DISTINCT ?s)'.
+//        // However, if there is more than 1 variable then we need wrapping in any case
+//        int projVarCount = query.getProjectVars().size();
+//        boolean isEffectiveQueryResultStar = isEffectiveQueryResultStar(query);
+//
+//        boolean result
+//                = needsWrappingByFeatures
+//                || (isDistinct && projVarCount > 1 && !isEffectiveQueryResultStar )
+//                ;
+//
+//        return result;
+//    }
 
-    	boolean needsWrappingByFeatures = needsWrappingByFeatures(query, true);
-    	
-        boolean isDistinct = query.isDistinct();
-        // If the query uses distinct and there is just a single projected variable
-        // then we can transform 'DISTINCT ?s' to 'COUNT(DISTINCT ?s)'.
-        // However, if there is more than 1 variable then we need wrapping in any case
-        int projVarCount = query.getProjectVars().size();
-        boolean isEffectiveQueryResultStar = isEffectiveQueryResultStar(query);
-
-		boolean result
-		        = needsWrappingByFeatures
-		        || (isDistinct && projVarCount > 1 && !isEffectiveQueryResultStar )
-		        ;
-
-		return result;
-    }
-    
     /**
      * Transform a SELECT query such that it yields the count of matching solution bindings within the given constraints
      *
@@ -859,15 +860,15 @@ public class QueryGenerationUtils {
 //                || (isDistinct && projVarCount > 1 && !isEffectiveQueryResultStar )
 //                ;
 
-        
+
         // Check the features - but exclude slice here because special rules are applied
         boolean needsWrappingByFeatures = needsWrappingByFeatures(query, false);
-	    boolean needsWrapping
-	    	= needsWrappingByFeatures
-	        || (isDistinct && projVarCount > 1 && !isEffectiveQueryResultStar )
-	        ;
+        boolean needsWrapping
+            = needsWrappingByFeatures
+            || (isDistinct && projVarCount > 1 && !isEffectiveQueryResultStar )
+            ;
 
-        
+
         if(rowLimit != null && isDistinct && !needsWrappingByFeatures) {
             Element elt = query.getQueryPattern();
             Query subQuery = new Query();

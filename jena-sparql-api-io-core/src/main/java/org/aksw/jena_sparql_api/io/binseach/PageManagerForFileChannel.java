@@ -17,8 +17,8 @@ import com.google.common.primitives.Ints;
 public class PageManagerForFileChannel
     implements PageManager
 {
-	public static final int DEFAULT_PAGE_SIZE = 16 * 1024 * 1024;
-	
+    public static final int DEFAULT_PAGE_SIZE = 16 * 1024 * 1024;
+
     /**
      * The cache is crucial to the implementation.
      * Setting its size to 0 will cause excessive allocation of pages and thus a timely
@@ -83,33 +83,31 @@ public class PageManagerForFileChannel
     }
 
     public static ByteBuffer map(FileChannel channel, MapMode mapMode, long start, long length) throws IOException {
-    	ByteBuffer result;
-    	
-    	try {
-    		result = channel.map(mapMode, start, length);
-    	} catch (UnsupportedOperationException e) {
-    		if (!MapMode.READ_ONLY.equals(mapMode)) {
-    			throw new UnsupportedOperationException(
-    					"The fallback for file channels without 'map' support can only MapMode.READ_ONLY", e);
-    		}
-    		
-    		int l = Ints.saturatedCast(length);
-    		
-    		result = ByteBuffer.allocate(l);
-    		System.out.println("before read");
-    		int n = channel.read(result, start);
-    		System.out.println("after read");
+        ByteBuffer result;
 
-    		// Set the buffer's position back to the start
-    		result.position(0);
-    		// Adjust the limit
-    		// Note that n may be -1 if the start position of the read was beyond the end
-    		result.limit(Math.max(0, n));
-    	}
-    	
-    	return result;
+        try {
+            result = channel.map(mapMode, start, length);
+        } catch (UnsupportedOperationException e) {
+            if (!MapMode.READ_ONLY.equals(mapMode)) {
+                throw new UnsupportedOperationException(
+                        "The fallback for file channels without 'map' support can only MapMode.READ_ONLY", e);
+            }
+
+            int l = Ints.saturatedCast(length);
+
+            result = ByteBuffer.allocate(l);
+            int n = ChannelUtils.readFully(channel, result, start);
+
+            // Set the buffer's position back to the start
+            result.position(0);
+            // Adjust the limit
+            // Note that n may be -1 if the start position of the read was beyond the end
+            result.limit(Math.max(0, n));
+        }
+
+        return result;
     }
-    
+
     public synchronized Ref<Page> getRefForPage(long page) throws IOException {
         long start = page * pageSize;
         long end = Math.min(channelSize, start + pageSize);
@@ -121,8 +119,8 @@ public class PageManagerForFileChannel
                     ? null
                     : pageCache.get(page, () -> {
                         //ByteBuffer b = channel.map(MapMode.READ_ONLY, start, length);
-                    	ByteBuffer b = map(channel, MapMode.READ_ONLY, start, length);
-                    	
+                        ByteBuffer b = map(channel, MapMode.READ_ONLY, start, length);
+
 //						System.err.println("Allocated page " + page);
                         Page p = new PageBase(this, page, b);
 

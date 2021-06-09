@@ -14,12 +14,14 @@ public class AnyResourceImpl
         super(n, m);
     }
 
-    final static public Implementation factory = new Implementation() {
+    public static final Implementation factory = new Implementation() {
         @Override
-        public boolean canWrap( Node n, EnhGraph eg )
-            { return true; }
+        public boolean canWrap(Node n, EnhGraph eg) {
+            return true;
+        }
+
         @Override
-        public EnhNode wrap(Node n,EnhGraph eg) {
+        public EnhNode wrap(Node n, EnhGraph eg) {
             return new AnyResourceImpl(n,eg);
         }
     };
