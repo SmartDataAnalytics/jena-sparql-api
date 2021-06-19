@@ -9,6 +9,8 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 import org.aksw.commons.util.strings.StringUtils;
+import org.aksw.jena_sparql_api.util.tuple.TupleAccessorTriple;
+import org.aksw.jena_sparql_api.util.tuple.TupleUtils;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.riot.writer.NTriplesWriter;
@@ -17,6 +19,8 @@ import org.apache.jena.sparql.engine.binding.BindingHashMap;
 import org.apache.jena.sparql.path.P_Path0;
 
 public class TripleUtils {
+
+
 
     public static Stream<Node> streamNodes(Triple t) {
         return Stream.of(t.getSubject(), t.getPredicate(), t.getObject());
@@ -133,6 +137,11 @@ public class TripleUtils {
         result.add(Vars.o, triple.getObject());
 
         return result;
+    }
+
+
+    public static Binding tripleToBinding(Triple pattern, Triple assignment) {
+        return TupleUtils.tupleToBinding(TupleAccessorTriple.INSTANCE, pattern, assignment);
     }
 
 

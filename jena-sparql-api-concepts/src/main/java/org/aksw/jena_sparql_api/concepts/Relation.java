@@ -19,7 +19,12 @@ import org.apache.jena.sparql.syntax.Element;
 import com.google.common.collect.Sets;
 
 /**
- * Base interface for SPARQL relations
+ * A (SPARQL) relation is a unifying abstraction for queries and graph patterns which allows treating both as tables.
+ * Variables can be marked as "distinguished" which means that they will be projected when generating a relation's
+ * effective SPARQL query.
+ * Furthermore, the relation inferface declares several methods for constructing joins between relations.
+ *
+ *
  * @author raven Mar 7, 2018
  *
  */
