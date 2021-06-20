@@ -1,5 +1,7 @@
 package org.aksw.jena_sparql_api.sparql.ext.json;
 
+import java.util.Objects;
+
 import org.apache.jena.datatypes.BaseDatatype;
 import org.apache.jena.datatypes.DatatypeFormatException;
 import org.apache.jena.datatypes.RDFDatatype;
@@ -20,29 +22,29 @@ import com.google.gson.JsonElement;
 public class RDFDatatypeJson
     extends BaseDatatype
 {
-	private static final Logger logger = LoggerFactory.getLogger(RDFDatatypeJson.class);
-	
-	public static final String IRI = XSD.getURI() + "json"; 
-	public static final RDFDatatypeJson INSTANCE = new RDFDatatypeJson();
-	
+    private static final Logger logger = LoggerFactory.getLogger(RDFDatatypeJson.class);
+
+    public static final String IRI = XSD.getURI() + "json";
+    public static final RDFDatatypeJson INSTANCE = new RDFDatatypeJson();
+
     private Gson gson;
 
     public RDFDatatypeJson() {
-    	this(IRI);
+        this(IRI);
     }
 
-    // Workaround for spark's old 
+    // Workaround for spark's old guava version which may not support setLenient
     public static Gson createGson() {
-    	GsonBuilder builder = new GsonBuilder();
-    	try {
-    		builder.setLenient();
-    	} catch(NoSuchMethodError e) {
-    		logger.warn("Gson.setLenient not available");
-    	}
-    	Gson result = builder.create();
-    	return result;
+        GsonBuilder builder = new GsonBuilder();
+        try {
+            builder.setLenient();
+        } catch(NoSuchMethodError e) {
+            logger.warn("Gson.setLenient not available");
+        }
+        Gson result = builder.create();
+        return result;
     }
-    
+
     public RDFDatatypeJson(String uri) {
         this(uri, createGson());
     }
@@ -50,6 +52,10 @@ public class RDFDatatypeJson
     public RDFDatatypeJson(String uri, Gson gson) {
         super(uri);
         this.gson = gson;
+    }
+
+    public Gson getGson() {
+        return gson;
     }
 
     @Override
@@ -73,26 +79,60 @@ public class RDFDatatypeJson
      */
     @Override
     public JsonElement parse(String lexicalForm) throws DatatypeFormatException {
-    	//Object result = gson.fromJson(lexicalForm, Object.class);
-    	JsonElement result;
-    	try {
-    		result = gson.fromJson(lexicalForm, JsonElement.class);
-    	} catch(Exception e) {
-    		// TODO This is not the best place for an expr eval exception; it should go to E_StrDatatype
-    		throw new ExprEvalException(e);
-    	}
+        //Object result = gson.fromJson(lexicalForm, Object.class);
+        JsonElement result;
+        try {
+            result = gson.fromJson(lexicalForm, JsonElement.class);
+        } catch(Exception e) {
+            // TODO This is not the best place for an expr eval exception; it should go to E_StrDatatype
+            throw new ExprEvalException(e);
+        }
         return result;
     }
-    
-	public static Node jsonToNode(JsonElement json) {
-		RDFDatatype dtype = RDFDatatypeJson.INSTANCE;
-		Node result = NodeFactory.createLiteralByValue(json, dtype);
-		return result;
-	}
 
-	public static NodeValue jsonToNodeValue(JsonElement json) {
-		Node node = jsonToNode(json);
-		NodeValue result = NodeValue.makeNode(node);
-		return result;
-	}
+    public static Node jsonToNode(JsonElement json) {
+        RDFDatatype dtype = RDFDatatypeJson.INSTANCE;
+        Node result = NodeFactory.createLiteralByValue(json, dtype);
+        return result;
+    }
+
+    public static NodeValue jsonToNodeValue(JsonElement json) {
+        Node node = jsonToNode(json);
+        NodeValue result = NodeValue.makeNode(node);
+        return result;
+    }
+
+
+    /**
+     * Extract a JsonElement from the given node.
+     * Returns null for a null argument.
+     * If the argument is not a literal or does not hold a json object
+     * an {@link IllegalArgumentException} is raised.
+     *
+     * @param node
+     * @return
+     */
+    public static JsonElement extract(Node node) {
+        JsonElement result;
+
+        if (node == null) {
+            result = null;
+        } else if (node.isLiteral()) {
+            Object obj = node.getLiteralValue();
+            if (obj instanceof JsonElement) {
+                result = (JsonElement)obj;
+            } else {
+                throw new IllegalArgumentException("The provided argument node does not hold a json element: " + node);
+            }
+        } else {
+            throw new IllegalArgumentException("Provided argument node is not a literal");
+        }
+
+       return result;
+    }
+
+    public static JsonElement extract(NodeValue nodeValue) {
+        return nodeValue == null ? null : extract(nodeValue.asNode());
+    }
+
 }
