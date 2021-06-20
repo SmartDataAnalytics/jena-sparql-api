@@ -399,7 +399,7 @@ public class MapperProxyUtils {
             RDFNodeMapper<?> valueMapper = RDFNodeMappers.from(valueType, typeMapper, typeDecider, polymorphicOnly, false);
             Converter<RDFNode, ?> valueConverter  = new ConverterFromRDFNodeMapper<>(valueMapper);
 
-            // Decide on which map model to use
+            // Decide on the map model to use
             // If a value property is present then the map mode is to use dedicated resources for entries
 
             Property keyProperty = Optional.ofNullable(m.getAnnotation(KeyIri.class))
