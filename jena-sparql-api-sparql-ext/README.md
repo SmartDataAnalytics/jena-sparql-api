@@ -1,6 +1,9 @@
 ## SPARQL extensions for heterogeneous data
 
+> :wrench: Many usage examples can be found at the [https://github.com/SmartDataAnalytics/RdfProcessingToolkit/tree/develop/doc](RDF Processing Toolkit Documentation)
+
 This module enhances Jena's SPARQL engine with additional datatypes, functions and property functions for accessing and processing JSON, CSV and XML data.
+
 
 Simply by including the following maven dependency will automatically make all features available. This works because the JAR file
 provides appropriate metadata which gets picked up by Jena's plugin system.
