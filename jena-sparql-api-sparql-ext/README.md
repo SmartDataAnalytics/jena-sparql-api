@@ -1,6 +1,6 @@
 ## SPARQL extensions for heterogeneous data
 
-> :wrench: Many usage examples can be found at the [RDF Processing Toolkit Documentation](https://github.com/SmartDataAnalytics/RdfProcessingToolkit/tree/develop/doc)
+> :wrench: Many usage examples can be found at the [RDF Processing Toolkit Documentation](https://github.com/SmartDataAnalytics/RdfProcessingToolkit/tree/develop/doc) which is an application of this module.
 
 This module enhances Jena's SPARQL engine with additional datatypes, functions and property functions for accessing and processing JSON, CSV and XML data.
 
