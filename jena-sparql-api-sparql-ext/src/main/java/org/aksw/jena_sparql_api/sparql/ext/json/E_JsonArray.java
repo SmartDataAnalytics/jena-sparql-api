@@ -21,7 +21,7 @@ public class E_JsonArray
         for (int i = 0; i < argCount; ++i) {
             NodeValue nodeValue = args.get(i);
             Node node = nodeValue == null ? null : nodeValue.asNode();
-            JsonElement jsonElement = E_ToJson.convert(node, RDFDatatypeJson.INSTANCE.getGson());
+            JsonElement jsonElement = E_JsonConvert.convert(node, RDFDatatypeJson.INSTANCE.getGson());
             jsonArray.add(jsonElement);
         }
 

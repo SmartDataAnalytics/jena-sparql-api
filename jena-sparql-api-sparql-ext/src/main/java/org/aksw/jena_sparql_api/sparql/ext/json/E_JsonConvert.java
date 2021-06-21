@@ -7,7 +7,7 @@ import org.apache.jena.sparql.function.FunctionBase1;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 
-public class E_ToJson
+public class E_JsonConvert
     extends FunctionBase1
 {
 

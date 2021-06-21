@@ -12,7 +12,7 @@ public class JenaExtensionJson {
     public static void register() {
         FunctionRegistry.get().put(ns + "object", E_JsonObject.class);
         FunctionRegistry.get().put(ns + "array", E_JsonArray.class);
-        FunctionRegistry.get().put(ns + "toJson", E_ToJson.class);
+        FunctionRegistry.get().put(ns + "convert", E_JsonConvert.class);
 
 
 //		FunctionRegistry.get().put(ns + "parse", E_JsonParse.class);

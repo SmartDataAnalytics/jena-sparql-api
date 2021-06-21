@@ -40,7 +40,7 @@ public class E_JsonObject
                 }
 
                 Node v = value == null ? null : value.asNode();
-                JsonElement jsonValue = E_ToJson.convert(v, RDFDatatypeJson.INSTANCE.getGson());
+                JsonElement jsonValue = E_JsonConvert.convert(v, RDFDatatypeJson.INSTANCE.getGson());
 
                 jsonObject.add(jsonKey, jsonValue);
             }
