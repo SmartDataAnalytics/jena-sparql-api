@@ -6,13 +6,18 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.SequenceInputStream;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.CloseShieldInputStream;
 import org.apache.jena.atlas.web.ContentType;
 import org.apache.jena.atlas.web.TypedInputStream;
+import org.apache.jena.ext.com.google.common.base.Stopwatch;
 import org.apache.jena.ext.com.google.common.collect.ArrayListMultimap;
 import org.apache.jena.ext.com.google.common.collect.Multimap;
 import org.apache.jena.ext.com.google.common.collect.Streams;
@@ -28,6 +33,7 @@ import org.apache.jena.riot.RDFParser;
 import org.apache.jena.riot.resultset.ResultSetReaderRegistry;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.core.Quad;
+import org.apache.jena.sys.JenaSystem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,6 +48,16 @@ import io.reactivex.rxjava3.core.Flowable;
  */
 public class RDFDataMgrEx {
     private static final Logger logger = LoggerFactory.getLogger(RDFDataMgrEx.class);
+
+    static { JenaSystem.init(); }
+
+    public static final List<Lang> DEFAULT_PROBE_LANGS = Collections.unmodifiableList(Arrays.asList(
+            RDFLanguages.TRIG, // Subsumes turtle, nquads and ntriples
+            RDFLanguages.JSONLD,
+            RDFLanguages.RDFXML,
+            RDFLanguages.RDFTHRIFT,
+            RDFLanguages.TRIX
+    ));
 
     public static boolean isStdIn(String filenameOrIri) {
         return "-".equals(filenameOrIri);
@@ -130,16 +146,17 @@ public class RDFDataMgrEx {
 
 //        BufferedInputStream bin = new BufferedInputStream(in);
 
+        // Here we rely on the VM/JDK not allocating the buffer right away but only
+        // using this as the max buffer size
+        // 1GB should be safe enough even for cases with huge literals such as for
+        // large spatial geometries (I encountered some around ~50MB)
+        in.mark(1 * 1024 * 1024 * 1024);
+
         Multimap<Long, Lang> successCountToLang = ArrayListMultimap.create();
         for(Lang cand : candidates) {
             @SuppressWarnings("resource")
             CloseShieldInputStream wbin = new CloseShieldInputStream(in);
 
-            // Here we rely on the VM/JDK not allocating the buffer right away but only
-            // using this as the max buffer size
-            // 1GB should be safe enough even for cases with huge literals such as for
-            // large spatial geometries (I encountered some around ~50MB)
-            in.mark(1 * 1024 * 1024 * 1024);
             //bin.mark(Integer.MAX_VALUE >> 1);
             Flowable<?> flow;
             if (RDFLanguages.isQuads(cand)) {
@@ -153,8 +170,9 @@ public class RDFDataMgrEx {
                 continue;
             }
 
+            Stopwatch sw = Stopwatch.createStarted();
             try {
-                long count = flow.take(1000)
+                long count = flow.take(100)
                     .count()
                     .blockingGet();
 
@@ -162,9 +180,11 @@ public class RDFDataMgrEx {
 
                 logger.debug("Number of items parsed by content type probing for " + cand + ": " + count);
             } catch(Exception e) {
-//                logger.debug("Failed to probe with format " + cand, e);
+                // logger.debug("Failed to probe with format " + cand, e);
                 continue;
             } finally {
+                System.err.println("Probing format " + cand + " took " + sw.elapsed(TimeUnit.MILLISECONDS));
+
                 try {
                     in.reset();
                 } catch (IOException x) {

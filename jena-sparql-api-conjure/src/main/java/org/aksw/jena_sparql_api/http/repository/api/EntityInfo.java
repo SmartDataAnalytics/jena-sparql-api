@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
  * @author raven
  *
  */
-public interface EntityInfoCore {
+public interface EntityInfo {
     List<String> getContentEncodings();
     //EntityInfoCore setEncodings(List<String> encodings);
 

@@ -1,6 +1,5 @@
 package org.aksw.jena_sparql_api.rx;
 
-import java.io.Closeable;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -20,6 +19,7 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CancellationException;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -50,7 +50,6 @@ import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.riot.RDFLanguages;
 import org.apache.jena.riot.RDFParser;
 import org.apache.jena.riot.ResultSetMgr;
-import org.apache.jena.riot.RiotException;
 import org.apache.jena.riot.RiotParseException;
 import org.apache.jena.riot.lang.LabelToNode;
 import org.apache.jena.riot.lang.PipedQuadsStream;
@@ -79,6 +78,26 @@ import io.reactivex.rxjava3.core.Maybe;
  *
  */
 public class RDFDataMgrRx {
+
+    /**
+     * Helper interface to configure a factory that creates a function that turns an InputStream
+     * into an iterator.
+     *
+     * INPUT may be a TypedInputStream (tis) which is an input stream but also holds metadata.
+     * This leads to code where the same tis is supplied twice: once in the role of configuration metadata
+     * and once as the actual input stream:
+     * Iterator&lt;T&gt; it = apply(th, eh, tis).apply(tis)
+     *
+     * @author raven
+     *
+     * @param <INPUT>
+     * @param <T> The type of items to deserialize from the input stream based on INPUT
+     */
+    public static interface IteratorFactoryFactory<INPUT, T> {
+        Function<InputStream, Iterator<T>> apply(Consumer<Thread> th, UncaughtExceptionHandler eh, INPUT input);
+    }
+
+
     public static Flowable<Triple> createFlowableTriples(String filenameOrURI, Lang lang, String baseIRI) {
         return createFlowableTriples(() -> RDFDataMgr.open(filenameOrURI), lang, baseIRI);
     }
@@ -193,7 +212,7 @@ public class RDFDataMgrRx {
     }
 
     public static Flowable<Triple> createFlowableTriples(Callable<InputStream> inSupplier, Lang lang, String baseIRI) {
-        return createFlowableFromInputStream(inSupplier, th -> eh -> in -> createIteratorTriples(in, lang, baseIRI, eh, th));
+        return createFlowableFromInputStream(inSupplier, (th, eh, rawIn) -> (in -> createIteratorTriples(in, lang, baseIRI, eh, th)));
     }
 
     public static Flowable<Resource> createFlowableResources(String filenameOrURI, Lang lang, String baseIRI) {
@@ -322,21 +341,21 @@ public class RDFDataMgrRx {
         return it;
     }
 
-    
+
     /**
      * Label to node strategy that passes existing labels on as given
      * but allocation of fresh nodes uses a pair comprising a jvm-global random value and an increment.
      * (i.e. incremental numbers scoped within some random value)
-     * 
+     *
      * This strategy is needed when processing RDF files in splits such as with Apache Spark:
      * Any mentioned labels should be retaine globally, but fresh nodes allocated for the splits must not clash.
-     * 
+     *
      * @return
      */
     public static LabelToNode createLabelToNodeAsGivenOrRandom() {
-    	return new LabelToNode(
-    			new AllocScopePolicy(),
-    			new Alloc(BlankNodeAllocatorAsGivenOrRandom.getGlobalInstance()));
+        return new LabelToNode(
+                new AllocScopePolicy(),
+                new Alloc(BlankNodeAllocatorAsGivenOrRandom.getGlobalInstance()));
     }
 
     public static ParserProfile dftProfile() {
@@ -409,7 +428,7 @@ public class RDFDataMgrRx {
 
 
     public static Flowable<Quad> createFlowableQuads(Callable<InputStream> inSupplier, Lang lang, String baseIRI) {
-        return createFlowableFromInputStream(inSupplier, th -> eh -> in -> createIteratorQuads(in, lang, baseIRI, eh, th))
+        return createFlowableFromInputStream(inSupplier, (th, eh, rawIn) -> (in -> createIteratorQuads(in, lang, baseIRI, eh, th)))
                 // Ensure that the graph node is always non-null
                 // Trig parser in Jena 3.14.0 creates quads with null graph
                 .map(q -> q.getGraph() != null
@@ -544,12 +563,12 @@ public class RDFDataMgrRx {
 
         Flowable<Quad> result = createFlowableFromInputStream(
                 inSupplier,
-                th -> eh -> in -> createIteratorQuads(
+                (th, eh, rawIn) -> (in -> createIteratorQuads(
                         in,
-                        RDFLanguages.contentTypeToLang(in.getContentType()),
-                        in.getBaseURI(),
+                        RDFLanguages.contentTypeToLang(rawIn.getContentType()),
+                        rawIn.getBaseURI(),
                         eh,
-                        th));
+                        th)));
 
         return result;
     }
@@ -559,132 +578,20 @@ public class RDFDataMgrRx {
 
         Flowable<Triple> result = createFlowableFromInputStream(
                 inSupplier,
-                th -> eh -> in -> createIteratorTriples(
+                (th, eh, rawIn) -> (in -> createIteratorTriples(
                         in,
-                        RDFLanguages.contentTypeToLang(in.getContentType()),
-                        in.getBaseURI(),
+                        RDFLanguages.contentTypeToLang(rawIn.getContentType()),
+                        rawIn.getBaseURI(),
                         eh,
-                        th));
+                        th)));
 
         return result;
     }
 
 
-    /**
-     * Helper class to track resources involved in RDF parsing
-     *
-     *
-     * @author raven
-     *
-     * @param <I> InputStream type
-     * @param <T> Item type of the resulting flow, typically Triples or Quads
-     */
-    static class FlowState<I extends InputStream, T> {
-        I in;
-        Thread thread;
-        Throwable raisedException;
-        Iterator<T> reader;
-        boolean closeInvoked;
-
-//		public FlowState(I in) {
-//			super();
-//			this.in = in;
-//		}
-
-        void handleException(Thread t, Throwable e) {
-            boolean report = true;
-
-            // If close was invoked, skip exceptions related to the underlying
-            // input stream having been prematurely closed
-            if(closeInvoked) {
-                if(e instanceof RiotException) {
-                    String msg = e.getMessage();
-                    if(msg.equalsIgnoreCase("Pipe closed") || msg.equals("Consumer Dead")) {
-                        report = false;
-                    }
-                }
-            }
-
-            if(report) {
-                if(raisedException == null) {
-                    raisedException = e;
-                }
-                // If we receive any reportable exception after the flowable
-                // was closed, raise them so they don't get unnoticed!
-                if(closeInvoked) {
-                    throw new RuntimeException(e);
-                }
-            }
-        }
-
-        void setThread(Thread t) {
-            thread = t;
-        }
-
-        void close() throws IOException {
-            closeInvoked = true;
-            // The producer thread may be blocked because not enough items were consumed
-//				if(thread[0] != null) {
-//					while(thread[0].isAlive()) {
-//						thread[0].interrupt();
-//					}
-//				}
-
-            // We need to wait if iterator.next is waiting
-//				synchronized(this) {
-//
-//				}
-
-            // Try to close the iterator 'it'
-            // Otherwise, forcefully close the stream
-            // (may cause a (usually/hopefully) harmless exception)
-            try {
-                if(reader instanceof Closeable) {
-                    ((Closeable)reader).close();
-                } else if (reader instanceof org.apache.jena.atlas.lib.Closeable) {
-                    ((org.apache.jena.atlas.lib.Closeable)reader).close();
-                }
-            } finally {
-                try {
-                    in.close();
-                } finally {
-                    try {
-                        // Consume any remaining items in the iterator to prevent blocking issues
-                        // For example, Jena's producer thread can get blocked
-                        // when parsed items are not consumed
-//							System.out.println("Consuming rest");
-                        // FIXME Do we still need to consume the iterator if we
-                        // interrupt the producer thread - or might that lead to triples / quads
-                        // getting lost?
-//							Iterators.size(it);
-                    } catch(Exception e) {
-                        // Ignore silently
-                    } finally {
-                        // The generator corresponds to the 2nd argument of Flowable.generate
-                        // The producer may be blocked by attempting to put new items on a already full blocking queue
-                        // The consumer in it.hasNext() may by waiting for a response from the producer
-                        // So we interrupt the producer to death
-                        Thread t = thread;
-                        if(t != null) {
-                            while(t.isAlive()) {
-//										System.out.println("Interrupting");
-                                t.interrupt();
-
-                                try {
-                                    Thread.sleep(100);
-                                } catch(InterruptedException e2) {
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
     public static <T, I extends InputStream> Flowable<T> createFlowableFromInputStream(
             Callable<I> inSupplier,
-            Function<Consumer<Thread>, Function<UncaughtExceptionHandler, Function<? super I, ? extends Iterator<T>>>> fn) {
+            IteratorFactoryFactory<I, T> iff) {
 
         // In case the creation of the iterator from an inputstream involves a thread
         // perform setup of the exception handler
@@ -694,35 +601,55 @@ public class RDFDataMgrRx {
 
         Flowable<T> result = Flowable.generate(
                 () -> {
-                    FlowState<I, T> state = new FlowState<>();
-                    state.in = inSupplier.call();
-                    state.reader = fn.apply(state::setThread).apply(state::handleException).apply(state.in);
+                    FlowState<T> state = new FlowState<>();
+                    I rawIn = inSupplier.call();
+                    // Closing the flowable may interrupt threads which may cause
+                    // unwanted close of the underlying input stream
+                    // state.in = Channels.newInputStream(new ReadableByteChannelWithoutCloseOnInterrupt(rawIn));
+
+                    state.setIn(rawIn);
+                    state.setIterator(iff.apply(state::setProducerThread, state::handleProducerException, rawIn).apply(state.in));
+
+
+                    // state.reader = fn.apply(state::setProducerThread).apply(state::handleException).apply(state.in);
+
                     return state;
                 },
                 (state, emitter) -> {
                     try {
+                        boolean hasNext;
+                        boolean isCancelled = false;
+
+                        try {
+                            hasNext = state.consumerInterrupter.setDelegate(
+                                () -> state.iterator.hasNext()).call();
+                        } catch (CancellationException e) {
+                            hasNext = false;
+                            isCancelled = true;
+                        }
+
                         //if(!closeInvoked[0])
 //						System.out.println("Generator invoked");
-                        if(state.reader.hasNext()) {
+                        if (hasNext) {
 //							System.out.println("hasNext = true");
-                            T item = state.reader.next();
+                            T item = state.iterator.next();
                             emitter.onNext(item);
                         } else {
 //							System.out.println("hasNext = false; Waiting for any pending exceptions from producer thread");
-                            if(state.thread != null) {
-                                state.thread.join();
+                            if (state.producerThread != null && !isCancelled) {
+                                state.producerThread.join();
                             }
 //							System.out.println("End");
 
                             Throwable t = state.raisedException;
                             boolean report = true;
-                            if(t != null) {
+                            if (t != null) {
                                 boolean isParseError = t instanceof RiotParseException;
 
                                 // Parse errors after an invocation of close are ignored
                                 // I.e. if we asked for 5 items, and there is parse error at the 6th one,
                                 // we still complete the original request without errors
-                                if(isParseError && state.closeInvoked) {
+                                if (isParseError && state.closeInvoked) {
                                     report = false;
                                 }
                             }

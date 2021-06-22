@@ -4,11 +4,11 @@ import java.util.Collection;
 import java.util.List;
 
 import org.aksw.dcat.ap.domain.api.Checksum;
-import org.aksw.jena_sparql_api.http.repository.api.EntityInfoCore;
+import org.aksw.jena_sparql_api.http.repository.api.EntityInfo;
 import org.apache.jena.rdf.model.Resource;
 
 public interface RdfEntityInfo
-    extends Resource, EntityInfoCore
+    extends Resource, EntityInfo
 {
     RdfEntityInfo setContentEncodings(List<String> enocdings);
     RdfEntityInfo setContentType(String contentType);
