@@ -1,7 +1,5 @@
 package org.aksw.jena_sparql_api.sparql.ext.json;
 
-import java.util.Objects;
-
 import org.apache.jena.datatypes.BaseDatatype;
 import org.apache.jena.datatypes.DatatypeFormatException;
 import org.apache.jena.datatypes.RDFDatatype;
@@ -16,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 
 
 
@@ -99,6 +98,24 @@ public class RDFDatatypeJson
     public static NodeValue jsonToNodeValue(JsonElement json) {
         Node node = jsonToNode(json);
         NodeValue result = NodeValue.makeNode(node);
+        return result;
+    }
+
+
+    public static JsonObject extractJsonObjectOrNull(Node node) {
+        JsonElement tmp = extractOrNull(node);
+
+        JsonObject result = tmp == null || !tmp.isJsonObject() ? null : tmp.getAsJsonObject();
+        return result;
+    }
+
+    public static JsonElement extractOrNull(Node node) {
+        JsonElement result;
+        try {
+            result = extract(node);
+        } catch (IllegalArgumentException e) {
+            result = null;
+        }
         return result;
     }
 

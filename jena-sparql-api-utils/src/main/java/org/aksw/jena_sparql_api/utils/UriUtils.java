@@ -39,14 +39,22 @@ public class UriUtils {
      * @return
      */
     public static Map<String, String> createMapFromUriQueryString(URI uri) {
+        return createMapFromUriQueryString(uri, new LinkedHashMap<>());
+    }
+
+    /**
+     * Only retains first value
+     * @return
+     */
+    public static Map<String, String> createMapFromUriQueryString(URI uri, Map<String, String> result) {
         List<NameValuePair> pairs = URLEncodedUtils.parse(uri, StandardCharsets.UTF_8);
-        Map<String, String> result = new LinkedHashMap<>();
         for (NameValuePair pair : pairs) {
             result.putIfAbsent(pair.getName(), pair.getValue());
         }
 
         return result;
     }
+
 
     /**
      * Taken from Node_URI.getNameSpace()

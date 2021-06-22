@@ -1,8 +1,9 @@
-package org.aksw.jena_sparql_api.http.repository.api;
+package org.aksw.jena_sparql_api.rx.entity;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+
 
 /**
  * A basic java implementation of the EntityInfo interface
@@ -18,12 +19,18 @@ public class EntityInfoImpl
     protected String charset;
     protected Set<String> languageTags;
 
+
+
     public EntityInfoImpl(String contentType) {
         this(Collections.emptyList(), contentType);
     }
 
     public EntityInfoImpl(List<String> contentEncodings, String contentType) {
-        this(contentEncodings, contentType, null, Collections.emptySet());
+        this(contentEncodings, contentType, null);
+    }
+
+    public EntityInfoImpl(List<String> contentEncodings, String contentType, String charset) {
+        this(contentEncodings, contentType, charset, Collections.emptySet());
     }
 
     public EntityInfoImpl(List<String> contentEncodings, String contentType, String charset, Set<String> languageTags) {

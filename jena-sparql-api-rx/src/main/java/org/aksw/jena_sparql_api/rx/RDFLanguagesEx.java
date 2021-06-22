@@ -1,14 +1,13 @@
 package org.aksw.jena_sparql_api.rx;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.aksw.commons.collections.CollectionUtils;
 import org.apache.jena.atlas.web.ContentType;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFFormat;
@@ -26,8 +25,8 @@ import org.apache.jena.riot.resultset.ResultSetWriterRegistry;
  */
 public class RDFLanguagesEx {
 
-	// public static Collection<Lang> basicQuadLangs = Arrays.asList(Lang.TRIG, Lang.NQUADS)
-	
+    // public static Collection<Lang> basicQuadLangs = Arrays.asList(Lang.TRIG, Lang.NQUADS)
+
     /**
      * Returns quad langs first followed by the triple ones.
      * Returned langs are distinct.
@@ -136,10 +135,10 @@ public class RDFLanguagesEx {
         Set<String> result = new LinkedHashSet<>();
         ContentType primaryCt = lang.getContentType();
         if(primaryCt != null) {
-            result.add(primaryCt.toHeaderString());
+            result.add(primaryCt.getContentTypeStr());
         }
 
-        result.addAll(lang.getAltContentTypes());
+        lang.getAltContentTypes().stream().filter(Objects::nonNull).forEach(result::add);
         return result;
     }
 
@@ -162,6 +161,12 @@ public class RDFLanguagesEx {
             .anyMatch(name -> name.equalsIgnoreCase(label));
     }
 
+    public static boolean matchesContentType(Lang lang, String label) {
+        // Extra robustness with null handling to deal with potentially broken registrations
+        return getAllContentTypes(lang).stream()
+            .anyMatch(contentType -> contentType.equalsIgnoreCase(label));
+    }
+
 
     /**
      * Find the first RDFFormat that matches a given label
@@ -177,7 +182,9 @@ public class RDFLanguagesEx {
 
     public static RDFFormat findRdfFormat(String label, Collection<RDFFormat> probeFormats) {
         RDFFormat outFormat = probeFormats.stream()
-                .filter(fmt -> fmt.toString().equalsIgnoreCase(label) || matchesLang(fmt.getLang(), label))
+                .filter(fmt -> fmt.toString().equalsIgnoreCase(label)
+                        || matchesLang(fmt.getLang(), label)
+                        || matchesContentType(fmt.getLang(), label))
                 .findFirst()
                 .orElseThrow(() -> new RuntimeException("No RDF format found for label " + label));
 
@@ -192,7 +199,9 @@ public class RDFLanguagesEx {
 
     public static Lang findLang(String label, Collection<Lang> probeLangs) {
         Lang result = probeLangs.stream()
-                .filter(lang -> matchesLang(lang, label) || matchesFileExtension(lang, label))
+                .filter(lang -> matchesLang(lang, label)
+                        || matchesFileExtension(lang, label)
+                        || matchesContentType(lang, label))
                 .findFirst()
                 .orElseThrow(() -> new RuntimeException("No lang found for label " + label));
 

@@ -6,18 +6,21 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.SequenceInputStream;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Objects;
-import java.util.concurrent.TimeUnit;
 
+import org.aksw.jena_sparql_api.rx.entity.EntityInfo;
+import org.aksw.jena_sparql_api.rx.entity.EntityInfoImpl;
+import org.apache.commons.compress.compressors.CompressorException;
+import org.apache.commons.compress.compressors.CompressorStreamFactory;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.CloseShieldInputStream;
 import org.apache.jena.atlas.web.ContentType;
 import org.apache.jena.atlas.web.TypedInputStream;
-import org.apache.jena.ext.com.google.common.base.Stopwatch;
 import org.apache.jena.ext.com.google.common.collect.ArrayListMultimap;
 import org.apache.jena.ext.com.google.common.collect.Multimap;
 import org.apache.jena.ext.com.google.common.collect.Streams;
@@ -120,9 +123,86 @@ public class RDFDataMgrEx {
         return result;
     }
 
+
+    /**
+     * Decode a given input stream based on a sequence of codec names.
+     *
+     * @param in
+     * @param codecs
+     * @param csf
+     * @return
+     * @throws CompressorException
+     */
+    public static InputStream decode(InputStream in, List<String> codecs, CompressorStreamFactory csf)
+            throws CompressorException {
+        InputStream result = in;
+        for (String encoding : codecs) {
+            result = csf.createCompressorInputStream(encoding, result, true);
+        }
+        return result;
+    }
+
+    /**
+     * Probe an input stream for any encodings (e.g. using compression codecs) and
+     * its eventual content type.
+     *
+     * <pre>
+     * try (InputStream in = ...) {
+     *   EntityInfo entityInfo = probeEntityInfo(in, RDFDataMgrEx.DEFAULT_PROBE_LANGS);
+     * }
+     * </pre>
+     *
+     * @param in
+     * @param candidates
+     * @return
+     * @throws IOException
+     */
+    public static EntityInfo probeEntityInfo(InputStream in, Iterable<Lang> candidates) throws IOException {
+        if (!in.markSupported()) {
+            in = new BufferedInputStream(in);
+        }
+        in.mark(1024 * 1024 * 1024);
+
+        CompressorStreamFactory csf = CompressorStreamFactory.getSingleton();
+
+        EntityInfo result;
+        try (InputStream is = in) {
+
+            InputStream nextIn = is;
+            List<String> encodings = new ArrayList<>();
+            for (;;) {
+                String encoding;
+                try {
+                    encoding = CompressorStreamFactory.detect(is);
+                } catch (CompressorException e) {
+                    break;
+                } finally {
+                    is.reset();
+                }
+                encodings.add(encoding);
+
+                try {
+                    nextIn = new BufferedInputStream(decode(is, encodings, csf));
+                } catch (CompressorException e) {
+                    // Should not fail here because we applied detect() before
+                    throw new RuntimeException(e);
+                }
+            }
+
+            try (TypedInputStream tis = RDFDataMgrEx.probeLang(nextIn, candidates)) {
+                String contentType = tis.getContentType();
+                String charset = tis.getCharset();
+                result = new EntityInfoImpl(encodings, contentType, charset);
+            }
+        }
+
+        return result;
+    }
+
     public static TypedInputStream probeLang(InputStream in, Iterable<Lang> candidates) {
         return probeLang(in, candidates, true);
     }
+
 
     /**
      * Probe the content of the input stream against a given set of candidate languages.
@@ -139,7 +219,10 @@ public class RDFDataMgrEx {
      *
      * @return
      */
-    public static TypedInputStream probeLang(InputStream in, Iterable<Lang> candidates, boolean tryAllCandidates) {
+    public static TypedInputStream probeLang(
+            InputStream in,
+            Iterable<Lang> candidates,
+            boolean tryAllCandidates) {
         if (!in.markSupported()) {
             throw new IllegalArgumentException("Language probing requires an input stream with mark support");
         }
@@ -170,7 +253,7 @@ public class RDFDataMgrEx {
                 continue;
             }
 
-            Stopwatch sw = Stopwatch.createStarted();
+//            Stopwatch sw = Stopwatch.createStarted();
             try {
                 long count = flow.take(100)
                     .count()
@@ -183,7 +266,7 @@ public class RDFDataMgrEx {
                 // logger.debug("Failed to probe with format " + cand, e);
                 continue;
             } finally {
-                System.err.println("Probing format " + cand + " took " + sw.elapsed(TimeUnit.MILLISECONDS));
+//                System.err.println("Probing format " + cand + " took " + sw.elapsed(TimeUnit.MILLISECONDS));
 
                 try {
                     in.reset();

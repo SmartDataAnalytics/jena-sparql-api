@@ -4,7 +4,7 @@ import java.util.Collection;
 import java.util.List;
 
 import org.aksw.dcat.ap.domain.api.Checksum;
-import org.aksw.jena_sparql_api.http.repository.api.EntityInfo;
+import org.aksw.jena_sparql_api.rx.entity.EntityInfo;
 import org.apache.jena.rdf.model.Resource;
 
 public interface RdfEntityInfo
