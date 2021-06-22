@@ -7,15 +7,16 @@ import java.util.Iterator;
 
 import org.aksw.commons.util.StreamUtils;
 import org.aksw.jena_sparql_api.core.ResultSetCloseable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.ResultSet;
-import org.apache.jena.query.ResultSetFactory;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
-import org.apache.jena.util.iterator.WrappedIterator;
+import org.apache.jena.riot.RDFFormat;
+import org.apache.jena.riot.ResultSetMgr;
+import org.apache.jena.riot.resultset.ResultSetLang;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -29,10 +30,18 @@ public class CacheResourceCacheEntry
 {
     private static Logger logger = LoggerFactory.getLogger(CacheResourceCacheEntry.class);
 
-    private CacheEntry cacheEntry;
+    protected CacheEntry cacheEntry;
+    protected Lang rdfLang;
+    protected Lang resultSetLang;
 
     public CacheResourceCacheEntry(CacheEntry cacheEntry) {
+        this(cacheEntry, Lang.RDFTHRIFT, ResultSetLang.RS_Thrift);
+    }
+
+    public CacheResourceCacheEntry(CacheEntry cacheEntry, Lang rdfLang, Lang resultSetLang) {
         this.cacheEntry = cacheEntry;
+        this.rdfLang = rdfLang;
+        this.resultSetLang = resultSetLang;
     }
 
 
@@ -56,7 +65,7 @@ public class CacheResourceCacheEntry
     public ResultSet asResultSet() {
         try {
             return _asResultSet();
-        } catch (SQLException e) {
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
@@ -66,7 +75,7 @@ public class CacheResourceCacheEntry
             throws SQLException
     {
         final InputStream in = cacheEntry.getInputStream();
-        ResultSet resultSet = ResultSetFactory.fromXML(in);
+        ResultSet resultSet = ResultSetMgr.read(in, resultSetLang);
         ResultSetCloseable result = new ResultSetCloseable(resultSet, in);
         return result;
     }
@@ -80,13 +89,17 @@ public class CacheResourceCacheEntry
     public Model asModel(Model result) {
         try {
             return _asModel(result);
-        } catch (SQLException e) {
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
     public Model _asModel(Model result) throws SQLException {
-        InputStream in = cacheEntry.getInputStream();
+        try (InputStream in = cacheEntry.getInputStream()) {
+            RDFDataMgr.read(result, in, rdfLang);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
 
         /*
         ByteArrayInputStream tmp;
@@ -102,8 +115,7 @@ public class CacheResourceCacheEntry
         in = tmp;
         */
 
-        result.read(in, null, "N-TRIPLES");
-        close();
+        //result.read(in, null, "N-TRIPLES");
 //        try {
 //            in.close();
 //        } catch (Exception e) {
@@ -153,7 +165,7 @@ public class CacheResourceCacheEntry
 
         // The iterator returned by jena closes the input stream when done
         // Also, it implements ClosableIterator
-        Iterator<Triple> result = RDFDataMgr.createIteratorTriples(in, Lang.NTRIPLES, null);
+        Iterator<Triple> result = RDFDataMgr.createIteratorTriples(in, rdfLang, null);
         return result;
     }
 

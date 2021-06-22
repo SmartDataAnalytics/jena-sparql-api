@@ -106,7 +106,7 @@ public class CallableWithAbortFactory
                 } finally {
                     isDone = true;
 
-                    // Clear interrupted flag
+                    // If abort was requested we may need to clear the interrupted flag
                     if (abortRequested.get()) {
                         synchronized (this) {
                             boolean wasInterrupted = Thread.interrupted();

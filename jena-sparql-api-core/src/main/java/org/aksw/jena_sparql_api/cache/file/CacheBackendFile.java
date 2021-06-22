@@ -26,14 +26,14 @@ public class CacheBackendFile
 
     protected boolean useCompression;
     protected boolean isReadonly;
-    
+
     // whether to write out the query to a file in addition to its result set
     protected boolean writeQuery;
 
     public CacheBackendFile(File parentFile, long lifespan) {
-    	this(parentFile.toPath(), lifespan, true, false, false);
+        this(parentFile.toPath(), lifespan, true, false, false);
     }
-    
+
     public CacheBackendFile(Path parentFile, long lifespan, boolean useCompression, boolean isReadonly, boolean writeQuery) {
         this.parentFile = parentFile;
         this.lifespan = lifespan;
@@ -43,9 +43,9 @@ public class CacheBackendFile
 
         if(!isReadonly && !Files.exists(parentFile)) {
             try {
-            	Files.createDirectories(parentFile);
+                Files.createDirectories(parentFile);
             } catch(Exception e) {
-            	throw new RuntimeException(e);
+                throw new RuntimeException(e);
             }
         }
 
@@ -58,11 +58,11 @@ public class CacheBackendFile
     @Override
     public CacheEntry lookup(String service, String queryString) {
         String baseFileName = StringUtils.urlEncode(service) + "-" + StringUtils.md5Hash(queryString);
-        
+
         String fileName = baseFileName + ".dat" + (useCompression ? ".bz2" : "");
 
         Path file = parentFile.resolve(fileName);
-        
+
 //System.out.println(file.getAbsolutePath());
         CacheEntry result;
         result = Files.exists(file)
@@ -74,33 +74,33 @@ public class CacheBackendFile
 
     @Override
     public void write(String service, String queryString, InputStream in) {
-    	if(isReadonly) {
-    		throw new RuntimeException("Cannot write to readonly cache");
-    	}
-    	
+        if(isReadonly) {
+            throw new RuntimeException("Cannot write to readonly cache");
+        }
+
         String baseFileName = StringUtils.urlEncode(service) + "-" + StringUtils.md5Hash(queryString);
 
         String dataFileName = baseFileName + ".dat" + (useCompression ? ".bz2" : "");
-        
+
         if(writeQuery) {
-        	Path queryFile = parentFile.resolve(baseFileName + ".sparql");
-        	if(!Files.exists(queryFile)) {
-        		try {
-					MoreFiles.asCharSink(queryFile, StandardCharsets.UTF_8).write(queryString);
-				} catch (IOException e) {
-					throw new RuntimeException(e);
-				}
-        	}
+            Path queryFile = parentFile.resolve(baseFileName + ".sparql");
+            if(!Files.exists(queryFile)) {
+                try {
+                    MoreFiles.asCharSink(queryFile, StandardCharsets.UTF_8).write(queryString);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
         }
-        
+
         // Rename the file once done with writing
         Path file = parentFile.resolve(dataFileName);
         if(Files.exists(file)) {
-        	try {
-				Files.delete(file);
-			} catch (IOException e) {
-				throw new RuntimeException(e);
-			}
+            try {
+                Files.delete(file);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         }
 
 
@@ -109,7 +109,7 @@ public class CacheBackendFile
         Path tmpFile = parentFile.resolve(tmpFileName);
         try {
             if(!Files.exists(tmpFile)) {
-            	Files.createFile(tmpFile);
+                Files.createFile(tmpFile);
             }
 
             OutputStream fos = Files.newOutputStream(tmpFile);
@@ -125,15 +125,15 @@ public class CacheBackendFile
 
 
         try {
-			Files.move(tmpFile, file);
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
+            Files.move(tmpFile, file);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-	@Override
-	public boolean isReadOnly() {
-		return isReadonly;
-	}
+    @Override
+    public boolean isReadOnly() {
+        return isReadonly;
+    }
 
 }
