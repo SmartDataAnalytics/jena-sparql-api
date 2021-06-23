@@ -85,7 +85,8 @@
 		<module>jena-sparql-api-playground</module>
 
 		<module>jena-sparql-api-virtuoso</module>
-	</modules>
+        <module>jena-sparql-api-fuseki-geosparql-bundle</module>
+    </modules>
 
 	<issueManagement>
 		<url>https://github.com/SmartDataAnalytics/jena-sparql-api/issues</url>
