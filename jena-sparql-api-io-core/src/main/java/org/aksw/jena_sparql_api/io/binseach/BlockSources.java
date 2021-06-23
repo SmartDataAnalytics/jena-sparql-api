@@ -5,8 +5,8 @@ import java.nio.channels.FileChannel;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 
+import org.aksw.commons.util.ref.Ref;
 import org.aksw.jena_sparql_api.io.binseach.bz2.BlockSourceBzip2;
-import org.aksw.jena_sparql_api.io.common.Reference;
 
 public class BlockSources {
     public static BinarySearcher createBinarySearcherBz2(Path path) throws IOException {
@@ -60,20 +60,20 @@ public class BlockSources {
      * @return A reference to a block that may contain the key or null if no candidate block was found
      * @throws Exception
      */
-    public static Reference<? extends Block> binarySearch(BlockSource blockSource, long min, long max, byte delimiter, byte[] prefix) throws IOException {
+    public static Ref<? extends Block> binarySearch(BlockSource blockSource, long min, long max, byte delimiter, byte[] prefix) throws IOException {
         // System.out.println("[" + min + ", " + max + "[");
         if(min >= max) {
             return null;
         }
 
-        Reference<? extends Block> result;
+        Ref<? extends Block> result;
 
         long middlePos = (min + max) >> 1; // fast divide by 2
 
         // Find the start of the record in the block:
         // In the first block, this is position 0
         // otherwise this is the first delimiter
-        Reference<? extends Block> blockRef = blockSource.contentAtOrBefore(middlePos, true);
+        Ref<? extends Block> blockRef = blockSource.contentAtOrBefore(middlePos, true);
         if(blockRef == null) {
             return null; //Long.MIN_VALUE;
         }
@@ -123,7 +123,7 @@ public class BlockSources {
                 // the search key may still be contained in this block
                 // but check the upper half of the search range if there is another block
                 //long lookupPos = pos + 1;
-                try(Reference<? extends Block> nextBlockRef = blockSource.contentAtOrAfter(pos, false)) {
+                try(Ref<? extends Block> nextBlockRef = blockSource.contentAtOrAfter(pos, false)) {
 
                     // If there is no further block it implies we are in the last block
                     if(nextBlockRef == null) {

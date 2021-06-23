@@ -36,16 +36,19 @@ import org.aksw.commons.collections.ConvertingSet;
 import org.aksw.commons.collections.MutableCollectionViews;
 import org.aksw.commons.collections.sets.SetFromCollection;
 import org.aksw.jena_sparql_api.collection.rx.utils.views.map.MapFromResource;
+import org.aksw.jena_sparql_api.collection.rx.utils.views.map.MapFromResourceUnmanaged;
 import org.aksw.jena_sparql_api.mapper.annotation.HashId;
 import org.aksw.jena_sparql_api.mapper.annotation.Inverse;
 import org.aksw.jena_sparql_api.mapper.annotation.Iri;
 import org.aksw.jena_sparql_api.mapper.annotation.IriNs;
 import org.aksw.jena_sparql_api.mapper.annotation.IriType;
+import org.aksw.jena_sparql_api.mapper.annotation.KeyIri;
 import org.aksw.jena_sparql_api.mapper.annotation.Namespace;
 import org.aksw.jena_sparql_api.mapper.annotation.Namespaces;
 import org.aksw.jena_sparql_api.mapper.annotation.PolymorphicOnly;
 import org.aksw.jena_sparql_api.mapper.annotation.StringId;
 import org.aksw.jena_sparql_api.mapper.annotation.ToString;
+import org.aksw.jena_sparql_api.mapper.annotation.ValueIri;
 import org.aksw.jena_sparql_api.mapper.hashid.ClassDescriptor;
 import org.aksw.jena_sparql_api.mapper.hashid.HashIdCxt;
 import org.aksw.jena_sparql_api.mapper.hashid.HashIdCxtImpl;
@@ -93,6 +96,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Converter;
 import com.google.common.base.Defaults;
+import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.common.hash.HashCode;
 import com.google.common.hash.HashFunction;
@@ -369,13 +373,20 @@ public class MapperProxyUtils {
 
 
     public static Function<Property, Function<Resource, Object>>
-        viewAsMap(Method m, boolean isValueIriType, boolean polymorphicOnly, Class<?> keyType, Class<?> valueType, TypeMapper typeMapper, TypeDecider typeDecider)
+        viewAsMap(
+                Method m,
+                boolean isValueIriType,
+                boolean polymorphicOnly,
+                Class<?> keyType,
+                Class<?> valueType,
+                TypeMapper typeMapper,
+                TypeDecider typeDecider)
     {
         Function<Property, Function<Resource, Object>> result = null;
 
     //	boolean isIriType = m.getAnnotation(IriType.class) != null;
         if(String.class.isAssignableFrom(valueType) && isValueIriType) {
-            throw new RuntimeException("Not implemented yet");
+            throw new RuntimeException("@IriType for maps not yet implemented yet");
 //			result = p -> s ->
 //				new ListFromConverter<String, RDFNode>(
 //						new ListFromRDFList(s, p),
@@ -384,13 +395,48 @@ public class MapperProxyUtils {
             RDFNodeMapper<?> keyMapper = RDFNodeMappers.from(keyType, typeMapper, typeDecider, polymorphicOnly, false);
             Converter<RDFNode, ?> keyConverter  = new ConverterFromRDFNodeMapper<>(keyMapper);
 
+
             RDFNodeMapper<?> valueMapper = RDFNodeMappers.from(valueType, typeMapper, typeDecider, polymorphicOnly, false);
             Converter<RDFNode, ?> valueConverter  = new ConverterFromRDFNodeMapper<>(valueMapper);
 
-            result = p -> s ->
+            // Decide on the map model to use
+            // If a value property is present then the map mode is to use dedicated resources for entries
+
+            Property keyProperty = Optional.ofNullable(m.getAnnotation(KeyIri.class))
+                    .map(x -> Strings.isNullOrEmpty(x.value()) ? MapVocab.key : ResourceFactory.createProperty(x.value()))
+                    .orElse(MapVocab.key); // If the annotation is absent then yield the default key
+
+            Property valuePropertyTmp = Optional.ofNullable(m.getAnnotation(ValueIri.class))
+                    .map(x -> Strings.isNullOrEmpty(x.value()) ? MapVocab.value : ResourceFactory.createProperty(x.value()))
+                    .orElse(null); // If the annotation is absent then yield null
+
+//
+//            String keyProperty = Optional.ofNullable(m.getAnnotation(KeyIri.class))
+//                    .map(x -> Optional.ofNullable(x.value()).orElse("")).orElse(null);
+
+            // If no value iri is given and the value type is not a subclass of Resource
+            // then we need to fall back to having dedicated Resources for values
+            Property valueProperty = valuePropertyTmp == null && !RDFNode.class.isAssignableFrom(valueType)
+                    ? MapVocab.value
+                    : valuePropertyTmp;
+
+            if (valueProperty != null) {
+                result = p -> s ->
                     new MapFromValueConverter<>(new MapFromKeyConverter<>(
-                        new MapFromResource(s, p, MapVocab.key, MapVocab.value),
+                        new MapFromResource(s, p, keyProperty, valueProperty),
                     keyConverter), valueConverter);
+            } else {
+                // Ugly type-unsafe adapter to convert RDFNode from the converter to Resource expected by the Map
+                Converter<Resource, ?> valueConverterRes = Converter.from(
+                    res -> valueConverter.convert(res),
+                    obj -> ((RDFNode)((Converter)valueConverter.reverse()).convert(obj)).asResource()
+                );
+
+                result = p -> s ->
+                    new MapFromValueConverter<>(new MapFromKeyConverter<>(
+                        new MapFromResourceUnmanaged(s, p, keyProperty),
+                    keyConverter), valueConverterRes);
+            }
         }
 
         return result;
@@ -1007,20 +1053,20 @@ public class MapperProxyUtils {
     }
 
     public static Object applyInModelIfApplicable(Object o, Model sourceModel) {
-    	Object result;
-    	
-    	// If the argument is an RDFNode then first create a copy of it in the
+        Object result;
+
+        // If the argument is an RDFNode then first create a copy of it in the
         // model of s (where this value is about to be added)
         if (o instanceof RDFNode) {
-        	RDFNode rdfNode = (RDFNode)o;
-        	result = rdfNode.inModel(sourceModel);
+            RDFNode rdfNode = (RDFNode)o;
+            result = rdfNode.inModel(sourceModel);
         } else {
-        	result = o;
+            result = o;
         }
-    	
+
         return result;
     }
-    
+
     @SuppressWarnings("unchecked")
     public static BiFunction<Property, Boolean, BiConsumer<Resource, Object>> viewAsScalarSetter(
             MethodDescriptor methodDescriptor,
@@ -1037,7 +1083,7 @@ public class MapperProxyUtils {
             ViewBundle viewBundle = setView.apply(p, isFwd).apply(s);
 
             o = applyInModelIfApplicable(o, s.getModel());
-            
+
             Set set = (Set)viewBundle.getJavaView();
             set.clear();
             set.add(o);
@@ -1119,7 +1165,7 @@ public class MapperProxyUtils {
         return result;
     }
 
-    
+
     public static String deriveIriFromMethod(Method method, PrefixMapping pm) {
         String result = null;
 
@@ -1175,11 +1221,11 @@ public class MapperProxyUtils {
 //		}
         return result;
     }
-    
+
     public static P_Path0 derivePathFromMethod(Method method, PrefixMapping pm) {
-    	String iri = deriveIriFromMethod(method, pm);
-    	P_Path0 result = iri == null ? null : new P_Link(NodeFactory.createURI(iri));
-    	return result;
+        String iri = deriveIriFromMethod(method, pm);
+        P_Path0 result = iri == null ? null : new P_Link(NodeFactory.createURI(iri));
+        return result;
     }
 
 //	public static Multimap<String, Method> indexMethodsByBeanPropertyName(Class<?> clazz) {
@@ -1267,56 +1313,56 @@ public class MapperProxyUtils {
         return result;
     }
 
-    
+
     /**
      * Read {@link Namespaces} and {@link Namespace} annotation from this class and
      * a super classes / interfaces.
      * The super classes / interfaces are visited first.
-     * 
+     *
      * TODO Add caching to avoid excessive reflection
-     * 
+     *
      * @param cls
      * @param out
      * @return
      */
     public static PrefixMapping readPrefixesFromClass(Class<?> cls, PrefixMapping out) {
-    	Objects.requireNonNull(cls);
-    	Objects.requireNonNull(out);
-    	
-    	Class<?> superClass = cls.getSuperclass();
-    	if (superClass != null) {
-    		readPrefixesFromClass(superClass, out);
-    	}
- 
-    	for (Class<?> i : cls.getInterfaces()) {
-    		readPrefixesFromClass(i, out);
-    	}
-    	
-    	Namespaces nss = cls.getAnnotation(Namespaces.class);    	
-    	if (nss != null && nss.value() != null) {
-    		for (Namespace ns : nss.value()) {
-        		addPrefix(cls, out, ns.prefix(), ns.value());
-    		}
-    	}
-    	
-    	Namespace ns = cls.getAnnotation(Namespace.class);
-    	if (ns != null) {
-    		addPrefix(cls, out, ns.prefix(), ns.value());
-    	}	
+        Objects.requireNonNull(cls);
+        Objects.requireNonNull(out);
 
-    	return out;
+        Class<?> superClass = cls.getSuperclass();
+        if (superClass != null) {
+            readPrefixesFromClass(superClass, out);
+        }
+
+        for (Class<?> i : cls.getInterfaces()) {
+            readPrefixesFromClass(i, out);
+        }
+
+        Namespaces nss = cls.getAnnotation(Namespaces.class);
+        if (nss != null && nss.value() != null) {
+            for (Namespace ns : nss.value()) {
+                addPrefix(cls, out, ns.prefix(), ns.value());
+            }
+        }
+
+        Namespace ns = cls.getAnnotation(Namespace.class);
+        if (ns != null) {
+            addPrefix(cls, out, ns.prefix(), ns.value());
+        }
+
+        return out;
     }
-    
+
     public static void addPrefix(Class<?> cls, PrefixMapping out, String prefix, String value) {
-    	logger.debug("Derived prefix " + prefix + " -> " + value
-    			+ " from annotation on " + cls.getCanonicalName());
+        logger.debug("Derived prefix " + prefix + " -> " + value
+                + " from annotation on " + cls.getCanonicalName());
 
-    	Objects.requireNonNull(prefix);
-    	Objects.requireNonNull(value);
-    	
-    	out.setNsPrefix(prefix, value);
+        Objects.requireNonNull(prefix);
+        Objects.requireNonNull(value);
+
+        out.setNsPrefix(prefix, value);
     }
-    
+
     /**
      * Method level annotations are processed into property level ones.
      *
@@ -1329,11 +1375,11 @@ public class MapperProxyUtils {
             PrefixMapping basePm,
             TypeDecider typeDecider) {
 
-    	// Shield the base prefixes from modification using PrefixMapping2 
-    	PrefixMapping2 pm = new PrefixMapping2(basePm);
-    	readPrefixesFromClass(clazz, pm);
-    	
-    	
+        // Shield the base prefixes from modification using PrefixMapping2
+        PrefixMapping2 pm = new PrefixMapping2(basePm);
+        readPrefixesFromClass(clazz, pm);
+
+
         Metamodel metamodel = Metamodel.get();
         ClassDescriptor classDescriptor = metamodel.getOrCreate(clazz);
 
@@ -1548,13 +1594,14 @@ public class MapperProxyUtils {
 
 
             // Predominantly consider only properties that have a path
-            // However, there are some execptions such as custom hash functions
+            // However, there are some exceptions such as custom hashid functions
             P_Path0 path = paths.get(beanPropertyName);
 
             if(path == null) {
 
-                // A simple read method may be a custom hash function
-                if(isHashId) {
+                // The signatures of basic read methods and custom hash functions are the same
+                // We need to check what we are dealing with based on the annotations
+                if (isHashId) {
 
                     // This is somewhat hacky - write method classification does not check the return type
                     // So the signature HashCode myHashId(HashIdCxt) looks like a setter
@@ -1663,7 +1710,7 @@ public class MapperProxyUtils {
                             || (effectiveCollectionType.isAssignableFrom(Set.class) && !isListType);
 
 
-                    if(isDynamicGetter) {
+                    if (isDynamicGetter) {
                         Function<Class<?>, BiFunction<Property, Boolean, Function<Resource, ViewBundle>>> collectionGetter;
                         if(isSetType) {
                             collectionGetter = viewAsDynamicSet(readMethod, isIriType, polymorphicOnly, typeMapper, typeDecider);
@@ -1674,7 +1721,7 @@ public class MapperProxyUtils {
                         }
 
 
-                        if(collectionGetter != null) {
+                        if (collectionGetter != null) {
                             readImpl = (o, args) -> {
                                 Class<?> clz = Objects.requireNonNull((Class<?>)args[0]);
                                 BiFunction<Property, Boolean, Function<Resource, ViewBundle>> ps = collectionGetter.apply(clz);

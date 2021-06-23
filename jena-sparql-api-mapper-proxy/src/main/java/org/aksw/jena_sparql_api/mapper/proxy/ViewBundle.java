@@ -4,6 +4,18 @@ import java.util.Collection;
 
 import org.apache.jena.rdf.model.RDFNode;
 
+/**
+ * A ViewBundle holds two collection views over an RDF graph:
+ * The rawView is a collection of raw {@link RDFNode}s (having the same Model), whereas the javaView is
+ * derived from the rawView using some conversion function over the items of the raw view.
+ *
+ * The view bundle main use case is to allow the skolemization system to operate on the
+ * nodes in the RDF graph themselves rather then the java objects derived from them.
+ *
+ *
+ * @author raven
+ *
+ */
 public class ViewBundle {
     /**
      * The raw yield yields the set of RDFNodes that back the java view

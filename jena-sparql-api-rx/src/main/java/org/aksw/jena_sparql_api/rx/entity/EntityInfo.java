@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.http.repository.api;
+package org.aksw.jena_sparql_api.rx.entity;
 
 import java.util.List;
 import java.util.Set;
@@ -12,15 +12,9 @@ import java.util.stream.Collectors;
  * @author raven
  *
  */
-public interface EntityInfoCore {
+public interface EntityInfo {
     List<String> getContentEncodings();
-    //EntityInfoCore setEncodings(List<String> encodings);
-
     String getContentType();
-    //EntityInfoCore setContentType(String contentType);
-
-    // Long getContentLength();
-    //EntityInfoCore setContentLength(Long length);
 
     /**
      * Charset, such as UTF-8 or ISO 8859-1
@@ -28,7 +22,6 @@ public interface EntityInfoCore {
      * @return
      */
     String getCharset();
-    // EntityInfoCore setCharset(String charset);
 
     /**
      * The set of language tags for which the content is suitable.
@@ -36,7 +29,6 @@ public interface EntityInfoCore {
      * @return
      */
     Set<String> getLanguageTags();
-    // EntityInfoCore setLanguages(Set<String> languageTags);
 
 
     /**

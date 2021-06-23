@@ -3,7 +3,7 @@ package org.aksw.jena_sparql_api.io.binseach;
 import java.io.IOException;
 import java.util.Objects;
 
-import org.aksw.jena_sparql_api.io.common.Reference;
+import org.aksw.commons.util.ref.Ref;
 
 /**
  * A helper iterator that automatically closes
@@ -23,7 +23,7 @@ public class BlockIterState {
 //    implements Iterator<OpenBlock> {
 
 //    protected OpenBlock current;
-    public Reference<? extends Block> blockRef;
+    public Ref<? extends Block> blockRef;
     public Block block;
     public Seekable seekable;
 
@@ -32,7 +32,7 @@ public class BlockIterState {
     protected boolean skipFirstClose;
     protected boolean isFwd;
 
-    public BlockIterState(boolean yieldSelf, Reference<? extends Block> blockRef, Seekable seekable, boolean isFwd) {
+    public BlockIterState(boolean yieldSelf, Ref<? extends Block> blockRef, Seekable seekable, boolean isFwd) {
         // this.current = new OpenBlock(blockRef, seekable);
         Objects.requireNonNull(blockRef);
 
@@ -45,15 +45,15 @@ public class BlockIterState {
         this.isFwd = isFwd;
     }
 
-    public static BlockIterState fwd(boolean yieldSelf, Reference<? extends Block> blockRef, Seekable seekable) {
+    public static BlockIterState fwd(boolean yieldSelf, Ref<? extends Block> blockRef, Seekable seekable) {
         return new BlockIterState(yieldSelf, blockRef, seekable, true);
     }
 
-    public static BlockIterState fwd(boolean yieldSelf, Reference<? extends Block> blockRef) {
+    public static BlockIterState fwd(boolean yieldSelf, Ref<? extends Block> blockRef) {
         return new BlockIterState(yieldSelf, blockRef, blockRef.get().newChannel(), true);
     }
 
-    public static BlockIterState bwd(boolean yieldSelf, Reference<? extends Block> blockRef, Seekable seekable) {
+    public static BlockIterState bwd(boolean yieldSelf, Ref<? extends Block> blockRef, Seekable seekable) {
         return new BlockIterState(yieldSelf, blockRef, seekable, false);
     }
 
@@ -90,7 +90,7 @@ public class BlockIterState {
             if(yieldSelf) {
                 yieldSelf = false;
             } else {
-                Reference<? extends Block> next = isFwd
+                Ref<? extends Block> next = isFwd
                         ? block.nextBlock()
                         : block.prevBlock();
 

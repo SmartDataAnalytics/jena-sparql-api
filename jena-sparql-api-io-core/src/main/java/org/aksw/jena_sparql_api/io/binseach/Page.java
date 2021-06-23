@@ -3,7 +3,7 @@ package org.aksw.jena_sparql_api.io.binseach;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-import org.aksw.jena_sparql_api.io.common.Reference;
+import org.aksw.commons.util.ref.Ref;
 
 /**
  * A page is a fixed size sequence of bytes obtained from a page manager backed by a ByteBuffer.
@@ -37,11 +37,11 @@ public interface Page
      */
     ByteBuffer newBuffer();
 
-    default Reference<? extends Block> prevBlock() throws IOException {
+    default Ref<? extends Block> prevBlock() throws IOException {
         return getPageManager().contentAtOrBefore(getOffset(), false);
     }
 
-    default Reference<? extends Page> nextBlock() throws IOException {
+    default Ref<? extends Page> nextBlock() throws IOException {
         return getPageManager().contentAtOrAfter(getOffset(), false);
     }
 

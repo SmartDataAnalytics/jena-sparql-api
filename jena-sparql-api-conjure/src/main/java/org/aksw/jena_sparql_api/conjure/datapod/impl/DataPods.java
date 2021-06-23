@@ -8,6 +8,8 @@ import java.util.Objects;
 import java.util.function.Supplier;
 
 import org.aksw.commons.io.util.UriUtils;
+import org.aksw.commons.util.ref.Ref;
+import org.aksw.commons.util.ref.RefImpl;
 import org.aksw.jena_sparql_api.conjure.datapod.api.RdfDataPod;
 import org.aksw.jena_sparql_api.conjure.dataref.core.api.PlainDataRef;
 import org.aksw.jena_sparql_api.conjure.dataref.core.api.PlainDataRefSparqlEndpoint;
@@ -21,8 +23,6 @@ import org.aksw.jena_sparql_api.conjure.dataset.engine.ExecutionUtils;
 import org.aksw.jena_sparql_api.http.repository.api.HttpResourceRepositoryFromFileSystem;
 import org.aksw.jena_sparql_api.http.repository.api.RdfHttpEntityFile;
 import org.aksw.jena_sparql_api.http.repository.impl.HttpResourceRepositoryFromFileSystemImpl;
-import org.aksw.jena_sparql_api.io.common.Reference;
-import org.aksw.jena_sparql_api.io.common.ReferenceImpl;
 import org.aksw.jena_sparql_api.io.hdt.JenaPluginHdt;
 import org.aksw.jena_sparql_api.mapper.proxy.JenaPluginUtils;
 import org.apache.http.HttpHeaders;
@@ -169,7 +169,7 @@ public class DataPods {
 			}
 			logger.info("Loading of hdt complete " + pathStr);
 
-			Reference<HDT> hdtRef = ReferenceImpl.create(hdt,
+			Ref<HDT> hdtRef = RefImpl.create(hdt,
 					() -> {
 						logger.debug("Closed HDT file: " + pathStr);
 						hdt.close();

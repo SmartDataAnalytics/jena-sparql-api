@@ -30,11 +30,11 @@ import org.apache.jena.sparql.graph.NodeTransform;
 
 public class VarExprListUtils {
 
-	/**
-	 * Note: Code taken from QueryIterGroup - unfortunately it not public there
-	 * Evaluates a VarExprList into a binding - Has many uss such as
-	 * for evaluating OpExtend or creating the group key for OpGroup
-	 **/
+    /**
+     * Note: Code taken from QueryIterGroup - unfortunately it not public there
+     * Evaluates a VarExprList into a binding - Has many uss such as
+     * for evaluating OpExtend or creating the group key for OpGroup
+     **/
     public static Binding copyProject(VarExprList vars, Binding binding, ExecutionContext execCxt) {
         // No group vars (implicit or explicit) => working on whole result set.
         // Still need a BindingMap to assign to later.
@@ -49,7 +49,7 @@ public class VarExprListUtils {
         return x;
     }
 
-	
+
     /**
      * Add variables to an {@link VarExprList} if they are not already present in it
      *

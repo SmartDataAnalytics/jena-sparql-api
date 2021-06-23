@@ -58,7 +58,7 @@ public class QueryExecutionFactoryHttp
         return result;
     }
 
-    public QueryExecution postProcesss(QueryEngineHTTP qe) {
+    public QueryExecution postProcess(QueryEngineHTTP qe) {
         qe.setDefaultGraphURIs(datasetDescription.getDefaultGraphURIs());
         qe.setNamedGraphURIs(datasetDescription.getNamedGraphURIs());
 
@@ -69,7 +69,7 @@ public class QueryExecutionFactoryHttp
     @Override
     public QueryExecution createQueryExecution(String queryString) {
         QueryEngineHTTP qe = new QueryEngineHTTP(service, queryString, httpClient);
-        QueryExecution result = postProcesss(qe);
+        QueryExecution result = postProcess(qe);
 
         return result;
     }
@@ -77,7 +77,7 @@ public class QueryExecutionFactoryHttp
     @Override
     public QueryExecution createQueryExecution(Query query) {
         QueryEngineHTTP qe = new QueryEngineHTTP(service, query, httpClient);
-        QueryExecution result = postProcesss(qe);
+        QueryExecution result = postProcess(qe);
 
         return result;
     }

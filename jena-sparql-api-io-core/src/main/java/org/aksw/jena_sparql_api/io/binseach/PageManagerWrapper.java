@@ -3,8 +3,8 @@ package org.aksw.jena_sparql_api.io.binseach;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 
-import org.aksw.jena_sparql_api.io.common.Reference;
-import org.aksw.jena_sparql_api.io.common.ReferenceImpl;
+import org.aksw.commons.util.ref.Ref;
+import org.aksw.commons.util.ref.RefImpl;
 
 
 /**
@@ -36,7 +36,7 @@ public class PageManagerWrapper
     }
 
     @Override
-    public Reference<Page> requestBufferForPage(long page) {
+    public Ref<Page> requestBufferForPage(long page) {
         int physPageSize = delegate.getPageSize();
 
         //page *  pageSize;
@@ -50,7 +50,7 @@ public class PageManagerWrapper
 
 
         ByteBuffer resultBuffer;
-        Reference<? extends Page> delegatePage;
+        Ref<? extends Page> delegatePage;
         if(effPage == effEndPage) {
             delegatePage = delegate.requestBufferForPage(effPage);
             ByteBuffer buf = delegatePage.get().newBuffer();
@@ -115,9 +115,9 @@ public class PageManagerWrapper
         // We pass a dummy reference to the buffer, but the actual release happens on the
         // local delPage attribute
 
-        Reference<? extends Page> delPage = delegatePage;
+        Ref<? extends Page> delPage = delegatePage;
         Page tmp = new PageBase(this, page, resultBuffer);
-        Reference<Page> result = ReferenceImpl.create(tmp, () -> {
+        Ref<Page> result = RefImpl.create(tmp, () -> {
             if(delPage != null) {
                 delPage.close();
             }

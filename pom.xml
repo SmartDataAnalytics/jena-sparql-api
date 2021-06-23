@@ -34,6 +34,7 @@
 		<module>jena-sparql-api-collections</module>
 		<!-- <module>jena-sparql-api-jgrapht</module> -->
 
+		<module>jena-sparql-api-any-resource</module>
 		<module>jena-sparql-api-utils</module>
 
 		<module>jena-sparql-api-udf</module>
@@ -84,7 +85,8 @@
 		<module>jena-sparql-api-playground</module>
 
 		<module>jena-sparql-api-virtuoso</module>
-	</modules>
+        <module>jena-sparql-api-fuseki-geosparql-bundle</module>
+    </modules>
 
 	<issueManagement>
 		<url>https://github.com/SmartDataAnalytics/jena-sparql-api/issues</url>

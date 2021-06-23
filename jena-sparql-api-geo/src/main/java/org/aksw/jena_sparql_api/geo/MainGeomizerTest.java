@@ -3,12 +3,12 @@ package org.aksw.jena_sparql_api.geo;
 import java.util.Map;
 import java.util.Set;
 
+import org.aksw.jena_sparql_api.core.LookupServiceUtils;
 import org.aksw.jena_sparql_api.core.connection.SparqlQueryConnectionJsa;
 import org.aksw.jena_sparql_api.http.QueryExecutionFactoryHttp;
 import org.aksw.jena_sparql_api.lookup.LookupService;
 import org.aksw.jena_sparql_api.lookup.LookupServiceCacheMem;
 import org.aksw.jena_sparql_api.lookup.LookupServicePartition;
-import org.aksw.jena_sparql_api.lookup.LookupServiceUtils;
 import org.aksw.jena_sparql_api.mapper.MappedConcept;
 import org.aksw.jena_sparql_api.utils.TripleUtils;
 import org.apache.jena.graph.Graph;

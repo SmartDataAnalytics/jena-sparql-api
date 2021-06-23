@@ -17,8 +17,8 @@ import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import org.aksw.commons.util.ref.Ref;
 import org.aksw.jena_sparql_api.io.binseach.bz2.BlockSourceBzip2;
-import org.aksw.jena_sparql_api.io.common.Reference;
 import org.aksw.jena_sparql_api.io.deprecated.BoyerMooreMatcherFactory;
 import org.aksw.jena_sparql_api.io.deprecated.SeekableMatcher;
 import org.apache.jena.ext.com.google.common.base.Stopwatch;
@@ -170,7 +170,7 @@ public class MainPlaygroundScanFile {
 
             byte[] prefix = "<http://linkedgeodata.org/geometry/node1583470199>".getBytes();
 
-            Reference<? extends Block> blockRef = BlockSources.binarySearch(blockSource, 0, maxBlockOffset, (byte)'\n', prefix);
+            Ref<? extends Block> blockRef = BlockSources.binarySearch(blockSource, 0, maxBlockOffset, (byte)'\n', prefix);
             if(blockRef == null) {
                 System.out.println("No match found");
                 return;

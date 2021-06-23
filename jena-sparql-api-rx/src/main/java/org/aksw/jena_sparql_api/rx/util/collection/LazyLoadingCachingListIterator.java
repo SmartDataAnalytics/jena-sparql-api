@@ -5,7 +5,6 @@ import java.util.Map.Entry;
 import java.util.function.Function;
 
 import org.aksw.commons.collections.cache.IndexBasedIterator;
-import org.aksw.jena_sparql_api.rx.util.collection.RangedSupplierLazyLoadingListCache.CacheEntry;
 import org.aksw.jena_sparql_api.utils.IteratorClosable;
 import org.apache.jena.util.iterator.ClosableIterator;
 
@@ -14,6 +13,7 @@ import com.google.common.collect.Range;
 import com.google.common.collect.RangeMap;
 
 import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.disposables.Disposable;
 
 public class LazyLoadingCachingListIterator<T>
     extends AbstractIterator<T>
@@ -23,14 +23,14 @@ public class LazyLoadingCachingListIterator<T>
     //protected long upperBound;
 
     protected long offset;
-    protected RangeMap<Long, CacheEntry<T>> rangeMap;
+    protected RangeMap<Long, CacheRangeEntry<T>> rangeMap;
     protected Function<Range<Long>, Flowable<T>> delegate;
 
     protected boolean usedDelegate;
 
     public LazyLoadingCachingListIterator(
             Range<Long> canonicalRequestRange,
-            RangeMap<Long, CacheEntry<T>> rangeMap,
+            RangeMap<Long, CacheRangeEntry<T>> rangeMap,
             Function<Range<Long>, Flowable<T>> delegate) {
         super();
         this.canonicalRequestRange = canonicalRequestRange;
@@ -58,7 +58,7 @@ public class LazyLoadingCachingListIterator<T>
 
         for(;;) {
             boolean isOffsetInRequestRange = canonicalRequestRange.contains(offset);
-            if(!isOffsetInRequestRange) {
+            if (!isOffsetInRequestRange) {
                 // TODO Use a cheaper primitive int / long comparison instead of the range
                 // We hit the end of the requested iteration - exit
                 currentIterator.close();
@@ -68,7 +68,7 @@ public class LazyLoadingCachingListIterator<T>
             } else if(currentIterator == null) {
 
                 // Make sure the map is not modified during lookup
-                Entry<Range<Long>, CacheEntry<T>> e;
+                Entry<Range<Long>, CacheRangeEntry<T>> e;
                 synchronized(rangeMap) {
                     e = rangeMap.getEntry(offset);
                 }
@@ -78,19 +78,20 @@ public class LazyLoadingCachingListIterator<T>
                 if(e == null) {
                     if(delegate != null && !usedDelegate) {
                         Range<Long> r = Range.atLeast(offset).intersection(canonicalRequestRange);
-                        boolean cancelled[] = {false};
-                        Flowable<T> stream = delegate.apply(r)
-                                .takeWhile(x -> !cancelled[0]);
-
+                        Flowable<T> stream = delegate.apply(r);
+                                // .takeWhile(x -> !cancelled[0]);
+                        
                         Iterator<T> it = stream.blockingIterable().iterator();
-                        currentIterator = new IteratorClosable<>(it, () -> cancelled[0] = true); //stream::close);
+                        Disposable disposable = (Disposable)it;
+
+                        currentIterator = new IteratorClosable<>(it, () -> disposable.dispose()); //stream::close);
                         usedDelegate = true;
                     } else {
                         result = endOfData();
                         break;
                     }
                 } else {
-                    CacheEntry<T> ce = e.getValue();
+                    CacheRangeEntry<T> ce = e.getValue();
 
                     // get the relative offset of
                     Range<Long> pageRange = ce.range;
@@ -107,7 +108,7 @@ public class LazyLoadingCachingListIterator<T>
                     }
 
                 }
-            } else if(currentIterator.hasNext()) {
+            } else if (currentIterator.hasNext()) {
                 result = currentIterator.next();
                 ++offset;
                 break;

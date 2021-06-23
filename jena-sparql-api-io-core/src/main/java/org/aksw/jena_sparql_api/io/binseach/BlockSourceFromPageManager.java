@@ -2,7 +2,7 @@ package org.aksw.jena_sparql_api.io.binseach;
 
 import java.io.IOException;
 
-import org.aksw.jena_sparql_api.io.common.Reference;
+import org.aksw.commons.util.ref.Ref;
 
 /**
  * A block source mainly for testing the rest of the block-based
@@ -42,13 +42,13 @@ public class BlockSourceFromPageManager
     protected PageManager pageManager;
 
     @Override
-    public Reference<Block> contentAtOrBefore(long pos, boolean inclusive) throws IOException {
+    public Ref<Block> contentAtOrBefore(long pos, boolean inclusive) throws IOException {
         // pageManager.requestBufferForPage(pos);
         return null;
     }
 
     @Override
-    public Reference<Block> contentAtOrAfter(long pos, boolean inclusive) throws IOException {
+    public Ref<Block> contentAtOrAfter(long pos, boolean inclusive) throws IOException {
         // TODO Auto-generated method stub
         return null;
     }

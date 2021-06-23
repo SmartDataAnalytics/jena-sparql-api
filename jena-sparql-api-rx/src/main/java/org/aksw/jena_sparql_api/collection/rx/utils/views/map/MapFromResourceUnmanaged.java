@@ -1,11 +1,13 @@
 package org.aksw.jena_sparql_api.collection.rx.utils.views.map;
 
 import java.util.AbstractMap;
+import java.util.Iterator;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.BiFunction;
 
 import org.aksw.commons.collections.ConvertingCollection;
+import org.aksw.commons.collections.SinglePrefetchIterator;
 import org.aksw.commons.collections.sets.SetFromCollection;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.RelationUtils;
@@ -61,8 +63,9 @@ public class MapFromResourceUnmanaged
 
     protected BiFunction<Resource, RDFNode, Resource> sAndKeyToEntry;
 
-    //protected fin
-    //protected Function<String, Resource> entryResourceFactory;
+    /** Whether to remove the key properties from entries upon unlinking them
+    /* Unlink occurs when an entry is deleted or replaced with a new one */
+    protected final boolean removeKeyFromEntryUponUnlinking = true;
 
     public MapFromResourceUnmanaged(
             Resource subject,
@@ -153,9 +156,14 @@ public class MapFromResourceUnmanaged
 
         Resource e = entry.inModel(subject.getModel());
 
-        if(!Objects.equals(existing, entry)) {
+        // If the put entry differs from a prior one then unlink the prior one
+        if (!Objects.equals(existing, entry)) {
             if(existing != null) {
                 subject.getModel().remove(subject, entryProperty, existing);
+
+                if (removeKeyFromEntryUponUnlinking) {
+                    existing.removeAll(keyProperty);
+                }
             }
         }
 
@@ -176,7 +184,28 @@ public class MapFromResourceUnmanaged
         Set<Entry<RDFNode, Resource>> result =
             new SetFromCollection<>(
                 new ConvertingCollection<>(
-                    new SetFromPropertyValues<>(subject, entryProperty, Resource.class),
+                    //new SetFromPropertyValues<>(subject, entryProperty, Resource.class),
+                    new SetFromPropertyValues<Resource>(subject, entryProperty, Resource.class) {
+                        // Override the iterator to support removal of key properties
+                        public Iterator<Resource> iterator() {
+                            Iterator<Resource> baseIt = super.iterator();
+
+                            return new SinglePrefetchIterator<Resource>() {
+                                @Override
+                                protected Resource prefetch() throws Exception {
+                                    return baseIt.hasNext() ? baseIt.next() : finish();
+                                }
+
+                                protected void doRemove(Resource item) {
+                                    if (removeKeyFromEntryUponUnlinking) {
+                                        item.removeAll(keyProperty);
+                                    }
+                                    baseIt.remove();
+                                };
+
+                            };
+                        };
+                    },
                     converter));
 
         return result;

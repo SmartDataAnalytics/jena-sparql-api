@@ -10,11 +10,20 @@ import java.util.Iterator;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.ResultSet;
-import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.rdf.model.Model;
-import org.apache.jena.riot.writer.NTriplesWriter;
+import org.apache.jena.riot.Lang;
+import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.riot.RDFFormat;
+import org.apache.jena.riot.ResultSetMgr;
+import org.apache.jena.riot.resultset.ResultSetLang;
+import org.apache.jena.riot.system.StreamRDF;
+import org.apache.jena.riot.system.StreamRDFOps;
+import org.apache.jena.riot.system.StreamRDFWriter;
 
 /**
+ * The cache frontend accepts SPARQL domain objects (such as ResultSets and
+ * iterators of triples), serializes them to an InputStream and sends it to the backend.
+ *
  * @author Claus Stadler
  *         <p/>
  *         Date: 7/26/11
@@ -23,10 +32,19 @@ import org.apache.jena.riot.writer.NTriplesWriter;
 public class CacheFrontendImpl
     implements CacheFrontend
 {
-    private CacheBackend cacheBackend;
+    protected CacheBackend cacheBackend;
+
+    protected RDFFormat rdfFormat;
+    protected Lang resultSetLang;
 
     public CacheFrontendImpl(CacheBackend cacheBackend) {
+        this(cacheBackend, RDFFormat.RDF_THRIFT, ResultSetLang.RS_Thrift);
+    }
+
+    public CacheFrontendImpl(CacheBackend cacheBackend, RDFFormat rdfFormat, Lang resultSetLang) {
         this.cacheBackend = cacheBackend;
+        this.rdfFormat = rdfFormat;
+        this.resultSetLang = resultSetLang;
     }
 
 
@@ -42,18 +60,17 @@ public class CacheFrontendImpl
     public void _write(String service, String queryString, final ResultSet resultSet) throws IOException {
         PipedInputStream in = new PipedInputStream();
         final PipedOutputStream out = new PipedOutputStream(in);
-        new Thread(
-          new Runnable(){
-            public void run(){
-                ResultSetFormatter.outputAsXML(out, resultSet);
+        new Thread(() -> {
+            try {
+                ResultSetMgr.write(out, resultSet, resultSetLang);
+            } finally {
                 try {
                     out.close();
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
             }
-          }
-        ).start();
+        }).start();
         cacheBackend.write(service, queryString, in);
     }
 
@@ -75,9 +92,10 @@ public class CacheFrontendImpl
         PipedInputStream in = new PipedInputStream();
         final PipedOutputStream out = new PipedOutputStream(in);
         new Thread(
-          new Runnable(){
-            public void run(){
-                model.write(out, "N-TRIPLES");
+          new Runnable() {
+            public void run() {
+                // model.write(out, "N-TRIPLES");
+                RDFDataMgr.write(out, model, rdfFormat);
                 try {
                     out.close();
                 } catch (IOException e) {
@@ -92,11 +110,15 @@ public class CacheFrontendImpl
     public void _writeTriples(String service, String queryString, Iterator<Triple> it) throws IOException {
         PipedInputStream in = new PipedInputStream();
         final PipedOutputStream out = new PipedOutputStream(in);
-        new Thread(
-          new Runnable(){
-            public void run(){
+        StreamRDF streamRdf = StreamRDFWriter.getWriterStream(out, rdfFormat);
+
+        new Thread(() -> {
+            try {
+                streamRdf.start();
+                StreamRDFOps.sendTriplesToStream(it, streamRdf);
+                streamRdf.finish();
+            } finally {
                 try {
-                    NTriplesWriter.write(out, it);
                     out.close();
                 } catch (IOException e) {
                     throw new RuntimeException(e);
@@ -117,7 +139,7 @@ public class CacheFrontendImpl
         CacheEntry cacheEntry = cacheBackend.lookup(service, queryString);
         return cacheEntry == null
                 ? null
-                : new CacheResourceCacheEntry(cacheEntry);
+                : new CacheResourceCacheEntry(cacheEntry, rdfFormat.getLang(), resultSetLang);
     }
 
     @Override
@@ -125,7 +147,7 @@ public class CacheFrontendImpl
         CacheEntry cacheEntry = cacheBackend.lookup(service, query.toString());
         return cacheEntry == null
                 ? null
-                : new CacheResourceCacheEntry(cacheEntry);
+                : new CacheResourceCacheEntry(cacheEntry, rdfFormat.getLang(), resultSetLang);
     }
 
 

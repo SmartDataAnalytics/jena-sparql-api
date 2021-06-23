@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 
-import org.aksw.jena_sparql_api.io.common.Reference;
+import org.aksw.commons.util.ref.Ref;
 
 import com.google.common.primitives.Ints;
 
@@ -40,7 +40,7 @@ public class PageNavigator
      * Initialization happens in getBufferForPage()
      */
 
-    protected Reference<? extends Page> pageObj = null;
+    protected Ref<? extends Page> pageObj = null;
 
     protected ByteBuffer pageBuffer = null;
     protected int displacement;

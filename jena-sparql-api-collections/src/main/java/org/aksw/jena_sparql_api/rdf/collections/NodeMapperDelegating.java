@@ -1,13 +1,19 @@
 package org.aksw.jena_sparql_api.rdf.collections;
 
+import java.io.Serializable;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
 import org.apache.jena.graph.Node;
 
 public class NodeMapperDelegating<T>
-	implements NodeMapper<T>
+	implements NodeMapper<T>, Serializable
 {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
 	protected Class<?> javaClass;
 	protected Function<? super T, Node> toNode;
 	protected Function<? super Node, T> toJava;
@@ -46,4 +52,14 @@ public class NodeMapperDelegating<T>
 		T result = toJava.apply(node);
 		return result;
 	}
+	
+	
+	/** Experimental contructor using serializable lambdas */
+//	public static <T> NodeMapperDelegating<T> create(
+//			Class<?> javaClass,
+//			SerializablePredicate<? super Node> canMap,
+//			SerializableFunction<? super T, Node> toNode,
+//			SerializableFunction<? super Node, T> toJava) {
+//		return new NodeMapperDelegating<>(javaClass, canMap, toNode, toJava);
+//	}
 }

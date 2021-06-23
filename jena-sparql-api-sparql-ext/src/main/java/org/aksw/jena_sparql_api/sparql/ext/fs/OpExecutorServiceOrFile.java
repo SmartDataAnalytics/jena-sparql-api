@@ -14,6 +14,8 @@ public class OpExecutorServiceOrFile
 
     @Override
     public QueryIterator execute(OpService opService, QueryIterator input) {
+        // TODO Rather have a jena-native plugin system for handling SERVICE extensions
+        // without the need to add custom OpExecutors
         return new QueryIterServiceOrFile(input, opService, execCxt);
     }
 }

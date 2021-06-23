@@ -1,18 +1,25 @@
 package org.aksw.jena_sparql_api.sparql.ext.fs;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.AbstractMap.SimpleEntry;
+import java.util.Collections;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
-import org.aksw.jena_sparql_api.io.binseach.BinarySearchOnSortedFile;
+import org.aksw.commons.collections.IterableUtils;
 import org.aksw.jena_sparql_api.io.binseach.BinarySearcher;
 import org.aksw.jena_sparql_api.io.binseach.BlockSources;
 import org.aksw.jena_sparql_api.io.binseach.GraphFromPrefixMatcher;
@@ -22,6 +29,7 @@ import org.aksw.jena_sparql_api.rx.RDFDataMgrEx;
 import org.aksw.jena_sparql_api.rx.RDFDataMgrRx;
 import org.aksw.jena_sparql_api.rx.RDFLanguagesEx;
 import org.aksw.jena_sparql_api.rx.SparqlRx;
+import org.aksw.jena_sparql_api.rx.entity.EntityInfo;
 import org.aksw.jena_sparql_api.utils.UriUtils;
 import org.apache.jena.atlas.logging.Log;
 import org.apache.jena.atlas.web.TypedInputStream;
@@ -65,8 +73,12 @@ import io.reactivex.rxjava3.disposables.Disposable;
  */
 public class QueryIterServiceOrFile extends QueryIterService {
 
-    protected Logger logger = LoggerFactory.getLogger(QueryIterServiceOrFile.class);
+    public static final String XBINSEARCH = "x-binsearch:";
+    public static final String FILE = "file:";
+    public static final String VFS = "vfs:";
 
+
+    protected Logger logger = LoggerFactory.getLogger(QueryIterServiceOrFile.class);
     protected OpService opService ;
 
     public QueryIterServiceOrFile(QueryIterator input, OpService opService, ExecutionContext context) {
@@ -83,41 +95,123 @@ public class QueryIterServiceOrFile extends QueryIterService {
     }
 
     public static Entry<Path, Map<String, String>> toPathSpec(Node node) {
-        Entry<Path, Map<String, String>> result = null;
-        if(node.isURI()) {
-            String uriStr = node.getURI();
-
-            boolean isFileRef = uriStr.startsWith("file:");
-            if(isFileRef) {
-                Path path;
-                try {
-                    URI uri = new URI(uriStr);
-                    Map<String, String> params = UriUtils.createMapFromUriQueryString(uri);
-
-                    // Cut off any query string
-                    URI effectiveUri = new URI(uriStr.replaceAll("\\?.*", ""));
-
-                    path = Paths.get(effectiveUri);
-//                    boolean fileExists = Files.exists(path);
-
-                    // result = fileExists ? Maps.immutableEntry(path, params) : null;
-                    return Maps.immutableEntry(path, params);
-                } catch (URISyntaxException e) {
-                    //throw new RuntimeException(e);
-                    // Nothing todo; we simply return null if we fail
-                }
-            }
+        Entry<Path, Map<String, String>> result;
+        if (node.isURI()) {
+            result = toPathSpec(node.getURI());
+        } else {
+            result = null;
         }
 
         return result;
     }
+
+    public static Entry<Path, Map<String, String>> toPathSpec(String uriStr) {
+        Entry<Path, Map<String, String>> result = null;
+        try {
+            String tmp = uriStr;
+            if (tmp.startsWith(XBINSEARCH)) {
+                tmp = tmp.substring(XBINSEARCH.length());
+
+                result = toPathSpecRaw(tmp);
+
+                if (result != null) {
+                    result.getValue().put("binsearch", "true");
+                }
+            } else {
+                result = toPathSpecRaw(uriStr);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        return result;
+    }
+
+    public static Entry<Path, Map<String, String>> toPathSpecRaw(String tmp) throws URISyntaxException, IOException {
+        Path path = null;
+        Map<String, String> params = new LinkedHashMap<>();
+
+        boolean useVfs = false;
+        boolean useFile = false;
+
+        if (tmp.startsWith(VFS)) {
+            useVfs = true;
+            tmp = tmp.substring(VFS.length());
+        } else if (tmp.startsWith(FILE)) {
+            useVfs = true;
+            tmp = tmp.substring(VFS.length());
+        } else {
+            tmp = null;
+        }
+
+        if (tmp != null) {
+            URI uri = new URI(tmp);
+            params = UriUtils.createMapFromUriQueryString(uri);
+
+            // Cut off any query string
+            URI effectiveUri = new URI(tmp.replaceAll("\\?.*", ""));
+
+            if (useVfs) {
+                String fileSystemUrl = effectiveUri.getScheme() + "://" + effectiveUri.getAuthority();
+
+                Map<String, Object> env = null; // new HashMap<>();
+
+                FileSystem fs = FileSystems.newFileSystem(
+                        URI.create("vfs:" + fileSystemUrl),
+                        env);
+
+                String pathStr = effectiveUri.getPath();
+                Path root = IterableUtils.expectOneItem(fs.getRootDirectories());
+                path = root.resolve(pathStr);
+            } else if (useFile) {
+                path = Paths.get(uri);
+            }
+        }
+
+        Entry<Path, Map<String, String>> result =
+                path == null ? null : Maps.immutableEntry(path, params);
+
+        return result;
+    }
+
+
+
+//
+//    public static Entry<Path, Map<String, String>> toPathSpec(Node node) {
+//        Entry<Path, Map<String, String>> result = null;
+//        if(node.isURI()) {
+//            String uriStr = node.getURI();
+//
+//            boolean isFileRef = uriStr.startsWith(FILE);
+//            if(isFileRef) {
+//                Path path;
+//                try {
+//                    URI uri = new URI(uriStr);
+//                    Map<String, String> params = UriUtils.createMapFromUriQueryString(uri);
+//
+//                    // Cut off any query string
+//                    URI effectiveUri = new URI(uriStr.replaceAll("\\?.*", ""));
+//
+//                    path = Paths.get(effectiveUri);
+////                    boolean fileExists = Files.exists(path);
+//
+//                    // result = fileExists ? Maps.immutableEntry(path, params) : null;
+//                    return Maps.immutableEntry(path, params);
+//                } catch (URISyntaxException e) {
+//                    //throw new RuntimeException(e);
+//                    // Nothing todo; we simply return null if we fail
+//                }
+//            }
+//        }
+//
+//        return result;
+//    }
 
 
     @Override
     protected QueryIterator nextStage(Binding outerBinding)
     {
         OpService op = (OpService)QC.substitute(opService, outerBinding);
-
         Node serviceNode = op.getService();
 
         //Path path = toPath(serviceNode);
@@ -146,14 +240,31 @@ public class QueryIterServiceOrFile extends QueryIterService {
 
             boolean useBinSearch = params.containsKey("binsearch");
             String binSearchVal = params.getOrDefault("binsearch", "");
-            if(useBinSearch || "true".equalsIgnoreCase(binSearchVal)) {
+            if (useBinSearch || "true".equalsIgnoreCase(binSearchVal)) {
                 specialProcessingApplied = true;
+
+                EntityInfo info;
+                try (InputStream in = Files.newInputStream(path)) {
+                    info = RDFDataMgrEx.probeEntityInfo(in, Collections.singleton(Lang.NTRIPLES));
+                } catch (IOException e1) {
+                    throw new RuntimeException(e1);
+                }
+
+                boolean isNtriples = Objects.equals(RDFLanguagesEx.findLang(info.getContentType()), Lang.NTRIPLES);
+
+                if (!isNtriples) {
+                    throw new RuntimeException("No ntriples content in " + path);
+                }
+
+                boolean isBzip2 = Collections.singletonList("bzip2").equals(info.getContentEncodings());
+
+                int bufferSize = 32 * 1024;
 
                 // Model generation wrapped as a flowable for resource management
                 Flowable<Binding> bindingFlow = Flowable.generate(() -> {
-                    BinarySearcher binarySearcher = path.getFileName().toString().toLowerCase().endsWith(".bz2")
-                        ? BlockSources.createBinarySearcherBz2(path)
-                        : BlockSources.createBinarySearcherText(path);
+                    BinarySearcher binarySearcher = isBzip2
+                        ? BlockSources.createBinarySearcherBz2(path, bufferSize)
+                        : BlockSources.createBinarySearcherText(path, bufferSize);
 
                     Graph graph = new GraphFromPrefixMatcher(binarySearcher);
                     GraphFromSubjectCache subjectCacheGraph = new GraphFromSubjectCache(graph);

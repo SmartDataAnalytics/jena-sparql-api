@@ -3,8 +3,8 @@ package org.aksw.jena_sparql_api.io.binseach;
 import java.io.IOException;
 import java.nio.channels.SeekableByteChannel;
 
+import org.aksw.commons.util.ref.Ref;
 import org.aksw.jena_sparql_api.io.api.ChannelFactory;
-import org.aksw.jena_sparql_api.io.common.Reference;
 
 public class DecodedDataBlock
     implements Block
@@ -25,12 +25,12 @@ public class DecodedDataBlock
     }
 
     @Override
-    public Reference<? extends Block> nextBlock() throws IOException {
+    public Ref<? extends Block> nextBlock() throws IOException {
         return blockSource.contentAtOrAfter(blockStart, false);
     }
 
     @Override
-    public Reference<? extends Block> prevBlock() throws IOException {
+    public Ref<? extends Block> prevBlock() throws IOException {
         return blockSource.contentAtOrBefore(blockStart, false);
     }
 

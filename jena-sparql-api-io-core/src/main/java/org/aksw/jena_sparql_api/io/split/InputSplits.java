@@ -7,12 +7,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.aksw.commons.util.ref.Ref;
 import org.aksw.jena_sparql_api.io.binseach.Block;
 import org.aksw.jena_sparql_api.io.binseach.BlockSource;
 import org.aksw.jena_sparql_api.io.binseach.PageManager;
 import org.aksw.jena_sparql_api.io.binseach.PageManagerForFileChannel;
 import org.aksw.jena_sparql_api.io.binseach.PageNavigator;
-import org.aksw.jena_sparql_api.io.common.Reference;
 
 public class InputSplits {
     public static List<Object> createInputSplits(BlockSource blockSource) throws Exception {
@@ -23,7 +23,7 @@ public class InputSplits {
 
         long priorOffset = -1;
         for(int i = 0; i < rawSplits.size(); ++i) {
-            try(Reference<? extends Block> blockRef = blockSource.contentAtOrAfter(i, true)) {
+            try(Ref<? extends Block> blockRef = blockSource.contentAtOrAfter(i, true)) {
                 if(blockRef != null) {
                     // Ensure that no distinct split resolve to the same block - otherwise ignore
                     // those splits that are too close to each other

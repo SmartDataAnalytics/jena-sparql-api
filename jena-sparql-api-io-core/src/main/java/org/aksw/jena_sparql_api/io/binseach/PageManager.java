@@ -2,7 +2,7 @@ package org.aksw.jena_sparql_api.io.binseach;
 
 import java.io.IOException;
 
-import org.aksw.jena_sparql_api.io.common.Reference;
+import org.aksw.commons.util.ref.Ref;
 
 
 /**
@@ -17,7 +17,7 @@ import org.aksw.jena_sparql_api.io.common.Reference;
 public interface PageManager
     extends BlockSource
 {
-    Reference<? extends Page> requestBufferForPage(long page);
+    Ref<? extends Page> requestBufferForPage(long page);
 
     //ByteBuffer requestBufferForPage(long page);
 
@@ -48,15 +48,15 @@ public interface PageManager
     }
 
 
-    default Reference<? extends Page> contentAtOrBefore(long pos, boolean inclusive) throws IOException {
-        Reference<? extends Page> result = inclusive
+    default Ref<? extends Page> contentAtOrBefore(long pos, boolean inclusive) throws IOException {
+        Ref<? extends Page> result = inclusive
                 ? requestBufferForPage(pos)
                 : (hasBlockBefore(pos) ? requestBufferForPage(pos - 1) : null);
         return result;
     }
 
-    default Reference<? extends Page> contentAtOrAfter(long pos, boolean inclusive) throws IOException {
-        Reference<? extends Page> result = inclusive
+    default Ref<? extends Page> contentAtOrAfter(long pos, boolean inclusive) throws IOException {
+        Ref<? extends Page> result = inclusive
                 ? requestBufferForPage(pos)
                 : (hasBlockAfter(pos) ? requestBufferForPage(pos + 1) : null);
         return result;

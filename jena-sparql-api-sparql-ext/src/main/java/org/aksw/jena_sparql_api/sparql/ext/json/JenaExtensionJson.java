@@ -10,6 +10,11 @@ public class JenaExtensionJson {
     public static String ns = "http://jsa.aksw.org/fn/json/";
 
     public static void register() {
+        FunctionRegistry.get().put(ns + "object", E_JsonObject.class);
+        FunctionRegistry.get().put(ns + "array", E_JsonArray.class);
+        FunctionRegistry.get().put(ns + "convert", E_JsonConvert.class);
+
+
 //		FunctionRegistry.get().put(ns + "parse", E_JsonParse.class);
         FunctionRegistry.get().put(ns + "path", E_JsonPath.class);
         FunctionRegistry.get().put(ns + "entries", E_JsonEntries.class);
