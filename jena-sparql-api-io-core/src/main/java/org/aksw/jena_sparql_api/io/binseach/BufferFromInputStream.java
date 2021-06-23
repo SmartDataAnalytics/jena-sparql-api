@@ -75,13 +75,13 @@ public class BufferFromInputStream
 
 
     public long getKnownDataSize() {
-    	return knownDataSize;
+        return knownDataSize;
     }
-    
+
     public boolean isDataSupplierConsumed() {
-    	return isDataSupplierConsumed;
+        return isDataSupplierConsumed;
     }
-    
+
 
     /**
      * @param maxReadSize Maximum number of bytes to request form the input stream at once
@@ -116,10 +116,10 @@ public class BufferFromInputStream
 
         int idx;
         int pos;
-		@Override
-		public String toString() {
-			return "BucketPointer [idx=" + idx + ", pos=" + pos + "]";
-		}
+        @Override
+        public String toString() {
+            return "BucketPointer [idx=" + idx + ", pos=" + pos + "]";
+        }
     }
 
 
@@ -233,21 +233,21 @@ public class BufferFromInputStream
          */
         @Override
         public long size() throws IOException {
-        	// ensureCapacityInActiveBucket();
-        	checkNext(1, false);
-        	
+            // ensureCapacityInActiveBucket();
+            checkNext(1, false);
+
             // loadDataUpTo(Long.MAX_VALUE);
             return knownDataSize;
         }
 
-        /** Loads all data into the buffer and returns the total size */ 
+        /** Loads all data into the buffer and returns the total size */
         // @Override
         public long loadAll() throws IOException {
             loadDataUpTo(Long.MAX_VALUE);
             return knownDataSize;
         }
 
-        
+
         @Override
         public SeekableByteChannel truncate(long size) throws IOException {
             throw new UnsupportedOperationException();
@@ -364,7 +364,7 @@ public class BufferFromInputStream
         public int checkNext(int len, boolean changePos) throws IOException {
             // Remaining bytes between pos and knowDataSize
             long remainingKnownBytes = knownDataSize - 1 - pos;
-            if(remainingKnownBytes < len) {
+            if (remainingKnownBytes < len) {
                 loadDataUpTo(pos + len);
 
                 remainingKnownBytes = knownDataSize - 1 - pos;
@@ -375,7 +375,7 @@ public class BufferFromInputStream
 //                System.out.println("reached end");
 //            }
 
-            if(changePos) {
+            if (changePos) {
 //                if(r <= 0) {
 //                    pos = knownDataSize;
 //                }
@@ -405,7 +405,7 @@ public class BufferFromInputStream
 
         @Override
         public byte get() throws IOException {
-            if(pointer == null) {
+            if (pointer == null) {
                 loadDataUpTo(pos);
                 pointer = getPointer(buckets, activeEnd, pos);
             }
@@ -414,11 +414,11 @@ public class BufferFromInputStream
             // we invoke read which does all this complex handling
             byte result;
             if (pointer.pos == buckets[pointer.idx].length) {
-            	ByteBuffer tmp = ByteBuffer.allocate(1);
-            	read(tmp);
-            	result = tmp.get(0);
+                ByteBuffer tmp = ByteBuffer.allocate(1);
+                read(tmp);
+                result = tmp.get(0);
             } else {
-            	result = buckets[pointer.idx][pointer.pos];
+                result = buckets[pointer.idx][pointer.pos];
             }
             return result;
         }
@@ -430,7 +430,7 @@ public class BufferFromInputStream
         @Override
         public int checkPrev(int len, boolean changePos) throws IOException {
             long delta = len > pos ? pos : len;
-            if(changePos) {
+            if (changePos) {
                 // Update the pointer (if it was set)
                 if(pointer != null) {
                     int remaining = Ints.checkedCast(delta);
@@ -468,7 +468,7 @@ public class BufferFromInputStream
     public BufferFromInputStream(
             int initialBucketSize,
             InputStream dataSupplier) {
-        if(initialBucketSize <= 0) {
+        if (initialBucketSize <= 0) {
             throw new IllegalArgumentException("Bucket size must not be 0");
         }
 
@@ -493,12 +493,12 @@ public class BufferFromInputStream
         int result = 0;
 
         BucketPointer pointer = reader.pointer;
-        if(pointer == null) {
+        if (pointer == null) {
             BucketPointer end = activeEnd;
 
             // Try to translate the logical linear position to a physical pointer
             pointer = getPointer(buckets, end, reader.pos);
-            if(pointer == null) {
+            if (pointer == null) {
                 if(isDataSupplierConsumed) {
                     return -1;
                 } else {
@@ -545,8 +545,8 @@ public class BufferFromInputStream
                 : currentBucket.length - bucketPos
                 ;
 
-            if(remainingBucketLen == 0) {
-                if(isInLastBucket) {
+            if (remainingBucketLen == 0) {
+                if (isInLastBucket) {
                     if(result != 0) {
                         // We have already read something on this iteration, return
                         break;
@@ -585,14 +585,14 @@ public class BufferFromInputStream
 
     /**
      * Preload data up to including the requested position.
-     * It is inclusive in order to allow for checking whether the requested position is in range. 
-     * 
+     * It is inclusive in order to allow for checking whether the requested position is in range.
+     *
      * @param requestedPos
      */
     protected void loadDataUpTo(long requestedPos) {
-        while(!isDataSupplierConsumed && knownDataSize <= requestedPos) {
+        while (!isDataSupplierConsumed && knownDataSize <= requestedPos) {
             synchronized(this) {
-                if(!isDataSupplierConsumed && knownDataSize <= requestedPos) {
+                if (!isDataSupplierConsumed && knownDataSize <= requestedPos) {
                     // System.out.println("load upto " + requestedPos);
                     int needed = Ints.saturatedCast(requestedPos - knownDataSize);
                     loadData(needed);
@@ -639,14 +639,14 @@ public class BufferFromInputStream
     protected void ensureCapacityInActiveBucket() {
         byte[] activeBucket = buckets[activeEnd.idx];
         int capacity = activeBucket.length - activeEnd.pos;
-        if(capacity == 0) {
+        if (capacity == 0) {
             int nextBucketSize = nextBucketSize();
             if(nextBucketSize == 0) {
                 throw new IllegalStateException("Bucket of size 0 generated");
             }
 
             int newEndIdx = activeEnd.idx + 1;
-            if(newEndIdx >= buckets.length) {
+            if (newEndIdx >= buckets.length) {
                 // Double number of buckets
                 int numNewBuckets = buckets.length * 2;
                 byte[][] newBuckets = new byte[numNewBuckets][];
@@ -661,36 +661,36 @@ public class BufferFromInputStream
         }
     }
 
-    
-    public static void main(String[] args) throws Exception {
-    	int n = 10000;
-    	byte[] data = new byte[10 * n];
-    	for (int i = 0; i < n; ++i) {
-    		for (int j = 0; j < 10; ++j) {
-    			data[i * 10 + j] = (byte)((byte)'a' + j);
-    		}
-    	}
-    	
-    	InputStream in = new ByteArrayInputStream(data);
-    	BufferFromInputStream b = BufferFromInputStream.create(in, 2);
-    	Seekable s = b.newChannel();
-    	
-    	// System.out.println("Pos changed? " + s.nextPos(10000 * 10 - 1));
-    	ByteBuffer buf = ByteBuffer.allocate(5);
-    	
-		// IOUtils.read(s, buf);
-    	s.nextPos(5001);
-    	s.read(buf);
-    	// s.read(buf);
-		System.out.println(Arrays.toString(buf.array()));
 
-    	for (int i = 0; i < 10; ++i) {
-    		
-    		long pos = s.getPos();
-    		byte ch = s.get(i);
-    		System.out.println("i: " + i + " pos: " + pos + " ch: " + ch);
-    	}
-    	
+    public static void main(String[] args) throws Exception {
+        int n = 10000;
+        byte[] data = new byte[10 * n];
+        for (int i = 0; i < n; ++i) {
+            for (int j = 0; j < 10; ++j) {
+                data[i * 10 + j] = (byte)((byte)'a' + j);
+            }
+        }
+
+        InputStream in = new ByteArrayInputStream(data);
+        BufferFromInputStream b = BufferFromInputStream.create(in, 2);
+        Seekable s = b.newChannel();
+
+        // System.out.println("Pos changed? " + s.nextPos(10000 * 10 - 1));
+        ByteBuffer buf = ByteBuffer.allocate(5);
+
+        // IOUtils.read(s, buf);
+        s.nextPos(5001);
+        s.read(buf);
+        // s.read(buf);
+        System.out.println(Arrays.toString(buf.array()));
+
+        for (int i = 0; i < 10; ++i) {
+
+            long pos = s.getPos();
+            byte ch = s.get(i);
+            System.out.println("i: " + i + " pos: " + pos + " ch: " + ch);
+        }
+
     }
 
 
@@ -748,7 +748,7 @@ public class BufferFromInputStream
 
                     // Assert.assertArrayEquals(expectedData, actualData);
                     if (expectedData.equals(actualData)) {
-                    	throw new RuntimeException("Actual and expected results differed");
+                        throw new RuntimeException("Actual and expected results differed");
                     }
                     return "foo";
                 }).count();

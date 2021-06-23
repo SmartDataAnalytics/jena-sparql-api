@@ -7,10 +7,15 @@ import java.nio.file.StandardOpenOption;
 
 import org.aksw.commons.util.ref.Ref;
 import org.aksw.jena_sparql_api.io.binseach.bz2.BlockSourceBzip2;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class BlockSources {
+    private static final Logger logger = LoggerFactory.getLogger(BlockSources.class);
+
+
     public static BinarySearcher createBinarySearcherBz2(Path path) throws IOException {
-    	return createBinarySearcherBz2(path, PageManagerForFileChannel.DEFAULT_PAGE_SIZE);
+        return createBinarySearcherBz2(path, PageManagerForFileChannel.DEFAULT_PAGE_SIZE);
     }
 
     public static BinarySearcher createBinarySearcherBz2(Path path, int pageSize) throws IOException {
@@ -32,7 +37,7 @@ public class BlockSources {
 
 
     public static BinarySearcher createBinarySearcherText(Path path) throws IOException {
-    	return createBinarySearcherText(path, PageManagerForFileChannel.DEFAULT_PAGE_SIZE);
+        return createBinarySearcherText(path, PageManagerForFileChannel.DEFAULT_PAGE_SIZE);
     }
 
     public static BinarySearcher createBinarySearcherText(Path path, int pageSize) throws IOException {
@@ -46,6 +51,8 @@ public class BlockSources {
         BinarySearcher result = new BinarySearchOnBlockSource(pageManager, closeChannel ? fileChannel::close : null);
         return result;
     }
+
+
 
     /**
      * Binary search over blocks
@@ -61,7 +68,7 @@ public class BlockSources {
      * @throws Exception
      */
     public static Ref<? extends Block> binarySearch(BlockSource blockSource, long min, long max, byte delimiter, byte[] prefix) throws IOException {
-        // System.out.println("[" + min + ", " + max + "[");
+        logger.debug("[" + min + ", " + max + ")");
         if(min >= max) {
             return null;
         }

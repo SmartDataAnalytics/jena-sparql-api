@@ -380,13 +380,8 @@
 				<version>2.3.1</version>
 			</dependency>
 
-<!--
-			<dependency>
-				<groupId>org.glassfish.jaxb</groupId>
-				<artifactId>jaxb-runtime</artifactId>
-				<version>2.3.1</version>
-			</dependency>
--->
+			<!-- <dependency> <groupId>org.glassfish.jaxb</groupId> <artifactId>jaxb-runtime</artifactId> 
+				<version>2.3.1</version> </dependency> -->
 
 			<dependency>
 				<groupId>javax.activation</groupId>
@@ -1033,6 +1028,13 @@
 				<groupId>org.apache.commons</groupId>
 				<artifactId>commons-compress</artifactId>
 				<version>1.20</version>
+			</dependency>
+
+			<!-- When commons-compress just isn't enough (e.g. when there is need for splittable bzip2 decoding) -->
+			<dependency>
+				<groupId>org.apache.hadoop</groupId>
+				<artifactId>hadoop-common</artifactId>
+				<version>3.3.1</version>
 			</dependency>
 
 

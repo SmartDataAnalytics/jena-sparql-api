@@ -5,6 +5,8 @@ import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.FileSystem;
+import java.nio.file.FileSystemAlreadyExistsException;
+import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -138,8 +140,7 @@ public class QueryIterServiceOrFile extends QueryIterService {
             useVfs = true;
             tmp = tmp.substring(VFS.length());
         } else if (tmp.startsWith(FILE)) {
-            useVfs = true;
-            tmp = tmp.substring(VFS.length());
+            useFile = true;
         } else {
             tmp = null;
         }
@@ -154,11 +155,23 @@ public class QueryIterServiceOrFile extends QueryIterService {
             if (useVfs) {
                 String fileSystemUrl = effectiveUri.getScheme() + "://" + effectiveUri.getAuthority();
 
-                Map<String, Object> env = null; // new HashMap<>();
+                URI fileSystemUri = URI.create("vfs:" + fileSystemUrl);
 
-                FileSystem fs = FileSystems.newFileSystem(
-                        URI.create("vfs:" + fileSystemUrl),
-                        env);
+                // Get-or-create file system
+                FileSystem fs;
+                try {
+                    fs = FileSystems.getFileSystem(fileSystemUri);
+                } catch (FileSystemNotFoundException e1) {
+                    try {
+                        Map<String, Object> env = null; // new HashMap<>();
+                        fs = FileSystems.newFileSystem(
+                            fileSystemUri,
+                            env);
+                    } catch (FileSystemAlreadyExistsException e2) {
+                        // There may have been a concurrent registration of the file system
+                        fs = FileSystems.getFileSystem(fileSystemUri);
+                    }
+                }
 
                 String pathStr = effectiveUri.getPath();
                 Path root = IterableUtils.expectOneItem(fs.getRootDirectories());
@@ -258,7 +271,15 @@ public class QueryIterServiceOrFile extends QueryIterService {
 
                 boolean isBzip2 = Collections.singletonList("bzip2").equals(info.getContentEncodings());
 
-                int bufferSize = 32 * 1024;
+                // On dnb-all_lds_20200213.sorted.nt.bz2:
+//              int bufferSize = 4 * 1024; // 363 requests
+//              int bufferSize = 8 * 1024; // 187 requests
+//              int bufferSize = 16 * 1024; // 98 requests
+//              int bufferSize = 32 * 1024; // 54 requests
+//              int bufferSize = 64 * 1024; // 33 requests
+                int bufferSize = 128 * 1024; // 22 requests
+//              int bufferSize = 256 * 1024; // 16 requests
+//              int bufferSize = 512 * 1024; // 14 requests
 
                 // Model generation wrapped as a flowable for resource management
                 Flowable<Binding> bindingFlow = Flowable.generate(() -> {
