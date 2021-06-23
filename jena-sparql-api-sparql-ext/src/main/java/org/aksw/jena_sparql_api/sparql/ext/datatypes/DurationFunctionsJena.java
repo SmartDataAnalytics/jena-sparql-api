@@ -22,21 +22,26 @@ public class DurationFunctionsJena {
 	static final long NANOS_PER_MINUTE = NANOS_PER_SECOND * SECONDS_PER_MINUTE;
 	static final long NANOS_PER_HOUR = NANOS_PER_MINUTE * MINUTES_PER_HOUR;
 	static final long NANOS_PER_DAY = NANOS_PER_HOUR * HOURS_PER_DAY;
-	
+	static final long DAYS_PER_WEEK = 7;
+
+	@IriNs(JenaExtensionDuration.NS)
+	public static long asWeeks(XSDDuration dur) {
+		return asDays(dur) / DAYS_PER_WEEK;
+	}
+
+	@IriNs(JenaExtensionDuration.NS)
+	public static long asDays(XSDDuration dur) {
+		return asHours(dur) / HOURS_PER_DAY;
+	}
+
 	@IriNs(JenaExtensionDuration.NS)
 	public static long asHours(XSDDuration dur) {
-		return dur.getFullSeconds() / SECONDS_PER_HOUR
-				+ dur.getMinutes() / MINUTES_PER_HOUR
-				+ dur.getHours()
-				+ dur.getDays() * HOURS_PER_DAY;
+		return asMinutes(dur) / MINUTES_PER_HOUR;
 	}
 
 	@IriNs(JenaExtensionDuration.NS)
 	public static long asMinutes(XSDDuration dur) {
-		return dur.getFullSeconds() / SECONDS_PER_MINUTE
-				+ dur.getMinutes()
-				+ dur.getHours() * MINUTES_PER_HOUR
-				+ dur.getDays() * MINUTES_PER_DAY;
+		return asSeconds(dur) / SECONDS_PER_MINUTE;
 	}
 
 	@IriNs(JenaExtensionDuration.NS)
