@@ -76,8 +76,10 @@ import io.reactivex.rxjava3.disposables.Disposable;
 public class QueryIterServiceOrFile extends QueryIterService {
 
     public static final String XBINSEARCH = "x-binsearch:";
+    public static final String XFSRDFSTORE = "x-fsrdfstore:";
     public static final String FILE = "file:";
     public static final String VFS = "vfs:";
+
 
 
     protected Logger logger = LoggerFactory.getLogger(QueryIterServiceOrFile.class);
@@ -139,6 +141,13 @@ public class QueryIterServiceOrFile extends QueryIterService {
         if (tmp.startsWith(VFS)) {
             useVfs = true;
             tmp = tmp.substring(VFS.length());
+
+            // In the case of vfs replace http (without trailing number) with e.g. http4
+            // in order to use the same http client as jena does
+            // Also, my fix for VFS-805 does not work with the vfs 2.8.0's default http client 3
+
+            tmp = tmp.replaceAll("^http(?!\\d+)", "http4");
+
         } else if (tmp.startsWith(FILE)) {
             useFile = true;
         } else {
