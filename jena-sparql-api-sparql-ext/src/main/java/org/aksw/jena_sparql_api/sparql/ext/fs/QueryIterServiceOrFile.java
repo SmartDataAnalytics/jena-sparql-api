@@ -42,6 +42,7 @@ import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Dataset;
+import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QueryExecutionFactory;
@@ -50,6 +51,7 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.riot.RDFLanguages;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.OpAsQuery;
 import org.apache.jena.sparql.algebra.op.OpService;
@@ -355,9 +357,17 @@ public class QueryIterServiceOrFile extends QueryIterService {
 
 
 
-            if(!specialProcessingApplied) {
-                String url = path.toUri().toString();
-                Dataset dataset = RDFDataMgr.loadDataset(url);
+            if (!specialProcessingApplied) {
+                Dataset dataset = DatasetFactory.create();
+                try (InputStream in = Files.newInputStream(path)) {
+                    TypedInputStream tis = RDFDataMgrEx.probeLang(in, RDFDataMgrEx.DEFAULT_PROBE_LANGS);
+
+                    // String url = path.toUri().toString();
+                    Lang lang = RDFLanguages.contentTypeToLang(tis.getContentType());
+                    RDFDataMgr.read(dataset, tis.getInputStream(), lang);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
 
 //    	    	// TODO Probably add namespaces declared on query scope (how to access them?)
                 //query.addGraphURI(path.toUri().toString());
