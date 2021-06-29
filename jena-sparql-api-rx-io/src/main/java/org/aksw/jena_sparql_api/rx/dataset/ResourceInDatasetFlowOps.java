@@ -105,6 +105,22 @@ class ConsecutiveGraphMergerMergerForResourceInDataset
  */
 public class ResourceInDatasetFlowOps {
 
+
+    /**
+     * Return a flow over the natural resources in the named graphs of a dataset.
+     * A natural resource is a node that has has the same name (IRI) as the graph.
+     *
+     * @param dataset
+     * @return
+     */
+    public static Flowable<ResourceInDataset> naturalResources(Dataset dataset) {
+        return Flowable.fromIterable(() -> dataset.listNames())
+            .map(graphName -> {
+                Node node = NodeFactory.createURI(graphName);
+                return new ResourceInDatasetImpl(dataset, graphName, node);
+            });
+    }
+
     /**
      * Operator that marks (graph, node) pairs from a dataset using a
      * SELECT query with two result variables and returns them in a
@@ -209,7 +225,7 @@ public class ResourceInDatasetFlowOps {
                 line -> DatasetFlowOps.deserializeFromSort(DatasetFlowOps.GSON, line, GroupedResourceInDataset.class)
                 );
     }
-    
+
 
     public static Function<? super SparqlQueryConnection, Node> createKeyMapper(
             String keyArg,
