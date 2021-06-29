@@ -26,9 +26,6 @@ public class FlowState<T> {
     protected volatile boolean closeInvoked;
     // protected Thread consumerThread;
 
-    protected CallableWithAbortFactory consumerInterrupter =
-            new CallableWithAbortFactory(t -> t instanceof CancellationException);
-
 
     // Only default ctor - attributes are set one after the other at different places
 
@@ -50,20 +47,33 @@ public class FlowState<T> {
         this.iterator = iterator;
     }
 
-    public void handleProducerException(Thread thread, Throwable e) {
-        boolean report = true;
+    public static boolean isRiotBrokenPipeException(Throwable t) {
+        boolean result = false;
+        if (t instanceof RiotException) {
+            String msg = t.getMessage();
+            if(msg.equalsIgnoreCase("Pipe closed") || msg.equals("Consumer Dead")) {
+                result = true;
+            }
+        }
 
-        // Abort the consumer who may be still be waiting for data from the deceased producer
-        consumerInterrupter.abort();
+        return result;
+    }
+
+    public void handleProducerException(Thread thread, Throwable e) {
+
+        boolean report = true; // May be set to false in the following
+
+        // We no longer need to abort the consumer because it will be notified
+        // with a poison
+        // consumerInterrupter.abort();
 
         // If close was invoked, skip exceptions related to the underlying
         // input stream having been prematurely closed
         if (closeInvoked) {
-            if(e instanceof RiotException) {
-                String msg = e.getMessage();
-                if(msg.equalsIgnoreCase("Pipe closed") || msg.equals("Consumer Dead")) {
-                    report = false;
-                }
+            if (e instanceof RiotParseException
+                    || e instanceof CancellationException
+                    || isRiotBrokenPipeException(e)) {
+                report = false;
             }
         }
 
@@ -72,8 +82,8 @@ public class FlowState<T> {
                 raisedException = e;
             }
             // If we receive any reportable exception after the flowable
-            // was closed, raise them so they don't get unnoticed!
-            if (closeInvoked && !(e instanceof RiotParseException)) {
+            // was closed then raise them so they don't get unnoticed!
+            if (closeInvoked) {
                 throw new RuntimeException(e);
             }
         }
@@ -81,57 +91,29 @@ public class FlowState<T> {
 
     public void close() throws IOException {
         closeInvoked = true;
-        // The producer thread may be blocked because not enough items were consumed
-//				if(thread[0] != null) {
-//					while(thread[0].isAlive()) {
-//						thread[0].interrupt();
-//					}
-//				}
 
-        // We need to wait if iterator.next is waiting
-//				synchronized(this) {
-//
-//				}
-
-        // Try to close the iterator 'it'
-        // Otherwise, forcefully close the stream
-        // (may cause a (usually/hopefully) harmless exception)
         try {
-            if(iterator instanceof Closeable) {
-                ((Closeable)iterator).close();
-            } else if (iterator instanceof org.apache.jena.atlas.lib.Closeable) {
-                ((org.apache.jena.atlas.lib.Closeable)iterator).close();
-            }
+            // Close the underlying input stream - this may cause producer threads to terminate
+            in.close();
         } finally {
             try {
-                in.close();
-            } finally {
-                try {
-                    // Consume any remaining items in the iterator to prevent blocking issues
-                    // For example, Jena's producer thread can get blocked
-                    // when parsed items are not consumed
-//							System.out.println("Consuming rest");
-                    // FIXME Do we still need to consume the iterator if we
-                    // interrupt the producer thread - or might that lead to triples / quads
-                    // getting lost?
-//							Iterators.size(it);
-                } catch(Exception e) {
-                    // Ignore silently
-                } finally {
-
-
-//                    if (consumerThread != null) {
-//                        consumerThread.interrupt();
-//                    }
-
-                    // The generator corresponds to the 2nd argument of Flowable.generate
-                    // The producer may be blocked by attempting to put new items on a already full blocking queue
-                    // The consumer in it.hasNext() may by waiting for a response from the producer
-                    // So we interrupt the producer to death
-
-                    interruptUntilDead(producerThread);
-                    consumerInterrupter.abort();
+                // Close the iterator which may be a consumer to the producer
+                if(iterator instanceof Closeable) {
+                    ((Closeable)iterator).close();
+                } else if (iterator instanceof org.apache.jena.atlas.lib.Closeable) {
+                    ((org.apache.jena.atlas.lib.Closeable)iterator).close();
                 }
+            } finally {
+                // The generator corresponds to the 2nd argument of Flowable.generate
+                // The producer may be blocked by attempting to put new items on a already full blocking queue
+                // The consumer in it.hasNext() may by waiting for a response from the producer
+                // So we interrupt the producer to death
+                interruptUntilDead(producerThread);
+
+                // The code in RDFDataMgrRx is designed to notify the consumer
+                // using the poison pill approach once the producer exits
+                // Therefore the should be no more need to cancel any waiting of the consumer
+                // consumerInterrupter.abort();
             }
         }
     }

@@ -50,6 +50,7 @@ import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.riot.RDFLanguages;
 import org.apache.jena.riot.RDFParser;
 import org.apache.jena.riot.ResultSetMgr;
+import org.apache.jena.riot.RiotException;
 import org.apache.jena.riot.RiotParseException;
 import org.apache.jena.riot.lang.LabelToNode;
 import org.apache.jena.riot.lang.PipedQuadsStream;
@@ -60,6 +61,7 @@ import org.apache.jena.riot.system.ErrorHandlerFactory;
 import org.apache.jena.riot.system.ParserProfile;
 import org.apache.jena.riot.system.RiotLib;
 import org.apache.jena.riot.system.StreamRDF;
+import org.apache.jena.riot.system.StreamRDFWrapper;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.util.Context;
@@ -212,7 +214,9 @@ public class RDFDataMgrRx {
     }
 
     public static Flowable<Triple> createFlowableTriples(Callable<InputStream> inSupplier, Lang lang, String baseIRI) {
-        return createFlowableFromInputStream(inSupplier, (th, eh, rawIn) -> (in -> createIteratorTriples(in, lang, baseIRI, eh, th)));
+        return createFlowableFromInputStream(
+                inSupplier,
+                (th, eh, rawIn) -> (in -> createIteratorTriples(in, lang, baseIRI, eh, th)));
     }
 
     public static Flowable<Resource> createFlowableResources(String filenameOrURI, Lang lang, String baseIRI) {
@@ -312,10 +316,10 @@ public class RDFDataMgrRx {
                 input), baseIRI);
         }
         // Otherwise, we have to spin up a thread to deal with it
-        final RDFIteratorFromPipedRDFIterator<Quad> it = new RDFIteratorFromPipedRDFIterator<>(bufferSize, fair, pollTimeout, maxPolls);
+        RDFIteratorFromPipedRDFIterator<Quad> it = new RDFIteratorFromPipedRDFIterator<>(bufferSize, fair, pollTimeout, maxPolls);
 
         // Upgrade triples to quads; this happens if quads are requested from a triple lang
-        final PipedQuadsStream out = new PipedQuadsStream(it) {
+        PipedQuadsStream out = new PipedQuadsStream(it) {
             @Override
             public void triple(Triple triple) {
                 Quad q = new Quad(Quad.defaultGraphNodeGenerated, triple);
@@ -323,17 +327,29 @@ public class RDFDataMgrRx {
             }
         };
 
+        // We need to handle finish ourself in order to pass any raised exception to rxjava
+        StreamRDF ignoreFinishWrapper = new StreamRDFWrapper(out) {
+            @Override public void finish() {}
+        };
+
+
         Thread t = new Thread(() -> {
             try {
                 // Invoke start on the sink so that the consumer knows the producer thread
                 // It appears otherwise the producer thread can get interrupted before
                 // the consumer gets to know the producer (which happens on start)
                 out.start();
-                parseFromInputStream(out, input, baseIRI, lang, null);
+                parseFromInputStream(ignoreFinishWrapper, input, baseIRI, lang, null);
             } catch(Exception e) {
                 // Ensure the exception handler is run before any
                 // thread.join() waiting for this thread
                 eh.uncaughtException(Thread.currentThread(), e);
+
+                try {
+                    out.finish();
+                } catch (Exception e2) {
+                    // Silently ignore failure on finish due to closed consumer
+                }
             }
         });
         th.accept(t);
@@ -386,8 +402,13 @@ public class RDFDataMgrRx {
                 input), baseIRI);
         }
         // Otherwise, we have to spin up a thread to deal with it
-        final RDFIteratorFromPipedRDFIterator<Triple> it = new RDFIteratorFromPipedRDFIterator<>(bufferSize, fair, pollTimeout, maxPolls);
-        final PipedTriplesStream out = new PipedTriplesStream(it);
+        RDFIteratorFromPipedRDFIterator<Triple> it = new RDFIteratorFromPipedRDFIterator<>(bufferSize, fair, pollTimeout, maxPolls);
+        PipedTriplesStream out = new PipedTriplesStream(it);
+
+        // We need to handle finish ourself in order to pass any raised exception to rxjava
+        StreamRDF ignoreFinishWrapper = new StreamRDFWrapper(out) {
+            @Override public void finish() {}
+        };
 
         Thread t = new Thread(()-> {
             try {
@@ -395,11 +416,17 @@ public class RDFDataMgrRx {
                 // It appears otherwise the producer thread can get interrupted before
                 // the consumer gets to know the producer (which happens on start)
                 out.start();
-                parseFromInputStream(out, input, baseIRI, lang, null);
+                parseFromInputStream(ignoreFinishWrapper, input, baseIRI, lang, null);
             } catch(Exception e) {
                 // Ensure the exception handler is run before any
                 // thread.join() waiting for this thread
                 eh.uncaughtException(Thread.currentThread(), e);
+
+                try {
+                    out.finish();
+                } catch (Exception e2) {
+                    // Silently ignore failure on finish due to closed consumer
+                }
             }
         });
         th.accept(t);
@@ -428,7 +455,9 @@ public class RDFDataMgrRx {
 
 
     public static Flowable<Quad> createFlowableQuads(Callable<InputStream> inSupplier, Lang lang, String baseIRI) {
-        return createFlowableFromInputStream(inSupplier, (th, eh, rawIn) -> (in -> createIteratorQuads(in, lang, baseIRI, eh, th)))
+        return createFlowableFromInputStream(
+                    inSupplier,
+                    (th, eh, rawIn) -> (in -> createIteratorQuads(in, lang, baseIRI, eh, th)))
                 // Ensure that the graph node is always non-null
                 // Trig parser in Jena 3.14.0 creates quads with null graph
                 .map(q -> q.getGraph() != null
@@ -621,16 +650,15 @@ public class RDFDataMgrRx {
                         boolean isCancelled = false;
 
                         try {
-                            hasNext = state.consumerInterrupter.setDelegate(
-                                () -> state.iterator.hasNext()).call();
-                        } catch (CancellationException e) {
+                            hasNext = state.iterator.hasNext();
+                        } catch (CancellationException | RiotException e) {
+                            // RiotException is assumed to be "Producer dead"
                             hasNext = false;
                             isCancelled = true;
                         }
 
-                        //if(!closeInvoked[0])
 //						System.out.println("Generator invoked");
-                        if (hasNext) {
+                        if (hasNext && !state.closeInvoked) {
 //							System.out.println("hasNext = true");
                             T item = state.iterator.next();
                             emitter.onNext(item);
@@ -654,7 +682,7 @@ public class RDFDataMgrRx {
                                 }
                             }
 
-                            if(t != null && report) {
+                            if (t != null && report) {
                                 emitter.onError(state.raisedException);
                             } else {
                                 emitter.onComplete();

@@ -630,7 +630,7 @@ public class BufferFromInputStream
                 } else if (n == 0) {
                     throw new IllegalStateException("Data supplier returned 0 bytes");
                 } else {
-                    throw new IllegalStateException("Invalid return value");
+                    throw new IllegalStateException("Invalid return value: " + n);
                 }
             }
         }

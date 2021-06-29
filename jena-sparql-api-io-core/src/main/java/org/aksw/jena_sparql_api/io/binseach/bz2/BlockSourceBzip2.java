@@ -115,56 +115,7 @@ public class BlockSourceBzip2
 
             BZip2Codec codec = new BZip2Codec();
             InputStream decodedIn = codec.createInputStream(seekableIn, null, blockStart, Long.MAX_VALUE, READ_MODE.BYBLOCK);
-            org.apache.hadoop.fs.Seekable s = (org.apache.hadoop.fs.Seekable)decodedIn;
-
-            long decodedStartPos = s.getPos();
-
-//            if (blockStart != blockEnd) {
-//                System.out.println(String.format("blockStart: %s - blockEnd: %s", blockStart, blockEnd));
-//            }
-//            System.out.println(String.format("decodedStart: %s", decodedStartPos));
-
-            // We need to check one byte in advance to detect block boundaries
-            PushbackInputStream pushbackIn = new PushbackInputStream(decodedIn, 1);
-
-            // Decode *exactly* a single block:
-            // The way the bzip2 codec works is that only *AFTER* reading one byte into the
-            // next block the read method returns with the new position advertised.
-            // However, we must avoid to read this one byte too many.
-            // For this reason we use a pushback inputstream in order to read one byte ahead
-            // and then decide whether it needs to be emitted or suppressed.
-
-            ReadableByteChannel wrapper = new ReadableByteChannelDecoratorBase<ReadableByteChannel>(Channels.newChannel(pushbackIn)) {
-                @Override
-                public int read(ByteBuffer byteBuffer) throws IOException {
-
-                    int backupPos = byteBuffer.position();
-                    byte before = byteBuffer.get(backupPos);
-
-                    int result = super.read(byteBuffer);
-
-
-                    // If only a single byte was read and the position changed then
-                    // undo the read and indicate end-of-block (file)
-                    if (result == 1) {
-                        long decodedPos = s.getPos();
-                        boolean change = decodedStartPos != decodedPos;
-
-                        if (change) {
-                            // Unread the byte
-                            byte after = byteBuffer.get(backupPos);
-                            pushbackIn.unread(after);
-
-                            // Revert the buffer state
-                            byteBuffer.put(backupPos, before);
-                            byteBuffer.position(backupPos);
-
-                            result = -1;
-                        }
-                    }
-                    return result;
-                }
-            };
+            ReadableByteChannel wrapper = SeekableInputStreams.advertiseEndOfBlock(decodedIn);
             effectiveIn = Channels.newInputStream(wrapper);
 
         }

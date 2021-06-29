@@ -85,8 +85,8 @@
 		<module>jena-sparql-api-playground</module>
 
 		<module>jena-sparql-api-virtuoso</module>
-        <module>jena-sparql-api-fuseki-geosparql-bundle</module>
-    </modules>
+		<module>jena-sparql-api-fuseki-geosparql-bundle</module>
+	</modules>
 
 	<issueManagement>
 		<url>https://github.com/SmartDataAnalytics/jena-sparql-api/issues</url>
@@ -937,6 +937,12 @@
 
 			<dependency>
 				<groupId>org.aksw.commons</groupId>
+				<artifactId>aksw-commons-lambdas-serializable</artifactId>
+				<version>${aksw.commons.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.aksw.commons</groupId>
 				<artifactId>aksw-commons-io-process-pipes</artifactId>
 				<version>${aksw.commons.version}</version>
 			</dependency>
@@ -1031,17 +1037,18 @@
 				<version>1.20</version>
 			</dependency>
 
-			<!-- When commons-compress just isn't enough (e.g. when there is need for splittable bzip2 decoding) -->
+			<!-- When commons-compress just isn't enough (e.g. when there is need 
+				for splittable bzip2 decoding) -->
 			<dependency>
 				<groupId>org.apache.hadoop</groupId>
 				<artifactId>hadoop-common</artifactId>
 				<version>3.3.1</version>
-   <exclusions>
-        <exclusion>
-            <groupId>*</groupId>
-            <artifactId>*</artifactId>
-        </exclusion>
-    </exclusions>
+				<exclusions>
+					<exclusion>
+						<groupId>*</groupId>
+						<artifactId>*</artifactId>
+					</exclusion>
+				</exclusions>
 			</dependency>
 
 
