@@ -1,30 +1,30 @@
 package org.aksw.jena_sparql_api.utils;
 
-import java.io.Closeable;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Function;
 
+import org.aksw.jena_sparql_api.utils.model.ResourceInDataset;
+import org.aksw.jena_sparql_api.utils.model.ResourceInDatasetImpl;
 import org.apache.jena.atlas.iterator.Iter;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
+import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Dataset;
-import org.apache.jena.query.ResultSet;
-import org.apache.jena.query.ResultSetCloseable;
-import org.apache.jena.query.ResultSetFactory;
+import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.sparql.core.DatasetGraph;
+import org.apache.jena.sparql.core.DatasetGraphFactory;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.engine.binding.BindingBuilder;
 import org.apache.jena.sparql.engine.binding.BindingFactory;
-import org.apache.jena.sparql.engine.iterator.QueryIter;
-import org.apache.jena.sparql.engine.iterator.QueryIterPlainWrapper;
 import org.apache.jena.sparql.expr.E_Conditional;
 import org.apache.jena.sparql.expr.E_Function;
 import org.apache.jena.sparql.expr.E_IRI;
@@ -45,135 +45,184 @@ import org.apache.jena.util.iterator.WrappedIterator;
 /** Note transforms not captured by {@link NodeTransformLib} such as Bindings, Graphs, Models, Datsets, ... */
 public class NodeTransformLib2 {
 
-	/** Wrap a node transform such the input node is returned whenever otherwise null would be returned */
-	public static NodeTransform makeNullSafe(NodeTransform xform) {
-		return x -> {
-			Node tmp = xform.apply(x);
-			Node r = tmp == null ? x : tmp;
-			return r;
-		};
-	}
-	
-	
-	public static Binding transformValues(Binding b, NodeTransform transform) {
-		BindingBuilder bb = BindingBuilder.create();
-	    List<Var> vars = Iter.toList(b.vars()) ;
-	    for (Var v : vars) {
-	        Node before = b.get(v);
-	        Node after = transform.apply(before);
-	        bb.add(v, after);
-	    }
-	    Binding result = bb.build();
-	    return result;
-	}
+    /** Wrap a node transform such the input node is returned whenever otherwise null would be returned */
+    public static NodeTransform makeNullSafe(NodeTransform xform) {
+        return x -> {
+            Node tmp = xform.apply(x);
+            Node r = tmp == null ? x : tmp;
+            return r;
+        };
+    }
 
-	// The following method is still part of QueryExecutionTransformResult because it needs our version of ResultSetCloseable
+
+    public static Binding transformValues(Binding b, NodeTransform transform) {
+        BindingBuilder bb = BindingBuilder.create();
+        List<Var> vars = Iter.toList(b.vars()) ;
+        for (Var v : vars) {
+            Node before = b.get(v);
+            Node after = transform.apply(before);
+            bb.add(v, after);
+        }
+        Binding result = bb.build();
+        return result;
+    }
+
+    // The following method is still part of QueryExecutionTransformResult because it needs our version of ResultSetCloseable
 //	public static ResultSet applyNodeTransform(NodeTransform nodeTransform, ResultSet rs) {
 //	    Closeable closeable = rs instanceof Closeable ? (Closeable)rs : null;
 //	    List<String> vars = rs.getResultVars();
-//	
+//
 //	    ExtendedIterator<Binding> it = WrappedIterator.create(new IteratorResultSetBinding(rs))
 //	        .mapWith(b -> transformValues(b, nodeTransform));
-//	
+//
 //	    QueryIter queryIter = new QueryIterPlainWrapper(it);
 //	    ResultSet core = ResultSetFactory.create(queryIter, vars);
-//	
+//
 //	    ResultSet result = new ResultSetCloseable(core, closeable);
 //	    return result;
 //	}
 
-	public static Graph copyWithNodeTransform(NodeTransform nodeTransform, Graph graph) {
-	    Graph result = GraphFactory.createDefaultGraph();
-	    graph.find().mapWith(t -> NodeTransformLib.transform(nodeTransform, t))
-	        .forEachRemaining(result::add);
-	    return result;
-	}
 
-	public static Graph applyNodeTransform(NodeTransform nodeTransform, Graph graph) {
-	    List<Triple> inserts = new ArrayList<>();
-	
-	    ExtendedIterator<Triple> it = graph.find();
-	    try {
-	        while(it.hasNext()) {
-	            Triple before = it.next();
-	            Triple after = NodeTransformLib.transform(nodeTransform, before);
-	            if(!after.equals(before)) {
-	                it.remove();
-	                inserts.add(after);
-	            }
-	        }
-	    } finally {
-	        it.close();
-	    }
-	
-	    for(Triple t : inserts) {
-	        graph.add(t);
-	    }
-	    return graph;
-	}
+    public static Graph copyWithNodeTransform(NodeTransform nodeTransform, Graph graph) {
+        Graph result = GraphFactory.createDefaultGraph();
+        graph.find().mapWith(t -> NodeTransformLib.transform(nodeTransform, t))
+            .forEachRemaining(result::add);
+        return result;
+    }
 
-	public static RDFNode applyNodeTransform(NodeTransform nodeTransform, RDFNode rdfNode) {
-	    Model model = rdfNode.getModel();
-	    applyNodeTransform(nodeTransform, model);
-	    Node beforeNode = rdfNode.asNode();
-	    Node tmp = nodeTransform.apply(beforeNode);
-	    Node afterNode = tmp == null ? beforeNode : tmp;
-	    RDFNode result = model.asRDFNode(afterNode);
-	
-	    return result;
-	}
+    public static Graph copyWithNodeTransform(NodeTransform nodeTransform, Graph in, Graph out) {
+        if (in == out) {
+            applyNodeTransform(nodeTransform, in);
+        } else {
+            in.find().mapWith(t -> NodeTransformLib.transform(nodeTransform, t))
+                .forEachRemaining(out::add);
+        }
+        return out;
+    }
 
-	public static RDFNode copyWithNodeTransform(NodeTransform nodeTransform, RDFNode rdfNode) {
-	    Model beforeModel = rdfNode.getModel();
-	    Model afterModel = copyWithNodeTransform(nodeTransform, beforeModel);
-	    Node beforeNode = rdfNode.asNode();
-	    Node tmp = nodeTransform.apply(beforeNode);
-	    Node afterNode = tmp == null ? beforeNode : tmp;
-	    RDFNode result = afterModel.asRDFNode(afterNode);
-	
-	    return result;
-	}
+    public static Graph applyNodeTransform(NodeTransform nodeTransform, Graph graph) {
+        List<Triple> inserts = new ArrayList<>();
 
-	public static Model applyNodeTransform(NodeTransform nodeTransform, Model model) {
-	    Graph oldGraph = model.getGraph();
-	    applyNodeTransform(nodeTransform, oldGraph);
-	    return model;
-	}
+        ExtendedIterator<Triple> it = graph.find();
+        try {
+            while(it.hasNext()) {
+                Triple before = it.next();
+                Triple after = NodeTransformLib.transform(nodeTransform, before);
+                if(!after.equals(before)) {
+                    it.remove();
+                    inserts.add(after);
+                }
+            }
+        } finally {
+            it.close();
+        }
 
-	public static Model copyWithNodeTransform(NodeTransform nodeTransform, Model model) {
-	    Graph oldGraph = model.getGraph();
-	    Graph newGraph = copyWithNodeTransform(nodeTransform, oldGraph);
-	    Model result = ModelFactory.createModelForGraph(newGraph);
-	    return result;
-	}
+        for(Triple t : inserts) {
+            graph.add(t);
+        }
+        return graph;
+    }
 
-	// Performs an in-place transform
-	public static DatasetGraph applyNodeTransform(NodeTransform nodeTransform, DatasetGraph dg) {
-	
-	    List<Quad> quads = new ArrayList<>();
-	    WrappedIterator.create(dg.find())
-	        .mapWith(q -> NodeTransformLib.transform(nodeTransform, q))
-	        .forEachRemaining(quads::add);
-	
-	    dg.clear();
-	    for(Quad quad : quads) {
-	        dg.add(quad);
-	    }
-	
-	    return dg;
-	}
+    public static RDFNode applyNodeTransform(NodeTransform nodeTransform, RDFNode rdfNode) {
+        Model model = rdfNode.getModel();
+        applyNodeTransform(nodeTransform, model);
+        Node beforeNode = rdfNode.asNode();
+        Node tmp = nodeTransform.apply(beforeNode);
+        Node afterNode = tmp == null ? beforeNode : tmp;
+        RDFNode result = model.asRDFNode(afterNode);
 
-	public static Dataset applyNodeTransform(NodeTransform nodeTransform, Dataset dataset) {
-	    DatasetGraph dg = dataset.asDatasetGraph();
-	    applyNodeTransform(nodeTransform, dg);
-	    return dataset;
-	}
+        return result;
+    }
 
-	public static <T> ExtendedIterator<T> map(Iterator<T> it, Function<? super T, ? extends T> xform) {
-	    ExtendedIterator<T> result = WrappedIterator.create(it).mapWith(x -> xform.apply(x));
-	    return result;
-	}
-	
+    public static RDFNode copyWithNodeTransform(NodeTransform nodeTransform, RDFNode rdfNode) {
+        Model beforeModel = rdfNode.getModel();
+        Model afterModel = copyWithNodeTransform(nodeTransform, beforeModel);
+        Node beforeNode = rdfNode.asNode();
+        Node tmp = nodeTransform.apply(beforeNode);
+        Node afterNode = tmp == null ? beforeNode : tmp;
+        RDFNode result = afterModel.asRDFNode(afterNode);
+
+        return result;
+    }
+
+    public static Model applyNodeTransform(NodeTransform nodeTransform, Model model) {
+        Graph oldGraph = model.getGraph();
+        applyNodeTransform(nodeTransform, oldGraph);
+        return model;
+    }
+
+    public static Model copyWithNodeTransform(NodeTransform nodeTransform, Model model) {
+        Graph oldGraph = model.getGraph();
+        Graph newGraph = copyWithNodeTransform(nodeTransform, oldGraph);
+        Model result = ModelFactory.createModelForGraph(newGraph);
+        return result;
+    }
+
+    // Performs an in-place transform
+    public static DatasetGraph applyNodeTransform(NodeTransform nodeTransform, DatasetGraph dg) {
+
+        List<Quad> quads = new ArrayList<>();
+        WrappedIterator.create(dg.find())
+            .mapWith(q -> NodeTransformLib.transform(nodeTransform, q))
+            .forEachRemaining(quads::add);
+
+        dg.clear();
+        for(Quad quad : quads) {
+            dg.add(quad);
+        }
+
+        return dg;
+    }
+
+
+    public static DatasetGraph copyWithNodeTransform(NodeTransform nodeTransform, DatasetGraph graph) {
+        DatasetGraph result = DatasetGraphFactory.create();
+        copyWithNodeTransform(nodeTransform, graph, result);
+        return result;
+    }
+
+    public static DatasetGraph copyWithNodeTransform(NodeTransform nodeTransform, DatasetGraph in, DatasetGraph out) {
+        if (in == out) {
+            applyNodeTransform(nodeTransform, in);
+        } else {
+            WrappedIterator.create(in.find())
+                .mapWith(t -> NodeTransformLib.transform(nodeTransform, t))
+                .forEachRemaining(out::add);
+        }
+        return out;
+    }
+
+
+
+    public static Dataset applyNodeTransform(NodeTransform nodeTransform, Dataset dataset) {
+        DatasetGraph dg = dataset.asDatasetGraph();
+        applyNodeTransform(nodeTransform, dg);
+        return dataset;
+    }
+
+    public static Dataset copyWithNodeTransform(NodeTransform nodeTransform, Dataset graph) {
+        Dataset result = DatasetFactory.create();
+        copyWithNodeTransform(nodeTransform, graph, result);
+        return result;
+    }
+
+    public static Dataset copyWithNodeTransform(NodeTransform nodeTransform, Dataset in, Dataset out) {
+        if (in == out) {
+            applyNodeTransform(nodeTransform, in);
+        } else {
+            copyWithNodeTransform(nodeTransform, in.asDatasetGraph(), out.asDatasetGraph());
+        }
+        return out;
+    }
+
+
+
+
+    public static <T> ExtendedIterator<T> map(Iterator<T> it, Function<? super T, ? extends T> xform) {
+        ExtendedIterator<T> result = WrappedIterator.create(it).mapWith(x -> xform.apply(x));
+        return result;
+    }
+
 
     /**
      * Create a conditional expression checks whether its argument is a blank node,
@@ -238,5 +287,48 @@ public class NodeTransformLib2 {
 //			return r;
 //		}
     }
-    
+
+
+
+    /**
+     * Rename multiple RDFterms
+     *
+     * @param old
+     * @param renames
+     * @return
+     */
+    public static ResourceInDataset applyNodeTransform(ResourceInDataset old, NodeTransform nodeTransform) {
+        String graphName = old.getGraphName();
+        Node graphNode = NodeFactory.createURI(graphName);
+        Node newGraphNode = Optional.ofNullable(nodeTransform.apply(graphNode)).orElse(graphNode);
+
+        Node n = old.asNode();
+        Node newNode = Optional.ofNullable(nodeTransform.apply(n)).orElse(n);
+
+        String g = newGraphNode.getURI();
+
+        Dataset dataset = old.getDataset();
+        NodeTransformLib2.applyNodeTransform(nodeTransform, dataset);
+
+        ResourceInDataset result = new ResourceInDatasetImpl(dataset, g, newNode);
+        return result;
+
+    }
+
+
+    public static ResourceInDataset copyWithNodeTransform(ResourceInDataset old, Dataset target, NodeTransform nodeTransform) {
+        String graphName = old.getGraphName();
+        Node graphNode = NodeFactory.createURI(graphName);
+        Node newGraphNode = Optional.ofNullable(nodeTransform.apply(graphNode)).orElse(graphNode);
+        String g = newGraphNode.getURI();
+
+        Node n = old.asNode();
+        Node newNode = Optional.ofNullable(nodeTransform.apply(n)).orElse(n);
+
+        NodeTransformLib2.copyWithNodeTransform(nodeTransform, old.getDataset(), target);
+
+        ResourceInDataset result = new ResourceInDatasetImpl(target, g, newNode);
+        return result;
+
+    }
 }

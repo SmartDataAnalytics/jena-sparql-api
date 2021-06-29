@@ -57,6 +57,7 @@ import org.apache.jena.riot.lang.PipedQuadsStream;
 import org.apache.jena.riot.lang.PipedRDFIterator;
 import org.apache.jena.riot.lang.PipedTriplesStream;
 import org.apache.jena.riot.lang.RiotParsers;
+import org.apache.jena.riot.system.ErrorHandler;
 import org.apache.jena.riot.system.ErrorHandlerFactory;
 import org.apache.jena.riot.system.ParserProfile;
 import org.apache.jena.riot.system.RiotLib;
@@ -374,8 +375,27 @@ public class RDFDataMgrRx {
                 new Alloc(BlankNodeAllocatorAsGivenOrRandom.getGlobalInstance()));
     }
 
+
+    public static ErrorHandler dftErrorHandler() {
+        return ErrorHandlerFactory.errorHandlerWarn;
+    }
+
     public static ParserProfile dftProfile() {
-        return RiotLib.createParserProfile(RiotLib.factoryRDF(createLabelToNodeAsGivenOrRandom()), ErrorHandlerFactory.errorHandlerDetailed(), true);
+        return permissiveProfile();
+    }
+
+    public static ParserProfile strictProfile() {
+        return RiotLib.createParserProfile(RiotLib.factoryRDF(
+                createLabelToNodeAsGivenOrRandom()),
+                ErrorHandlerFactory.errorHandlerDetailed(),
+                true);
+    }
+
+    public static ParserProfile permissiveProfile() {
+        return RiotLib.createParserProfile(RiotLib.factoryRDF(
+                createLabelToNodeAsGivenOrRandom()),
+                ErrorHandlerFactory.errorHandlerWarn,
+                false);
     }
 
     /**
@@ -443,7 +463,7 @@ public class RDFDataMgrRx {
             .base(baseUri)
             .lang(lang)
             .context(context)
-            .errorHandler(ErrorHandlerFactory.errorHandlerDetailed())
+            .errorHandler(dftErrorHandler())
             .labelToNode(createLabelToNodeAsGivenOrRandom())
             //.errorHandler(handler)
             .parse(destination);
