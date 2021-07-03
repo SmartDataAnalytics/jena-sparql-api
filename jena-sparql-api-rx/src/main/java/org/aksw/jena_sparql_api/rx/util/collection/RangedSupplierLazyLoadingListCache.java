@@ -9,9 +9,11 @@ import java.util.concurrent.ExecutorService;
 
 import org.aksw.commons.collections.cache.Cache;
 import org.aksw.commons.collections.cache.CacheImpl;
+import org.aksw.commons.rx.range.RangedSupplier;
+import org.aksw.commons.rx.range.RangedSupplierDelegated;
+import org.aksw.commons.util.range.RangeUtils;
 import org.aksw.jena_sparql_api.util.collection.CacheRangeInfo;
 import org.aksw.jena_sparql_api.util.collection.RangeCostModel;
-import org.aksw.jena_sparql_api.utils.RangeUtils;
 import org.apache.jena.util.iterator.ClosableIterator;
 
 import com.google.common.collect.DiscreteDomain;

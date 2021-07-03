@@ -595,12 +595,12 @@ public class QueryUtils {
      * @return
      */
     public static <T extends Comparable<T>> Range<T> makeClosedOpen(Range<T> range, DiscreteDomain<T> domain) {
-    	ContiguousSet<T> set = ContiguousSet.create(range, domain);
-    	
-    	Range<T> result = set.isEmpty()
-    			? Range.closedOpen(range.lowerEndpoint(), range.lowerEndpoint())
-    			: ContiguousSet.create(range, domain).range(BoundType.CLOSED, BoundType.OPEN);
-//    	
+        ContiguousSet<T> set = ContiguousSet.create(range, domain);
+
+        Range<T> result = set.isEmpty()
+                ? Range.closedOpen(range.lowerEndpoint(), range.lowerEndpoint())
+                : ContiguousSet.create(range, domain).range(BoundType.CLOSED, BoundType.OPEN);
+//
 //        T lower = closedLowerEndpointOrNull(range, domain);
 //        T upper = openUpperEndpointOrNull(range, domain);
 //
@@ -744,8 +744,8 @@ public class QueryUtils {
         Range<Long> parent = makeClosedOpen(_parent, DiscreteDomain.longs());
         Range<Long> child = makeClosedOpen(_child, DiscreteDomain.longs());
 
-        Range<Long> shiftedChild = RangeUtils.transform(child, e -> e + parent.lowerEndpoint());
-        
+        Range<Long> shiftedChild = org.aksw.commons.util.range.RangeUtils.transform(child, e -> e + parent.lowerEndpoint());
+
         Range<Long> result = shiftedChild.intersection(parent);
 //        long newMin = parent.lowerEndpoint() + child.lowerEndpoint();
 //

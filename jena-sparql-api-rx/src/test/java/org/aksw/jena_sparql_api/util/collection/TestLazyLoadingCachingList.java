@@ -7,7 +7,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import org.aksw.jena_sparql_api.rx.util.collection.RangedSupplier;
+import org.aksw.commons.rx.range.RangedSupplier;
 import org.aksw.jena_sparql_api.rx.util.collection.RangedSupplierLazyLoadingListCache;
 import org.aksw.jena_sparql_api.rx.util.collection.RangedSupplierList;
 import org.junit.Test;

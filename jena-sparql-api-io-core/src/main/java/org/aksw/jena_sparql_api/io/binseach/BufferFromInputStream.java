@@ -14,6 +14,7 @@ import java.util.stream.IntStream;
 
 import javax.annotation.concurrent.ThreadSafe;
 
+import org.aksw.commons.io.seekable.api.Seekable;
 import org.aksw.jena_sparql_api.io.api.ChannelFactory;
 
 import com.google.common.base.Stopwatch;

@@ -5,6 +5,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.channels.Channels;
 
+import org.aksw.commons.io.block.api.Block;
+import org.aksw.commons.io.block.api.BlockSource;
+import org.aksw.commons.io.block.impl.BlockSources;
+import org.aksw.commons.io.seekable.impl.SeekableFromBlock;
 import org.aksw.commons.util.ref.Ref;
 
 import com.google.common.primitives.Ints;

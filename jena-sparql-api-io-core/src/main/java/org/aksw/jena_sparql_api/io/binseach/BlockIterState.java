@@ -3,6 +3,8 @@ package org.aksw.jena_sparql_api.io.binseach;
 import java.io.IOException;
 import java.util.Objects;
 
+import org.aksw.commons.io.block.api.Block;
+import org.aksw.commons.io.seekable.api.Seekable;
 import org.aksw.commons.util.ref.Ref;
 
 /**

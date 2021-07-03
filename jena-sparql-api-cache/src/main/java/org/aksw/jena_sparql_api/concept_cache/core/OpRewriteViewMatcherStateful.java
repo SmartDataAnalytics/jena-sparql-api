@@ -15,6 +15,7 @@ import java.util.stream.Stream;
 
 import org.aksw.commons.collections.trees.Tree;
 import org.aksw.commons.collections.trees.TreeUtils;
+import org.aksw.commons.rx.range.RangedSupplier;
 import org.aksw.jena_sparql_api.algebra.analysis.VarInfo;
 import org.aksw.jena_sparql_api.algebra.utils.ConjunctiveQuery;
 import org.aksw.jena_sparql_api.algebra.utils.OpExtConjunctiveQuery;
@@ -26,7 +27,6 @@ import org.aksw.jena_sparql_api.concept_cache.dirty.ConjunctiveQueryMatcherImpl;
 import org.aksw.jena_sparql_api.concept_cache.dirty.QfpcMatch;
 import org.aksw.jena_sparql_api.concept_cache.dirty.SparqlViewMatcherQfpcImpl;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
-import org.aksw.jena_sparql_api.rx.util.collection.RangedSupplier;
 import org.aksw.jena_sparql_api.rx.util.collection.RangedSupplierLazyLoadingListCache;
 import org.aksw.jena_sparql_api.util.collection.CacheRangeInfo;
 import org.aksw.jena_sparql_api.utils.ResultSetUtils;

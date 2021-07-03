@@ -3,6 +3,9 @@ package org.aksw.jena_sparql_api.io.binseach;
 import java.io.IOException;
 import java.nio.channels.SeekableByteChannel;
 
+import org.aksw.commons.io.block.api.Block;
+import org.aksw.commons.io.block.api.BlockSource;
+import org.aksw.commons.io.seekable.api.Seekable;
 import org.aksw.commons.util.ref.Ref;
 import org.aksw.jena_sparql_api.io.api.ChannelFactory;
 

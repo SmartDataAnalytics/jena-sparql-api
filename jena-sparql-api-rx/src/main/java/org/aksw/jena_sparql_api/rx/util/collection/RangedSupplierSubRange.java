@@ -2,7 +2,9 @@ package org.aksw.jena_sparql_api.rx.util.collection;
 
 import java.util.function.BiFunction;
 
-import org.aksw.jena_sparql_api.utils.RangeUtils;
+import org.aksw.commons.rx.range.RangedSupplier;
+import org.aksw.commons.rx.range.RangedSupplierDelegated;
+import org.aksw.commons.util.range.RangeUtils;
 
 import com.google.common.collect.DiscreteDomain;
 import com.google.common.collect.Range;

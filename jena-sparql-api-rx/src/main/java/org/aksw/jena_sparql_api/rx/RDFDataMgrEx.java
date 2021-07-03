@@ -61,8 +61,8 @@ public class RDFDataMgrEx {
             RDFLanguages.TRIG, // Subsumes turtle, nquads and ntriples
             RDFLanguages.JSONLD,
             RDFLanguages.RDFXML,
-            RDFLanguages.RDFTHRIFT,
-            RDFLanguages.TRIX
+            RDFLanguages.RDFTHRIFT
+            // RDFLanguages.TRIX
     ));
 
     public static boolean isStdIn(String filenameOrIri) {
