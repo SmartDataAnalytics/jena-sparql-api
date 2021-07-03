@@ -345,7 +345,7 @@ public class RDFDataMgrRx {
                 // Ensure the exception handler is run before any
                 // thread.join() waiting for this thread
                 eh.uncaughtException(Thread.currentThread(), e);
-
+            } finally {
                 try {
                     out.finish();
                 } catch (Exception e2) {
@@ -441,7 +441,7 @@ public class RDFDataMgrRx {
                 // Ensure the exception handler is run before any
                 // thread.join() waiting for this thread
                 eh.uncaughtException(Thread.currentThread(), e);
-
+            } finally {
                 try {
                     out.finish();
                 } catch (Exception e2) {
