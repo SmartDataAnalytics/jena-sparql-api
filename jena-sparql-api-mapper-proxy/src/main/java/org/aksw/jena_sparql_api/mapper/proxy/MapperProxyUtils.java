@@ -3,8 +3,6 @@ package org.aksw.jena_sparql_api.mapper.proxy;
 import java.beans.Introspector;
 import java.io.ByteArrayOutputStream;
 import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles.Lookup;
-import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
@@ -30,6 +28,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import org.aksw.commons.beans.model.MethodHandleLookup;
 import org.aksw.commons.collections.ConvertingCollection;
 import org.aksw.commons.collections.ConvertingList;
 import org.aksw.commons.collections.ConvertingSet;
@@ -1447,7 +1446,7 @@ public class MapperProxyUtils {
             // These figures were observed with our "Conjure" system which
             // heavily uses the visitor pattern in conjunction with default methods
             // on Jena Resource classes
-            if(method.isDefault()) {
+            if (method.isDefault()) {
                 BiFunction<Object, Object[], Object> defaultMethodDelegate;
                 try {
                     defaultMethodDelegate = proxyDefaultMethod(method);
@@ -2092,20 +2091,15 @@ public class MapperProxyUtils {
         return result;
     }
 
-    public static BiFunction<Object, Object[], Object> proxyDefaultMethod(Method method)
-            throws NoSuchMethodException, SecurityException, IllegalAccessException, InstantiationException, IllegalArgumentException, InvocationTargetException {
-        BiFunction<Object, Object[], Object> defaultMethodDelegate;
-        Class<?> declaringClass = method.getDeclaringClass();
-        Constructor<Lookup> constructor =
-            Lookup.class.getDeclaredConstructor(Class.class);
-        constructor.setAccessible(true);
 
-        MethodHandle undboundHandle = constructor.newInstance(declaringClass)
-                .in(declaringClass)
-                .unreflectSpecial(method, declaringClass);
+    public static BiFunction<Object, Object[], Object> proxyDefaultMethod(Method method) throws ReflectiveOperationException {
+
+        BiFunction<Object, Object[], Object> defaultMethodDelegate;
+
+        MethodHandle unboundHandle = MethodHandleLookup.getMethodHandleLookup().lookup(method);
 
         defaultMethodDelegate = (o, a) -> {
-            MethodHandle boundHandle = undboundHandle.bindTo(o);
+            MethodHandle boundHandle = unboundHandle.bindTo(o);
             Object r;
             try {
                 r = boundHandle.invokeWithArguments(a);
