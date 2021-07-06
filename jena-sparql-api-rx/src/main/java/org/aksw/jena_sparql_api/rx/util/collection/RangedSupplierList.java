@@ -2,6 +2,8 @@ package org.aksw.jena_sparql_api.rx.util.collection;
 
 import java.util.List;
 
+import org.aksw.commons.rx.range.RangedSupplier;
+
 import com.google.common.collect.DiscreteDomain;
 import com.google.common.collect.Range;
 

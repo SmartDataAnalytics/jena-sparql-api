@@ -95,10 +95,10 @@ public class ResourceInDatasetImpl
         return result;
     }
 
-    
+
     /**
      * Rename multiple RDFterms
-     * 
+     *
      * @param old
      * @param renames
      * @return
@@ -107,7 +107,7 @@ public class ResourceInDatasetImpl
         String graphName = old.getGraphName();
         Node graphNode = NodeFactory.createURI(graphName);
         Node newGraphNode = Optional.ofNullable(nodeTransform.apply(graphNode)).orElse(graphNode);
-        
+
         Node n = old.asNode();
         Node newNode = Optional.ofNullable(nodeTransform.apply(n)).orElse(n);
 
@@ -115,13 +115,13 @@ public class ResourceInDatasetImpl
 
         Dataset dataset = old.getDataset();
         NodeTransformLib2.applyNodeTransform(nodeTransform, dataset);
-        
+
         ResourceInDataset result = new ResourceInDatasetImpl(dataset, g, newNode);
         return result;
-    	
+
     }
-    	
-    	
+
+
     public static ResourceInDataset renameResource(ResourceInDataset old, String uri) {
         Dataset dataset = old.getDataset();
         String graphName = old.getGraphName();
@@ -157,7 +157,7 @@ public class ResourceInDatasetImpl
     }
 
     /**
-     * Create a new ResourceInDataset instance backed by a blank node 
+     * Create a new ResourceInDataset instance backed by a blank node
      * in the default graph.
      */
     public static ResourceInDataset createAnonInDefaultGraph() {

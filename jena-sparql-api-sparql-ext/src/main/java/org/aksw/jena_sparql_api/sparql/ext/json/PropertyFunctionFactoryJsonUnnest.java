@@ -51,21 +51,21 @@ public class PropertyFunctionFactoryJsonUnnest
     @Override
     public PropertyFunction create(final String uri)
     {
-    	// TODO Allow indexed access if the index variable is bound
-    	// Consider reusing ListBaseList or listIndex
+        // TODO Allow indexed access if the index variable is bound
+        // Consider reusing ListBaseList or listIndex
         return new PFuncSimpleAndList()
         {
             @Override
-			public QueryIterator execEvaluated(Binding binding, Node subject, Node predicate, PropFuncArg objects,
-					ExecutionContext execCxt) {
+            public QueryIterator execEvaluated(Binding binding, Node subject, Node predicate, PropFuncArg objects,
+                    ExecutionContext execCxt) {
 
-            	// Get the subject's value
+                // Get the subject's value
                 Node node = subject.isVariable()
                         ? binding.get((Var)subject)
                         : subject;
 
                 Node object = objects.getArg(0);
-                        
+
                 if(!object.isVariable()) {
                     throw new RuntimeException("Object of json array unnesting must be a variable");
                 }
@@ -74,22 +74,22 @@ public class PropertyFunctionFactoryJsonUnnest
                 Node index = objects.getArgListSize() > 1 ? objects.getArg(1) : null;
                 Var indexVar = null;
                 Integer indexVal = null;
-                
+
                 if(index != null && index.isVariable()) {
                     indexVar = (Var)index;
 //                    throw new RuntimeException("Index of json array unnesting must be a variable");
                 } else if(index.isLiteral()) {
-                	Object obj = NodeMapperFromRdfDatatype.toJavaCore(index, index.getLiteralDatatype());
-                	if(obj instanceof Number) {
-                		indexVal = ((Number)obj).intValue();
-                	}
+                    Object obj = NodeMapperFromRdfDatatype.toJavaCore(index, index.getLiteralDatatype());
+                    if(obj instanceof Number) {
+                        indexVal = ((Number)obj).intValue();
+                    }
                 }
-                
 
-                
+
+
                 QueryIterator result = null;
 
-                boolean isJson = node.isLiteral() && node.getLiteralDatatype() instanceof RDFDatatypeJson;
+                boolean isJson = node != null && node.isLiteral() && node.getLiteralDatatype() instanceof RDFDatatypeJson;
                 if(isJson) {
                     JsonElement data = (JsonElement)node.getLiteralValue();
                     if(data != null && data.isJsonArray()) {
@@ -98,8 +98,8 @@ public class PropertyFunctionFactoryJsonUnnest
 
                         //for(JsonElement item : arr) {
                         if(indexVal != null) {
-                        	Binding b = itemToBinding(binding, arr, indexVal, gson, indexVar, outputVar);
-                            bindings.add(b);                        	
+                            Binding b = itemToBinding(binding, arr, indexVal, gson, indexVar, outputVar);
+                            bindings.add(b);
                         } else {
 	                        for(int i = 0; i < arr.size(); ++i) {
 	                        	Binding b = itemToBinding(binding, arr, i, gson, indexVar, outputVar);
@@ -118,26 +118,26 @@ public class PropertyFunctionFactoryJsonUnnest
             }
         };
     }
-    
+
     public static Binding itemToBinding(Binding binding, JsonArray arr, int i, Gson gson, Var indexVar, Var outputVar) {
-    	JsonElement item;
-    	
-    	try {
-    		item = arr.get(i);
-    	} catch(Exception e) {
-    		throw new ExprEvalException(e);
-    	}
-    	RDFDatatype jsonDatatype = TypeMapper.getInstance().getTypeByClass(JsonElement.class);
+        JsonElement item;
+
+        try {
+            item = arr.get(i);
+        } catch(Exception e) {
+            throw new ExprEvalException(e);
+        }
+        RDFDatatype jsonDatatype = TypeMapper.getInstance().getTypeByClass(JsonElement.class);
 
         Node n = E_JsonPath.jsonToNode(item, gson, jsonDatatype);
         // NodeValue nv = n == null ? null : NodeValue.makeNode(n);
 
         if (n != null) {
-        	binding = BindingFactory.binding(binding, outputVar, n);	        
+            binding = BindingFactory.binding(binding, outputVar, n);
         }
 
         if(indexVar != null) {
-        	binding = BindingFactory.binding(binding, indexVar, NodeValue.makeInteger(i).asNode());
+            binding = BindingFactory.binding(binding, indexVar, NodeValue.makeInteger(i).asNode());
         }
 
         return binding;

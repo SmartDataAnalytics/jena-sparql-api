@@ -47,6 +47,12 @@
 		</dependency>
 
 		<dependency>
+			<groupId>org.apache.hadoop</groupId>
+			<artifactId>hadoop-common</artifactId>
+		</dependency>
+
+
+		<dependency>
 			<groupId>org.aksw.commons</groupId>
 			<artifactId>aksw-commons-collections</artifactId>
 		</dependency>

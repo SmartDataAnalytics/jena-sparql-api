@@ -8,12 +8,12 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import org.aksw.jena_sparql_api.algebra.utils.QuadFilterPattern;
+import org.aksw.commons.util.range.CountInfo;
 import org.aksw.jena_sparql_api.algebra.utils.AlgebraUtils;
 import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.utils.QueryExecutionUtils;
 import org.aksw.jena_sparql_api.utils.CnfUtils;
-import org.aksw.jena_sparql_api.utils.CountInfo;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
 import org.apache.jena.sparql.algebra.Op;

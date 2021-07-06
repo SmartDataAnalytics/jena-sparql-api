@@ -12,6 +12,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 import org.aksw.jena_sparql_api.rx.entity.EntityInfo;
 import org.aksw.jena_sparql_api.rx.entity.EntityInfoImpl;
@@ -40,6 +41,8 @@ import org.apache.jena.sys.JenaSystem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Stopwatch;
+
 import io.reactivex.rxjava3.core.Flowable;
 
 /**
@@ -58,8 +61,8 @@ public class RDFDataMgrEx {
             RDFLanguages.TRIG, // Subsumes turtle, nquads and ntriples
             RDFLanguages.JSONLD,
             RDFLanguages.RDFXML,
-            RDFLanguages.RDFTHRIFT,
-            RDFLanguages.TRIX
+            RDFLanguages.RDFTHRIFT
+            // RDFLanguages.TRIX
     ));
 
     public static boolean isStdIn(String filenameOrIri) {
@@ -253,20 +256,26 @@ public class RDFDataMgrEx {
                 continue;
             }
 
-//            Stopwatch sw = Stopwatch.createStarted();
+            // Stopwatch sw = Stopwatch.createStarted();
+
+            // TODO If there is a syntax error within the first n items
+            // then the format won't be recognized at all
+            // We should add an indirection layer that allows to configure the prober
+            // and query its result before allowing the client to obtain the input stream
+            int n = 100;
             try {
-                long count = flow.take(100)
-                    .count()
-                    .blockingGet();
+                long count = flow.take(n)
+                        .count()
+                        .blockingGet();
 
                 successCountToLang.put(count, cand);
 
                 logger.debug("Number of items parsed by content type probing for " + cand + ": " + count);
             } catch(Exception e) {
-                // logger.debug("Failed to probe with format " + cand, e);
+                logger.debug("Failed to probe with format " + cand, e);
                 continue;
             } finally {
-//                System.err.println("Probing format " + cand + " took " + sw.elapsed(TimeUnit.MILLISECONDS));
+                // logger.debug("Probing format " + cand + " took " + sw.elapsed(TimeUnit.MILLISECONDS));
 
                 try {
                     in.reset();

@@ -85,8 +85,8 @@
 		<module>jena-sparql-api-playground</module>
 
 		<module>jena-sparql-api-virtuoso</module>
-        <module>jena-sparql-api-fuseki-geosparql-bundle</module>
-    </modules>
+		<module>jena-sparql-api-fuseki-geosparql-bundle</module>
+	</modules>
 
 	<issueManagement>
 		<url>https://github.com/SmartDataAnalytics/jena-sparql-api/issues</url>
@@ -381,13 +381,8 @@
 				<version>2.3.1</version>
 			</dependency>
 
-<!--
-			<dependency>
-				<groupId>org.glassfish.jaxb</groupId>
-				<artifactId>jaxb-runtime</artifactId>
-				<version>2.3.1</version>
-			</dependency>
--->
+			<!-- <dependency> <groupId>org.glassfish.jaxb</groupId> <artifactId>jaxb-runtime</artifactId> 
+				<version>2.3.1</version> </dependency> -->
 
 			<dependency>
 				<groupId>javax.activation</groupId>
@@ -948,6 +943,12 @@
 
 			<dependency>
 				<groupId>org.aksw.commons</groupId>
+				<artifactId>aksw-commons-lambdas-serializable</artifactId>
+				<version>${aksw.commons.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.aksw.commons</groupId>
 				<artifactId>aksw-commons-io-process-pipes</artifactId>
 				<version>${aksw.commons.version}</version>
 			</dependency>
@@ -1040,6 +1041,20 @@
 				<groupId>org.apache.commons</groupId>
 				<artifactId>commons-compress</artifactId>
 				<version>1.20</version>
+			</dependency>
+
+			<!-- When commons-compress just isn't enough (e.g. when there is need 
+				for splittable bzip2 decoding) -->
+			<dependency>
+				<groupId>org.apache.hadoop</groupId>
+				<artifactId>hadoop-common</artifactId>
+				<version>3.3.1</version>
+				<exclusions>
+					<exclusion>
+						<groupId>*</groupId>
+						<artifactId>*</artifactId>
+					</exclusion>
+				</exclusions>
 			</dependency>
 
 
@@ -1246,7 +1261,7 @@
 			<dependency>
 				<groupId>com.jayway.jsonpath</groupId>
 				<artifactId>json-path</artifactId>
-				<version>2.4.0</version>
+				<version>2.6.0</version>
 			</dependency>
 
 			<!-- experimental dependencies -->

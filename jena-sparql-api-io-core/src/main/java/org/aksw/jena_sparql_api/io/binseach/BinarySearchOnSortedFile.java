@@ -9,6 +9,11 @@ import java.nio.channels.ReadableByteChannel;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 
+import org.aksw.commons.io.block.api.PageManager;
+import org.aksw.commons.io.block.impl.PageManagerForFileChannel;
+import org.aksw.commons.io.block.impl.PageNavigator;
+import org.aksw.commons.io.seekable.api.Seekable;
+
 /**
  * Binary search over sorted files with memory mapped IO
  *

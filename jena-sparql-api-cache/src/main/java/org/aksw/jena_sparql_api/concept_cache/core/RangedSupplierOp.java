@@ -1,7 +1,7 @@
 package org.aksw.jena_sparql_api.concept_cache.core;
 
+import org.aksw.commons.rx.range.RangedSupplier;
 import org.aksw.jena_sparql_api.algebra.transform.TransformPushSlice;
-import org.aksw.jena_sparql_api.rx.util.collection.RangedSupplier;
 import org.aksw.jena_sparql_api.util.RewriteUtils;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.apache.jena.sparql.algebra.Op;

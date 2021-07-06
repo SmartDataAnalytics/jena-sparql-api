@@ -5,6 +5,8 @@ import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
 
+import org.aksw.commons.io.seekable.api.Seekable;
+
 import com.google.common.primitives.Ints;
 
 public class ReadableByteChannelForLinesMatchingPrefix

@@ -5,6 +5,8 @@ import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.FileSystem;
+import java.nio.file.FileSystemAlreadyExistsException;
+import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -20,8 +22,8 @@ import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 import org.aksw.commons.collections.IterableUtils;
+import org.aksw.commons.io.block.impl.BlockSources;
 import org.aksw.jena_sparql_api.io.binseach.BinarySearcher;
-import org.aksw.jena_sparql_api.io.binseach.BlockSources;
 import org.aksw.jena_sparql_api.io.binseach.GraphFromPrefixMatcher;
 import org.aksw.jena_sparql_api.io.binseach.GraphFromSubjectCache;
 import org.aksw.jena_sparql_api.rx.GraphOpsRx;
@@ -40,6 +42,7 @@ import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Dataset;
+import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QueryExecutionFactory;
@@ -48,6 +51,7 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.riot.RDFLanguages;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.OpAsQuery;
 import org.apache.jena.sparql.algebra.op.OpService;
@@ -74,8 +78,10 @@ import io.reactivex.rxjava3.disposables.Disposable;
 public class QueryIterServiceOrFile extends QueryIterService {
 
     public static final String XBINSEARCH = "x-binsearch:";
+    public static final String XFSRDFSTORE = "x-fsrdfstore:";
     public static final String FILE = "file:";
     public static final String VFS = "vfs:";
+
 
 
     protected Logger logger = LoggerFactory.getLogger(QueryIterServiceOrFile.class);
@@ -137,9 +143,15 @@ public class QueryIterServiceOrFile extends QueryIterService {
         if (tmp.startsWith(VFS)) {
             useVfs = true;
             tmp = tmp.substring(VFS.length());
+
+            // In the case of vfs replace http (without trailing number) with e.g. http4
+            // in order to use the same http client as jena does
+            // Also, my fix for VFS-805 does not work with the vfs 2.8.0's default http client 3
+
+            tmp = tmp.replaceAll("^http(?!\\d+)", "http4");
+
         } else if (tmp.startsWith(FILE)) {
-            useVfs = true;
-            tmp = tmp.substring(VFS.length());
+            useFile = true;
         } else {
             tmp = null;
         }
@@ -154,11 +166,23 @@ public class QueryIterServiceOrFile extends QueryIterService {
             if (useVfs) {
                 String fileSystemUrl = effectiveUri.getScheme() + "://" + effectiveUri.getAuthority();
 
-                Map<String, Object> env = null; // new HashMap<>();
+                URI fileSystemUri = URI.create("vfs:" + fileSystemUrl);
 
-                FileSystem fs = FileSystems.newFileSystem(
-                        URI.create("vfs:" + fileSystemUrl),
-                        env);
+                // Get-or-create file system
+                FileSystem fs;
+                try {
+                    fs = FileSystems.getFileSystem(fileSystemUri);
+                } catch (FileSystemNotFoundException e1) {
+                    try {
+                        Map<String, Object> env = null; // new HashMap<>();
+                        fs = FileSystems.newFileSystem(
+                            fileSystemUri,
+                            env);
+                    } catch (FileSystemAlreadyExistsException e2) {
+                        // There may have been a concurrent registration of the file system
+                        fs = FileSystems.getFileSystem(fileSystemUri);
+                    }
+                }
 
                 String pathStr = effectiveUri.getPath();
                 Path root = IterableUtils.expectOneItem(fs.getRootDirectories());
@@ -258,7 +282,15 @@ public class QueryIterServiceOrFile extends QueryIterService {
 
                 boolean isBzip2 = Collections.singletonList("bzip2").equals(info.getContentEncodings());
 
-                int bufferSize = 32 * 1024;
+                // On dnb-all_lds_20200213.sorted.nt.bz2:
+//              int bufferSize = 4 * 1024; // 363 requests
+//              int bufferSize = 8 * 1024; // 187 requests
+//              int bufferSize = 16 * 1024; // 98 requests
+//              int bufferSize = 32 * 1024; // 54 requests
+//              int bufferSize = 64 * 1024; // 33 requests
+                int bufferSize = 128 * 1024; // 22 requests
+//              int bufferSize = 256 * 1024; // 16 requests
+//              int bufferSize = 512 * 1024; // 14 requests
 
                 // Model generation wrapped as a flowable for resource management
                 Flowable<Binding> bindingFlow = Flowable.generate(() -> {
@@ -325,9 +357,17 @@ public class QueryIterServiceOrFile extends QueryIterService {
 
 
 
-            if(!specialProcessingApplied) {
-                String url = path.toUri().toString();
-                Dataset dataset = RDFDataMgr.loadDataset(url);
+            if (!specialProcessingApplied) {
+                Dataset dataset = DatasetFactory.create();
+                try (InputStream in = Files.newInputStream(path)) {
+                    TypedInputStream tis = RDFDataMgrEx.probeLang(in, RDFDataMgrEx.DEFAULT_PROBE_LANGS);
+
+                    // String url = path.toUri().toString();
+                    Lang lang = RDFLanguages.contentTypeToLang(tis.getContentType());
+                    RDFDataMgr.read(dataset, tis.getInputStream(), lang);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
 
 //    	    	// TODO Probably add namespaces declared on query scope (how to access them?)
                 //query.addGraphURI(path.toUri().toString());

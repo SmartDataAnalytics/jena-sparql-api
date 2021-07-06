@@ -2,24 +2,33 @@ package org.aksw.jena_sparql_api.io.binseach.bz2;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PushbackInputStream;
+import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
+import java.nio.channels.ReadableByteChannel;
 import java.util.concurrent.ExecutionException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.aksw.commons.io.block.api.Block;
+import org.aksw.commons.io.block.api.BlockSource;
+import org.aksw.commons.io.seekable.api.Seekable;
+import org.aksw.commons.io.seekable.api.SeekableSource;
+import org.aksw.commons.io.util.channel.ReadableByteChannelDecoratorBase;
+import org.aksw.commons.io.util.channel.ReadableByteChannelWithConditionalBound;
 import org.aksw.commons.util.ref.Ref;
 import org.aksw.commons.util.ref.RefImpl;
-import org.aksw.jena_sparql_api.io.binseach.Block;
-import org.aksw.jena_sparql_api.io.binseach.BlockSource;
 import org.aksw.jena_sparql_api.io.binseach.BufferFromInputStream;
 import org.aksw.jena_sparql_api.io.binseach.BufferFromInputStream.ByteArrayChannel;
 import org.aksw.jena_sparql_api.io.binseach.CharSequenceFromSeekable;
 import org.aksw.jena_sparql_api.io.binseach.DecodedDataBlock;
 import org.aksw.jena_sparql_api.io.binseach.ReverseCharSequenceFromSeekable;
-import org.aksw.jena_sparql_api.io.binseach.Seekable;
-import org.aksw.jena_sparql_api.io.binseach.SeekableSource;
 import org.aksw.jena_sparql_api.io.deprecated.MatcherFactory;
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream;
+import org.apache.hadoop.io.compress.BZip2Codec;
+import org.apache.hadoop.io.compress.SplittableCompressionCodec.READ_MODE;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.github.jsonldjava.shaded.com.google.common.primitives.Ints;
 import com.google.common.cache.Cache;
@@ -29,13 +38,23 @@ import com.google.common.cache.CacheBuilder;
 public class BlockSourceBzip2
     implements BlockSource
 {
+    private static final Logger logger = LoggerFactory.getLogger(BlockSourceBzip2.class);
+
+
 //	public static final byte[] magic = new BigInteger("425a6839", 16).toByteArray();
     // The magic number in characters is: BZh91AY&SY
     // TODO Block size is a parameter - we should parse it out
-    public static final String magicStr = "BZh91AY&SY";
+
+    public static final String COMPRESSED_MAGIC_STR = "1AY&SY";
+
+//    public static final String magicStr = "BZh91AY&SY";
 //    public static final byte[] magic = new BigInteger("425a6839314159265359", 16).toByteArray();
-    public static final Pattern fwdMagicPattern = Pattern.compile(magicStr, Pattern.LITERAL);
-    public static final Pattern bwdMagicPattern = Pattern.compile(new StringBuilder(magicStr).reverse().toString(), Pattern.LITERAL);
+//    public static final Pattern fwdMagicPattern = Pattern.compile("(BZh9)?" + COMPRESSED_MAGIC_STR.replaceAll("&", "\\&")); //, Pattern.LITERAL);
+//    public static final Pattern bwdMagicPattern = Pattern.compile(
+//            new StringBuilder(COMPRESSED_MAGIC_STR).reverse().toString().replaceAll("&", "\\&") + "(9hZB)?");//, Pattern.LITERAL);
+
+    public static final Pattern fwdMagicPattern = Pattern.compile("1AY\\&SY");
+    public static final Pattern bwdMagicPattern = Pattern.compile("YS\\&YA1");
 
     protected SeekableSource seekableSource;
 //    protected MatcherFactory fwdBlockStartMatcherFactory;
@@ -76,10 +95,42 @@ public class BlockSourceBzip2
     protected Ref<Block> loadBlock(Seekable seekable) throws IOException {
         long blockStart = seekable.getPos();
 
-        // The input stream now owns the seekable - closing it closes the seekable!
-        InputStream rawIn = Channels.newInputStream(seekable);
-        BZip2CompressorInputStream decodedIn = new BZip2CompressorInputStream(rawIn, false);
-        BufferFromInputStream blockBuffer = new BufferFromInputStream(8192, decodedIn);
+
+//        PushbackInputStream headerAddedIn = new PushbackInputStream(rawIn, 4);
+//
+//        byte[] headerBytes = new byte[] {'B', 'Z', 'h', '9'};
+//        headerAddedIn.unread(headerBytes);
+
+
+        InputStream effectiveIn;
+        boolean useHadoop = true;
+        if (!useHadoop) {
+            // The input stream now owns the seekable - closing it closes the seekable!
+            InputStream rawIn = Channels.newInputStream(seekable);
+            effectiveIn = new BZip2CompressorInputStream(rawIn, false);
+        } else {
+
+
+            SeekableInputStream seekableIn = SeekableInputStreams.create(seekable, Seekable::getPos, Seekable::setPos);
+
+            BZip2Codec codec = new BZip2Codec();
+            InputStream decodedIn = codec.createInputStream(seekableIn, null, blockStart, Long.MAX_VALUE, READ_MODE.BYBLOCK);
+            ReadableByteChannel wrapper = SeekableInputStreams.advertiseEndOfBlock(decodedIn);
+            effectiveIn = Channels.newInputStream(wrapper);
+
+        }
+
+
+//                dummy -> {
+//                    try {
+
+//                    } catch (IOException e) {
+//                        throw new RuntimeException(e);
+//                    }
+//                }));
+//        }
+
+        BufferFromInputStream blockBuffer = new BufferFromInputStream(8192, effectiveIn);
 
         // Closing the block would close the input stream -
         // In order to allow multiple clients, wrap the block in a reference:
@@ -93,13 +144,15 @@ public class BlockSourceBzip2
 
     @Override
     public Ref<Block> contentAtOrBefore(long requestPos, boolean inclusive) throws IOException {
+        logger.debug(String.format("contentAtOrBefore(%d, %b)", requestPos, inclusive));
+
         // If the requestPos is already in the cache, serve it from there
         // TODO Track consecutive blocks in a cache
 //        if(!inclusive) {
 //            inclusive = true;
 //        }
 
-        long internalRequestPos = requestPos - (inclusive ? 0 : 1) + (magicStr.length() - 1);
+        long internalRequestPos = requestPos - (inclusive ? 0 : 1) + (COMPRESSED_MAGIC_STR.length() - 1);
         Ref<Block> result = blockCache.getIfPresent(internalRequestPos);
 
         if(result == null) {
@@ -141,6 +194,8 @@ public class BlockSourceBzip2
 
     @Override
     public Ref<Block> contentAtOrAfter(long requestPos, boolean inclusive) throws IOException {
+        logger.debug(String.format("contentAtOrAfter(%d, %b)", requestPos, inclusive));
+
         // TODO Track consecutive blocks in a cache
 //        if(!inclusive) {
 //            inclusive = true;
@@ -178,9 +233,9 @@ public class BlockSourceBzip2
         long result;
         try (Ref<Block> ref = contentAtOrAfter(pos, true)) {
             try (Seekable channel = ref.get().newChannel()) {
-            	// This is super ugly code to read all data in a block
-            	// in order to get its size
-            	result = ((ByteArrayChannel)channel).loadAll();
+                // This is super ugly code to read all data in a block
+                // in order to get its size
+                result = ((ByteArrayChannel)channel).loadAll();
             }
         } catch (Exception e) {
             throw new IOException(e);
@@ -207,7 +262,7 @@ public class BlockSourceBzip2
     @Override
     public boolean hasBlockBefore(long pos) throws IOException {
         boolean result;
-        long internalRequestPos = pos - 1 + (magicStr.length() - 1);
+        long internalRequestPos = pos - 1 + (COMPRESSED_MAGIC_STR.length() - 1);
         try(Seekable seekable = seekableSource.get(internalRequestPos)) {
 //            SeekableMatcher matcher = bwdBlockStartMatcherFactory.newMatcher();
 //            result = matcher.find(seekable);

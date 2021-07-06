@@ -17,6 +17,16 @@ import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import org.aksw.commons.io.block.api.Block;
+import org.aksw.commons.io.block.api.BlockSource;
+import org.aksw.commons.io.block.api.PageManager;
+import org.aksw.commons.io.block.impl.BlockSources;
+import org.aksw.commons.io.block.impl.PageManagerForByteBuffer;
+import org.aksw.commons.io.block.impl.PageManagerForFileChannel;
+import org.aksw.commons.io.block.impl.PageNavigator;
+import org.aksw.commons.io.seekable.api.SeekableSource;
+import org.aksw.commons.io.seekable.impl.SeekableFromBlock;
+import org.aksw.commons.io.seekable.impl.SeekableSourceFromPageManager;
 import org.aksw.commons.util.ref.Ref;
 import org.aksw.jena_sparql_api.io.binseach.bz2.BlockSourceBzip2;
 import org.aksw.jena_sparql_api.io.deprecated.BoyerMooreMatcherFactory;

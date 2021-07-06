@@ -17,10 +17,13 @@ import org.apache.jena.sparql.util.ExprUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
+import com.jayway.jsonpath.JsonPath;
+import com.jayway.jsonpath.PathNotFoundException;
 
 public class TestSparqlExtJson {
     protected static final PrefixMapping pm = new PrefixMappingImpl();
@@ -131,4 +134,12 @@ public class TestSparqlExtJson {
       }
     }
 
+
+    /** Accessing non-existent paths should raise the {@link PathNotFoundException} */
+    @Test(expected = PathNotFoundException.class)
+    public void testJsonPathNull() {
+        Gson gson = new Gson();
+        Object tmp = gson.fromJson("{\"foo\": \"bar\"}", Object.class);
+        JsonPath.read(tmp, "$.baz");
+    }
 }

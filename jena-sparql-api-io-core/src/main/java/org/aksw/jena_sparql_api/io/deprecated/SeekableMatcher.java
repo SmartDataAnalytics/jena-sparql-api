@@ -2,7 +2,7 @@ package org.aksw.jena_sparql_api.io.deprecated;
 
 import java.io.IOException;
 
-import org.aksw.jena_sparql_api.io.binseach.Seekable;
+import org.aksw.commons.io.seekable.api.Seekable;
 
 /**
  * A matcher over a Seekable.

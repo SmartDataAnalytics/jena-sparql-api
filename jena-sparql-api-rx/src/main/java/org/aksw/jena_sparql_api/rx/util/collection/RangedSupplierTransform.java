@@ -3,6 +3,7 @@ package org.aksw.jena_sparql_api.rx.util.collection;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
+import org.aksw.commons.rx.range.RangedSupplier;
 import org.aksw.commons.util.delegate.AbstractDelegated;
 
 import com.google.common.collect.Range;

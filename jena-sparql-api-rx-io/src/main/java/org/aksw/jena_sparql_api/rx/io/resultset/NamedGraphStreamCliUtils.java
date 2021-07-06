@@ -41,6 +41,13 @@ import org.slf4j.LoggerFactory;
 
 import io.reactivex.rxjava3.core.Flowable;
 
+/**
+ * Utilities for processing a sequence of command line arguments that denote
+ * RDF sources and SPARQL-based transformations into streams of data
+ *
+ * @author raven
+ *
+ */
 public class NamedGraphStreamCliUtils {
 
     private static final Logger logger = LoggerFactory.getLogger(NamedGraphStreamCliUtils.class);
@@ -124,7 +131,7 @@ public class NamedGraphStreamCliUtils {
             String fmtHint,
             PrefixMapping pm,
             Collection<Lang> quadLangs
-    		) {
+            ) {
 
         List<String> args = preprocessArgs(rawArgs);
         Map<String, Callable<TypedInputStream>> map = validate(args, quadLangs, true);
@@ -179,17 +186,17 @@ public class NamedGraphStreamCliUtils {
 
         return result;
     }
-    
-    
-    
+
+
+
     public static void execMap(
-    		PrefixMapping pm,
-    		List<String> sourceStrs,
-    		Collection<Lang> quadLangs,
-    		List<String> stmtStrs,
-    		String timeoutSpec,
-    		String outFormat,
-    		long deferCount) {
+            PrefixMapping pm,
+            List<String> sourceStrs,
+            Collection<Lang> quadLangs,
+            List<String> stmtStrs,
+            String timeoutSpec,
+            String outFormat,
+            long deferCount) {
 
         Consumer<Context> contextHandler = cxt -> {
             if (!Strings.isNullOrEmpty(timeoutSpec)) {
@@ -213,23 +220,23 @@ public class NamedGraphStreamCliUtils {
 
         // This is the final output sink
         SPARQLResultExProcessor resultProcessor = SPARQLResultExProcessorBuilder.configureProcessor(
-      	      StdIo.openStdOutWithCloseShield(), System.err,
-      	      outFormat,
-      	      stmts,
-      	      pm,
-      	      RDFFormat.TURTLE_BLOCKS,
-      	      RDFFormat.TRIG_BLOCKS,
-      	      deferCount,
-      	      false, 0, false,
-      	      () -> {});
+                StdIo.openStdOutWithCloseShield(), System.err,
+                outFormat,
+                stmts,
+                pm,
+                RDFFormat.TURTLE_BLOCKS,
+                RDFFormat.TRIG_BLOCKS,
+                deferCount,
+                false, 0, false,
+                () -> {});
 
         // SPARQLResultExProcessor resultProcessor = resultProcessorBuilder.build();
-        
+
         Function<RDFConnection, SPARQLResultEx> mapper = SparqlMappers.createMapperToSparqlResultEx(outputMode, stmts, resultProcessor);
 
         Flowable<SPARQLResultEx> flow =
                 // Create a stream of Datasets
-        		NamedGraphStreamCliUtils.createNamedGraphStreamFromArgs(sourceStrs, null, pm, quadLangs)
+                NamedGraphStreamCliUtils.createNamedGraphStreamFromArgs(sourceStrs, null, pm, quadLangs)
                     // Map the datasets in parallel
                     .compose(RxOps.createParallelMapperOrdered(
                         // Map the dataset to a connection
@@ -238,7 +245,7 @@ public class NamedGraphStreamCliUtils {
                                 SparqlMappers.applyContextHandler(contextHandler)
                                     // Finally invoke the mapper
                                     .andThen(mapper))));
-        
+
         resultProcessor.start();
         try {
 //            for(SPARQLResultEx item : flow.blockingIterable(16)) {

@@ -7,12 +7,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.aksw.commons.io.block.api.Block;
+import org.aksw.commons.io.block.api.BlockSource;
+import org.aksw.commons.io.block.api.PageManager;
+import org.aksw.commons.io.block.impl.PageManagerForFileChannel;
+import org.aksw.commons.io.block.impl.PageNavigator;
 import org.aksw.commons.util.ref.Ref;
-import org.aksw.jena_sparql_api.io.binseach.Block;
-import org.aksw.jena_sparql_api.io.binseach.BlockSource;
-import org.aksw.jena_sparql_api.io.binseach.PageManager;
-import org.aksw.jena_sparql_api.io.binseach.PageManagerForFileChannel;
-import org.aksw.jena_sparql_api.io.binseach.PageNavigator;
 
 public class InputSplits {
     public static List<Object> createInputSplits(BlockSource blockSource) throws Exception {

@@ -7,7 +7,7 @@ public class RDFIteratorFromPipedRDFIterator<T>
     implements RDFIterator<T>
 {
     /** A dirty flag for prefixes */
-    protected boolean prefixesChanged = false;
+    protected volatile boolean prefixesChanged = false;
 
     public RDFIteratorFromPipedRDFIterator(int bufferSize, boolean fair, int pollTimeout, int maxPolls) {
         super(bufferSize, fair, pollTimeout, maxPolls);
