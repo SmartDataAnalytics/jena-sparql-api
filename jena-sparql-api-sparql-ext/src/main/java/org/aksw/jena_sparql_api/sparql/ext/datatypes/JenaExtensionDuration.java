@@ -1,7 +1,11 @@
 package org.aksw.jena_sparql_api.sparql.ext.datatypes;
 
 import org.aksw.jena_sparql_api.mapper.proxy.function.FunctionBinder;
+import org.aksw.jena_sparql_api.sparql.ext.geosparql.AccumulatorFactories;
+import org.aksw.jena_sparql_api.sparql.ext.geosparql.AggregatorsJena;
+import org.apache.jena.geosparql.implementation.vocabulary.GeoSPARQL_URI;
 import org.apache.jena.shared.PrefixMapping;
+import org.apache.jena.sparql.expr.aggregate.AggregateRegistry;
 import org.apache.jena.sparql.function.FunctionRegistry;
 
 public class JenaExtensionDuration {
@@ -10,6 +14,10 @@ public class JenaExtensionDuration {
 
     public static void register() {
         loadDefs(FunctionRegistry.get());
+
+        AggregateRegistry.register(
+                NS + "sum",
+                AccumulatorFactories.wrap1(AggregatorsDuration::aggSum));
     }
 
     public static void loadDefs(FunctionRegistry registry) {

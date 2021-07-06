@@ -3,7 +3,6 @@ package org.aksw.jena_sparql_api.sparql.ext.datatypes;
 import org.aksw.jena_sparql_api.mapper.annotation.IriNs;
 import org.apache.jena.datatypes.xsd.XSDDatatype;
 import org.apache.jena.datatypes.xsd.XSDDuration;
-import org.apache.jena.datatypes.xsd.impl.XSDDurationType;
 
 import java.time.Duration;
 
