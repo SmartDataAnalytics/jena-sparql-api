@@ -40,7 +40,7 @@ public class AggregatorsDuration {
     }
 
     public static ParallelAggregator<Duration, Duration, ?> aggSumDuration() {
-        return AggBuilder.binaryOperator(() -> NodeValue.makeDuration("PT0H").getDuration(), Duration::add);
+        return AggBuilder.reduce(() -> NodeValue.makeDuration("PT0H").getDuration(), Duration::add);
     }
 
 
