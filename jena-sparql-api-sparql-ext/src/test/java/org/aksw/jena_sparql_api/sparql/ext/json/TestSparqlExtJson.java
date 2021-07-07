@@ -84,6 +84,13 @@ public class TestSparqlExtJson {
         ExprUtils.eval(ExprUtils.parse("json:object('uri', <urn:test>, 'binsearch')", pm));
     }
 
+    @Test
+    public void testJsonArrayLength() {
+        NodeValue nv = ExprUtils.eval(ExprUtils.parse("json:length('[1, 2, 3]'^^xsd:json)", pm));
+        Assert.assertEquals(3, nv.getInteger().intValue());
+    }
+
+
 
     @Test
     public void testconvert() {

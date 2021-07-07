@@ -1,5 +1,7 @@
 package org.aksw.jena_sparql_api.sparql.ext.json;
 
+import org.aksw.jena_sparql_api.mapper.proxy.function.FunctionBinder;
+import org.aksw.jena_sparql_api.sparql.ext.util.JenaExtensionUtil;
 import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.ARQConstants;
@@ -7,7 +9,7 @@ import org.apache.jena.sparql.function.FunctionRegistry;
 import org.apache.jena.sparql.pfunction.PropertyFunctionRegistry;
 
 public class JenaExtensionJson {
-    public static String ns = "http://jsa.aksw.org/fn/json/";
+    public static final String ns = "http://jsa.aksw.org/fn/json/";
 
     public static void register() {
         FunctionRegistry.get().put(ns + "object", E_JsonObject.class);
@@ -29,6 +31,10 @@ public class JenaExtensionJson {
         TypeMapper.getInstance().registerDatatype(new RDFDatatypeJson());
 
         PropertyFunctionRegistry.get().put(ns + "unnest", new PropertyFunctionFactoryJsonUnnest());
+
+        FunctionBinder binder = JenaExtensionUtil.createFunctionBinder(FunctionRegistry.get());
+        binder.registerAll(SparqlFnLibJson.class);
+
     }
 
     public static void addPrefixes(PrefixMapping pm) {

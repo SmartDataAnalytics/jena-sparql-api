@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 
 import org.aksw.jena_sparql_api.mapper.proxy.function.FunctionBinder;
 import org.aksw.jena_sparql_api.mapper.proxy.function.FunctionGenerator;
+import org.aksw.jena_sparql_api.sparql.ext.util.JenaExtensionUtil;
 import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.geosparql.implementation.GeometryWrapper;
 import org.apache.jena.geosparql.implementation.datatype.WKTDatatype;
@@ -35,7 +36,7 @@ public class JenaExtensionsGeoSparqlX {
         WKTDatatype.registerDatatypes();
 
 
-        FunctionBinder binder = new FunctionBinder(registry);
+        FunctionBinder binder = JenaExtensionUtil.createFunctionBinder(registry);
         FunctionGenerator generator = binder.getFunctionGenerator();
 
         // Define two-way Geometry - GeometryWrapper coercions
@@ -43,18 +44,6 @@ public class JenaExtensionsGeoSparqlX {
             .register(Geometry.class, GeometryWrapper.class,
                     geometry -> new GeometryWrapper(geometry, WKTDatatype.URI),
                     GeometryWrapper::getParsingGeometry)
-            .register(BigDecimal.class, Long.class,
-                    BigDecimal::longValueExact, BigDecimal::new)
-            .register(BigDecimal.class, Integer.class,
-                    BigDecimal::intValueExact, BigDecimal::new)
-            .register(BigDecimal.class, Short.class,
-                    BigDecimal::shortValueExact, BigDecimal::new)
-            .register(BigDecimal.class, Byte.class,
-                    BigDecimal::byteValueExact, BigDecimal::new)
-            .register(BigDecimal.class, Double.class,
-                    BigDecimal::doubleValue, BigDecimal::new)
-            .register(BigDecimal.class, Float.class,
-                    BigDecimal::floatValue, BigDecimal::new)
             ;
 
         // Declare that the conversion of Geometry to GeometryWrapper
