@@ -43,7 +43,8 @@ public class WebAppInitializerSparqlServiceUtils {
 
         {
             AnnotationConfigWebApplicationContext dispatcherContext = new AnnotationConfigWebApplicationContext();
-            dispatcherContext.register(WebMvcConfigSnorql.class);
+//            dispatcherContext.register(WebMvcConfigSnorql.class);
+            dispatcherContext.register(WebMvcConfigYasgui.class);
 
             ServletRegistration.Dynamic servlet = servletContext.addServlet("dispatcherServlet", new DispatcherServlet(dispatcherContext));
             servlet.addMapping("/*");
