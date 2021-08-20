@@ -45,7 +45,7 @@ public class TestBinSearch {
             if(true)
             {
                 Ref<? extends Block> block = blockSource.contentAtOrAfter(21133549, true);
-                BlockIterState state = new BlockIterState(true, block, null, true);
+                BlockIterState state = new BlockIterState(true, block, null, true, true);
                 while(state.hasNext()) {
                     state.advance();
                     System.out.println(state.block.getOffset());
@@ -65,7 +65,7 @@ public class TestBinSearch {
             if(true)
             {
                 Ref<? extends Block> block = blockSource.contentAtOrBefore(162881, true);
-                BlockIterState state = new BlockIterState(true, block, null, false);
+                BlockIterState state = new BlockIterState(true, block, null, false, true);
                 while(state.hasNext()) {
                     state.advance();
                     System.out.println(state.block.getOffset());

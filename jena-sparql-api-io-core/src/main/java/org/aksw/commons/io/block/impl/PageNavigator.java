@@ -6,6 +6,7 @@ import java.nio.ByteBuffer;
 
 import org.aksw.commons.io.block.api.PageManager;
 import org.aksw.commons.io.seekable.api.Seekable;
+import org.aksw.commons.rx.cache.range.AutoCloseableWithLeakDetectionBase;
 import org.aksw.commons.util.ref.Ref;
 
 import com.google.common.primitives.Ints;
@@ -19,6 +20,7 @@ import com.google.common.primitives.Ints;
  *
  */
 public class PageNavigator
+    extends AutoCloseableWithLeakDetectionBase
     implements Seekable
 {
     protected PageManager pageManager;
@@ -155,7 +157,7 @@ public class PageNavigator
 
     /**
      * Limit the maxmimum position by length bytes from the current position.
-     * 
+     *
      * @param length
      * @return
      */
@@ -818,12 +820,12 @@ public class PageNavigator
 
     @Override
     public boolean isOpen() {
-        return true;
+        return !isClosed;
         //return isOpen;
     }
 
     @Override
-    public void close() throws IOException {
+    public void closeActual() throws Exception {
         if(pageObj != null) {
             try {
                 if(!pageObj.isClosed()) {

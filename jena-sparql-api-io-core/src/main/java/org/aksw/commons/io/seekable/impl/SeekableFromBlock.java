@@ -88,6 +88,16 @@ public class SeekableFromBlock
         this(startBlockRef, posInStartSegment, exposedStartPos, Long.MIN_VALUE, Long.MAX_VALUE);
     }
 
+    /**
+     * The startBlockRef is considered to be owned by this object.
+     * Closing this seekable also closes the reference.
+     *
+     * @param startBlockRef
+     * @param posInStartSegment
+     * @param exposedStartPos
+     * @param minPos
+     * @param maxPos
+     */
     public SeekableFromBlock(Ref<? extends Block> startBlockRef, int posInStartSegment, long exposedStartPos, long minPos, long maxPos) {
         super();
         this.startBlockRef = startBlockRef;
@@ -113,9 +123,9 @@ public class SeekableFromBlock
 
     @Override
     public void closeActual() throws Exception {
-//        currentSeekable.close();
-//        currentBlockRef.close();
-//        startBlockRef.close();
+        currentSeekable.close();
+        currentBlockRef.close();
+        startBlockRef.close();
     }
 
 

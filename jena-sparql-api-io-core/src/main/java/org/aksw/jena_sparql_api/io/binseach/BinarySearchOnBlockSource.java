@@ -57,10 +57,10 @@ public class BinarySearchOnBlockSource
 
 
             int extraBytes = 0;
-            BlockIterState it = BlockIterState.fwd(true, blockRef);
+            BlockIterState it = BlockIterState.fwd(true, blockRef.acquire(), false);
             while(it.hasNext()) {
                 it.advance();
-                try(SeekableFromBlock seekable = new SeekableFromBlock(it.blockRef, 0, 0)) {
+                try(SeekableFromBlock seekable = new SeekableFromBlock(it.blockRef.acquire(), 0, 0)) {
                     boolean found = seekable.posToNext((byte)'\n');
                     if(found) {
                         extraBytes = Ints.checkedCast(seekable.getPos());
@@ -69,6 +69,8 @@ public class BinarySearchOnBlockSource
                     }
                 }
             }
+            // This extra close in case no match was found is ugly - refactor.
+            it.closeCurrent();
 
             // extraBytes = 0;
 //            System.out.println("Extra bytes: " + extraBytes);
@@ -77,7 +79,7 @@ public class BinarySearchOnBlockSource
 //            System.out.println("Block size: " + blockSize);
             long maxPos = blockSize + extraBytes;
 
-            SeekableFromBlock decodedView = new SeekableFromBlock(it.blockRef, 0, 0, Long.MIN_VALUE, maxPos);
+            SeekableFromBlock decodedView = new SeekableFromBlock(blockRef, 0, 0, Long.MIN_VALUE, maxPos);
 
 
             if(prefix == null || prefix.length == 0) {

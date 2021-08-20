@@ -2,8 +2,6 @@ package org.aksw.jena_sparql_api.io.binseach.bz2;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.PushbackInputStream;
-import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 import java.util.concurrent.ExecutionException;
@@ -14,8 +12,6 @@ import org.aksw.commons.io.block.api.Block;
 import org.aksw.commons.io.block.api.BlockSource;
 import org.aksw.commons.io.seekable.api.Seekable;
 import org.aksw.commons.io.seekable.api.SeekableSource;
-import org.aksw.commons.io.util.channel.ReadableByteChannelDecoratorBase;
-import org.aksw.commons.io.util.channel.ReadableByteChannelWithConditionalBound;
 import org.aksw.commons.util.ref.Ref;
 import org.aksw.commons.util.ref.RefImpl;
 import org.aksw.jena_sparql_api.io.binseach.BufferFromInputStream;
@@ -30,9 +26,10 @@ import org.apache.hadoop.io.compress.SplittableCompressionCodec.READ_MODE;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.github.jsonldjava.shaded.com.google.common.primitives.Ints;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.RemovalNotification;
+import com.google.common.primitives.Ints;
 
 
 public class BlockSourceBzip2
@@ -60,7 +57,10 @@ public class BlockSourceBzip2
 //    protected MatcherFactory fwdBlockStartMatcherFactory;
 //    protected MatcherFactory bwdBlockStartMatcherFactory;
 
-    protected Cache<Long, Ref<Block>> blockCache = CacheBuilder.newBuilder().build();
+    protected Cache<Long, Ref<Block>> blockCache = CacheBuilder
+            .newBuilder()
+            .removalListener((RemovalNotification<Long, Ref<Block>> notification) -> { notification.getValue().close(); })
+            .build();
 
 
 
@@ -144,7 +144,7 @@ public class BlockSourceBzip2
 
     @Override
     public Ref<Block> contentAtOrBefore(long requestPos, boolean inclusive) throws IOException {
-        logger.debug(String.format("contentAtOrBefore(%d, %b)", requestPos, inclusive));
+        logger.trace(String.format("contentAtOrBefore(%d, %b)", requestPos, inclusive));
 
         // If the requestPos is already in the cache, serve it from there
         // TODO Track consecutive blocks in a cache
@@ -176,6 +176,8 @@ public class BlockSourceBzip2
                 seekable.setPos(blockStart);
 
                 result = cache(blockStart, seekable);
+            } else {
+                seekable.close();
             }
         }
 
@@ -185,7 +187,16 @@ public class BlockSourceBzip2
     public Ref<Block> cache(long blockStart, Seekable seekable) throws IOException {
         Ref<Block> result;
         try {
-            result = blockCache.get(blockStart, () -> loadBlock(seekable));
+            boolean[] usedLoader = { false };
+            result = blockCache.get(blockStart, () -> {
+                usedLoader[0] = true;
+                return loadBlock(seekable);
+            });
+
+            if (!usedLoader[0]) {
+                seekable.close();
+            }
+
         } catch (ExecutionException e) {
             throw new RuntimeException(e);
         }
@@ -194,7 +205,7 @@ public class BlockSourceBzip2
 
     @Override
     public Ref<Block> contentAtOrAfter(long requestPos, boolean inclusive) throws IOException {
-        logger.debug(String.format("contentAtOrAfter(%d, %b)", requestPos, inclusive));
+        logger.trace(String.format("contentAtOrAfter(%d, %b)", requestPos, inclusive));
 
         // TODO Track consecutive blocks in a cache
 //        if(!inclusive) {
@@ -219,6 +230,8 @@ public class BlockSourceBzip2
                 //long blockStart = seekable.getPos();
 //                System.err.println("Bz2 block for " + requestPos + " found at " + blockStart);
                 result = cache(blockStart, seekable);
+            } else {
+                seekable.close();
             }
         }
 
