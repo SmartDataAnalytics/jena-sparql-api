@@ -7,8 +7,8 @@ import java.util.function.Supplier;
 
 import org.aksw.commons.io.block.api.Block;
 import org.aksw.commons.io.seekable.api.Seekable;
-import org.aksw.commons.rx.cache.range.AutoCloseableBase;
-import org.aksw.commons.rx.cache.range.AutoCloseableWithLeakDetectionBase;
+import org.aksw.commons.util.closeable.AutoCloseableBase;
+import org.aksw.commons.util.closeable.AutoCloseableWithLeakDetectionBase;
 import org.aksw.commons.util.ref.Ref;
 import org.aksw.jena_sparql_api.io.binseach.BlockIterState;
 

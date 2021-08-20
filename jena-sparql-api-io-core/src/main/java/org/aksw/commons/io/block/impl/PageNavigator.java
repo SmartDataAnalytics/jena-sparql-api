@@ -6,7 +6,7 @@ import java.nio.ByteBuffer;
 
 import org.aksw.commons.io.block.api.PageManager;
 import org.aksw.commons.io.seekable.api.Seekable;
-import org.aksw.commons.rx.cache.range.AutoCloseableWithLeakDetectionBase;
+import org.aksw.commons.util.closeable.AutoCloseableWithLeakDetectionBase;
 import org.aksw.commons.util.ref.Ref;
 
 import com.google.common.primitives.Ints;
