@@ -7,6 +7,8 @@ import java.util.function.Supplier;
 
 import org.aksw.commons.io.block.api.Block;
 import org.aksw.commons.io.seekable.api.Seekable;
+import org.aksw.commons.rx.cache.range.AutoCloseableBase;
+import org.aksw.commons.rx.cache.range.AutoCloseableWithLeakDetectionBase;
 import org.aksw.commons.util.ref.Ref;
 import org.aksw.jena_sparql_api.io.binseach.BlockIterState;
 
@@ -57,6 +59,7 @@ class OpenBlock{
  *
  */
 public class SeekableFromBlock
+    extends AutoCloseableWithLeakDetectionBase
     implements Seekable
 {
     protected Ref<? extends Block> startBlockRef;
@@ -109,7 +112,10 @@ public class SeekableFromBlock
 
 
     @Override
-    public void close() throws IOException {
+    public void closeActual() throws Exception {
+//        currentSeekable.close();
+//        currentBlockRef.close();
+//        startBlockRef.close();
     }
 
 

@@ -103,7 +103,7 @@ public class BlockSources {
 
         // For records larger than the block we'd need to create a seekable over
         // all blocks starting from the current block
-        try(SeekableFromBlock seekable = new SeekableFromBlock(blockRef, 0, 0)) {
+        try(SeekableFromBlock seekable = new SeekableFromBlock(blockRef.acquire(), 0, 0)) {
 
 
 
