@@ -411,6 +411,16 @@ public class SeekableFromBlock
 
 
     void setCurrent(BlockIterState state) {
+        if (currentBlockRef != state.blockRef) {
+            currentBlockRef.close();
+            try {
+                currentBlock.close();
+                currentSeekable.close();
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+
         currentBlockRef = state.blockRef;
         currentBlock = state.block;
         currentSeekable = state.seekable;

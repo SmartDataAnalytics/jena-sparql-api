@@ -51,6 +51,10 @@ public class BlockIterState {
         return new BlockIterState(yieldSelf, blockRef, seekable, true, true);
     }
 
+    public static BlockIterState fwd(boolean yieldSelf, Ref<? extends Block> blockRef, Seekable seekable, boolean skipFirstClose) {
+        return new BlockIterState(yieldSelf, blockRef, seekable, true, skipFirstClose);
+    }
+
     public static BlockIterState fwd(boolean yieldSelf, Ref<? extends Block> blockRef, boolean skipFirstClose) {
         return new BlockIterState(yieldSelf, blockRef, blockRef.get().newChannel(), true, skipFirstClose);
     }
