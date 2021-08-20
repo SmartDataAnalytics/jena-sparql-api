@@ -151,14 +151,17 @@ public abstract class SparqlEndpointBase {
 
     @GET
     @Produces(MediaType.APPLICATION_XML)
-    public void executeQueryXml(@Suspended final AsyncResponse asyncResponse, @QueryParam("query") String queryString) {
+    public void executeQueryXml(
+            @Suspended final AsyncResponse asyncResponse,
+            @QueryParam("query") String queryString,
+            @QueryParam("update") String updateString) {
             //throws Exception {
 
-        if(queryString == null) {
+        if(queryString == null && updateString == null) {
             StreamingOutput so = StreamingOutputString.create("<error>No query specified. Append '?query=&lt;your SPARQL query&gt;'</error>");
             asyncResponse.resume(Response.status(Status.BAD_REQUEST).entity(so).build()); // TODO: Return some error HTTP code
         } else {
-            processStmtAsync(asyncResponse, queryString, SparqlFormatterUtils.FORMAT_XML);
+            processStmtAsync(asyncResponse, queryString, updateString, SparqlFormatterUtils.FORMAT_XML);
         }
 
         //return processQuery(req, queryString, SparqlFormatterUtils.FORMAT_XML);
@@ -181,7 +184,10 @@ public abstract class SparqlEndpointBase {
     @POST
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Produces(MediaType.APPLICATION_XML)
-    public void executeQueryXmlPostAsync(@Suspended final AsyncResponse asyncResponse, @FormParam("query") String queryString, @FormParam("update") String updateString) {
+    public void executeQueryXmlPostAsync(
+            @Suspended final AsyncResponse asyncResponse,
+            @FormParam("query") String queryString,
+            @FormParam("update") String updateString) {
             //throws Exception {
 
         if(queryString == null) {
@@ -196,7 +202,7 @@ public abstract class SparqlEndpointBase {
             asyncResponse.resume(Response.ok(so).build()); // TODO: Return some error HTTP code
         } else {
         //  return processQuery(req, queryString, SparqlFormatterUtils.FORMAT_XML);
-            processStmtAsync(asyncResponse, queryString, SparqlFormatterUtils.FORMAT_XML);
+            processStmtAsync(asyncResponse, queryString, updateString, SparqlFormatterUtils.FORMAT_XML);
         }
     }
 
@@ -212,8 +218,11 @@ public abstract class SparqlEndpointBase {
 
     @GET
     @Produces({MediaType.APPLICATION_JSON, "application/sparql-results+json"})
-    public void executeQueryJson(@Suspended final AsyncResponse asyncResponse, @QueryParam("query") String queryString) {
-        processStmtAsync(asyncResponse, queryString, SparqlFormatterUtils.FORMAT_Json);
+    public void executeQueryJson(
+            @Suspended final AsyncResponse asyncResponse,
+            @QueryParam("query") String queryString,
+            @QueryParam("update") String updateString) {
+        processStmtAsync(asyncResponse, queryString, updateString, SparqlFormatterUtils.FORMAT_Json);
     }
 
 
@@ -238,17 +247,26 @@ public abstract class SparqlEndpointBase {
     @POST
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Produces({MediaType.APPLICATION_JSON, "application/sparql-results+json"})
-    public void executeQueryXmlPost(@Suspended final AsyncResponse asyncResponse, @FormParam("query") String queryString, @FormParam("update") String updateStr) {
+    public void executeQueryXmlPost(
+            @Suspended final AsyncResponse asyncResponse,
+            @FormParam("query") String queryString,
+            @FormParam("update") String updateStr) {
         if(queryString == null) {
             queryString = updateStr;
         }
-        processStmtAsync(asyncResponse, queryString, SparqlFormatterUtils.FORMAT_Json);
+        processStmtAsync(asyncResponse, queryString, updateStr, SparqlFormatterUtils.FORMAT_Json);
     }
 
-    public void processStmtAsync(final AsyncResponse response, String stmtStr, final String format) {
-        if(stmtStr == null) {
+    public void processStmtAsync(final AsyncResponse response, String queryStr, String updateStr, final String format) {
+        if(queryStr == null && updateStr == null) {
             throw new RuntimeException("No query/update statement provided");
         }
+
+        if (queryStr != null && updateStr != null) {
+            throw new RuntimeException("Both 'query' and 'update' statement strings provided in a single request");
+        }
+
+        String stmtStr = queryStr != null ? queryStr : updateStr;
 
         SparqlStmt stmt = classifyStmt(stmtStr);
 
@@ -257,7 +275,7 @@ public abstract class SparqlEndpointBase {
         } else if(stmt.isUpdateRequest()) {
             processUpdateAsync(response, stmt.getAsUpdateStmt());
         } else {
-            throw new RuntimeException("Unknown request type: " + stmtStr);
+            throw new RuntimeException("Unknown request type: " + queryStr);
         }
     }
 
@@ -378,8 +396,12 @@ public abstract class SparqlEndpointBase {
 
     @GET
     @Produces("application/rdf+xml") //HttpParams.contentTypeRDFXML)
-    public void executeQueryRdfXml(@Suspended final AsyncResponse asyncResponse, @QueryParam("query") String queryString) {
-        processStmtAsync(asyncResponse, queryString, SparqlFormatterUtils.FORMAT_RdfXml);
+    public void executeQueryRdfXml(
+            @Suspended final AsyncResponse asyncResponse,
+            @QueryParam("query") String queryString,
+            @QueryParam("update") String updateString
+            ) {
+        processStmtAsync(asyncResponse, queryString, updateString, SparqlFormatterUtils.FORMAT_RdfXml);
     }
 
 //    @POST
@@ -393,8 +415,11 @@ public abstract class SparqlEndpointBase {
     @POST
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Produces("application/rdf+xml")// HttpParams.contentTypeRDFXML)
-    public void executeQueryRdfXmlPost(@Suspended final AsyncResponse asyncResponse, @FormParam("query") String queryString) {
-        processStmtAsync(asyncResponse, queryString, SparqlFormatterUtils.FORMAT_RdfXml);
+    public void executeQueryRdfXmlPost(
+            @Suspended final AsyncResponse asyncResponse,
+            @FormParam("query") String queryString,
+            @FormParam("query") String updateString) {
+        processStmtAsync(asyncResponse, queryString, updateString, SparqlFormatterUtils.FORMAT_RdfXml);
     }
 
 
@@ -409,8 +434,11 @@ public abstract class SparqlEndpointBase {
 
     @GET
     @Produces("application/sparql-results+xml")
-    public void executeQueryResultSetXml(@Suspended final AsyncResponse asyncResponse, @QueryParam("query") String queryString) {
-        processStmtAsync(asyncResponse, queryString, SparqlFormatterUtils.FORMAT_XML);
+    public void executeQueryResultSetXml(
+            @Suspended final AsyncResponse asyncResponse,
+            @QueryParam("query") String queryString,
+            @QueryParam("update") String updateString) {
+        processStmtAsync(asyncResponse, queryString, updateString, SparqlFormatterUtils.FORMAT_XML);
     }
 
 
@@ -426,8 +454,11 @@ public abstract class SparqlEndpointBase {
     @POST
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Produces("application/sparql-results+xml")
-    public void executeQueryResultSetXmlPost(@Suspended final AsyncResponse asyncResponse, @FormParam("query") String queryString) {
-        processStmtAsync(asyncResponse, queryString, SparqlFormatterUtils.FORMAT_Text);
+    public void executeQueryResultSetXmlPost(
+            @Suspended final AsyncResponse asyncResponse,
+            @FormParam("query") String queryString,
+            @FormParam("update") String updateString) {
+        processStmtAsync(asyncResponse, queryString, updateString, SparqlFormatterUtils.FORMAT_Text);
     }
 
 
@@ -441,8 +472,11 @@ public abstract class SparqlEndpointBase {
 
     @GET
     @Produces(MediaType.TEXT_PLAIN)
-    public void executeQueryText(@Suspended final AsyncResponse asyncResponse, @QueryParam("query") String queryString) {
-        processStmtAsync(asyncResponse, queryString, SparqlFormatterUtils.FORMAT_Text);
+    public void executeQueryText(
+            @Suspended final AsyncResponse asyncResponse,
+            @QueryParam("query") String queryString,
+            @QueryParam("update") String updateString) {
+        processStmtAsync(asyncResponse, queryString, updateString, SparqlFormatterUtils.FORMAT_Text);
     }
 
 
@@ -458,8 +492,11 @@ public abstract class SparqlEndpointBase {
     @POST
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Produces(MediaType.TEXT_PLAIN)
-    public void executeQueryTextPost(@Suspended final AsyncResponse asyncResponse, @FormParam("query") String queryString) {
-        processStmtAsync(asyncResponse, queryString, SparqlFormatterUtils.FORMAT_Text);
+    public void executeQueryTextPost(
+            @Suspended final AsyncResponse asyncResponse,
+            @FormParam("query") String queryString,
+            @FormParam("update") String updateString) {
+        processStmtAsync(asyncResponse, queryString, updateString, SparqlFormatterUtils.FORMAT_Text);
     }
 
 
