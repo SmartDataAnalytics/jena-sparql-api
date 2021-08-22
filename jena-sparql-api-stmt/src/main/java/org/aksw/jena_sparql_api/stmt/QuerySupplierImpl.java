@@ -3,6 +3,7 @@ package org.aksw.jena_sparql_api.stmt;
 import java.util.function.Supplier;
 
 import org.aksw.jena_sparql_api.utils.PrologueUtils;
+import org.apache.jena.irix.IRIxResolver;
 import org.apache.jena.query.Query;
 import org.apache.jena.sparql.core.Prologue;
 
@@ -33,12 +34,7 @@ public class QuerySupplierImpl
         Query result = new Query();
 
         if (prologue != null) {
-            PrologueUtils.copy(result.getPrologue(), prologue);
-        }
-
-        if (baseURI != null) {
-            // result.setBaseURI(baseURI);
-            result.setBase(result.getResolver().resolve(baseURI));
+            PrologueUtils.configure(result, prologue, baseURI);
         }
 
         return result;

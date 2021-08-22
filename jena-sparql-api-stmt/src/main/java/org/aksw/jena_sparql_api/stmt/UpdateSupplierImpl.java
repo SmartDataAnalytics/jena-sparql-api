@@ -31,13 +31,8 @@ public class UpdateSupplierImpl
     public UpdateRequest get() {
         UpdateRequest result = new UpdateRequest();
 
-        if(prologue != null) {
-            PrologueUtils.copy(result, prologue);
-        }
-
-        if (baseURI != null) {
-            // result.setBaseURI(baseURI);
-            result.setBase(result.getResolver().resolve(baseURI));
+        if (prologue != null) {
+            PrologueUtils.configure(result, prologue, baseURI);
         }
 
         return result;
