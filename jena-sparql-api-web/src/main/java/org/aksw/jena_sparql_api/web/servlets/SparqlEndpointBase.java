@@ -29,6 +29,8 @@ import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QueryFactory;
 import org.apache.jena.query.Syntax;
+import org.apache.jena.sparql.core.DatasetGraph;
+import org.apache.jena.system.Txn;
 import org.apache.jena.update.UpdateProcessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -581,7 +583,14 @@ public abstract class SparqlEndpointBase {
     public void processUpdateAsync(final AsyncResponse response, SparqlStmtUpdate stmt) { //String serviceUri, String requestStr, List<String> usingGraphUris, List<String> usingNamedGraphUris) {
         UpdateProcessor updateProcessor = createUpdateProcessor(stmt.getAsUpdateStmt()); //serviceUri, requestStr, usingGraphUris, usingNamedGraphUris);
 
-        updateProcessor.execute();
+        DatasetGraph dg = updateProcessor.getDatasetGraph();
+        if (dg != null) {
+            Txn.executeWrite(dg, () -> {
+                updateProcessor.execute();
+            });
+        } else {
+            updateProcessor.execute();
+        }
 
 
 //      QueryExecutionAndType tmp;

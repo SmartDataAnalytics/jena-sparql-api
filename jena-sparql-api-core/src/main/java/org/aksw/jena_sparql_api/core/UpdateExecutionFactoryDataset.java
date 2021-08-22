@@ -14,9 +14,9 @@ public class UpdateExecutionFactoryDataset
 
     @FunctionalInterface
     public static interface UpdateProcessorFactory {
-    	UpdateProcessor create(UpdateRequest updateRequest, Dataset dataset, Context context);
+        UpdateProcessor create(UpdateRequest updateRequest, Dataset dataset, Context context);
     }
-    
+
     public UpdateExecutionFactoryDataset(Dataset dataset) {
         this(dataset, null);
     }
@@ -26,8 +26,8 @@ public class UpdateExecutionFactoryDataset
     }
 
     public UpdateExecutionFactoryDataset(Dataset dataset, Context context, UpdateProcessorFactory updateProcessorFactory) {
-    	super();
-    	this.dataset = dataset;
+        super();
+        this.dataset = dataset;
         this.context = context;
         this.updateProcessorFactory = updateProcessorFactory;
     }
