@@ -120,7 +120,8 @@ public class SparqlStmtParserImpl
     }
 
     public static SparqlStmtParserImpl create(Syntax syntax, boolean actAsClassifier) {
-        SparqlStmtParserImpl result = create(SparqlParserConfig.newInstance().setSyntax(syntax).applyDefaults(), actAsClassifier);
+        SparqlStmtParserImpl result = create(SparqlParserConfig.newInstance()
+                .setSyntax(syntax).applyDefaults(), actAsClassifier);
         return result;
     }
 

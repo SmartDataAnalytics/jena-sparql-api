@@ -11,6 +11,7 @@ public class SparqlParserConfig
 {
     protected Syntax syntax;
     protected Prologue prologue;
+    protected String baseURI;
     // It may be better to support prefix optimization as a post processor
 //    protected boolean optimizePrefixes;
 
@@ -27,6 +28,13 @@ public class SparqlParserConfig
         super();
         this.syntax = syntax;
         this.prologue = prologue;
+    }
+
+    public SparqlParserConfig(Syntax syntax, Prologue prologue, String baseURI) {
+        super();
+        this.syntax = syntax;
+        this.prologue = prologue;
+        this.baseURI = baseURI;
     }
 
     public Syntax getSyntax() {
@@ -79,7 +87,17 @@ public class SparqlParserConfig
 //		return this;
 //	}
 
-	public SparqlParserConfig applyDefaults() {
+    /** The default baseURI by which to parameterize fresh SPARQL statements */
+    public String getBaseURI() {
+        return baseURI;
+    }
+
+    public SparqlParserConfig setBaseURI(String baseURI) {
+        this.baseURI = baseURI;
+        return this;
+    }
+
+    public SparqlParserConfig applyDefaults() {
         if(syntax == null) {
             syntax = Syntax.syntaxARQ;
         }
@@ -89,13 +107,15 @@ public class SparqlParserConfig
         }
 
         if(prologue.getResolver() == null) {
-        	// Avoid creation of another prologue instance because it may be referenced from elsewhere
-        	
+            // Avoid creation of another prologue instance because it may be referenced from elsewhere
+
 //        	prologue = new Prologue(
 //        			prologue.getPrefixMapping(),
 //        			IRIxResolver.create().resolve(false).allowRelative(true).build());
 
-        	PrologueUtils.setResolver(prologue, IRIxResolver.create().noBase().resolve(false).allowRelative(true).build());
+            PrologueUtils.setResolver(prologue, IRIxResolver.create().noBase().resolve(false).allowRelative(true).build());
+            baseURI = "";
+
             // prologue.setResolver(IRIxResolver.create().resolve(false).allowRelative(true).build());
         }
 
