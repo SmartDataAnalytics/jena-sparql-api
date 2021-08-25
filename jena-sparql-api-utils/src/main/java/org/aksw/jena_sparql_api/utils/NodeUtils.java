@@ -33,7 +33,10 @@ public class NodeUtils {
 
     /** Compare nodes via {@link NodeValue#compareAlways(NodeValue, NodeValue)} */
     public static int compareAlways(Node o1, Node o2) {
-        return NodeValue.compareAlways(NodeValue.makeNode(o1), NodeValue.makeNode(o2));
+        int result = o1 == null
+                ? o2 == null ? 0 : -1
+                : o2 == null ? 1 : NodeValue.compareAlways(NodeValue.makeNode(o1), NodeValue.makeNode(o2));
+        return result;
     }
 
 //	public static final Node N_ABSENT = NodeFactory.createURI("http://special.absent/none");
