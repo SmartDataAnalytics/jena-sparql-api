@@ -18,6 +18,7 @@ import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.riot.out.NodeFormatterNT;
 import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.expr.NodeValue;
 
 import com.google.common.collect.Iterables;
 
@@ -28,6 +29,12 @@ public class NodeUtils {
 
     // Prefix for URIs referring to environment variables
     public static final String ENV_PREFIX = "env:";
+
+
+    /** Compare nodes via {@link NodeValue#compareAlways(NodeValue, NodeValue)} */
+    public static int compareAlways(Node o1, Node o2) {
+        return NodeValue.compareAlways(NodeValue.makeNode(o1), NodeValue.makeNode(o2));
+    }
 
 //	public static final Node N_ABSENT = NodeFactory.createURI("http://special.absent/none");
 
@@ -215,36 +222,36 @@ public class NodeUtils {
     }
 
 
-    /* Constants for use with {@link #getDatatypeIri(Node)} */ 
-	public static final String R2RML_NS 					= "http://www.w3.org/ns/r2rml#";
-	public static final String R2RML_IRI 					= R2RML_NS + "IRI";
-	public static final String R2RML_BlankNode 				= R2RML_NS + "BlankNode";
+    /* Constants for use with {@link #getDatatypeIri(Node)} */
+    public static final String R2RML_NS 					= "http://www.w3.org/ns/r2rml#";
+    public static final String R2RML_IRI 					= R2RML_NS + "IRI";
+    public static final String R2RML_BlankNode 				= R2RML_NS + "BlankNode";
 
-	/**
-	 * Return a Node's datatype. Thereby, IRIs are returned as rr:IRI and BlankNodes as rr:BlankNode
-	 * Returns null for variables and unknown node types
-	 * 
-	 * @param node
-	 */
-	public static String getDatatypeIri(Node node) {
-		String result;
-		if (node == null) {
-			result = null;
-		} else if (node.isURI()) {
-			result = R2RML_IRI;
-		} else if (node.isBlank()) {
-			result = R2RML_BlankNode;
-		} else if (node.isLiteral()) {
-			result = node.getLiteralDatatypeURI();
-		} else {
-			// Should not happen
-			result = null;
-		}
-		
-		return result;
-	}
+    /**
+     * Return a Node's datatype. Thereby, IRIs are returned as rr:IRI and BlankNodes as rr:BlankNode
+     * Returns null for variables and unknown node types
+     *
+     * @param node
+     */
+    public static String getDatatypeIri(Node node) {
+        String result;
+        if (node == null) {
+            result = null;
+        } else if (node.isURI()) {
+            result = R2RML_IRI;
+        } else if (node.isBlank()) {
+            result = R2RML_BlankNode;
+        } else if (node.isLiteral()) {
+            result = node.getLiteralDatatypeURI();
+        } else {
+            // Should not happen
+            result = null;
+        }
 
-    
+        return result;
+    }
+
+
     @Deprecated // Use NodeFmtLib.str
     public static String toNTriplesString(Node node) {
         NodeFormatterNT formatter = new NodeFormatterNT();
