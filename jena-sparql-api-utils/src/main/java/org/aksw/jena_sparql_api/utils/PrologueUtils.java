@@ -3,10 +3,15 @@ package org.aksw.jena_sparql_api.utils;
 import java.lang.reflect.Field;
 
 import org.apache.jena.irix.IRIxResolver;
-import org.apache.jena.query.Query;
+import org.apache.jena.shared.impl.PrefixMappingImpl;
 import org.apache.jena.sparql.core.Prologue;
 
 public class PrologueUtils {
+
+    /** Create a new prologue without base URL that retains relative IRIs and has an empty prefix mapping */
+    public static Prologue newPrologueAsGiven() {
+        return new Prologue(new PrefixMappingImpl(), IRIxResolverUtils.newIRIxResolverAsGiven());
+    }
 
     /** Configure the target prologue by copying the config from source and setting the baseURI */
     public static Prologue configure(Prologue target, Prologue source, String baseURI) {

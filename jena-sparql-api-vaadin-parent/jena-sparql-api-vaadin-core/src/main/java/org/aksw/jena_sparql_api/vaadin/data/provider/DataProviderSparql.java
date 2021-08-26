@@ -1,6 +1,7 @@
 package org.aksw.jena_sparql_api.vaadin.data.provider;
 
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.aksw.commons.rx.util.RxUtils;
@@ -62,7 +63,9 @@ public class DataProviderSparql
 
         System.out.println(q);
 
-        Stream<Binding> result = RxUtils.stream(SparqlRx.execSelectRaw(() -> qef.apply(q)));
+        Stream<Binding> result = SparqlRx.execSelectRaw(() -> qef.apply(q)).toList().blockingGet().stream();
+
+
 //        Stream<Binding> debug = toStream(SparqlRx.execSelectRaw(() -> qef.apply(q)));
 //        long s = System.currentTimeMillis();
 //        debug.forEach(b -> {int i = 1;});

@@ -1,9 +1,11 @@
 package org.aksw.jena_sparql_api.stmt;
 
+import org.aksw.jena_sparql_api.utils.IRIxResolverUtils;
 import org.aksw.jena_sparql_api.utils.PrologueUtils;
 import org.apache.jena.irix.IRIxResolver;
 import org.apache.jena.query.Syntax;
 import org.apache.jena.shared.PrefixMapping;
+import org.apache.jena.shared.impl.PrefixMappingImpl;
 import org.apache.jena.sparql.core.Prologue;
 
 public class SparqlParserConfig
@@ -55,13 +57,40 @@ public class SparqlParserConfig
         return this;
     }
 
+    public SparqlParserConfig setIrixResolver(IRIxResolver resolver) {
+        if(prologue == null) {
+            prologue = new Prologue(new PrefixMappingImpl(), resolver);
+        } else {
+            PrologueUtils.setResolver(prologue, resolver);
+        }
+        return this;
+    }
+
     public SparqlParserConfig setPrefixMapping(PrefixMapping pm) {
         if(prologue == null) {
-            prologue = new Prologue(pm, IRIxResolver.create().noBase().resolve(false).allowRelative(true).build());
+            prologue = new Prologue(pm, newDefaultIrixResolver());
         } else {
             prologue.setPrefixMapping(pm);
         }
         return this;
+    }
+
+    /**
+     * Parse sparql statements as given - without resolving relative IRIs
+     * Sets the base URL to an empty string and configures the iri resolver without a base.
+     */
+    public SparqlParserConfig parseAsGiven() {
+        setIrixResolverAsGiven();
+        setBaseURI("");
+        return this;
+    }
+
+    public SparqlParserConfig setIrixResolverAsGiven() {
+        return setIrixResolver(newDefaultIrixResolver());
+    }
+
+    protected IRIxResolver newDefaultIrixResolver() {
+        return IRIxResolverUtils.newIRIxResolverAsGiven();
     }
 
 //    public SparqlParserConfig setBaseURI() {
@@ -113,7 +142,7 @@ public class SparqlParserConfig
 //        			prologue.getPrefixMapping(),
 //        			IRIxResolver.create().resolve(false).allowRelative(true).build());
 
-            PrologueUtils.setResolver(prologue, IRIxResolver.create().noBase().resolve(false).allowRelative(true).build());
+            PrologueUtils.setResolver(prologue, newDefaultIrixResolver());
             baseURI = "";
 
             // prologue.setResolver(IRIxResolver.create().resolve(false).allowRelative(true).build());
