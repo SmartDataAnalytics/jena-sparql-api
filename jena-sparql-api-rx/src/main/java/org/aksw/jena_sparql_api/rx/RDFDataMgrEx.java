@@ -471,7 +471,7 @@ public class RDFDataMgrEx {
     }
 
     /** Return a preconfigured parser builder that retains blank node ids and relative IRIs */
-    public static RDFParserBuilder newParserBuilderForAsGiven() {
+    public static RDFParserBuilder newParserBuilderForReadAsGiven() {
         return RDFParser.create()
             .resolver(IRIxResolver.create().noBase().allowRelative(true).build())
             .context(null)
@@ -481,7 +481,7 @@ public class RDFDataMgrEx {
 
 
     public static void readAsGiven(Graph graph, String uri) {
-        newParserBuilderForAsGiven().source(uri).parse(graph);
+        newParserBuilderForReadAsGiven().source(uri).parse(graph);
     }
 
     public static void readAsGiven(Model model, String uri) {
@@ -495,11 +495,19 @@ public class RDFDataMgrEx {
     }
 
     public static void readAsGiven(DatasetGraph datasetGraph, String uri) {
-        newParserBuilderForAsGiven().source(uri).parse(datasetGraph);
+        newParserBuilderForReadAsGiven().source(uri).parse(datasetGraph);
     }
 
     public static void readAsGiven(Dataset dataset, String uri) {
         readAsGiven(dataset.asDatasetGraph(), uri);
+    }
+
+    public static void readAsGiven(DatasetGraph datasetGraph, InputStream in, Lang lang) {
+        newParserBuilderForReadAsGiven().source(in).lang(lang).build().parse(datasetGraph);
+    }
+
+    public static void readAsGiven(Dataset dataset, InputStream in, Lang lang) {
+        readAsGiven(dataset.asDatasetGraph(), in, lang);
     }
 
     public static Dataset loadDatasetAsGiven(String uri) {
