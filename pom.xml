@@ -86,6 +86,9 @@
 
 		<module>jena-sparql-api-virtuoso</module>
 		<module>jena-sparql-api-fuseki-geosparql-bundle</module>
+
+
+		<module>jena-sparql-api-vaadin-parent</module>
 	</modules>
 
 	<issueManagement>
