@@ -9,10 +9,20 @@ public class SparqlUpdateConnectionJsa
     implements SparqlUpdateConnectionTmp
 {
     protected UpdateExecutionFactory updateExecutionFactory;
+    protected Transactional transactional;
 
     public SparqlUpdateConnectionJsa(UpdateExecutionFactory updateExecutionFactory) {
+        this(updateExecutionFactory, new TransactionalTmp() {
+            @Override
+            public Transactional getDelegate() {
+                return null;
+            }});
+    }
+
+    public SparqlUpdateConnectionJsa(UpdateExecutionFactory updateExecutionFactory, Transactional transactional) {
         super();
         this.updateExecutionFactory = updateExecutionFactory;
+        this.transactional = transactional;
     }
 
     @Override
@@ -30,8 +40,8 @@ public class SparqlUpdateConnectionJsa
         }
     }
 
-	@Override
-	public Transactional getDelegate() {
-		return null;
-	}
+    @Override
+    public Transactional getDelegate() {
+        return transactional;
+    }
 }

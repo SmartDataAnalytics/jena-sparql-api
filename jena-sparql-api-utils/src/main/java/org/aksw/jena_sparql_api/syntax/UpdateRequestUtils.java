@@ -168,10 +168,7 @@ public class UpdateRequestUtils {
 
     public static UpdateRequest copyTransform(UpdateRequest request, Function<? super Update, ? extends Update> updateTransform) {
         UpdateRequest result = new UpdateRequest();
-        result.setBaseURI(request.getBaseURI());
-        result.setPrefixMapping(request.getPrefixMapping());
-        PrologueUtils.setResolver(result, request.getResolver());
-        // result.setResolver(request.getResolver());
+        PrologueUtils.copy(result, request);
 
         for(Update update : request.getOperations()) {
             Update newUpdate = updateTransform.apply(update);

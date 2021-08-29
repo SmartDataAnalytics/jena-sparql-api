@@ -16,6 +16,9 @@ import java.util.Objects;
 
 import org.aksw.jena_sparql_api.rx.entity.EntityInfo;
 import org.aksw.jena_sparql_api.rx.entity.EntityInfoImpl;
+import org.aksw.jena_sparql_api.utils.IRIxResolverUtils;
+import org.aksw.jena_sparql_api.utils.io.StreamRDFWriterEx;
+import org.aksw.jena_sparql_api.utils.io.WriterStreamRDFBaseUtils;
 import org.apache.commons.compress.compressors.CompressorException;
 import org.apache.commons.compress.compressors.CompressorStreamFactory;
 import org.apache.commons.io.IOUtils;
@@ -27,6 +30,7 @@ import org.apache.jena.ext.com.google.common.collect.Multimap;
 import org.apache.jena.ext.com.google.common.collect.Streams;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Triple;
+import org.apache.jena.irix.IRIx;
 import org.apache.jena.irix.IRIxResolver;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.rdf.model.Model;
@@ -37,7 +41,12 @@ import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.riot.RDFLanguages;
 import org.apache.jena.riot.RDFParser;
 import org.apache.jena.riot.RDFParserBuilder;
+import org.apache.jena.riot.RIOT;
+import org.apache.jena.riot.out.NodeToLabel;
 import org.apache.jena.riot.resultset.ResultSetReaderRegistry;
+import org.apache.jena.riot.system.StreamRDF;
+import org.apache.jena.riot.system.StreamRDFOps;
+import org.apache.jena.riot.writer.WriterStreamRDFBase;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.Quad;
@@ -471,17 +480,20 @@ public class RDFDataMgrEx {
     }
 
     /** Return a preconfigured parser builder that retains blank node ids and relative IRIs */
-    public static RDFParserBuilder newParserBuilderForReadAsGiven() {
+    public static RDFParserBuilder newParserBuilderForReadAsGiven(String baseIri) {
+        IRIxResolver resolver = IRIxResolverUtils.newIRIxResolverAsGiven(baseIri);
+
         return RDFParser.create()
-            .resolver(IRIxResolver.create().noBase().allowRelative(true).build())
+            .resolver(resolver)
             .context(null)
+            .base(null)
             .errorHandler(RDFDataMgrRx.dftErrorHandler())
             .labelToNode(RDFDataMgrRx.createLabelToNodeAsGivenOrRandom());
     }
 
 
     public static void readAsGiven(Graph graph, String uri) {
-        newParserBuilderForReadAsGiven().source(uri).parse(graph);
+        newParserBuilderForReadAsGiven(null).source(uri).parse(graph);
     }
 
     public static void readAsGiven(Model model, String uri) {
@@ -494,31 +506,71 @@ public class RDFDataMgrEx {
         return result;
     }
 
-    public static void readAsGiven(DatasetGraph datasetGraph, String uri) {
-        newParserBuilderForReadAsGiven().source(uri).parse(datasetGraph);
+    public static void readAsGiven(DatasetGraph datasetGraph, String uri, String baseIri) {
+        newParserBuilderForReadAsGiven(baseIri).source(uri).parse(datasetGraph);
     }
 
-    public static void readAsGiven(Dataset dataset, String uri) {
-        readAsGiven(dataset.asDatasetGraph(), uri);
+    public static void readAsGiven(Dataset dataset, String uri, String baseIri) {
+        readAsGiven(dataset.asDatasetGraph(), uri, baseIri);
     }
 
     public static void readAsGiven(DatasetGraph datasetGraph, InputStream in, Lang lang) {
-        newParserBuilderForReadAsGiven().source(in).lang(lang).build().parse(datasetGraph);
+        newParserBuilderForReadAsGiven(null).source(in).lang(lang).build().parse(datasetGraph);
     }
 
     public static void readAsGiven(Dataset dataset, InputStream in, Lang lang) {
         readAsGiven(dataset.asDatasetGraph(), in, lang);
     }
 
-    public static Dataset loadDatasetAsGiven(String uri) {
+    public static Dataset loadDatasetAsGiven(String uri, String baseIri) {
         Dataset result = DatasetFactoryEx.createInsertOrderPreservingDataset();
-        readAsGiven(result, uri);
+        readAsGiven(result, uri, baseIri);
         return result;
     }
 
 
+    public static void writeAsGiven(OutputStream out, Dataset dataset, RDFFormat rdfFormat, String baseIri) {
+        writeAsGiven(out, dataset.asDatasetGraph(), rdfFormat, baseIri);
+    }
+
     // TODO Implement; A variant of write that accepts a context; allows e.g. disabling writing out base IRIs
-    public static void write(OutputStream out, Dataset dataset, RDFFormat rdfFormat, Context context) {
+    public static void writeAsGiven(OutputStream out, DatasetGraph datasetGraph, RDFFormat rdfFormat, String baseIri) {
+        Context cxt = RIOT.getContext().copy();
+        cxt.setTrue(RIOT.symTurtleOmitBase);
+
+        StreamRDF writer = StreamRDFWriterEx.getWriterStream(
+                out,
+                rdfFormat,
+                cxt,
+                null,
+                NodeToLabel.createBNodeByLabelAsGiven(),
+                true
+        );
+
+        if (baseIri != null) {
+            // IRIx irix = IRIx.createAny(baseIri);
+            IRIx irix = IRIxResolverUtils.newIRIxAsGiven(baseIri);
+            WriterStreamRDFBaseUtils.setNodeFormatterIRIx((WriterStreamRDFBase)writer, irix);
+        }
+
+
+        writer.start();
+        StreamRDFOps.sendDatasetToStream(datasetGraph, writer);
+        writer.finish();
+
+
+//        RDFWriter writer = RDFWriter
+//            .create(dataset)
+//            .base(baseIri)
+//            .context(cxt)
+//            .format(rdfFormat)
+//            .build();
+//
+//        if (writer instanceof WriterStreamRDF) {
+//            // WriterStreamRDFBaseUtils.setNodeToLabel(writer, RDFDataMgrRx.createLabelToNodeAsGivenOrRandom());
+//        }
+            //.output(out);
+
         // RDFDataMgr.write
         // Context.set(RIOT.symTurtleOmitBase);
         // RIOT.multilineLiterals

@@ -62,4 +62,10 @@ public class SparqlUpdateParserImpl
         return result;
     }
 
+    /** Return a parser without base url that retains relative IRIs */
+    public static SparqlUpdateParserImpl createAsGiven() {
+        return create(SparqlParserConfig.newInstance().parseAsGiven().applyDefaults());
+    }
+
 }
+

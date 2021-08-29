@@ -10,4 +10,7 @@ public interface UpdateExecutionFactory
     UpdateProcessor createUpdateProcessor(String updateRequestStr);
 
     <T> T unwrap(Class<T> clazz);
+
+//    @Override
+//    void close();
 }

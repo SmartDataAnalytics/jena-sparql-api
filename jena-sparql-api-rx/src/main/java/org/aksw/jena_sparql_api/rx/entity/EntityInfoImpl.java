@@ -18,7 +18,7 @@ public class EntityInfoImpl
     protected String contentType;
     protected String charset;
     protected Set<String> languageTags;
-
+    protected Set<String> conformsTo;
 
 
     public EntityInfoImpl(String contentType) {
@@ -34,11 +34,17 @@ public class EntityInfoImpl
     }
 
     public EntityInfoImpl(List<String> contentEncodings, String contentType, String charset, Set<String> languageTags) {
+        this(contentEncodings, contentType, charset, languageTags, Collections.emptySet());
+    }
+
+    public EntityInfoImpl(List<String> contentEncodings, String contentType,
+            String charset, Set<String> languageTags, Set<String> conformsTo) {
         super();
         this.contentEncodings = contentEncodings;
         this.contentType = contentType;
         this.charset = charset;
         this.languageTags = languageTags;
+        this.conformsTo = conformsTo;
     }
 
     @Override
@@ -62,9 +68,14 @@ public class EntityInfoImpl
     }
 
     @Override
+    public Set<String> getConformsTo() {
+        return conformsTo;
+    }
+
+    @Override
     public String toString() {
         return "EntityInfoImpl [contentEncodings=" + contentEncodings + ", contentType=" + contentType + ", charset="
-                + charset + ", languageTags=" + languageTags + "]";
+                + charset + ", languageTags=" + languageTags + ", conformsTo=" + conformsTo + "]";
     }
 
     @Override
@@ -72,6 +83,7 @@ public class EntityInfoImpl
         final int prime = 31;
         int result = 1;
         result = prime * result + ((charset == null) ? 0 : charset.hashCode());
+        result = prime * result + ((conformsTo == null) ? 0 : conformsTo.hashCode());
         result = prime * result + ((contentEncodings == null) ? 0 : contentEncodings.hashCode());
         result = prime * result + ((contentType == null) ? 0 : contentType.hashCode());
         result = prime * result + ((languageTags == null) ? 0 : languageTags.hashCode());
@@ -91,6 +103,11 @@ public class EntityInfoImpl
             if (other.charset != null)
                 return false;
         } else if (!charset.equals(other.charset))
+            return false;
+        if (conformsTo == null) {
+            if (other.conformsTo != null)
+                return false;
+        } else if (!conformsTo.equals(other.conformsTo))
             return false;
         if (contentEncodings == null) {
             if (other.contentEncodings != null)
