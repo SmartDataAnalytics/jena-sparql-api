@@ -147,4 +147,8 @@ public class SparqlStmtParserImpl
         return result;
     }
 
+    public static SparqlStmtParserImpl createAsGiven() {
+        return create(SparqlParserConfig.newInstance().parseAsGiven().applyDefaults());
+    }
+
 }

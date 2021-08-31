@@ -10,6 +10,7 @@ import java.util.function.Supplier;
 
 import org.aksw.commons.collector.domain.Accumulator;
 import org.aksw.commons.collector.domain.ParallelAggregator;
+import org.aksw.commons.rx.op.RxOps;
 import org.aksw.jena_sparql_api.core.connection.RDFConnectionFactoryEx;
 import org.aksw.jena_sparql_api.json.RdfJsonUtils;
 import org.aksw.jena_sparql_api.rx.ResultSetRx;

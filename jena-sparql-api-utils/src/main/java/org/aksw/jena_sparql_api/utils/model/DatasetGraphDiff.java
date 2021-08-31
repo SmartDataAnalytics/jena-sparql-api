@@ -6,11 +6,13 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 
 import org.apache.jena.ext.com.google.common.collect.Iterators;
+import org.apache.jena.ext.com.google.common.collect.Lists;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.compose.Delta;
@@ -72,7 +74,7 @@ public class DatasetGraphDiff
         this.addedGraphs = new TransactionalSetImpl<>();
     }
 
-    
+
 //    public void applyChanges() {
 //    	removed.find().forEachRemaining(base::delete);
 //    	added.find().forEachRemaining(base::add);
@@ -81,8 +83,8 @@ public class DatasetGraphDiff
 //    }
 
     public void clearChanges() {
-    	removed.clear();
-    	added.clear();
+        removed.clear();
+        added.clear();
     }
 
     public DatasetGraph getBase() {
@@ -107,13 +109,18 @@ public class DatasetGraphDiff
 
     @Override
     public boolean contains(Node g, Node s, Node p, Node o) {
-    	boolean result = !removed.contains(g, s, p, o) && (added.contains(g, s, p, o) || base.contains(g, s, p, o));
-    	return result;
+        boolean result = !removed.contains(g, s, p, o) && (added.contains(g, s, p, o) || base.contains(g, s, p, o));
+        return result;
     }
-    
+
     @Override
-    public Iterator<Quad> find(Node g, Node s, Node p, Node o) {    	
+    public Iterator<Quad> find(Node g, Node s, Node p, Node o) {
         Iterator<Quad> itBase = base.find(g, s, p, o);
+
+//        List<Quad> materialized = Lists.newArrayList(itBase);
+//        System.err.println("Internal base iterator size: " + materialized.size());
+//        itBase = materialized.iterator();
+
         Iterator<Quad> itActualAdded = Iterators.filter(added.find(g, s, p, o), quad -> !base.contains(quad));
         Iterator<Quad> itVisibleBase = Iterators.filter(itBase, quad -> !removed.contains(quad));
         Iterator<Quad> result = Iterators.concat(itVisibleBase, itActualAdded);
@@ -333,9 +340,9 @@ public class DatasetGraphDiff
     }
 
     /** TODO Consider a PrefixMapDiff/Delta object - for now we just return the base prefixes */
-	@Override
-	public PrefixMap prefixes() {
-		return base.prefixes();
-	}
+    @Override
+    public PrefixMap prefixes() {
+        return base.prefixes();
+    }
 
 }

@@ -779,4 +779,8 @@ public class SparqlRx {
             .map(binding -> binding.get(var));
     }
 
+    public static Flowable<Node> execConceptRaw(SparqlQueryConnection conn, Query query, Var var) {
+        return execConceptRaw(() -> conn.query(query), var);
+    }
+
 }

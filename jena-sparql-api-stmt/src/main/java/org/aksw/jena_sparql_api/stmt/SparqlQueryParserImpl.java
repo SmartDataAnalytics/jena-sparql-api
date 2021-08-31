@@ -68,6 +68,9 @@ public class SparqlQueryParserImpl
         return result;
     }
 
+    public static SparqlQueryParserImpl createAsGiven() {
+        return create(SparqlParserConfig.newInstance().parseAsGiven().applyDefaults());
+    }
 
     // TODO Move to common query parser utils
     public static SparqlQueryParser wrapWithOptimizePrefixes(Function<String, Query> delegate) {
