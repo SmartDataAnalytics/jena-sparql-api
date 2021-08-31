@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.core;
+package org.aksw.jena_sparql_api.arq.core.query;
 
 
 import org.apache.jena.query.Query;

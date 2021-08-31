@@ -2,7 +2,7 @@ package org.aksw.jena_sparql_api.sparql.ext.fs;
 
 import java.nio.file.Files;
 
-import org.aksw.jena_sparql_api.arq.core.OpExecutorWithCustomServiceExecutors;
+import org.aksw.jena_sparql_api.arq.core.service.OpExecutorWithCustomServiceExecutors;
 import org.aksw.jena_sparql_api.arq.service.vfs.ServiceExecutorFactoryRegistratorVfs;
 import org.apache.jena.ext.com.google.common.hash.Hashing;
 import org.apache.jena.query.ARQ;

@@ -1,6 +1,5 @@
-package org.aksw.jena_sparql_api.core;
+package org.aksw.jena_sparql_api.arq.core.update;
 
-import org.aksw.jena_sparql_api.arq.core.update.UpdateEngineFactoryProvider;
 import org.apache.jena.atlas.logging.Log;
 import org.apache.jena.query.ARQ;
 import org.apache.jena.query.Dataset;
@@ -13,29 +12,23 @@ import org.apache.jena.sparql.util.Context;
 import org.apache.jena.update.UpdateProcessor;
 import org.apache.jena.update.UpdateRequest;
 
-public class UpdateExecutionFactoryDataset
-    extends UpdateExecutionFactoryParsingBase
+public class UpdateProcessorFactoryDataset
+    implements UpdateProcessorFactory
 {
     protected Dataset dataset;
     protected Context context;
     protected UpdateEngineFactoryProvider updateEngineFactoryProvider;
 
-    
 
-//    @FunctionalInterface
-//    public static interface UpdateProcessorFactory {
-//        UpdateProcessor create(UpdateRequest updateRequest, Dataset dataset, Context context);
-//    }
-
-    public UpdateExecutionFactoryDataset(Dataset dataset) {
+    public UpdateProcessorFactoryDataset(Dataset dataset) {
         this(dataset, null);
     }
 
-    public UpdateExecutionFactoryDataset(Dataset dataset, Context context) {
+    public UpdateProcessorFactoryDataset(Dataset dataset, Context context) {
         this(dataset, context, UpdateEngineRegistry.get()::find);
     }
 
-    public UpdateExecutionFactoryDataset(Dataset dataset, Context context, UpdateEngineFactoryProvider updateEngineFactoryProvider) {
+    public UpdateProcessorFactoryDataset(Dataset dataset, Context context, UpdateEngineFactoryProvider updateEngineFactoryProvider) {
         super();
         this.dataset = dataset;
         this.context = context;
@@ -64,9 +57,9 @@ public class UpdateExecutionFactoryDataset
             return null ;
         }
         //dataset.begin(ReadWrite.WRITE);
-//        QueryExecutionBase tmp = new QueryExecutionBase(query, dataset, context, f) ;
-//        QueryExecution result = new QueryExecutionDecoratorTxn<QueryExecution>(tmp, dsg);
-//        return result;
+    //    QueryExecutionBase tmp = new QueryExecutionBase(query, dataset, context, f) ;
+    //    QueryExecution result = new QueryExecutionDecoratorTxn<QueryExecution>(tmp, dsg);
+    //    return result;
         // UpdateEngine updateEngine = f.create(dsg, null, context);
 
         UpdateProcessorBase result = new UpdateProcessorBase(updateRequest, dsg, null, context, f);

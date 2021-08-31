@@ -31,7 +31,7 @@ public class QueryEngineQuadForm
     }
 
 
-    public static final QueryEngineFactory factory = new QueryEngineQuadFormFactory() ;
+    public static final QueryEngineFactory FACTORY = new QueryEngineQuadFormFactory() ;
     // public static final QueryEngineFactoryProvider PROVIDER = (qu, da, co) -> QueryEngineQuadForm.factory;
 
     protected static class QueryEngineQuadFormFactory implements QueryEngineFactory

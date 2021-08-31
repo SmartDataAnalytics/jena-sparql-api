@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api.core;
 
+import org.aksw.jena_sparql_api.arq.core.query.QueryExecutionDecoratorBase;
 import org.apache.jena.query.QueryExecution;
 
 /**
@@ -9,7 +10,7 @@ import org.apache.jena.query.QueryExecution;
  *
  */
 public class QueryExecutionExecWrapper
-    extends QueryExecutionDecorator
+    extends QueryExecutionDecoratorBase<QueryExecution>
 {
     protected Runnable beforeExecAction;
     protected Runnable afterExecAction;

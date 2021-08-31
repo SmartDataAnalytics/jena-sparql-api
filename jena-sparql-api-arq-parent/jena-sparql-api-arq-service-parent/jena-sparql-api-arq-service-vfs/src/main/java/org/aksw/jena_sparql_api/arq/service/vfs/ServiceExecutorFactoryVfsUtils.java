@@ -23,7 +23,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.aksw.commons.collections.IterableUtils;
 import org.aksw.commons.io.block.impl.BlockSources;
-import org.aksw.jena_sparql_api.arq.util.QueryIteratorBindingIterator;
+import org.aksw.jena_sparql_api.arq.core.util.QueryIteratorBindingIterator;
 import org.aksw.jena_sparql_api.io.binseach.BinarySearcher;
 import org.aksw.jena_sparql_api.io.binseach.GraphFromPrefixMatcher;
 import org.aksw.jena_sparql_api.io.binseach.GraphFromSubjectCache;

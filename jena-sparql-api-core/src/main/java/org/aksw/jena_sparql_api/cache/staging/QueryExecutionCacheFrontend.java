@@ -2,17 +2,16 @@ package org.aksw.jena_sparql_api.cache.staging;
 
 import java.io.IOException;
 
+import org.aksw.jena_sparql_api.arq.core.query.QueryExecutionDecoratorBase;
 import org.aksw.jena_sparql_api.cache.core.ModelProvider;
 import org.aksw.jena_sparql_api.cache.extra.CacheFrontend;
 import org.aksw.jena_sparql_api.cache.extra.CacheResource;
-import org.aksw.jena_sparql_api.core.QueryExecutionDecorator;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Claus Stadler
@@ -21,7 +20,7 @@ import org.apache.jena.rdf.model.ModelFactory;
  *         Time: 4:11 PM
  */
 public class QueryExecutionCacheFrontend
-    extends QueryExecutionDecorator
+    extends QueryExecutionDecoratorBase<QueryExecution>
 {
     private static final Logger logger = LoggerFactory.getLogger(QueryExecutionCacheFrontend.class);
 
@@ -57,7 +56,7 @@ public class QueryExecutionCacheFrontend
     {
         // TODO I think we can now remove the synchronized blocks, as the
         // CacheBackend does synchronization
-        
+
         synchronized(this) {
             resource = cacheFrontend.lookup(service, queryString);
             setResource(resource);
@@ -71,7 +70,7 @@ public class QueryExecutionCacheFrontend
             }
 
             try {
-                rs = getDecoratee().execSelect();
+                rs = getDelegate().execSelect();
             } catch(Exception e) {
                 // New strategie:
                 // If something goes wrong, just pass the exception on
@@ -91,20 +90,20 @@ public class QueryExecutionCacheFrontend
             }
 
             if(!cacheFrontend.isReadOnly()) {
-            
-	            logger.trace("Cache write [" + service + "]: " + queryString);
-	
-	            // TODO We need to get a promise for the write action so we can cancel it
-	            cacheFrontend.write(service, queryString, rs);
-	
-	            synchronized(this) {
-	                resource = cacheFrontend.lookup(service, queryString);
-	                setResource(resource);
-	            }
-	
-	            if(resource == null) {
-	                throw new RuntimeException("Cache error: Lookup of just written data failed");
-	            }
+
+                logger.trace("Cache write [" + service + "]: " + queryString);
+
+                // TODO We need to get a promise for the write action so we can cancel it
+                cacheFrontend.write(service, queryString, rs);
+
+                synchronized(this) {
+                    resource = cacheFrontend.lookup(service, queryString);
+                    setResource(resource);
+                }
+
+                if(resource == null) {
+                    throw new RuntimeException("Cache error: Lookup of just written data failed");
+                }
             }
         } else {
             logger.trace("Cache hit [" + service + "]:" + queryString);
@@ -131,7 +130,7 @@ public class QueryExecutionCacheFrontend
 
             Model model;
             try {
-                model = modelProvider.getModel(); //getDecoratee().execConstruct();
+                model = modelProvider.getModel(); //getDelegate().execConstruct();
             } catch(Exception e) {
                 /*
                 logger.warn("Error communicating with backend", e);
@@ -175,7 +174,7 @@ public class QueryExecutionCacheFrontend
         if(resource == null || resource.isOutdated()) {
 
             try {
-                ret = getDecoratee().execAsk();
+                ret = getDelegate().execAsk();
             } catch(Exception e) {
                 /*
                 logger.warn("Error communicating with backend", e);
@@ -224,7 +223,7 @@ public class QueryExecutionCacheFrontend
         return doCacheModel(model, new ModelProvider() {
             @Override
             public Model getModel() {
-                return getDecoratee().execConstruct();
+                return getDelegate().execConstruct();
             }
         });
      }
@@ -239,7 +238,7 @@ public class QueryExecutionCacheFrontend
          return doCacheModel(model, new ModelProvider() {
              @Override
              public Model getModel() {
-                 return getDecoratee().execDescribe();
+                 return getDelegate().execDescribe();
              }
          });
      }

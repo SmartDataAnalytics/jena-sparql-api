@@ -19,6 +19,11 @@
 			<artifactId>jena-arq</artifactId>
 		</dependency>
 
+		<dependency>
+			<groupId>org.apache.jena</groupId>
+			<artifactId>jena-rdfconnection</artifactId>
+		</dependency>
+
 
 		<!-- Unit Testing -->
 

@@ -3,6 +3,7 @@ package org.aksw.jena_sparql_api.core.connection;
 import java.util.Arrays;
 import java.util.Collection;
 
+import org.aksw.jena_sparql_api.core.connection.TransactionalMultiplex;
 import org.apache.jena.rdfconnection.SparqlUpdateConnection;
 import org.apache.jena.update.Update;
 import org.apache.jena.update.UpdateRequest;

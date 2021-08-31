@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api.core;
 
+import org.aksw.jena_sparql_api.arq.core.query.QueryExecutionFactoryQuery;
 
 /**
  * @author Claus Stadler

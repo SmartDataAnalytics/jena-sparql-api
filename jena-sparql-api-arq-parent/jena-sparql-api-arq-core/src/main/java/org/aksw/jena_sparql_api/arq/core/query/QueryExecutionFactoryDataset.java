@@ -1,7 +1,5 @@
-package org.aksw.jena_sparql_api.core;
+package org.aksw.jena_sparql_api.arq.core.query;
 
-import org.aksw.jena_sparql_api.arq.core.query.QueryEngineFactoryProvider;
-import org.aksw.jena_sparql_api.arq.core.query.QueryExecutionDecoratorTxn;
 import org.apache.jena.atlas.logging.Log;
 import org.apache.jena.query.ARQ;
 import org.apache.jena.query.Dataset;
@@ -16,13 +14,13 @@ import org.apache.jena.sparql.engine.QueryExecutionBase;
 import org.apache.jena.sparql.util.Context;
 
 public class QueryExecutionFactoryDataset
-    extends QueryExecutionFactoryBackQuery
+    implements QueryExecutionFactoryQuery
 {
-	protected Dataset dataset;
+    protected Dataset dataset;
     protected Context context;
     protected QueryEngineFactoryProvider queryEngineFactoryProvider;
 
-    
+
     public QueryExecutionFactoryDataset() {
         this(DatasetFactory.create());
     }
@@ -32,12 +30,12 @@ public class QueryExecutionFactoryDataset
     }
 
     public QueryExecutionFactoryDataset(Dataset dataset, Context context) {
-    	this(dataset, context, QueryEngineRegistry.get()::find);
+        this(dataset, context, QueryEngineRegistry.get()::find);
     }
 
     public QueryExecutionFactoryDataset(Dataset dataset, Context context, QueryEngineFactoryProvider queryEngineFactoryProvider) {
         super();
-    	this.dataset = dataset;
+        this.dataset = dataset;
         this.context = context;
         this.queryEngineFactoryProvider = queryEngineFactoryProvider;
     }
@@ -46,16 +44,6 @@ public class QueryExecutionFactoryDataset
 
     public Dataset getDataset() {
         return dataset;
-    }
-
-    @Override
-    public String getId() {
-        return "" + dataset.hashCode();
-    }
-
-    @Override
-    public String getState() {
-        return "" + dataset.hashCode();
     }
 
     @Override
@@ -77,10 +65,5 @@ public class QueryExecutionFactoryDataset
         QueryExecutionBase tmp = new QueryExecutionBase(query, dataset, context, f) ;
         QueryExecution result = new QueryExecutionDecoratorTxn<QueryExecution>(tmp, dsg);
         return result;
-    }
-
-    @Override
-    public void close() {
-        dataset.close();
     }
 }

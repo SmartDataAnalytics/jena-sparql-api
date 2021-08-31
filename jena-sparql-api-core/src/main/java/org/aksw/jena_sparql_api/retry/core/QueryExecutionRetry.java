@@ -6,7 +6,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
-import org.aksw.jena_sparql_api.core.QueryExecutionDecorator;
+import org.aksw.jena_sparql_api.arq.core.query.QueryExecutionDecoratorBase;
 import org.apache.jena.atlas.json.JsonArray;
 import org.apache.jena.atlas.json.JsonObject;
 import org.apache.jena.graph.Triple;
@@ -28,7 +28,7 @@ import com.nurkiewicz.asyncretry.policy.AbortRetryException;
 import com.nurkiewicz.asyncretry.policy.RetryPolicy;
 
 public class QueryExecutionRetry
-    extends QueryExecutionDecorator
+    extends QueryExecutionDecoratorBase<QueryExecution>
 {
     protected Supplier<QueryExecution> supplier;
     protected int retryCount;

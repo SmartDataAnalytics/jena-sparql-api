@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.arq.core;
+package org.aksw.jena_sparql_api.arq.core.service;
 
 import java.util.function.Supplier;
 

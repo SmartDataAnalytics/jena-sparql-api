@@ -6,6 +6,7 @@ import java.util.function.Function;
 
 import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.SparqlServiceReference;
+import org.aksw.jena_sparql_api.core.connection.SparqlQueryConnectionJsa;
 import org.aksw.jena_sparql_api.stmt.SparqlStmt;
 import org.aksw.jena_sparql_api.utils.Symbols;
 import org.apache.jena.query.Dataset;
@@ -182,7 +183,7 @@ public class RDFConnectionFactoryEx {
 
     /** Reflective access to an {@link RDFConnectionModular}'s datasetConnection. */
     public static RDFDatasetConnection getDatasetConnection(RDFConnectionModular conn) {
-    	RDFDatasetConnection result;
+        RDFDatasetConnection result;
         try {
             Field f = RDFConnectionModular.class.getDeclaredField("datasetConnection");
             f.setAccessible(true);
@@ -233,9 +234,9 @@ public class RDFConnectionFactoryEx {
     }
 
     public static RDFDatasetConnection unwrapDatasetConnection(RDFDatasetConnection conn) {
-    	RDFDatasetConnection result;
+        RDFDatasetConnection result;
         if(conn instanceof RDFConnectionModular) {
-        	RDFDatasetConnection tmp = getDatasetConnection((RDFConnectionModular)conn);
+            RDFDatasetConnection tmp = getDatasetConnection((RDFConnectionModular)conn);
             result = unwrapDatasetConnection(tmp);
         } else {
             result = conn;
@@ -244,7 +245,7 @@ public class RDFConnectionFactoryEx {
         return result;
     }
 
-    
+
     public static RDFConnection wrapWithContext(RDFConnection rawConn) {
         return wrapWithContext(rawConn, cxt -> {});
     }
@@ -317,19 +318,19 @@ public class RDFConnectionFactoryEx {
         return result[0];
     }
 
-    
+
     public static RDFConnectionModular wrapWithPostProcessor(
-    		RDFConnection rawConn,
-    		Function<? super QueryExecution, ? extends QueryExecution> queryExecTransform
-    		) {
-    	
+            RDFConnection rawConn,
+            Function<? super QueryExecution, ? extends QueryExecution> queryExecTransform
+            ) {
+
         SparqlQueryConnection queryConn = unwrapQueryConnection(rawConn);
         SparqlUpdateConnection updateConn = unwrapUpdateConnection(rawConn);
         RDFDatasetConnection datasetConn = unwrapDatasetConnection(rawConn);
-        
+
         return new RDFConnectionModular(
-        		new SparqlQueryConnectionWithExecTransform(queryConn, queryExecTransform), updateConn, datasetConn);
+                new SparqlQueryConnectionWithExecTransform(queryConn, queryExecTransform), updateConn, datasetConn);
     }
-    
+
 
 }

@@ -5,8 +5,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.Supplier;
 
-import org.aksw.jena_sparql_api.arq.core.ServiceExecutorFactory;
-import org.aksw.jena_sparql_api.arq.core.ServiceExecutorFactoryRegistrator;
+import org.aksw.jena_sparql_api.arq.core.service.ServiceExecutorFactory;
+import org.aksw.jena_sparql_api.arq.core.service.ServiceExecutorFactoryRegistrator;
 import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.algebra.op.OpService;
 import org.apache.jena.sparql.engine.ExecutionContext;

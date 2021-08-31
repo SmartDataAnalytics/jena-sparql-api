@@ -25,6 +25,10 @@ public interface SparqlQueryConnectionTmp
 
     // ---- SparqlQueryConnection
 
+    default Query parse(String query) {
+        return QueryFactory.create(query);
+    }
+
     /**
      * Execute a SELECT query and process the ResultSet with the handler code.
      * @param query
@@ -32,7 +36,7 @@ public interface SparqlQueryConnectionTmp
      */
     @Override
     public default void queryResultSet(String query, Consumer<ResultSet> resultSetAction) {
-        queryResultSet(QueryFactory.create(query), resultSetAction);
+        queryResultSet(parse(query), resultSetAction);
     }
 
     /**
@@ -60,7 +64,7 @@ public interface SparqlQueryConnectionTmp
      */
     @Override
     public default void querySelect(String query, Consumer<QuerySolution> rowAction) {
-        querySelect(QueryFactory.create(query), rowAction);
+        querySelect(parse(query), rowAction);
     }
 
     /**
@@ -82,7 +86,7 @@ public interface SparqlQueryConnectionTmp
     /** Execute a CONSTRUCT query and return as a Model */
     @Override
     public default Model queryConstruct(String query) {
-        return queryConstruct(QueryFactory.create(query));
+        return queryConstruct(parse(query));
     }
 
     /** Execute a CONSTRUCT query and return as a Model */
@@ -99,7 +103,7 @@ public interface SparqlQueryConnectionTmp
     /** Execute a DESCRIBE query and return as a Model */
     @Override
     public default Model queryDescribe(String query) {
-        return queryDescribe(QueryFactory.create(query));
+        return queryDescribe(parse(query));
     }
 
     /** Execute a DESCRIBE query and return as a Model */
@@ -116,7 +120,7 @@ public interface SparqlQueryConnectionTmp
     /** Execute a ASK query and return a boolean */
     @Override
     public default boolean queryAsk(String query) {
-        return queryAsk(QueryFactory.create(query));
+        return queryAsk(parse(query));
     }
 
     /** Execute a ASK query and return a boolean */
@@ -153,7 +157,7 @@ public interface SparqlQueryConnectionTmp
      */
     @Override
     public default QueryExecution query(String queryString) {
-        return query(QueryFactory.create(queryString));
+        return query(parse(queryString));
     }
 
 //

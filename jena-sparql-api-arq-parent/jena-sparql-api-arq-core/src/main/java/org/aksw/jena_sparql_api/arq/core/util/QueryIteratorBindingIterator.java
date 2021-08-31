@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.arq.util;
+package org.aksw.jena_sparql_api.arq.core.util;
 
 import java.util.Iterator;
 

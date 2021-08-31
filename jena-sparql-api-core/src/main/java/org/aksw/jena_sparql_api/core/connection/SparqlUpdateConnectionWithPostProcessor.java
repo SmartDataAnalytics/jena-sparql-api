@@ -2,6 +2,7 @@ package org.aksw.jena_sparql_api.core.connection;
 
 import java.util.function.Consumer;
 
+import org.aksw.jena_sparql_api.core.connection.SparqlUpdateConnectionTmp;
 import org.apache.jena.rdfconnection.SparqlUpdateConnection;
 import org.apache.jena.update.UpdateProcessor;
 import org.apache.jena.update.UpdateRequest;

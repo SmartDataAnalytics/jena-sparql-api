@@ -1,6 +1,6 @@
 package org.aksw.difs.engine;
 
-import org.aksw.jena_sparql_api.arq.core.OpExecutorWithCustomServiceExecutors;
+import org.aksw.jena_sparql_api.arq.core.service.OpExecutorWithCustomServiceExecutors;
 import org.apache.jena.sparql.algebra.op.OpBGP;
 import org.apache.jena.sparql.algebra.op.OpQuadPattern;
 import org.apache.jena.sparql.engine.ExecutionContext;

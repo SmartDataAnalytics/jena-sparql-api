@@ -3,7 +3,6 @@ package org.aksw.difs.engine;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.engine.binding.Binding;
-import org.apache.jena.sparql.engine.main.QC;
 import org.apache.jena.sparql.modify.UpdateEngineFactory;
 import org.apache.jena.sparql.modify.UpdateProcessorBase;
 import org.apache.jena.sparql.util.Context;

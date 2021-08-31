@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.arq.core;
+package org.aksw.jena_sparql_api.arq.core.service;
 
 import java.util.List;
 
@@ -24,7 +24,8 @@ import org.apache.jena.sparql.util.Context;
 public class OpExecutorWithCustomServiceExecutors
     extends OpExecutor
 {
-    public static final OpExecutorFactory FACTORY = OpExecutorWithCustomServiceExecutors::new;
+    // OpExecutorWithCustomServiceExecutors::new already fulfills the OpExecutorFactory interface contract
+    // public static final OpExecutorFactory FACTORY = OpExecutorWithCustomServiceExecutors::new;
 
 
     public OpExecutorWithCustomServiceExecutors(ExecutionContext execCxt) {
@@ -38,6 +39,6 @@ public class OpExecutorWithCustomServiceExecutors
 
     /** Register this class as the OpExecutor in the given context */
     public static void register(Context context) {
-        QC.setFactory(context, FACTORY);
+        QC.setFactory(context, OpExecutorWithCustomServiceExecutors::new);
     }
 }

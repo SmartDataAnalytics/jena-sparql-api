@@ -3,7 +3,7 @@ package org.aksw.jena_sparql_api.http;
 import java.util.Collections;
 import java.util.Iterator;
 
-import org.aksw.jena_sparql_api.core.QueryExecutionDecorator;
+import org.aksw.jena_sparql_api.arq.core.query.QueryExecutionDecoratorBase;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.ResultSet;
@@ -14,7 +14,7 @@ import org.apache.jena.sparql.resultset.ResultSetException;
 import com.google.common.base.Supplier;
 
 public class QueryExecutionHttpWrapper
-    extends QueryExecutionDecorator
+    extends QueryExecutionDecoratorBase<QueryExecution>
 {
 
     public QueryExecutionHttpWrapper(QueryExecution decoratee) {

@@ -1,30 +1,29 @@
 package org.aksw.difs.engine;
 
-import org.aksw.jena_sparql_api.core.QueryExecutionFactoryDataset;
-import org.aksw.jena_sparql_api.core.UpdateExecutionFactoryDataset;
-import org.aksw.jena_sparql_api.core.connection.SparqlQueryConnectionJsa;
-import org.aksw.jena_sparql_api.core.connection.SparqlUpdateConnectionJsa;
+import org.aksw.jena_sparql_api.arq.core.connection.DatasetRDFConnectionFactory;
+import org.aksw.jena_sparql_api.arq.core.connection.DatasetRDFConnectionFactoryBuilder;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.rdfconnection.RDFConnection;
-import org.apache.jena.rdfconnection.RDFConnectionFactory;
-import org.apache.jena.rdfconnection.RDFConnectionModular;
+import org.apache.jena.sparql.util.Context;
 
 public class RDFConnectionFactoryQuadForm {
 
     /** Connect to a dataset using the quad form engine */
     public static RDFConnection connect(Dataset dataset) {
+        return connect(dataset, null);
+    }
 
-        RDFConnection result = new RDFConnectionModular(
-            new SparqlQueryConnectionJsa(
-                    new QueryExecutionFactoryDataset(dataset, null, (qu, da, co) -> QueryEngineQuadForm.factory),
-                    dataset),
+    public static DatasetRDFConnectionFactory createFactory(Context context) {
+        return DatasetRDFConnectionFactoryBuilder.create()
+            .setQueryEngineFactoryProvider(QueryEngineQuadForm.FACTORY)
+            .setUpdateEngineFactoryProvider(UpdateEngineMainQuadForm.FACTORY)
+            .setContext(context)
+            .build();
+    }
 
-            new SparqlUpdateConnectionJsa(
-                new UpdateExecutionFactoryDataset(dataset, null, UpdateProcessorFactoryQuadForm::create),
-                dataset),
-
-            RDFConnectionFactory.connect(dataset)
-        );
+    public static RDFConnection connect(Dataset dataset, Context context) {
+        RDFConnection result = createFactory(context)
+                .apply(dataset);
 
         return result;
     }

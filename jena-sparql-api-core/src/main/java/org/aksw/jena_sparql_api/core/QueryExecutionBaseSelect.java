@@ -5,6 +5,7 @@ import java.util.Set;
 
 import org.aksw.commons.collections.SetUtils;
 import org.aksw.commons.collections.SinglePrefetchIterator;
+import org.aksw.jena_sparql_api.arq.core.query.QueryExecutionDecoratorBase;
 import org.aksw.jena_sparql_api.utils.CloseableQueryExecution;
 import org.aksw.jena_sparql_api.utils.QuadPatternUtils;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
@@ -91,7 +92,7 @@ class TestQueryExecutionBaseSelect
  *
  */
 public abstract class QueryExecutionBaseSelect
-        extends QueryExecutionDecorator
+        extends QueryExecutionDecoratorBase<QueryExecution>
         implements QueryExecution
 {
     private static final Logger logger = LoggerFactory
@@ -341,27 +342,27 @@ public abstract class QueryExecutionBaseSelect
 
         Template template = query.getConstructTemplate();
         Set<Var> projectVars = QuadPatternUtils.getVarsMentioned(template.getQuads());
-        
+
         Query clone = query.cloneQuery();
         clone.setQuerySelectType();
 
         //Query selectQuery = QueryUtils.elementToQuery(query.getQueryPattern());
-        
-    	clone.getProject().clear();
-    	if(projectVars.isEmpty()) {
-        	// If the template is variable free then project the first variable of the query pattern
-    		// If the query pattern is variable free then just use the result star
-        	Set<Var> patternVars = SetUtils.asSet(PatternVars.vars(query.getQueryPattern()));
-        	if(patternVars.isEmpty()) {
-        		clone.setQueryResultStar(true);
-        	} else {
-        		Var v = patternVars.iterator().next();
-            	clone.setQueryResultStar(false);
-            	clone.getProject().add(v);        		
-        	}
+
+        clone.getProject().clear();
+        if(projectVars.isEmpty()) {
+            // If the template is variable free then project the first variable of the query pattern
+            // If the query pattern is variable free then just use the result star
+            Set<Var> patternVars = SetUtils.asSet(PatternVars.vars(query.getQueryPattern()));
+            if(patternVars.isEmpty()) {
+                clone.setQueryResultStar(true);
+            } else {
+                Var v = patternVars.iterator().next();
+                clone.setQueryResultStar(false);
+                clone.getProject().add(v);
+            }
         } else {
-        	clone.setQueryResultStar(false);
-        	clone.addProjectVars(projectVars);
+            clone.setQueryResultStar(false);
+            clone.addProjectVars(projectVars);
         }
 
         ResultSetCloseable rs = executeCoreSelect(clone);
@@ -411,14 +412,14 @@ public abstract class QueryExecutionBaseSelect
     {
         throw new RuntimeException("Not implemented");
     }
-    
-	@Override
-	public JsonArray execJson() {
-		throw new UnsupportedOperationException();
-	}
 
-	@Override
-	public Iterator<JsonObject> execJsonItems() {
-		throw new UnsupportedOperationException();
-	}
+    @Override
+    public JsonArray execJson() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Iterator<JsonObject> execJsonItems() {
+        throw new UnsupportedOperationException();
+    }
 }

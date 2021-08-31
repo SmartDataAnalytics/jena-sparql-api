@@ -10,6 +10,10 @@ public interface SparqlUpdateConnectionTmp
 {
     // ---- SparqlUpdateConnection
 
+    default UpdateRequest parse(String updateString) {
+        return UpdateFactory.create(updateString);
+    }
+
     /** Execute a SPARQL Update.
      *
      * @param update
@@ -26,6 +30,6 @@ public interface SparqlUpdateConnectionTmp
      */
     @Override
      default void update(String updateString) {
-        update(UpdateFactory.create(updateString));
+        update(parse(updateString));
     }
 }
