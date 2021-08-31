@@ -87,6 +87,7 @@
 		<module>jena-sparql-api-virtuoso</module>
 		<module>jena-sparql-api-fuseki-geosparql-bundle</module>
 
+		<module>jena-sparql-api-arq-parent</module>
 
 		<module>jena-sparql-api-vaadin-parent</module>
 	</modules>
@@ -656,6 +657,32 @@
 				<artifactId>jena-sparql-api-fuseki-geosparql-bundle</artifactId>
 				<version>${project.version}</version>
 			</dependency>
+
+
+			<dependency>
+				<groupId>org.aksw.jena-sparql-api</groupId>
+				<artifactId>jena-sparql-api-arq-core</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.aksw.jena-sparql-api</groupId>
+				<artifactId>jena-sparql-api-arq-quad-form</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.aksw.jena-sparql-api</groupId>
+				<artifactId>jena-sparql-api-arq-service-vfs</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.aksw.jena-sparql-api</groupId>
+				<artifactId>jena-sparql-api-arq-service-binsearch</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+
 
 			<dependency>
 				<groupId>org.aksw.commons</groupId>

@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.sparql.ext.fs;
+package org.aksw.jena_sparql_api.arq.service.vfs;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -23,6 +23,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.aksw.commons.collections.IterableUtils;
 import org.aksw.commons.io.block.impl.BlockSources;
+import org.aksw.jena_sparql_api.arq.util.QueryIteratorBindingIterator;
 import org.aksw.jena_sparql_api.io.binseach.BinarySearcher;
 import org.aksw.jena_sparql_api.io.binseach.GraphFromPrefixMatcher;
 import org.aksw.jena_sparql_api.io.binseach.GraphFromSubjectCache;
@@ -33,7 +34,6 @@ import org.aksw.jena_sparql_api.rx.RDFLanguagesEx;
 import org.aksw.jena_sparql_api.rx.SparqlRx;
 import org.aksw.jena_sparql_api.rx.entity.EntityInfo;
 import org.aksw.jena_sparql_api.utils.UriUtils;
-import org.apache.jena.atlas.logging.Log;
 import org.apache.jena.atlas.web.TypedInputStream;
 import org.apache.jena.ext.com.google.common.base.Stopwatch;
 import org.apache.jena.ext.com.google.common.base.Strings;
@@ -61,7 +61,6 @@ import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.engine.iterator.QueryIterCommonParent;
 import org.apache.jena.sparql.engine.iterator.QueryIterSingleton;
 import org.apache.jena.sparql.engine.main.QC;
-import org.apache.jena.sparql.engine.main.iterator.QueryIterService;
 import org.apache.jena.sparql.graph.GraphFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -75,7 +74,7 @@ import io.reactivex.rxjava3.disposables.Disposable;
  * @author Claus Stadler, Dec 5, 2018
  *
  */
-public class QueryIterServiceOrFile extends QueryIterService {
+public class ServiceExecutorFactoryVfsUtils {
 
     public static final String XBINSEARCH = "x-binsearch:";
     public static final String XFSRDFSTORE = "x-fsrdfstore:";
@@ -83,16 +82,8 @@ public class QueryIterServiceOrFile extends QueryIterService {
     public static final String VFS = "vfs:";
 
 
+    protected static Logger logger = LoggerFactory.getLogger(ServiceExecutorFactoryVfsUtils.class);
 
-    protected Logger logger = LoggerFactory.getLogger(QueryIterServiceOrFile.class);
-    protected OpService opService ;
-
-    public QueryIterServiceOrFile(QueryIterator input, OpService opService, ExecutionContext context) {
-        super(input, opService, context);
-
-        // TODO Sigh, Jena made this attribute package visible only...
-        this.opService = opService;
-    }
 
     public static Path toPath(Node node) {
         Entry<Path, Map<String, String>> tmp = toPathSpec(node);
@@ -232,25 +223,24 @@ public class QueryIterServiceOrFile extends QueryIterService {
 //    }
 
 
-    @Override
-    protected QueryIterator nextStage(Binding outerBinding)
-    {
-        OpService op = (OpService)QC.substitute(opService, outerBinding);
-        Node serviceNode = op.getService();
+//    @Override
+//    protected QueryIterator nextStage(Binding outerBinding)
+//    {
+//        OpService op = (OpService)QC.substitute(opService, outerBinding);
+//        Node serviceNode = op.getService();
+//
+//        //Path path = toPath(serviceNode);
+//        Entry<Path, Map<String, String>> fileSpec = toPathSpec(serviceNode);
+//
+//        QueryIterator result = fileSpec == null
+//                ? super.nextStage(outerBinding)//nextStageService(outerBinding)
+//                : nextStagePath(outerBinding, fileSpec.getKey(), fileSpec.getValue());
+//
+//        return result;
+//    }
 
-        //Path path = toPath(serviceNode);
-        Entry<Path, Map<String, String>> fileSpec = toPathSpec(serviceNode);
 
-        QueryIterator result = fileSpec == null
-                ? super.nextStage(outerBinding)//nextStageService(outerBinding)
-                : nextStagePath(outerBinding, fileSpec.getKey(), fileSpec.getValue());
-
-        return result;
-    }
-
-
-    protected QueryIterator nextStagePath(Binding outerBinding, Path path, Map<String, String> params) //Path path)
-    {
+    public static QueryIterator nextStage(OpService opService, Binding outerBinding, ExecutionContext execCxt, Path path, Map<String, String> params) {
         OpService op = (OpService)QC.substitute(opService, outerBinding);
         boolean silent = opService.getSilent() ;
         QueryIterator qIter ;
@@ -402,16 +392,16 @@ public class QueryIterServiceOrFile extends QueryIterService {
         {
             if ( silent )
             {
-                Log.warn(this, "SERVICE <" + opService.getService().toString() + ">: " + ex.getMessage()) ;
+                logger.warn("SERVICE <" + opService.getService().toString() + ">: " + ex.getMessage()) ;
                 // Return the input
-                return QueryIterSingleton.create(outerBinding, getExecContext()) ;
+                return QueryIterSingleton.create(outerBinding, execCxt) ;
             }
             throw ex ;
         }
 
         // Need to put the outerBinding as parent to every binding of the service call.
         // There should be no variables in common because of the OpSubstitute.substitute
-        QueryIterator qIter2 = new QueryIterCommonParent(qIter, outerBinding, getExecContext()) ;
+        QueryIterator qIter2 = new QueryIterCommonParent(qIter, outerBinding, execCxt) ;
         return qIter2 ;
     }
 }
