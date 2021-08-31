@@ -15,7 +15,7 @@ public class RDFConnectionFactoryQuadForm {
 
     public static DatasetRDFConnectionFactory createFactory(Context context) {
         return DatasetRDFConnectionFactoryBuilder.create()
-            .setQueryEngineFactoryProvider(QueryEngineQuadForm.FACTORY)
+            .setQueryEngineFactoryProvider(QueryEngineMainQuadForm.FACTORY)
             .setUpdateEngineFactoryProvider(UpdateEngineMainQuadForm.FACTORY)
             .setContext(context)
             .build();
@@ -23,7 +23,7 @@ public class RDFConnectionFactoryQuadForm {
 
     public static RDFConnection connect(Dataset dataset, Context context) {
         RDFConnection result = createFactory(context)
-                .apply(dataset);
+                .connect(dataset);
 
         return result;
     }

@@ -37,7 +37,7 @@ class DatasetRDFConnectionFactoryImpl
     }
 
     @Override
-    public RDFConnection apply(Dataset dataset) {
+    public RDFConnection connect(Dataset dataset) {
 
         RDFConnection result = new RDFConnectionModular(
             new SparqlQueryConnectionJsaBase<>(

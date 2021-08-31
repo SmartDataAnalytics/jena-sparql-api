@@ -53,7 +53,7 @@ public class UpdateProcessorFactoryDataset
         UpdateEngineFactory f = updateEngineFactoryProvider.find(dsg, context);
         if ( f == null )
         {
-            Log.warn(QueryExecutionFactory.class, "Failed to find a QueryEngineFactory for query: " + updateRequest) ;
+            Log.warn(UpdateProcessorFactoryDataset.class, "Failed to find a UpdateEngineFactory for update: " + updateRequest) ;
             return null ;
         }
         //dataset.begin(ReadWrite.WRITE);
@@ -62,7 +62,9 @@ public class UpdateProcessorFactoryDataset
     //    return result;
         // UpdateEngine updateEngine = f.create(dsg, null, context);
 
-        UpdateProcessorBase result = new UpdateProcessorBase(updateRequest, dsg, null, context, f);
+        UpdateProcessorBase tmp = new UpdateProcessorBase(updateRequest, dsg, null, context, f);
+        UpdateProcessor result = UpdateProcessorDecoratorTxn.wrap(tmp, dsg);
+
 
         // UpdateProcessor result = updateProcessorFactory.create(updateRequest, dataset, context);
         return result;

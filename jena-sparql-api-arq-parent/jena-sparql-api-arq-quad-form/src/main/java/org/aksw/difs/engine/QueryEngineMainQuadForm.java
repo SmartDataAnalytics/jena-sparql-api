@@ -11,15 +11,15 @@ import org.apache.jena.sparql.engine.main.QC;
 import org.apache.jena.sparql.engine.main.QueryEngineMain;
 import org.apache.jena.sparql.util.Context;
 
-public class QueryEngineQuadForm
+public class QueryEngineMainQuadForm
     extends QueryEngineMain
 {
 
-    public QueryEngineQuadForm(Op op, DatasetGraph dataset, Binding input, Context context) {
+    public QueryEngineMainQuadForm(Op op, DatasetGraph dataset, Binding input, Context context) {
         super(op, dataset, input, context);
     }
 
-    public QueryEngineQuadForm(Query query, DatasetGraph dataset, Binding input, Context context) {
+    public QueryEngineMainQuadForm(Query query, DatasetGraph dataset, Binding input, Context context) {
         super(query, dataset, input, context);
     }
 
@@ -44,7 +44,7 @@ public class QueryEngineQuadForm
         public Plan create(Query query, DatasetGraph dataset, Binding input, Context context)
         {
             QC.setFactory(context, OpExecutorQuadForm.FACTORY);
-            QueryEngineQuadForm engine = new QueryEngineQuadForm(query, dataset, input, context) ;
+            QueryEngineMainQuadForm engine = new QueryEngineMainQuadForm(query, dataset, input, context) ;
             return engine.getPlan() ;
         }
 
@@ -56,7 +56,7 @@ public class QueryEngineQuadForm
         public Plan create(Op op, DatasetGraph dataset, Binding binding, Context context)
         {
             QC.setFactory(context, OpExecutorQuadForm.FACTORY);
-            QueryEngineQuadForm engine = new QueryEngineQuadForm(op, dataset, binding, context) ;
+            QueryEngineMainQuadForm engine = new QueryEngineMainQuadForm(op, dataset, binding, context) ;
             return engine.getPlan() ;
         }
     }

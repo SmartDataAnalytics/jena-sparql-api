@@ -7,6 +7,6 @@ import org.apache.jena.sparql.engine.QueryExecutionBase;
 
 public class QueryExecutionFactoryQuadForm {
 	public static QueryExecution create(Query query, Dataset dataset) {
-		return new QueryExecutionBase(query, dataset, null, QueryEngineQuadForm.FACTORY);
+		return new QueryExecutionBase(query, dataset, null, QueryEngineMainQuadForm.FACTORY);
 	}
 }

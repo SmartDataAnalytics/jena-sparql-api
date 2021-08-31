@@ -28,7 +28,7 @@ public class UpdateEngineWorkerQuadForm
     protected QueryEngineFactory queryEngineFactory;
 
     public UpdateEngineWorkerQuadForm(DatasetGraph datasetGraph, Binding inputBinding, Context context) {
-        this(datasetGraph, inputBinding, context, QueryEngineQuadForm.FACTORY);
+        this(datasetGraph, inputBinding, context, QueryEngineMainQuadForm.FACTORY);
     }
 
     public UpdateEngineWorkerQuadForm(DatasetGraph datasetGraph, Binding inputBinding, Context context, QueryEngineFactory queryEngineFactory) {

@@ -13,6 +13,7 @@ import org.apache.jena.rdfconnection.RDFConnection;
  */
 @FunctionalInterface
 public interface DatasetRDFConnectionFactory
-    extends Function<Dataset, RDFConnection>
+//    extends Function<Dataset, RDFConnection>
 {
+    RDFConnection connect(Dataset dataset);
 }
