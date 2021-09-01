@@ -3,6 +3,7 @@ package org.aksw.difs.engine;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.engine.binding.Binding;
+import org.apache.jena.sparql.engine.binding.BindingRoot;
 import org.apache.jena.sparql.modify.UpdateEngineFactory;
 import org.apache.jena.sparql.modify.UpdateProcessorBase;
 import org.apache.jena.sparql.util.Context;
@@ -16,7 +17,7 @@ public class UpdateProcessorFactoryQuadForm
     // @Override
     public static UpdateProcessor create(UpdateRequest updateRequest, Dataset dataset, Context context) {
         DatasetGraph datasetGraph = dataset.asDatasetGraph();
-        Binding inputBinding = null;
+        Binding inputBinding = BindingRoot.create();
 
         Context cxt = Context.setupContextForDataset(context, datasetGraph);
         UpdateEngineFactory f = UpdateEngineMainQuadForm.getFactory();

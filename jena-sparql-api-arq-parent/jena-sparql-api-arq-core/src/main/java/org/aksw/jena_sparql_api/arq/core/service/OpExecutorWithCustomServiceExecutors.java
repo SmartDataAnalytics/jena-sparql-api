@@ -6,7 +6,6 @@ import org.apache.jena.sparql.algebra.op.OpService;
 import org.apache.jena.sparql.engine.ExecutionContext;
 import org.apache.jena.sparql.engine.QueryIterator;
 import org.apache.jena.sparql.engine.main.OpExecutor;
-import org.apache.jena.sparql.engine.main.OpExecutorFactory;
 import org.apache.jena.sparql.engine.main.QC;
 import org.apache.jena.sparql.util.Context;
 

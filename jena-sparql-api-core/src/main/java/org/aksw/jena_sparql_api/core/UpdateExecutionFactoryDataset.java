@@ -6,6 +6,8 @@ import org.apache.jena.query.ARQ;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.sparql.core.DatasetGraph;
+import org.apache.jena.sparql.engine.binding.Binding;
+import org.apache.jena.sparql.engine.binding.BindingRoot;
 import org.apache.jena.sparql.modify.UpdateEngineFactory;
 import org.apache.jena.sparql.modify.UpdateEngineRegistry;
 import org.apache.jena.sparql.modify.UpdateProcessorBase;
@@ -20,7 +22,7 @@ public class UpdateExecutionFactoryDataset
     protected Context context;
     protected UpdateEngineFactoryProvider updateEngineFactoryProvider;
 
-    
+
 
 //    @FunctionalInterface
 //    public static interface UpdateProcessorFactory {
@@ -69,7 +71,8 @@ public class UpdateExecutionFactoryDataset
 //        return result;
         // UpdateEngine updateEngine = f.create(dsg, null, context);
 
-        UpdateProcessorBase result = new UpdateProcessorBase(updateRequest, dsg, null, context, f);
+        Binding initialBinding = BindingRoot.create();
+        UpdateProcessorBase result = new UpdateProcessorBase(updateRequest, dsg, initialBinding, context, f);
 
         // UpdateProcessor result = updateProcessorFactory.create(updateRequest, dataset, context);
         return result;

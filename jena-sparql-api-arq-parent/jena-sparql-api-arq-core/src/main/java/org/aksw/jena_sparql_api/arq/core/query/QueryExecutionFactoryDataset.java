@@ -63,6 +63,8 @@ public class QueryExecutionFactoryDataset
         }
         //dataset.begin(ReadWrite.WRITE);
         QueryExecutionBase tmp = new QueryExecutionBase(query, dataset, context, f) ;
+
+        // TODO We shouldn't wrap with txn here
         QueryExecution result = new QueryExecutionDecoratorTxn<QueryExecution>(tmp, dsg);
         return result;
     }

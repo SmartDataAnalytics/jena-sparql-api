@@ -19,6 +19,9 @@ import org.apache.jena.system.Txn;
 /**
  * A wrapper for a collection that provides transactions using MRSW locking.
  *
+ * Also uses copy-on-write; i.e. the thread with the write transaction creates a full
+ * copy of the underlying collection - which is far from optimal.
+ *
  * @author raven
  *
  * @param <T>

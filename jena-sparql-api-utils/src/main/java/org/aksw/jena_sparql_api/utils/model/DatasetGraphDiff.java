@@ -6,13 +6,11 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 
 import org.apache.jena.ext.com.google.common.collect.Iterators;
-import org.apache.jena.ext.com.google.common.collect.Lists;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.compose.Delta;
@@ -36,7 +34,9 @@ import org.apache.jena.system.Txn;
  *
  * Similar to {@link Delta} which however is for Graphs.
  *
- * Does not support transactions.
+ * Supports transactions on a best-effort basis:
+ * Invoking a transaction operation (begin, commit, rollback, end)
+ * on this class also invokes that operation on each involved component.
  *
  *
  * @author raven
@@ -58,21 +58,49 @@ public class DatasetGraphDiff
     protected GraphView defaultGraphViewCache = GraphView.createDefaultGraph(this);
     protected Map<Node, GraphView> namedGraphViewCache = Collections.synchronizedMap(new HashMap<>());
 
-    public DatasetGraphDiff() {
-        this(DatasetGraphFactory.createTxnMem());
+    public static DatasetGraphDiff createNonTxn(DatasetGraph base) {
+        return new DatasetGraphDiff(
+                base,
+                DatasetGraphFactory.create(),
+                DatasetGraphFactory.create(),
+                new TransactionalSetDummyImpl<>(new LinkedHashSet<>()),
+                new TransactionalSetDummyImpl<>(new LinkedHashSet<>()));
+
     }
 
-    public DatasetGraphDiff(DatasetGraph base) {
-        super();
+    public static DatasetGraphDiff createTxn(DatasetGraph base) {
+        return new DatasetGraphDiff(
+                base,
+                DatasetGraphFactory.createTxnMem(),
+                DatasetGraphFactory.createTxnMem(),
+                new TransactionalSetImpl<>(),
+                new TransactionalSetImpl<>());
+    }
+
+    public DatasetGraphDiff(
+            DatasetGraph base,
+            DatasetGraph added,
+            DatasetGraph removed,
+            TransactionalSet<Node> removedGraphs,
+            TransactionalSet<Node> addedGraphs) {
         this.base = base;
-        this.added = DatasetGraphFactory.createTxnMem();
-        this.removed = DatasetGraphFactory.createTxnMem();
-
-//        this.allowEmptyGraphs = allowEmptyGraphs;
-
-        this.removedGraphs = new TransactionalSetImpl<>();
-        this.addedGraphs = new TransactionalSetImpl<>();
+        this.added = added;
+        this.removed = removed;
+        this.removedGraphs = removedGraphs;
+        this.addedGraphs = addedGraphs;
     }
+
+//    public DatasetGraphDiff(DatasetGraph base) {
+//        super();
+//        this.base = base;
+//        this.added = DatasetGraphFactory.createTxnMem();
+//        this.removed = DatasetGraphFactory.createTxnMem();
+//
+////        this.allowEmptyGraphs = allowEmptyGraphs;
+//
+//        this.removedGraphs = new TransactionalSetImpl<>();
+//        this.addedGraphs = new TransactionalSetImpl<>();
+//    }
 
 
 //    public void applyChanges() {
@@ -118,7 +146,11 @@ public class DatasetGraphDiff
         Iterator<Quad> itBase = base.find(g, s, p, o);
 
 //        List<Quad> materialized = Lists.newArrayList(itBase);
-//        System.err.println("Internal base iterator size: " + materialized.size());
+//        int size = materialized.size();
+//        System.err.println("Internal base iterator size: " + size);
+//        if (size > 1) {
+//            System.err.println("DEBUG POINT");
+//        }
 //        itBase = materialized.iterator();
 
         Iterator<Quad> itActualAdded = Iterators.filter(added.find(g, s, p, o), quad -> !base.contains(quad));

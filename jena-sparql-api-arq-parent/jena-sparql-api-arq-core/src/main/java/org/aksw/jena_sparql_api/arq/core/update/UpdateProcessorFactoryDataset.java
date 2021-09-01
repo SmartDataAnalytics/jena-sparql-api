@@ -3,8 +3,9 @@ package org.aksw.jena_sparql_api.arq.core.update;
 import org.apache.jena.atlas.logging.Log;
 import org.apache.jena.query.ARQ;
 import org.apache.jena.query.Dataset;
-import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.sparql.core.DatasetGraph;
+import org.apache.jena.sparql.engine.binding.Binding;
+import org.apache.jena.sparql.engine.binding.BindingRoot;
 import org.apache.jena.sparql.modify.UpdateEngineFactory;
 import org.apache.jena.sparql.modify.UpdateEngineRegistry;
 import org.apache.jena.sparql.modify.UpdateProcessorBase;
@@ -62,7 +63,9 @@ public class UpdateProcessorFactoryDataset
     //    return result;
         // UpdateEngine updateEngine = f.create(dsg, null, context);
 
-        UpdateProcessorBase tmp = new UpdateProcessorBase(updateRequest, dsg, null, context, f);
+        Binding initialBinding = BindingRoot.create();
+
+        UpdateProcessorBase tmp = new UpdateProcessorBase(updateRequest, dsg, initialBinding, context, f);
         UpdateProcessor result = UpdateProcessorDecoratorTxn.wrap(tmp, dsg);
 
 

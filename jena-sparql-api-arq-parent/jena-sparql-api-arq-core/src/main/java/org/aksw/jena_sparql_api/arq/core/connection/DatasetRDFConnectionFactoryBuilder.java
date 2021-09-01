@@ -3,59 +3,27 @@ package org.aksw.jena_sparql_api.arq.core.connection;
 import java.util.Objects;
 
 import org.aksw.jena_sparql_api.arq.core.query.QueryEngineFactoryProvider;
-import org.aksw.jena_sparql_api.arq.core.query.QueryExecutionFactoryDataset;
 import org.aksw.jena_sparql_api.arq.core.update.UpdateEngineFactoryProvider;
-import org.aksw.jena_sparql_api.arq.core.update.UpdateProcessorFactoryDataset;
-import org.aksw.jena_sparql_api.core.connection.SparqlQueryConnectionJsaBase;
-import org.aksw.jena_sparql_api.core.connection.SparqlUpdateConnectionJsaBase;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionFactory;
-import org.apache.jena.rdfconnection.RDFConnectionModular;
 import org.apache.jena.sparql.engine.QueryEngineFactory;
 import org.apache.jena.sparql.engine.QueryEngineRegistry;
 import org.apache.jena.sparql.modify.UpdateEngineFactory;
 import org.apache.jena.sparql.modify.UpdateEngineRegistry;
 import org.apache.jena.sparql.util.Context;
 
-class DatasetRDFConnectionFactoryImpl
-    implements DatasetRDFConnectionFactory
-{
-    protected QueryEngineFactoryProvider queryEngineFactoryProvider;
-    protected UpdateEngineFactoryProvider updateEngineFactoryProvider;
-
-    // Use a context supplier?
-    protected Context context;
-
-    public DatasetRDFConnectionFactoryImpl(
-            Context context,
-            QueryEngineFactoryProvider queryEngineFactoryProvider,
-            UpdateEngineFactoryProvider updateEngineFactoryProvider) {
-        this.context = context;
-        this.queryEngineFactoryProvider = queryEngineFactoryProvider;
-        this.updateEngineFactoryProvider = updateEngineFactoryProvider;
-    }
-
-    @Override
-    public RDFConnection connect(Dataset dataset) {
-
-        RDFConnection result = new RDFConnectionModular(
-            new SparqlQueryConnectionJsaBase<>(
-                new QueryExecutionFactoryDataset(dataset, context, queryEngineFactoryProvider),
-                dataset),
-
-            new SparqlUpdateConnectionJsaBase<>(
-                new UpdateProcessorFactoryDataset(dataset, context, updateEngineFactoryProvider),
-                dataset),
-
-            RDFConnectionFactory.connect(dataset)
-        );
-
-        return result;
-    }
-
-}
-
+/**
+ * Similar to {@link RDFConnectionFactory#connect(Dataset)} but
+ * with additional configuration options to set a {@link Context} and
+ * the update / query engines.
+ *
+ * The result of the builder is of type {@link DatasetRDFConnectionFactory}
+ * which is a function from {@link Dataset} to {@link RDFConnection}.
+ *
+ * @author Claus Stadler
+ *
+ */
 public class DatasetRDFConnectionFactoryBuilder {
     protected QueryEngineFactoryProvider queryEngineFactoryProvider = null;
     protected UpdateEngineFactoryProvider updateEngineFactoryProvider = null;
