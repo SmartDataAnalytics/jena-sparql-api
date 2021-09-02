@@ -4,6 +4,10 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.channels.Channels;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 
 import org.aksw.commons.io.block.api.Block;
 import org.aksw.commons.io.block.api.BlockSource;
@@ -29,12 +33,11 @@ public class BinarySearchOnBlockSource
     public InputStream search(byte[] prefix) throws IOException {
         InputStream result;
 
-        long maxBlockOffset = blockSource.size();
-
         Ref<? extends Block> blockRef;
         if(prefix == null || prefix.length == 0) {
             blockRef = blockSource.contentAtOrAfter(0, true);
         } else {
+            long maxBlockOffset = blockSource.size();
             blockRef = BlockSources.binarySearch(blockSource, 0, maxBlockOffset, (byte)'\n', prefix);
         }
 
@@ -115,6 +118,10 @@ public class BinarySearchOnBlockSource
                 }
             }
         }
+
+//        Path tmp = Paths.get("/tmp/debugging-binsearch.dat");
+//        Files.copy(result, tmp, StandardCopyOption.REPLACE_EXISTING);
+//        result = Files.newInputStream(tmp);
 
         return result;
     }

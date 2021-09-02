@@ -20,10 +20,10 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 import org.aksw.commons.collections.IterableUtils;
 import org.aksw.commons.io.block.impl.BlockSources;
-import org.aksw.jena_sparql_api.arq.core.util.QueryIteratorBindingIterator;
 import org.aksw.jena_sparql_api.io.binseach.BinarySearcher;
 import org.aksw.jena_sparql_api.io.binseach.GraphFromPrefixMatcher;
 import org.aksw.jena_sparql_api.io.binseach.GraphFromSubjectCache;
@@ -34,6 +34,10 @@ import org.aksw.jena_sparql_api.rx.RDFLanguagesEx;
 import org.aksw.jena_sparql_api.rx.SparqlRx;
 import org.aksw.jena_sparql_api.rx.entity.EntityInfo;
 import org.aksw.jena_sparql_api.utils.UriUtils;
+import org.apache.jena.atlas.data.BagFactory;
+import org.apache.jena.atlas.data.DataBag;
+import org.apache.jena.atlas.data.ThresholdPolicy;
+import org.apache.jena.atlas.data.ThresholdPolicyFactory;
 import org.apache.jena.atlas.web.TypedInputStream;
 import org.apache.jena.ext.com.google.common.base.Stopwatch;
 import org.apache.jena.ext.com.google.common.base.Strings;
@@ -59,11 +63,16 @@ import org.apache.jena.sparql.engine.ExecutionContext;
 import org.apache.jena.sparql.engine.QueryIterator;
 import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.engine.iterator.QueryIterCommonParent;
+import org.apache.jena.sparql.engine.iterator.QueryIterPlainWrapper;
 import org.apache.jena.sparql.engine.iterator.QueryIterSingleton;
 import org.apache.jena.sparql.engine.main.QC;
 import org.apache.jena.sparql.graph.GraphFactory;
+import org.apache.jena.sparql.system.SerializationFactoryFinder;
+import org.apache.jena.sparql.util.Context;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.common.collect.Streams;
 
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.disposables.Disposable;
@@ -248,14 +257,15 @@ public class ServiceExecutorFactoryVfsUtils {
             Op subOp = op.getSubOp();
             Query query = OpAsQuery.asQuery(subOp);
 
-            Iterator<Binding> itBindings = null;
+            Flowable<Binding> bindingFlow = null;
+            // Iterator<Binding> itBindings = null;
 
-            boolean specialProcessingApplied = false;
+            boolean specialStreamProcessingApplied = false;
 
             boolean useBinSearch = params.containsKey("binsearch");
             String binSearchVal = params.getOrDefault("binsearch", "");
             if (useBinSearch || "true".equalsIgnoreCase(binSearchVal)) {
-                specialProcessingApplied = true;
+                specialStreamProcessingApplied = true;
 
                 EntityInfo info;
                 try (InputStream in = Files.newInputStream(path)) {
@@ -283,7 +293,7 @@ public class ServiceExecutorFactoryVfsUtils {
 //              int bufferSize = 512 * 1024; // 14 requests
 
                 // Model generation wrapped as a flowable for resource management
-                Flowable<Binding> bindingFlow = Flowable.generate(() -> {
+                bindingFlow = Flowable.generate(() -> {
                     BinarySearcher binarySearcher = isBzip2
                         ? BlockSources.createBinarySearcherBz2(path, bufferSize)
                         : BlockSources.createBinarySearcherText(path, bufferSize);
@@ -315,7 +325,7 @@ public class ServiceExecutorFactoryVfsUtils {
                 },
                 e -> e.getKey().close());
 
-                itBindings = bindingFlow.blockingIterable().iterator();
+                // itBindings = bindingFlow.blockingIterable().iterator();
             }
 
             // TODO Allow subject-streams to take advantage of binsearch:
@@ -325,13 +335,13 @@ public class ServiceExecutorFactoryVfsUtils {
             String streamVal = params.get("stream");
             if(!Strings.isNullOrEmpty(streamVal)) {
                 if("s".equalsIgnoreCase(streamVal)) {
-                    specialProcessingApplied = true;
+                    specialStreamProcessingApplied = true;
 
                     // Stream by subject - useful for answering star patterns
                     List<Lang> tripleLangs = RDFLanguagesEx.getTripleLangs();
                     TypedInputStream tmp = RDFDataMgrEx.open(path.toString(), tripleLangs);
 
-                    Flowable<Binding> flow = RDFDataMgrRx.createFlowableTriples(() -> tmp)
+                    bindingFlow = RDFDataMgrRx.createFlowableTriples(() -> tmp)
                             .compose(GraphOpsRx.graphFromConsecutiveTriples(Triple::getSubject, GraphFactory::createDefaultGraph))
                             .map(ModelFactory::createModelForGraph)
                             //.parallel()
@@ -339,7 +349,7 @@ public class ServiceExecutorFactoryVfsUtils {
                                 SparqlRx.execSelectRaw(() -> QueryExecutionFactory.create(query.cloneQuery(), m)));
                             //.sequential();
 
-                    itBindings = flow.blockingIterable().iterator();
+                    // itBindings = flow.blockingIterable().iterator();
                 } else {
                     throw new RuntimeException("For streaming in SERVICE, only 's' for subjects is presently supported.");
                 }
@@ -347,7 +357,7 @@ public class ServiceExecutorFactoryVfsUtils {
 
 
 
-            if (!specialProcessingApplied) {
+            if (!specialStreamProcessingApplied) {
                 Dataset dataset = DatasetFactory.create();
                 try (InputStream in = Files.newInputStream(path)) {
                     TypedInputStream tis = RDFDataMgrEx.probeLang(in, RDFDataMgrEx.DEFAULT_PROBE_LANGS);
@@ -364,20 +374,35 @@ public class ServiceExecutorFactoryVfsUtils {
 
 //                qe = QueryExecutionFactory.create(query, dataset);//, input);
 //                right = new QueryIteratorResultSet(qe.execSelect());
-                itBindings = SparqlRx.execSelectRaw(() -> QueryExecutionFactory.create(query, dataset))
-                        .blockingIterable().iterator();
+                bindingFlow = SparqlRx.execSelectRaw(() -> QueryExecutionFactory.create(query, dataset));
+                        // .blockingIterable().iterator();
             }
 
-            Iterator<Binding> tmp = itBindings;
-            QueryIterator right = new QueryIteratorBindingIterator(itBindings) {
+
+            // In silent mode we consume all data into a data bag
+            // so that any exception raised during iteration gets caught here
+            if (silent && specialStreamProcessingApplied) {
+                Context cxt = execCxt.getContext();
+                ThresholdPolicy<Binding> policy = ThresholdPolicyFactory.policyFromContext(cxt);
+                DataBag<Binding> db = BagFactory.newDefaultBag(policy, SerializationFactoryFinder.bindingSerializationFactory());
+                Iterator<Binding> bindingIt = bindingFlow.blockingIterable().iterator();
+                db.addAll(bindingIt);
+                Stream<Binding> bindingStream = Streams.stream(db.iterator()).onClose(db::close);
+                bindingFlow = Flowable.fromStream(bindingStream);
+            }
+
+            Iterator<Binding> tmp = bindingFlow.blockingIterable().iterator();
+            QueryIterator right = new QueryIterPlainWrapper(tmp) {
                 @Override
-                protected final void requestCancel() {
+                protected void requestCancel() {
                     ((Disposable)tmp).dispose();
+                    super.requestCancel();
                 }
 
                 @Override
-                public final void close() {
+                protected void closeIterator() {
                     ((Disposable)tmp).dispose();
+                    super.closeIterator();
                 }
             };
 
@@ -402,6 +427,7 @@ public class ServiceExecutorFactoryVfsUtils {
         // Need to put the outerBinding as parent to every binding of the service call.
         // There should be no variables in common because of the OpSubstitute.substitute
         QueryIterator qIter2 = new QueryIterCommonParent(qIter, outerBinding, execCxt) ;
+
         return qIter2 ;
     }
 }
