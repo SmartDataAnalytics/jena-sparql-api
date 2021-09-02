@@ -45,7 +45,7 @@ public class QueryIterServiceWithCustomExecutors
         }
 
         if (result == null) {
-            result = nextStage(outerBinding);
+            result = super.nextStage(outerBinding);
         }
 
         return result;
