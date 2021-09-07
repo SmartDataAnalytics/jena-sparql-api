@@ -27,8 +27,7 @@
 			<artifactId>jena-sparql-api-concepts</artifactId>
 		</dependency>
 
-
-		<!-- Unit Testing -->
+		<!-- Unit testing -->
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>

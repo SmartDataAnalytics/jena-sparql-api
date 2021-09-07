@@ -101,12 +101,12 @@ public abstract class RelationGeneratorBase
 
     protected void reset() {
         setHashCode(null);
+        pastRelations.clear();
         relation = null;
         columnIdx = 0;
         relationStartAbsPath = PathOpsPE.newAbsolutePath();
         relPath = PathOpsPE.newRelativePath();
         updateHash();
-        pastRelations.clear();
     }
 
     public void ensureInit() {
@@ -115,8 +115,11 @@ public abstract class RelationGeneratorBase
             String oldHash = contextHashStr;
             updateHash();
 
+            Var pastLastVar = null;
+
             if (relation != null) {
                 Relation pastItem = relation.filter(conditions);
+                pastLastVar = pastItem.getVars().get(pastItem.getVars().size() - 1);
                 pastRelations.add(pastItem);
             }
 
@@ -138,16 +141,26 @@ public abstract class RelationGeneratorBase
 
             Var firstVar = vars.get(0);
 
+            if (pastLastVar == null) {
+                pastLastVar = Var.alloc(contextHashStr + "_" + firstVar.getName());
+            }
+
+            Var plv = pastLastVar;
+
             Map<Var, Node> remap = relation.getVarsMentioned().stream()
                     .collect(Collectors.toMap(
                             v -> v,
                             node -> {
                                 Node r;
                                 if (node.isVariable()) {
-                                    String prefix = node.equals(firstVar)
-                                            ? oldHash
-                                            : contextHashStr;
-                                    r = Var.alloc(prefix + "_" + node.getName());
+                                    if (node.equals(firstVar)) {
+                                        r = plv;
+                                    } else {
+//	                                    String prefix = node.equals(firstVar)
+//	                                            ? oldHash
+//	                                            : contextHashStr;
+                                        r = Var.alloc(contextHashStr + "_" + node.getName());
+                                    }
                                 } else {
                                     r = node;
                                 }

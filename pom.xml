@@ -468,12 +468,6 @@
 			<!-- </dependency> -->
 
 			<dependency>
-				<groupId>org.aksw.commons</groupId>
-				<artifactId>aksw-commons-paths</artifactId>
-				<version>${aksw.commons.version}</version>
-			</dependency>
-
-			<dependency>
 				<groupId>org.aksw.jena-sparql-api</groupId>
 				<artifactId>jena-sparql-api-vocabs</artifactId>
 				<version>${project.version}</version>
@@ -590,6 +584,12 @@
 			<dependency>
 				<groupId>org.aksw.jena-sparql-api</groupId>
 				<artifactId>jena-sparql-api-concepts</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.aksw.jena-sparql-api</groupId>
+				<artifactId>jena-sparql-api-paths</artifactId>
 				<version>${project.version}</version>
 			</dependency>
 
@@ -952,6 +952,12 @@
 					</exclusion>
 				</exclusions>
 
+			</dependency>
+
+			<dependency>
+				<groupId>org.aksw.commons</groupId>
+				<artifactId>aksw-commons-paths</artifactId>
+				<version>${aksw.commons.version}</version>
 			</dependency>
 
 			<dependency>
