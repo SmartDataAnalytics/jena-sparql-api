@@ -249,7 +249,7 @@ public class SparqlStmtMgr {
                     // same variable is assigned to in two different BINDs.
                     // For this reason parse errors can occur at invalid char positions such as
                     // line=-1 and/or column=-1 it
-                    // qpe.getLine() > 1 || 
+                    // qpe.getLine() > 1 ||
                     // && qpe.getColumn() > 1)
                     if  (!mentionsEncounteredSlash) {
                         throw new RuntimeException(filenameOrStr + " could not be openend and failed to parse as SPARQL query", f);

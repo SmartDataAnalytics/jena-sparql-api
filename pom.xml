@@ -87,6 +87,7 @@
 		<module>jena-sparql-api-virtuoso</module>
 		<module>jena-sparql-api-fuseki-geosparql-bundle</module>
 
+		<module>jena-sparql-api-paths</module>
 		<module>jena-sparql-api-arq-parent</module>
 
 		<module>jena-sparql-api-vaadin-parent</module>
@@ -465,6 +466,12 @@
 			<!-- <artifactId>hdt-jena</artifactId> -->
 			<!-- <version>2.1</version> -->
 			<!-- </dependency> -->
+
+			<dependency>
+				<groupId>org.aksw.commons</groupId>
+				<artifactId>aksw-commons-paths</artifactId>
+				<version>${aksw.commons.version}</version>
+			</dependency>
 
 			<dependency>
 				<groupId>org.aksw.jena-sparql-api</groupId>
