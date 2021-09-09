@@ -1,7 +1,10 @@
 package org.aksw.jena_sparql_api.concepts;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.stmt.SparqlPrologueParser;
 import org.aksw.jena_sparql_api.stmt.SparqlPrologueParserImpl;
@@ -9,18 +12,25 @@ import org.aksw.jena_sparql_api.stmt.SparqlQueryParser;
 import org.aksw.jena_sparql_api.stmt.SparqlQueryParserImpl;
 import org.aksw.jena_sparql_api.stmt.SparqlQueryParserWrapperSelectShortForm;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
+import org.aksw.jena_sparql_api.utils.Vars;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.Syntax;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.core.Prologue;
 import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.engine.binding.BindingFactory;
 import org.apache.jena.sparql.graph.NodeTransform;
 import org.apache.jena.sparql.lang.ParserSPARQL11;
 import org.apache.jena.sparql.lang.SPARQLParser;
 import org.apache.jena.sparql.syntax.Element;
+import org.apache.jena.sparql.syntax.ElementData;
 import org.apache.jena.sparql.syntax.ElementGroup;
 import org.apache.jena.sparql.syntax.ElementTriplesBlock;
+
+import com.google.common.collect.Streams;
 
 /**
  * A concept combines a SPARQL graph pattern (element) with a variable.
@@ -160,6 +170,37 @@ public class Concept
         Concept result = new Concept(element, var);
 
         return result;
+    }
+
+    public static Concept createIris(String varName, String ...iris) {
+        List<Node> nodes = Arrays.asList(iris).stream().map(NodeFactory::createURI).collect(Collectors.toList());
+        return create(Var.alloc(varName), nodes);
+    }
+
+
+    public static Concept createNodes(Node ...nodes) {
+        return create(Arrays.asList(nodes));
+    }
+
+    public static Concept create(Iterable<Node> nodes) {
+        return create(Vars.s, nodes);
+    }
+
+    public static Concept create(String varName, Node ... nodes) {
+        return create(Var.alloc(varName), nodes);
+    }
+
+    public static Concept create(Var var, Node ... nodes) {
+        return create(var, Arrays.asList(nodes));
+    }
+
+    public static Concept create(Var var, Iterable<Node> nodes) {
+        ElementData elt = new ElementData(
+                Collections.singletonList(var),
+                Streams.stream(nodes).map(n -> BindingFactory.binding(var, n))
+                    .collect(Collectors.toList()));
+
+        return new Concept(elt, Vars.s);
     }
 
     public static Element parseElement(String elementStr, PrefixMapping prefixMapping) {

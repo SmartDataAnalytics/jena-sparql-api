@@ -93,7 +93,7 @@ public class SparqlStmtMgr {
      * @throws IOException
      * @throws ParseException
      */
-    public static Query loadQuery(String filenameOrURI) throws FileNotFoundException, IOException, ParseException {
+    public static Query loadQuery(String filenameOrURI) {
         return loadQuery(filenameOrURI, DefaultPrefixes.prefixes);
     }
 
@@ -152,12 +152,14 @@ public class SparqlStmtMgr {
      * @param filenameOrURI
      * @param pm Prefix mapping
      * @return Exactly a single query - nevel null.
-     * @throws FileNotFoundException
-     * @throws IOException
-     * @throws ParseException
      */
-    public static Query loadQuery(String filenameOrURI, PrefixMapping pm) throws FileNotFoundException, IOException, ParseException {
-        List<Query> queries = loadQueries(filenameOrURI, pm);
+    public static Query loadQuery(String filenameOrURI, PrefixMapping pm) {
+        List<Query> queries;
+        try {
+            queries = loadQueries(filenameOrURI, pm);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
 
         if(queries.size() != 1) {
             throw new RuntimeException("Expected a single query in " + filenameOrURI + "; got " + queries.size());
