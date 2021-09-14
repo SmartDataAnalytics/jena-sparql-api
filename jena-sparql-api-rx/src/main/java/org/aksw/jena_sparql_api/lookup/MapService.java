@@ -2,7 +2,9 @@ package org.aksw.jena_sparql_api.lookup;
 
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.function.BiFunction;
 
+import org.aksw.commons.util.range.RangeUtils;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
 
 import com.google.common.collect.Range;
@@ -37,6 +39,11 @@ public interface MapService<C, K, V>
         return result;
     }
 
+    default Map<K, V> fetchData(C concept) {
+        Map<K, V> result = fetchData(concept, RangeUtils.rangeStartingWithZero);
+        return result;
+    }
+
     /**
      * Select Distinct ?v {
      *     { Select ?v {
@@ -52,6 +59,10 @@ public interface MapService<C, K, V>
     default Single<Range<Long>> fetchCount(C concept, Long itemLimit, Long rowLimit) {
         Single<Range<Long>> result = createPaginator(concept).fetchCount(itemLimit, rowLimit);
         return result;
+    }
+
+    default Single<Long> fetchCount() {
+        return fetchCount(null, null, null).map(Range::lowerEndpoint);
     }
 
 
@@ -72,6 +83,10 @@ public interface MapService<C, K, V>
     }
 
 
+
+    default <O> MapService<C, K, O> transformValues(BiFunction<? super K, ? super V, ? extends O> transform) {
+        return new MapServiceTransformItem<>(this, transform);
+    }
     /**
      *
      * @param listService

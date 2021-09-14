@@ -1,7 +1,7 @@
 package org.aksw.jena_sparql_api.lookup;
 
 import java.util.Map.Entry;
-import java.util.function.Function;
+import java.util.function.BiFunction;
 
 import org.apache.jena.ext.com.google.common.collect.Maps;
 
@@ -23,9 +23,9 @@ public class MapPaginatorTransformItem<K, I, O>
     implements MapPaginator<K, O>
 {
     protected MapPaginator<K, I> delegate;
-    protected Function<I, O> fnTransformItem;
+    protected BiFunction<? super K, ? super I, ? extends O> fnTransformItem;
 
-    public MapPaginatorTransformItem(MapPaginator<K, I> delegate, Function<I, O> fnTransformItem) {
+    public MapPaginatorTransformItem(MapPaginator<K, I> delegate, BiFunction<? super K, ? super I, ? extends O> fnTransformItem) {
         this.delegate = delegate;
         this.fnTransformItem = fnTransformItem;
     }
@@ -61,7 +61,7 @@ public class MapPaginatorTransformItem<K, I, O>
     @Override
     public Flowable<Entry<K, O>> apply(Range<Long> range) {
         return delegate.apply(range).map(e ->
-            Maps.immutableEntry(e.getKey(), fnTransformItem.apply(e.getValue())));
+            Maps.immutableEntry(e.getKey(), fnTransformItem.apply(e.getKey(), e.getValue())));
     }
 
 
@@ -71,7 +71,7 @@ public class MapPaginatorTransformItem<K, I, O>
         return result;
     }
 
-    public static <K, I, O> MapPaginatorTransformItem<K, I, O> create(MapPaginator<K, I> listService, Function<I, O> fnTransformItem) {
+    public static <K, I, O> MapPaginatorTransformItem<K, I, O> create(MapPaginator<K, I> listService, BiFunction<? super K, ? super I, ? extends O> fnTransformItem) {
         MapPaginatorTransformItem<K, I, O> result = new MapPaginatorTransformItem<K, I, O>(listService, fnTransformItem);
         return result;
     }

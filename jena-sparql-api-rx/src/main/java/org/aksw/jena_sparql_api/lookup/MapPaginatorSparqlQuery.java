@@ -46,7 +46,7 @@ public class MapPaginatorSparqlQuery
     @Override
     public Single<Range<Long>> fetchCount(Long itemLimit, Long rowLimit) {
 
-        if(filterConcept != null) {
+        if(filterConcept == null) {
             filterConcept = ConceptUtils.createSubjectConcept();
         }
 

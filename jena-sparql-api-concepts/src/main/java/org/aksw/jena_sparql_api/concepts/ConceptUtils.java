@@ -43,7 +43,6 @@ import org.apache.jena.sparql.engine.binding.BindingHashMap;
 import org.apache.jena.sparql.expr.E_Equals;
 import org.apache.jena.sparql.expr.E_OneOf;
 import org.apache.jena.sparql.expr.Expr;
-import org.apache.jena.sparql.expr.ExprAggregator;
 import org.apache.jena.sparql.expr.ExprList;
 import org.apache.jena.sparql.expr.ExprVar;
 import org.apache.jena.sparql.expr.NodeValue;
@@ -305,7 +304,10 @@ public class ConceptUtils {
 
         Query result = new Query();
         result.setQuerySelectType();
-        result.getProject().add(outputVar, new ExprAggregator(null, new AggCount()));//new ExprAggregator(concept.getVar(), new AggCount()));
+
+        Expr ea = result.allocAggregate(new AggCount());
+
+        result.getProject().add(outputVar, ea);//new ExprAggregator(concept.getVar(), new AggCount()));
         result.setQueryPattern(esq);
 
         return result;
