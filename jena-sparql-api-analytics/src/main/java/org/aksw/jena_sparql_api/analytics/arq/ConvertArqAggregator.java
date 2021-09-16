@@ -47,7 +47,7 @@ public class ConvertArqAggregator {
 		ParallelAggregator<Binding, Node, ?> result =
 			AggBuilder.outputTransform(
 				AggBuilder.inputTransform(b -> expr.eval(b, null),
-					AggBuilder.reduce(() -> NodeValue.makeInteger(0l), (a, b) -> NodeValueOps.additionNV(a, b))),
+					AggBuilder.fold(() -> NodeValue.makeInteger(0L), NodeValueOps::additionNV)),
 				NodeValue::toNode);
 
 		return result;
