@@ -1,6 +1,7 @@
 package org.aksw.jena_sparql_api.utils;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -8,6 +9,8 @@ import java.util.stream.Stream;
 import org.apache.jena.graph.Node;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.shared.impl.PrefixMappingImpl;
+import org.apache.jena.vocabulary.RDF;
+import org.apache.jena.vocabulary.XSD;
 
 public class PrefixUtils {
     public static  void usedPrefixes(PrefixMapping in, Stream<Node> node, PrefixMapping out) {
@@ -20,7 +23,12 @@ public class PrefixUtils {
             addPrefix(iri, in, out);
         } else if(node.isLiteral()) {
             String iri = node.getLiteralDatatypeURI();
-            if(iri != null) {
+
+            // FIXME Ignore the implicit datatypes xsd:string and rdf:langString
+            if(iri != null
+//                    && !Objects.equals(iri, XSD.xstring.getURI())
+//                    && !Objects.equals(iri, RDF.langString.getURI())
+                    ) {
                 addPrefix(iri, in, out);
             }
         }

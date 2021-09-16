@@ -32,6 +32,12 @@ public interface EntityInfo {
 
 
     /**
+     * A set of IRIs for 'standards' (may be informal or ad-hoc) a resource conforms to
+     *
+     */
+    Set<String> getConformsTo();
+
+    /**
      * Convenience method
      *
      * @return

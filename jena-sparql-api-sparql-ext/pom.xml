@@ -78,6 +78,12 @@
 			<artifactId>jena-sparql-api-utils</artifactId>
 		</dependency>
 
+		<!-- Query federation to files in virtual file systems with binary search support -->
+		<dependency>
+			<groupId>org.aksw.jena-sparql-api</groupId>
+			<artifactId>jena-sparql-api-arq-service-vfs</artifactId>
+		</dependency>
+
 		<!-- Used for binary search via the service clause -->
 		<dependency>
 			<groupId>org.aksw.jena-sparql-api</groupId>

@@ -4,9 +4,9 @@ cache.core;
 import java.io.IOException;
 import java.util.Iterator;
 
+import org.aksw.jena_sparql_api.arq.core.query.QueryExecutionDecoratorBase;
 import org.aksw.jena_sparql_api.cache.extra.CacheFrontend;
 import org.aksw.jena_sparql_api.cache.extra.CacheResource;
-import org.aksw.jena_sparql_api.core.QueryExecutionDecorator;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.ResultSet;
@@ -23,7 +23,7 @@ import org.slf4j.LoggerFactory;
  *         Time: 4:11 PM
  */
 public class QueryExecutionCacheEx
-    extends QueryExecutionDecorator
+    extends QueryExecutionDecoratorBase<QueryExecution>
 {
     private static final Logger logger = LoggerFactory.getLogger(QueryExecutionCacheEx.class);
 
@@ -74,7 +74,7 @@ public class QueryExecutionCacheEx
         CacheResource resource = cache.lookup(service, queryString);
 
         if(needsCaching(resource)) {
-            ResultSet rs = getDecoratee().execSelect();
+            ResultSet rs = getDelegate().execSelect();
 
             if(cache.isReadOnly()) {
                 result = rs;
@@ -99,14 +99,14 @@ public class QueryExecutionCacheEx
                     }*/
 
                     try {
-                        getDecoratee().abort();
+                        getDelegate().abort();
                     } catch(Exception x) {
                         logger.warn("Error", x);
                     }
 
                     throw new RuntimeException(e);
                 } finally {
-                    getDecoratee().close();
+                    getDelegate().close();
                 }
 
                 resource = cache.lookup(service, queryString);
@@ -150,7 +150,7 @@ public class QueryExecutionCacheEx
 
             logger.trace("Cache write [" + service + "]: " + queryString);
 
-            Iterator<Triple> it = getDecoratee().execConstructTriples();
+            Iterator<Triple> it = getDelegate().execConstructTriples();
 
             try {
                 cache.writeTriples(service, queryString, it);
@@ -159,7 +159,7 @@ public class QueryExecutionCacheEx
             } finally {
                 // Attempt to close the iterator - for this to work it must inherit from jena's {@link ClosableIterator}
                 NiceIterator.close(it);
-                getDecoratee().close();
+                getDelegate().close();
             }
 
             resource = cache.lookup(service, queryString);
@@ -180,7 +180,7 @@ public class QueryExecutionCacheEx
 
             Model model;
             try {
-                model = modelProvider.getModel(); //getDecoratee().execConstruct();
+                model = modelProvider.getModel(); //getDelegate().execConstruct();
             } catch(Exception e) {
                 /*
                 logger.warn("Error communicating with backend", e);
@@ -223,7 +223,7 @@ public class QueryExecutionCacheEx
         if(needsCaching(resource)) {
 
             try {
-                ret = getDecoratee().execAsk();
+                ret = getDelegate().execAsk();
             } catch(Exception e) {
                 /*
                 logger.warn("Error communicating with backend", e);
@@ -271,7 +271,7 @@ public class QueryExecutionCacheEx
         return doCacheModel(model, new ModelProvider() {
             @Override
             public Model getModel() {
-                return getDecoratee().execConstruct();
+                return getDelegate().execConstruct();
             }
         });
      }
@@ -291,7 +291,7 @@ public class QueryExecutionCacheEx
          return doCacheModel(model, new ModelProvider() {
              @Override
              public Model getModel() {
-                 return getDecoratee().execDescribe();
+                 return getDelegate().execDescribe();
              }
          });
      }
@@ -308,7 +308,7 @@ public class QueryExecutionCacheEx
              currentResource.close();
          }
 
-         QueryExecution dec = getDecoratee();
+         QueryExecution dec = getDelegate();
          if(dec != null) {
              dec.close();
          }

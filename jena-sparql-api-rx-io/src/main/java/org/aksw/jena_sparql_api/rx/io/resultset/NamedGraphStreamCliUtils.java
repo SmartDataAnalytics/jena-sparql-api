@@ -13,6 +13,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.aksw.commons.io.util.StdIo;
+import org.aksw.commons.rx.op.RxOps;
 import org.aksw.commons.rx.util.RxUtils;
 import org.aksw.jena_sparql_api.rx.RDFDataMgrEx;
 import org.aksw.jena_sparql_api.rx.RDFDataMgrRx;

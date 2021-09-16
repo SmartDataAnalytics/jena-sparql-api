@@ -7,6 +7,7 @@ import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.query.ReadWrite;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
+import org.apache.jena.sparql.core.DatasetGraphFactory;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.graph.GraphFactory;
 import org.apache.jena.sparql.sse.SSE;
@@ -18,7 +19,7 @@ public class TestDatasetGraphDiff {
 
     @Test
     public void test() {
-        DatasetGraphDiff dg = new DatasetGraphDiff();
+        DatasetGraphDiff dg = DatasetGraphDiff.createTxn(DatasetGraphFactory.createTxnMem());
 
         Node g = SSE.parseNode(":g");
         Quad q = SSE.parseQuad("(quad :g :s :p :o)");

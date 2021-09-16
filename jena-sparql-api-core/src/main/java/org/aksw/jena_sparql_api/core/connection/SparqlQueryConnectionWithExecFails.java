@@ -3,7 +3,7 @@ package org.aksw.jena_sparql_api.core.connection;
 import java.util.Objects;
 import java.util.function.Function;
 
-import org.aksw.jena_sparql_api.core.QueryExecutionDecorator;
+import org.aksw.jena_sparql_api.arq.core.query.QueryExecutionDecoratorBase;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
@@ -46,7 +46,7 @@ public class SparqlQueryConnectionWithExecFails
 
 
     public class QueryExecutionWithExecFails
-        extends QueryExecutionDecorator
+        extends QueryExecutionDecoratorBase<QueryExecution>
     {
         public QueryExecutionWithExecFails(QueryExecution delegate) {
             super(delegate);

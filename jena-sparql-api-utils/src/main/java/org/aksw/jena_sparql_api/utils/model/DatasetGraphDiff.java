@@ -34,7 +34,9 @@ import org.apache.jena.system.Txn;
  *
  * Similar to {@link Delta} which however is for Graphs.
  *
- * Does not support transactions.
+ * Supports transactions on a best-effort basis:
+ * Invoking a transaction operation (begin, commit, rollback, end)
+ * on this class also invokes that operation on each involved component.
  *
  *
  * @author raven
@@ -56,23 +58,51 @@ public class DatasetGraphDiff
     protected GraphView defaultGraphViewCache = GraphView.createDefaultGraph(this);
     protected Map<Node, GraphView> namedGraphViewCache = Collections.synchronizedMap(new HashMap<>());
 
-    public DatasetGraphDiff() {
-        this(DatasetGraphFactory.createTxnMem());
+    public static DatasetGraphDiff createNonTxn(DatasetGraph base) {
+        return new DatasetGraphDiff(
+                base,
+                DatasetGraphFactory.create(),
+                DatasetGraphFactory.create(),
+                new TransactionalSetDummyImpl<>(new LinkedHashSet<>()),
+                new TransactionalSetDummyImpl<>(new LinkedHashSet<>()));
+
     }
 
-    public DatasetGraphDiff(DatasetGraph base) {
-        super();
+    public static DatasetGraphDiff createTxn(DatasetGraph base) {
+        return new DatasetGraphDiff(
+                base,
+                DatasetGraphFactory.createTxnMem(),
+                DatasetGraphFactory.createTxnMem(),
+                new TransactionalSetImpl<>(),
+                new TransactionalSetImpl<>());
+    }
+
+    public DatasetGraphDiff(
+            DatasetGraph base,
+            DatasetGraph added,
+            DatasetGraph removed,
+            TransactionalSet<Node> removedGraphs,
+            TransactionalSet<Node> addedGraphs) {
         this.base = base;
-        this.added = DatasetGraphFactory.createTxnMem();
-        this.removed = DatasetGraphFactory.createTxnMem();
-
-//        this.allowEmptyGraphs = allowEmptyGraphs;
-
-        this.removedGraphs = new TransactionalSetImpl<>();
-        this.addedGraphs = new TransactionalSetImpl<>();
+        this.added = added;
+        this.removed = removed;
+        this.removedGraphs = removedGraphs;
+        this.addedGraphs = addedGraphs;
     }
 
-    
+//    public DatasetGraphDiff(DatasetGraph base) {
+//        super();
+//        this.base = base;
+//        this.added = DatasetGraphFactory.createTxnMem();
+//        this.removed = DatasetGraphFactory.createTxnMem();
+//
+////        this.allowEmptyGraphs = allowEmptyGraphs;
+//
+//        this.removedGraphs = new TransactionalSetImpl<>();
+//        this.addedGraphs = new TransactionalSetImpl<>();
+//    }
+
+
 //    public void applyChanges() {
 //    	removed.find().forEachRemaining(base::delete);
 //    	added.find().forEachRemaining(base::add);
@@ -81,8 +111,8 @@ public class DatasetGraphDiff
 //    }
 
     public void clearChanges() {
-    	removed.clear();
-    	added.clear();
+        removed.clear();
+        added.clear();
     }
 
     public DatasetGraph getBase() {
@@ -107,13 +137,22 @@ public class DatasetGraphDiff
 
     @Override
     public boolean contains(Node g, Node s, Node p, Node o) {
-    	boolean result = !removed.contains(g, s, p, o) && (added.contains(g, s, p, o) || base.contains(g, s, p, o));
-    	return result;
+        boolean result = !removed.contains(g, s, p, o) && (added.contains(g, s, p, o) || base.contains(g, s, p, o));
+        return result;
     }
-    
+
     @Override
-    public Iterator<Quad> find(Node g, Node s, Node p, Node o) {    	
+    public Iterator<Quad> find(Node g, Node s, Node p, Node o) {
         Iterator<Quad> itBase = base.find(g, s, p, o);
+
+//        List<Quad> materialized = Lists.newArrayList(itBase);
+//        int size = materialized.size();
+//        System.err.println("Internal base iterator size: " + size);
+//        if (size > 1) {
+//            System.err.println("DEBUG POINT");
+//        }
+//        itBase = materialized.iterator();
+
         Iterator<Quad> itActualAdded = Iterators.filter(added.find(g, s, p, o), quad -> !base.contains(quad));
         Iterator<Quad> itVisibleBase = Iterators.filter(itBase, quad -> !removed.contains(quad));
         Iterator<Quad> result = Iterators.concat(itVisibleBase, itActualAdded);
@@ -333,9 +372,9 @@ public class DatasetGraphDiff
     }
 
     /** TODO Consider a PrefixMapDiff/Delta object - for now we just return the base prefixes */
-	@Override
-	public PrefixMap prefixes() {
-		return base.prefixes();
-	}
+    @Override
+    public PrefixMap prefixes() {
+        return base.prefixes();
+    }
 
 }

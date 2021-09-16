@@ -39,6 +39,8 @@ import org.apache.jena.graph.GraphUtil;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
+import org.apache.jena.irix.IRIs;
+import org.apache.jena.irix.IRIxResolver;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.query.ResultSet;
@@ -49,6 +51,7 @@ import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.riot.RDFLanguages;
 import org.apache.jena.riot.RDFParser;
+import org.apache.jena.riot.RIOT;
 import org.apache.jena.riot.ResultSetMgr;
 import org.apache.jena.riot.RiotException;
 import org.apache.jena.riot.RiotParseException;
@@ -59,7 +62,10 @@ import org.apache.jena.riot.lang.PipedTriplesStream;
 import org.apache.jena.riot.lang.RiotParsers;
 import org.apache.jena.riot.system.ErrorHandler;
 import org.apache.jena.riot.system.ErrorHandlerFactory;
+import org.apache.jena.riot.system.FactoryRDF;
 import org.apache.jena.riot.system.ParserProfile;
+import org.apache.jena.riot.system.ParserProfileStd;
+import org.apache.jena.riot.system.PrefixMapFactory;
 import org.apache.jena.riot.system.RiotLib;
 import org.apache.jena.riot.system.StreamRDF;
 import org.apache.jena.riot.system.StreamRDFWrapper;
@@ -392,15 +398,26 @@ public class RDFDataMgrRx {
         return permissiveProfile();
     }
 
+    public static ParserProfile createParserProfile(FactoryRDF factory, ErrorHandler errorHandler, boolean checking) {
+        return new ParserProfileStd(factory,
+                                    errorHandler,
+                                    // IRIxResolver.create(IRIs.getSystemBase()).build(),
+                                    IRIxResolver.create().noBase().allowRelative(true).build(),
+                                    PrefixMapFactory.create(),
+                                    RIOT.getContext().copy(),
+                                    checking,
+                                    false);
+    }
+
     public static ParserProfile strictProfile() {
-        return RiotLib.createParserProfile(RiotLib.factoryRDF(
+        return createParserProfile(RiotLib.factoryRDF(
                 createLabelToNodeAsGivenOrRandom()),
                 ErrorHandlerFactory.errorHandlerDetailed(),
                 true);
     }
 
     public static ParserProfile permissiveProfile() {
-        return RiotLib.createParserProfile(RiotLib.factoryRDF(
+        return createParserProfile(RiotLib.factoryRDF(
                 createLabelToNodeAsGivenOrRandom()),
                 ErrorHandlerFactory.errorHandlerWarn,
                 false);

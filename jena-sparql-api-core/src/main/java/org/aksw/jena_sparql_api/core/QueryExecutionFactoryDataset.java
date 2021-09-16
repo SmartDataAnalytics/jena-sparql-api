@@ -1,5 +1,7 @@
 package org.aksw.jena_sparql_api.core;
 
+import org.aksw.jena_sparql_api.arq.core.query.QueryEngineFactoryProvider;
+import org.aksw.jena_sparql_api.arq.core.query.QueryExecutionDecoratorTxn;
 import org.apache.jena.atlas.logging.Log;
 import org.apache.jena.query.ARQ;
 import org.apache.jena.query.Dataset;
@@ -16,12 +18,6 @@ import org.apache.jena.sparql.util.Context;
 public class QueryExecutionFactoryDataset
     extends QueryExecutionFactoryBackQuery
 {
-	/** Functional Interface whose signature matches {@link QueryEngineRegistry#find(Query, DatasetGraph, Context)}*/
-    @FunctionalInterface
-    public static interface QueryEngineFactoryProvider {
-        QueryEngineFactory find(Query query, DatasetGraph dataset, Context context);
-    }
-
 	protected Dataset dataset;
     protected Context context;
     protected QueryEngineFactoryProvider queryEngineFactoryProvider;

@@ -2,6 +2,8 @@ package org.aksw.jena_sparql_api.sparql.ext.fs;
 
 import java.nio.file.Files;
 
+import org.aksw.jena_sparql_api.arq.core.service.OpExecutorWithCustomServiceExecutors;
+import org.aksw.jena_sparql_api.arq.service.vfs.ServiceExecutorFactoryRegistratorVfs;
 import org.apache.jena.ext.com.google.common.hash.Hashing;
 import org.apache.jena.query.ARQ;
 import org.apache.jena.shared.PrefixMapping;
@@ -52,7 +54,13 @@ public class JenaExtensionFs {
     public static void registerFileServiceHandler() {
         QC.setFactory(ARQ.getContext(), execCxt -> {
             execCxt.getContext().set(ARQ.stageGenerator, StageBuilder.executeInline);
-            return new OpExecutorServiceOrFile(execCxt);
+
+            OpExecutorWithCustomServiceExecutors result = new OpExecutorWithCustomServiceExecutors(execCxt);
+            ServiceExecutorFactoryRegistratorVfs.register(execCxt.getContext());
+
+            return result;
+            // ServiceExecutorFactoryRegistratorVfs.
+            // return new OpExecutorServiceOrFile(execCxt);
         });
     }
 }

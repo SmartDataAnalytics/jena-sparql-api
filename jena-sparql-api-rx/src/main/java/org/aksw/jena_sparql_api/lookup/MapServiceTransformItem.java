@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api.lookup;
 
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 
@@ -8,13 +9,13 @@ import java.util.function.Function;
  * which gets passed to the underlying list service
  *
  */
-class MapServiceTransformItem<C, K, I, O>
+public class MapServiceTransformItem<C, K, I, O>
     implements MapService<C, K, O>
 {
     private MapService<C, K, I> listService;
-    private Function<I, O> fnTransformItem;
+    private BiFunction<? super K, ? super I, ? extends O> fnTransformItem;
 
-    public MapServiceTransformItem(MapService<C, K, I> listService, Function<I, O> fnTransformItem) {
+    public MapServiceTransformItem(MapService<C, K, I> listService, BiFunction<? super K, ? super I, ? extends O> fnTransformItem) {
         this.listService = listService;
         this.fnTransformItem = fnTransformItem;
     }
@@ -26,8 +27,14 @@ class MapServiceTransformItem<C, K, I, O>
         return result;
     }
 
-    public static <C, K, I, O> MapServiceTransformItem<C, K, I, O> create(MapService<C, K, I> listService, Function<I, O> fnTransformItem) {
+    public static <C, K, I, O> MapServiceTransformItem<C, K, I, O> create(MapService<C, K, I> listService, BiFunction<? super K, ? super I, ? extends O> fnTransformItem) {
         MapServiceTransformItem<C, K, I, O> result = new MapServiceTransformItem<C, K, I, O>(listService, fnTransformItem);
         return result;
     }
+
+    public static <C, K, I, O> MapServiceTransformItem<C, K, I, O> create(MapService<C, K, I> listService, Function<? super I, ? extends O> fnTransformItem) {
+        MapServiceTransformItem<C, K, I, O> result = new MapServiceTransformItem<C, K, I, O>(listService, (k, v) -> fnTransformItem.apply(v));
+        return result;
+    }
+
 }

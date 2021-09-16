@@ -2,16 +2,15 @@ package org.aksw.jena_sparql_api.cache.core;
 
 import java.io.IOException;
 
+import org.aksw.jena_sparql_api.arq.core.query.QueryExecutionDecoratorBase;
 import org.aksw.jena_sparql_api.cache.extra.Cache;
 import org.aksw.jena_sparql_api.cache.extra.CacheResource;
-import org.aksw.jena_sparql_api.core.QueryExecutionDecorator;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -21,7 +20,7 @@ import org.apache.jena.rdf.model.ModelFactory;
  *         Time: 4:11 PM
  */
 public class QueryExecutionCache
-    extends QueryExecutionDecorator
+    extends QueryExecutionDecoratorBase<QueryExecution>
 {
     private static final Logger logger = LoggerFactory.getLogger(QueryExecutionCache.class);
 
@@ -45,7 +44,7 @@ public class QueryExecutionCache
         if(resource == null || resource.isOutdated()) {
 
             try {
-                rs = getDecoratee().execSelect();
+                rs = getDelegate().execSelect();
             } catch(Exception e) {
                 logger.warn("Error communicating with backend", e);
 
@@ -120,7 +119,7 @@ public class QueryExecutionCache
         if(resource == null || resource.isOutdated()) {
 
             try {
-                ret = getDecoratee().execAsk();
+                ret = getDelegate().execAsk();
             } catch(Exception e) {
                 logger.warn("Error communicating with backend", e);
 
@@ -162,7 +161,7 @@ public class QueryExecutionCache
        return doCacheModel(model, new ModelProvider() {
            @Override
            public Model getModel() {
-               return getDecoratee().execConstruct();
+               return getDelegate().execConstruct();
            }
        });
     }
@@ -177,7 +176,7 @@ public class QueryExecutionCache
         return doCacheModel(model, new ModelProvider() {
             @Override
             public Model getModel() {
-                return getDecoratee().execDescribe();
+                return getDelegate().execDescribe();
             }
         });
     }

@@ -2,6 +2,7 @@ package org.aksw.jena_sparql_api.core.connection;
 
 import java.util.function.Function;
 
+import org.aksw.jena_sparql_api.core.connection.SparqlQueryConnectionTmp;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;

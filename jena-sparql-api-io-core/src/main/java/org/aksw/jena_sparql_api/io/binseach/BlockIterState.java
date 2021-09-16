@@ -34,7 +34,7 @@ public class BlockIterState {
     protected boolean skipFirstClose;
     protected boolean isFwd;
 
-    public BlockIterState(boolean yieldSelf, Ref<? extends Block> blockRef, Seekable seekable, boolean isFwd) {
+    public BlockIterState(boolean yieldSelf, Ref<? extends Block> blockRef, Seekable seekable, boolean isFwd, boolean skipFirstClose) {
         // this.current = new OpenBlock(blockRef, seekable);
         Objects.requireNonNull(blockRef);
 
@@ -43,20 +43,24 @@ public class BlockIterState {
         this.seekable = seekable;
 
         this.yieldSelf = yieldSelf;
-        this.skipFirstClose = true;
+        this.skipFirstClose = skipFirstClose;
         this.isFwd = isFwd;
     }
 
     public static BlockIterState fwd(boolean yieldSelf, Ref<? extends Block> blockRef, Seekable seekable) {
-        return new BlockIterState(yieldSelf, blockRef, seekable, true);
+        return new BlockIterState(yieldSelf, blockRef, seekable, true, true);
     }
 
-    public static BlockIterState fwd(boolean yieldSelf, Ref<? extends Block> blockRef) {
-        return new BlockIterState(yieldSelf, blockRef, blockRef.get().newChannel(), true);
+    public static BlockIterState fwd(boolean yieldSelf, Ref<? extends Block> blockRef, Seekable seekable, boolean skipFirstClose) {
+        return new BlockIterState(yieldSelf, blockRef, seekable, true, skipFirstClose);
+    }
+
+    public static BlockIterState fwd(boolean yieldSelf, Ref<? extends Block> blockRef, boolean skipFirstClose) {
+        return new BlockIterState(yieldSelf, blockRef, blockRef.get().newChannel(), true, skipFirstClose);
     }
 
     public static BlockIterState bwd(boolean yieldSelf, Ref<? extends Block> blockRef, Seekable seekable) {
-        return new BlockIterState(yieldSelf, blockRef, seekable, false);
+        return new BlockIterState(yieldSelf, blockRef, seekable, false, true);
     }
 
     //@Override
@@ -79,8 +83,13 @@ public class BlockIterState {
     public void closeCurrent() {
         if(!skipFirstClose) {
             try {
-                blockRef.close();
-                seekable.close();
+                if (!blockRef.isClosed()) {
+                    blockRef.close();
+                }
+
+                if (seekable.isOpen()) {
+                    seekable.close();
+                }
             } catch(Exception e) {
                 throw new RuntimeException(e);
             }

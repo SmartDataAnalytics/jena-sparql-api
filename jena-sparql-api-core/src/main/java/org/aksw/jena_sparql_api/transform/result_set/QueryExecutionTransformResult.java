@@ -4,7 +4,7 @@ import java.io.Closeable;
 import java.util.Iterator;
 import java.util.List;
 
-import org.aksw.jena_sparql_api.core.QueryExecutionDecorator;
+import org.aksw.jena_sparql_api.arq.core.query.QueryExecutionDecoratorBase;
 import org.aksw.jena_sparql_api.core.ResultSetCloseable;
 import org.aksw.jena_sparql_api.utils.DatasetGraphUtils;
 import org.aksw.jena_sparql_api.utils.ExtendedIteratorClosable;
@@ -24,7 +24,6 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.sparql.engine.QueryIterator;
 import org.apache.jena.sparql.engine.binding.Binding;
-import org.apache.jena.sparql.engine.iterator.QueryIter;
 import org.apache.jena.sparql.engine.iterator.QueryIterPlainWrapper;
 import org.apache.jena.sparql.graph.NodeTransform;
 import org.apache.jena.sparql.graph.NodeTransformLib;
@@ -35,7 +34,7 @@ import org.apache.jena.vocabulary.RDF;
 
 
 public class QueryExecutionTransformResult
-    extends QueryExecutionDecorator
+    extends QueryExecutionDecoratorBase<QueryExecution>
 {
     //protected Converter<Node, Node> nodeConverter;
     protected NodeTransform nodeTransform;
@@ -127,21 +126,21 @@ public class QueryExecutionTransformResult
         return result;
     }
 
-	public static ResultSet applyNodeTransform(NodeTransform nodeTransform, ResultSet rs) {
-	    Closeable closeable = rs instanceof Closeable ? (Closeable)rs : null;
-	    List<String> vars = rs.getResultVars();
-	
-	    ExtendedIterator<Binding> it = WrappedIterator.create(new IteratorResultSetBinding(rs))
-	        .mapWith(b -> NodeTransformLib2.transformValues(b, nodeTransform));
-	
-	    QueryIterator queryIter = QueryIterPlainWrapper.create(it);
-	    ResultSet core = ResultSetFactory.create(queryIter, vars);
-	
-	    ResultSet result = new ResultSetCloseable(core, closeable);
-	    return result;
-	}
+    public static ResultSet applyNodeTransform(NodeTransform nodeTransform, ResultSet rs) {
+        Closeable closeable = rs instanceof Closeable ? (Closeable)rs : null;
+        List<String> vars = rs.getResultVars();
 
-    
+        ExtendedIterator<Binding> it = WrappedIterator.create(new IteratorResultSetBinding(rs))
+            .mapWith(b -> NodeTransformLib2.transformValues(b, nodeTransform));
+
+        QueryIterator queryIter = QueryIterPlainWrapper.create(it);
+        ResultSet core = ResultSetFactory.create(queryIter, vars);
+
+        ResultSet result = new ResultSetCloseable(core, closeable);
+        return result;
+    }
+
+
     public static void main(String[] args) {
         Model model = ModelFactory.createDefaultModel();
         Node bn = NodeFactory.createBlankNode("test");

@@ -76,7 +76,7 @@ public class BlockSources {
      * @throws Exception
      */
     public static Ref<? extends Block> binarySearch(BlockSource blockSource, long min, long max, byte delimiter, byte[] prefix) throws IOException {
-        logger.debug("[" + min + ", " + max + ")");
+        logger.trace("Binary search in range [" + min + ", " + max + ")");
         if(min >= max) {
             return null;
         }
@@ -103,7 +103,7 @@ public class BlockSources {
 
         // For records larger than the block we'd need to create a seekable over
         // all blocks starting from the current block
-        try(SeekableFromBlock seekable = new SeekableFromBlock(blockRef, 0, 0)) {
+        try(SeekableFromBlock seekable = new SeekableFromBlock(blockRef.acquire(), 0, 0)) {
 
 
 
@@ -150,14 +150,14 @@ public class BlockSources {
                         if (result == null) {
                             result = blockRef;
                         } else {
-                            closeWithIOException(blockRef);
+                            closeWithRethrowAsIOException(blockRef);
                         }
                     }
                 } catch (Exception e) {
                     throw new IOException(e);
                 }
             } else { // if cmp > 0
-                closeWithIOException(blockRef);
+                closeWithRethrowAsIOException(blockRef);
                 // prefix is smaller than the first key of the block
                 // search in lower half
                 result = binarySearch(blockSource, min, pos, delimiter, prefix);
@@ -167,7 +167,7 @@ public class BlockSources {
         return result;
     }
 
-    public static void closeWithIOException(AutoCloseable obj) throws IOException {
+    public static void closeWithRethrowAsIOException(AutoCloseable obj) throws IOException {
         try {
             obj.close();
         } catch(Exception e) {

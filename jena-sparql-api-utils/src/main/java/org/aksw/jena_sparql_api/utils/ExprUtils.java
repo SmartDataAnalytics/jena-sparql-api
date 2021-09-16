@@ -24,6 +24,7 @@ import org.aksw.commons.collections.trees.TreeImpl;
 import org.aksw.commons.util.Pair;
 import org.apache.jena.ext.com.google.common.collect.Maps;
 import org.apache.jena.graph.Node;
+import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.E_Equals;
 import org.apache.jena.sparql.expr.E_LogicalAnd;
@@ -107,6 +108,14 @@ public class ExprUtils {
         return new E_OneOf(base, el);
     }
 
+    public static E_OneOf oneOfIris(String varName, String ... iris) {
+        List<Node> nodes = Arrays.asList(iris).stream().map(NodeFactory::createURI).collect(Collectors.toList());
+        return oneOf(Var.alloc(varName), nodes);
+    }
+
+    public static E_OneOf oneOf(String varName, Collection<Node> nodes) {
+        return oneOf(Var.alloc(varName), nodes);
+    }
 
     public static E_OneOf oneOf(Node v, Node ... args) {
         return oneOf(v, Arrays.asList(args));

@@ -7,6 +7,8 @@ import java.util.function.Supplier;
 
 import org.aksw.commons.io.block.api.Block;
 import org.aksw.commons.io.seekable.api.Seekable;
+import org.aksw.commons.util.closeable.AutoCloseableBase;
+import org.aksw.commons.util.closeable.AutoCloseableWithLeakDetectionBase;
 import org.aksw.commons.util.ref.Ref;
 import org.aksw.jena_sparql_api.io.binseach.BlockIterState;
 
@@ -57,6 +59,7 @@ class OpenBlock{
  *
  */
 public class SeekableFromBlock
+    extends AutoCloseableWithLeakDetectionBase
     implements Seekable
 {
     protected Ref<? extends Block> startBlockRef;
@@ -85,6 +88,16 @@ public class SeekableFromBlock
         this(startBlockRef, posInStartSegment, exposedStartPos, Long.MIN_VALUE, Long.MAX_VALUE);
     }
 
+    /**
+     * The startBlockRef is considered to be owned by this object.
+     * Closing this seekable also closes the reference.
+     *
+     * @param startBlockRef
+     * @param posInStartSegment
+     * @param exposedStartPos
+     * @param minPos
+     * @param maxPos
+     */
     public SeekableFromBlock(Ref<? extends Block> startBlockRef, int posInStartSegment, long exposedStartPos, long minPos, long maxPos) {
         super();
         this.startBlockRef = startBlockRef;
@@ -109,7 +122,10 @@ public class SeekableFromBlock
 
 
     @Override
-    public void close() throws IOException {
+    public void closeActual() throws Exception {
+        currentSeekable.close();
+        currentBlockRef.close();
+        startBlockRef.close();
     }
 
 
@@ -395,6 +411,16 @@ public class SeekableFromBlock
 
 
     void setCurrent(BlockIterState state) {
+        if (currentBlockRef != state.blockRef) {
+            currentBlockRef.close();
+            try {
+                currentBlock.close();
+                currentSeekable.close();
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+
         currentBlockRef = state.blockRef;
         currentBlock = state.block;
         currentSeekable = state.seekable;

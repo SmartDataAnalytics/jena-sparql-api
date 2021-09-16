@@ -120,7 +120,8 @@ public class SparqlStmtParserImpl
     }
 
     public static SparqlStmtParserImpl create(Syntax syntax, boolean actAsClassifier) {
-        SparqlStmtParserImpl result = create(SparqlParserConfig.newInstance().setSyntax(syntax).applyDefaults(), actAsClassifier);
+        SparqlStmtParserImpl result = create(SparqlParserConfig.newInstance()
+                .setSyntax(syntax).applyDefaults(), actAsClassifier);
         return result;
     }
 
@@ -144,6 +145,10 @@ public class SparqlStmtParserImpl
         SparqlUpdateParser updateParser = SparqlUpdateParserImpl.create(config);
         SparqlStmtParserImpl result = new SparqlStmtParserImpl(queryParser, updateParser, actAsClassifier);
         return result;
+    }
+
+    public static SparqlStmtParserImpl createAsGiven() {
+        return create(SparqlParserConfig.newInstance().parseAsGiven().applyDefaults());
     }
 
 }

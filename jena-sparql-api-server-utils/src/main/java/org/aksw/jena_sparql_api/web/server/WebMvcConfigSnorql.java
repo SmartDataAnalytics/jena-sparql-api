@@ -11,7 +11,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurationSupp
  * @author raven
  *
  */
-@Configuration
+// @Configuration
 public class WebMvcConfigSnorql
     extends WebMvcConfigurationSupport
 {

@@ -43,6 +43,12 @@ public interface RdfEntityInfoDefault
     @Override
     Set<String> getLanguageTags();
 
+
+    @IriNs("dct")
+    @Override
+    Set<String> getConformsTo();
+
+
     @IriNs("eg")
     @Override
     Set<Checksum> getHashes();

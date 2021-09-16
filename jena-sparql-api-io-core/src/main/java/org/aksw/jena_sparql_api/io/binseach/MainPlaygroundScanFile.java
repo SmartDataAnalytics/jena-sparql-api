@@ -194,7 +194,7 @@ public class MainPlaygroundScanFile {
 
 
             int extraBytes = 0;
-            BlockIterState it = BlockIterState.fwd(true, blockRef);
+            BlockIterState it = BlockIterState.fwd(true, blockRef, true);
             while(it.hasNext()) {
                 it.advance();
                 SeekableFromBlock seekable = new SeekableFromBlock(it.blockRef, 0, 0);

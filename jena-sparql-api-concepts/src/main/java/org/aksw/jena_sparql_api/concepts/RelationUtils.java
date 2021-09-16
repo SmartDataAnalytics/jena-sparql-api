@@ -2,6 +2,7 @@ package org.aksw.jena_sparql_api.concepts;
 
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -15,6 +16,8 @@ import java.util.stream.Collectors;
 import org.aksw.commons.collections.generator.Generator;
 import org.aksw.jena_sparql_api.syntax.QueryGenerationUtils;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
+import org.aksw.jena_sparql_api.utils.ExprUtils;
+import org.aksw.jena_sparql_api.utils.PrologueUtils;
 import org.aksw.jena_sparql_api.utils.QuadPatternUtils;
 import org.aksw.jena_sparql_api.utils.VarGeneratorBlacklist;
 import org.aksw.jena_sparql_api.utils.VarUtils;
@@ -30,12 +33,15 @@ import org.apache.jena.query.Syntax;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.shared.impl.PrefixMappingImpl;
+import org.apache.jena.sparql.core.Prologue;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.core.VarExprList;
 import org.apache.jena.sparql.expr.E_Bound;
 import org.apache.jena.sparql.expr.E_Conditional;
+import org.apache.jena.sparql.expr.E_Equals;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprVar;
+import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.expr.aggregate.AggCountVarDistinct;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementFilter;
@@ -53,6 +59,36 @@ public class RelationUtils {
             ElementUtils.createElementTriple(Vars.s, Vars.p, Vars.o),
             Vars.s, Vars.p, Vars.o);
 
+
+    /**
+     * Create a relation using the variables ?s ?p ?o and adding filters
+     * as needed for any concrete node
+     *
+     * @return
+     */
+    public static TernaryRelation createTernaryRelation(Node s, Node p, Node o) {
+        List<Expr> exprs = new ArrayList<>(3);
+        List<Node> nodes = Arrays.asList(s, p, o);
+
+        for (int i = 0; i < 3; ++i) {
+            Node n = nodes.get(i);
+            if (n.isConcrete()) {
+                Var v = Vars.spo.get(i);
+
+                exprs.add(new E_Equals(new ExprVar(v), NodeValue.makeNode(n)));
+            }
+        }
+
+        Element elt = ElementUtils.createElementTriple(Vars.s, Vars.p, Vars.o);
+
+        if (!exprs.isEmpty()) {
+            Expr expr = ExprUtils.andifyBalanced(exprs);
+            elt = ElementUtils.createElementGroup(elt, new ElementFilter(expr));
+        }
+
+        return new TernaryRelationImpl(elt,
+                Vars.s, Vars.p, Vars.o);
+    }
 
     /**
      * Rename the variables of the relation to the given variables
@@ -215,8 +251,8 @@ public class RelationUtils {
 //    }
 
     public static Relation fromQuery(String queryStr) {
-    	PrefixMapping pm = new PrefixMappingImpl();
-    	pm.setNsPrefixes(PrefixMapping.Extended);
+        PrefixMapping pm = new PrefixMappingImpl();
+        pm.setNsPrefixes(PrefixMapping.Extended);
         return fromQuery(queryStr, pm);
     }
 
@@ -239,11 +275,11 @@ public class RelationUtils {
             List<Var> vars = query.getProjectVars();
 
             boolean needsWrapping = QueryGenerationUtils.needsWrappingByFeatures(query);
-        	Element element = needsWrapping
-        			? new ElementSubQuery(query)
-        			: query.getQueryPattern();
+            Element element = needsWrapping
+                    ? new ElementSubQuery(query)
+                    : query.getQueryPattern();
 
-        	result = new RelationImpl(element, vars);
+            result = new RelationImpl(element, vars);
         } else if(query.isConstructType()) {
             Template template = query.getConstructTemplate();
             List<Var> vars = new ArrayList<>(QuadPatternUtils.getVarsMentioned(template.getQuads()));
@@ -251,7 +287,7 @@ public class RelationUtils {
             result = new RelationImpl(element, vars);
         } else {
 
-            throw new RuntimeException("SELECT o CONSTRUCT query form expected, instead got " + query);
+            throw new RuntimeException("SELECT or CONSTRUCT query form expected, instead got " + query);
         }
 
         return result;
@@ -397,7 +433,8 @@ public class RelationUtils {
             removals.forEach(project::remove);
 
         } else {
-            result = new Query();
+            Prologue prologue = PrologueUtils.newPrologueAsGiven();
+            result = new Query(prologue);
             result.setQuerySelectType();
 
             result.setQueryPattern(e);

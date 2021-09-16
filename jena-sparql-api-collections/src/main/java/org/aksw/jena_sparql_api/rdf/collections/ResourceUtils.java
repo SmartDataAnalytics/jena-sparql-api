@@ -77,19 +77,24 @@ public class ResourceUtils {
      * @param rdfNode
      */
     public static RDFNode asBasicRdfNode(RDFNode rdfNode) {
-        Class<?> clazz = rdfNode.getClass();
-        Node n = rdfNode.asNode();
-        Model m = rdfNode.getModel();
-
         RDFNode result;
-        if(rdfNode instanceof Property) {
-            result = clazz.equals(PropertyImpl.class)
-                    ? rdfNode
-                    : new PropertyImpl(n, (ModelCom)m);
+
+        if (rdfNode == null) {
+            result = null;
         } else {
-            result = clazz.equals(ResourceImpl.class) || clazz.equals(LiteralImpl.class)
-                ? rdfNode
-                : ModelUtils.convertGraphNodeToRDFNode(n, m);
+            Class<?> clazz = rdfNode.getClass();
+            Node n = rdfNode.asNode();
+            Model m = rdfNode.getModel();
+
+            if(rdfNode instanceof Property) {
+                result = clazz.equals(PropertyImpl.class)
+                        ? rdfNode
+                        : new PropertyImpl(n, (ModelCom)m);
+            } else {
+                result = clazz.equals(ResourceImpl.class) || clazz.equals(LiteralImpl.class)
+                    ? rdfNode
+                    : ModelUtils.convertGraphNodeToRDFNode(n, m);
+            }
         }
 
         return result;
@@ -1202,47 +1207,47 @@ public class ResourceUtils {
 
         return result;
     }
-    
-    
+
+
     /**
      * Obtain the stream of values reachable from a given source node and a path.
-     * 
+     *
      * The flag 'isForward' determines whether the source takes the subject or object position
      * of the underlying TriplePath.
-     * 
-     * 
+     *
+     *
      * @param source
      * @param path
      * @param isForward
      * @return
      */
     public Stream<RDFNode> getReachableValues(RDFNode source, Path path, boolean isForward) {
-    	Model model = source.getModel();
-    	
-    	Node s = source.asNode();
-    	Var o = Var.alloc("o");
+        Model model = source.getModel();
 
-    	TriplePath tp = isForward
-    			? new TriplePath(s, path, o)
-    			: new TriplePath(o, path, s);
- 
-    	DatasetGraph dsg = DatasetGraphFactory.wrap(source.getModel().getGraph());
-    	
+        Node s = source.asNode();
+        Var o = Var.alloc("o");
+
+        TriplePath tp = isForward
+                ? new TriplePath(s, path, o)
+                : new TriplePath(o, path, s);
+
+        DatasetGraph dsg = DatasetGraphFactory.wrap(source.getModel().getGraph());
+
         Context context = ARQ.getContext().copy() ;
         context.set(ARQConstants.sysCurrentTime, NodeFactoryExtra.nowAsDateTime()) ;
         ExecutionContext execCxt = new ExecutionContext(context, dsg.getDefaultGraph(), dsg, QC.getFactory(context)) ;
 
         QueryIterator it = PathLib.execTriplePath(BindingFactory.root(), tp, execCxt);
         Stream<RDFNode> result = Streams.stream(it)
-        		.onClose(it::close)
-        		.map(qs -> qs.get(o))
-        		.map(model::asRDFNode);
+                .onClose(it::close)
+                .map(qs -> qs.get(o))
+                .map(model::asRDFNode);
 
         return result;
     }
 
-    
-    
+
+
     /**
      * Update all matching resources in a model
      *
@@ -1274,7 +1279,7 @@ public class ResourceUtils {
         return result;
     }
 
-    
+
     /**
      * Rename resources based on a map of local IDs and a IRI prefix - so the resulting IRI
      * has the pattern ${baseIri}${localId}.

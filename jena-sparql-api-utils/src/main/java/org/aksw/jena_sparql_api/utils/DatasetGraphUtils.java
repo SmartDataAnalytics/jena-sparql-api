@@ -8,6 +8,7 @@ import java.util.Map.Entry;
 import org.aksw.commons.collections.diff.Diff;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
+import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
@@ -25,10 +26,9 @@ public class DatasetGraphUtils {
         }
     }
 
-	
     public static DatasetGraph addAll(DatasetGraph target, DatasetGraph source) {
         Iterator<Quad> it = source.find();
-        addAll(target, it);            
+        addAll(target, it);
         return target;
     }
 
@@ -42,7 +42,7 @@ public class DatasetGraphUtils {
             Quad q = it.next();
             datasetGraph.add(q);
         }
-        
+
         return datasetGraph;
     }
 
@@ -90,6 +90,18 @@ public class DatasetGraphUtils {
         Diff<DatasetGraph> result = new Diff<DatasetGraph>(added, removed, null);
         return result;
     }
+
+
+    public static Graph getDefaultOrNamedGraph(DatasetGraph datasetGraph, Node graphName) {
+        boolean isDefaultGraph = Quad.isDefaultGraph(graphName);
+
+        Graph result = isDefaultGraph
+            ? datasetGraph.getDefaultGraph()
+            : datasetGraph.getGraph(graphName);
+
+        return result;
+    }
+
 
     public static void write(PrintStream out, DatasetGraph dg) {
         Dataset ds = DatasetFactory.wrap(dg);

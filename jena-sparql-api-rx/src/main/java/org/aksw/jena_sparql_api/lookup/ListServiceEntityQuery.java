@@ -1,7 +1,5 @@
 package org.aksw.jena_sparql_api.lookup;
 
-import java.util.AbstractMap.SimpleEntry;
-import java.util.Map.Entry;
 import java.util.function.Function;
 
 import org.aksw.jena_sparql_api.concepts.Concept;
@@ -78,9 +76,9 @@ public class ListServiceEntityQuery
             // QueryUtils.applySlice(query, offset, limit, cloneOnChange)
 
             Flowable<RDFNode> result = EntityQueryRxBuilder.create()
-            		.setQueryExecutionFactory(qef)
-            		.setQuery(entityQuery)
-            		.build();
+                    .setQueryExecutionFactory(qef)
+                    .setQuery(entityQuery)
+                    .build();
 
             return result;
         }
@@ -127,88 +125,5 @@ public class ListServiceEntityQuery
         EntityBaseQuery result = fromConcept(concept);
         return result;
     }
-}
-
-class MapServiceFromListService<C, T, K, V>
-    implements MapService<C, K, V>
-{
-    protected ListService<C, T> listService;
-    protected Function<? super T, ? extends K> itemToKey;
-    protected Function<? super T, ? extends V> itemToValue;
-
-    public MapServiceFromListService(
-            ListService<C, T> listService,
-            Function<? super T, ? extends K> itemToKey,
-            Function<? super T, ? extends V> itemToValue) {
-        super();
-        this.listService = listService;
-        this.itemToKey = itemToKey;
-        this.itemToValue = itemToValue;
-    }
-
-
-    public class MapPaginatorFromListService
-        implements MapPaginator<K, V>
-    {
-        protected ListPaginator<T> listPaginator;
-
-        public MapPaginatorFromListService(ListPaginator<T> listPaginator) {
-            super();
-            this.listPaginator = listPaginator;
-        }
-
-        @Override
-        public Flowable<Entry<K, V>> apply(Range<Long> t) {
-            Flowable<Entry<K, V>> result = listPaginator.apply(t)
-                .map(item -> {
-                    K key = itemToKey.apply(item);
-                    V value = itemToValue.apply(item);
-                    Entry<K, V> r = new SimpleEntry<>(key, value);
-                    return r;
-                });
-
-            return result;
-        }
-
-        @Override
-        public Single<Range<Long>> fetchCount(Long itemLimit, Long rowLimit) {
-            return listPaginator.fetchCount(itemLimit, rowLimit);
-        }
-    }
-
-
-    @Override
-    public MapPaginator<K, V> createPaginator(C concept) {
-        ListPaginator<T> listPaginator = listService.createPaginator(concept);
-        return new MapPaginatorFromListService(listPaginator);
-    }
-
-    public LookupService<K, V> asLookupService(Function<? super Iterable<? extends K>, C> keysToFilter) {
-        LookupService<K, V> result = new LookupServiceFromMapService<>(this, keysToFilter);
-        return result;
-    }
-}
-
-class LookupServiceFromMapService<K, V, C>
-    implements LookupService<K, V>
-{
-    protected MapService<C, K, V> mapService;
-    protected Function<? super Iterable<? extends K>, C> keysToFilter;
-
-
-    public LookupServiceFromMapService(MapService<C, K, V> mapService,
-            Function<? super Iterable<? extends K>, C> keysToFilter) {
-        super();
-        this.mapService = mapService;
-        this.keysToFilter = keysToFilter;
-    }
-
-
-    @Override
-    public Flowable<Entry<K, V>> apply(Iterable<K> t) {
-        C filter = keysToFilter.apply(t);
-        return mapService.streamData(filter, Range.atLeast(0l));
-    }
-
 }
 

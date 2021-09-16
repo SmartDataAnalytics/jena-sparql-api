@@ -2,36 +2,28 @@ package org.aksw.jena_sparql_api.core.connection;
 
 import org.aksw.jena_sparql_api.core.UpdateExecutionFactory;
 import org.apache.jena.sparql.core.Transactional;
-import org.apache.jena.update.UpdateProcessor;
-import org.apache.jena.update.UpdateRequest;
 
 public class SparqlUpdateConnectionJsa
-    implements SparqlUpdateConnectionTmp
+   extends SparqlUpdateConnectionJsaBase<UpdateExecutionFactory>
 {
-    protected UpdateExecutionFactory updateExecutionFactory;
-
     public SparqlUpdateConnectionJsa(UpdateExecutionFactory updateExecutionFactory) {
-        super();
-        this.updateExecutionFactory = updateExecutionFactory;
+        this(updateExecutionFactory, new TransactionalTmp() {
+            @Override
+            public Transactional getDelegate() {
+                return null;
+            }});
     }
 
-    @Override
-    public void update(UpdateRequest updateRequest) {
-        UpdateProcessor updateProcessor = updateExecutionFactory.createUpdateProcessor(updateRequest);
-        updateProcessor.execute();
+    public SparqlUpdateConnectionJsa(UpdateExecutionFactory updateExecutionFactory, Transactional transactional) {
+        super(updateExecutionFactory, transactional);
     }
 
     @Override
     public void close() {
         try {
-            updateExecutionFactory.close();
+            updateProcessorFactory.close();
         } catch (Exception e) {
             throw new RuntimeException();
         }
     }
-
-	@Override
-	public Transactional getDelegate() {
-		return null;
-	}
 }

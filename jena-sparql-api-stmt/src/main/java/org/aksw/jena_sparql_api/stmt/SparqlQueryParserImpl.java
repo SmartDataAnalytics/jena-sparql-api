@@ -37,7 +37,7 @@ public class SparqlQueryParserImpl
     }
 
     public static SparqlQueryParserImpl create(SparqlParserConfig config) {
-        SparqlQueryParserImpl result = create(config.getSyntax(), config.getPrologue());
+        SparqlQueryParserImpl result = create(config.getSyntax(), config.getPrologue(), config.getBaseURI());
         return result;
     }
 
@@ -57,10 +57,19 @@ public class SparqlQueryParserImpl
     }
 
     public static SparqlQueryParserImpl create(Syntax syntax, Prologue prologue) {
-        Supplier<Query> querySupplier = new QuerySupplierImpl(prologue);
+        SparqlQueryParserImpl result = create(syntax, prologue, "");
+        return result;
+    }
+
+    public static SparqlQueryParserImpl create(Syntax syntax, Prologue prologue, String baseURI) {
+        Supplier<Query> querySupplier = new QuerySupplierImpl(prologue, baseURI);
 
         SparqlQueryParserImpl result = new SparqlQueryParserImpl(querySupplier, syntax, null);
         return result;
+    }
+
+    public static SparqlQueryParserImpl createAsGiven() {
+        return create(SparqlParserConfig.newInstance().parseAsGiven().applyDefaults());
     }
 
     // TODO Move to common query parser utils

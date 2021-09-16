@@ -442,20 +442,20 @@ public class SparqlRx {
     }
 
     public static Single<Number> fetchNumber(
-    		SparqlQueryConnection conn,
-    		Query query,
-    		Var var) {
-    	return fetchNumber(conn::query, query, var);
+            SparqlQueryConnection conn,
+            Query query,
+            Var var) {
+        return fetchNumber(conn::query, query, var);
     }
 
-    
+
     public static Single<Number> fetchNumber(
-    		Function<? super Query, ? extends QueryExecution> qef,
-    		Query query,
-    		Var var) {
-    	return fetchNumber(() -> qef.apply(query), var);
+            Function<? super Query, ? extends QueryExecution> qef,
+            Query query,
+            Var var) {
+        return fetchNumber(() -> qef.apply(query), var);
     }
-    
+
     public static Single<Number> fetchNumber(Callable<? extends QueryExecution> queryConnSupp, Var var) {
         return SparqlRx.execSelectRaw(queryConnSupp)
                 .map(b -> b.get(var))
@@ -465,11 +465,11 @@ public class SparqlRx {
                 .map(Optional::get); // Should never be null here
     }
 
-    
+
     public static Single<Range<Long>> fetchCountConcept(SparqlQueryConnection conn, UnaryRelation concept, Long itemLimit, Long rowLimit) {
-    	return fetchCountConcept(conn::query, concept, itemLimit, rowLimit);
+        return fetchCountConcept(conn::query, concept, itemLimit, rowLimit);
     }
-    
+
 
     public static Single<Range<Long>> fetchCountConcept(Function<? super Query, ? extends QueryExecution> qef, UnaryRelation concept, Long itemLimit, Long rowLimit) {
 
@@ -500,23 +500,23 @@ public class SparqlRx {
 //    	Single<Range<Long>> result = fetchCountQuery(conn, query, itemLimit, rowLimit);
 //    	return result;
 //    }
-    
-    
+
+
     public static Single<Range<Long>> fetchCountQueryPartition(
-    		SparqlQueryConnection conn,
-    		Query query,
-    		Collection<Var> partitionVars,
-    		Long itemLimit, 
-    		Long rowLimit) {
-    	return fetchCountQueryPartition(conn::query, query, partitionVars, itemLimit, rowLimit);
+            SparqlQueryConnection conn,
+            Query query,
+            Collection<Var> partitionVars,
+            Long itemLimit,
+            Long rowLimit) {
+        return fetchCountQueryPartition(conn::query, query, partitionVars, itemLimit, rowLimit);
     }
 
     public static Single<Range<Long>> fetchCountQueryPartition(
-    		Function<? super Query, ? extends QueryExecution> qef,
-    		Query query,
-    		Collection<Var> partitionVars,
-    		Long itemLimit, 
-    		Long rowLimit) {
+            Function<? super Query, ? extends QueryExecution> qef,
+            Query query,
+            Collection<Var> partitionVars,
+            Long itemLimit,
+            Long rowLimit) {
 
         //Var outputVar = Var.alloc("_count_"); //ConceptUtils.freshVar(concept);
 
@@ -536,27 +536,27 @@ public class SparqlRx {
     }
 
     public static Single<Long> fetchBindingCount(String serviceUrl, Query query) {
-    	Entry<Var, Query> countQuery = QueryGenerationUtils.createQueryCount(query);
+        Entry<Var, Query> countQuery = QueryGenerationUtils.createQueryCount(query);
         return SparqlRx.fetchNumber(() ->
-        	QueryExecutionFactory.createServiceRequest(serviceUrl, countQuery.getValue()),
-        		countQuery.getKey())
-        		.map(Number::longValue);
+            QueryExecutionFactory.createServiceRequest(serviceUrl, countQuery.getValue()),
+                countQuery.getKey())
+                .map(Number::longValue);
     }
 
     public static Single<Range<Long>> fetchCountQuery(
-    		SparqlQueryConnection conn,
-    		Query query,
-    		Long itemLimit,
-    		Long rowLimit) {
+            SparqlQueryConnection conn,
+            Query query,
+            Long itemLimit,
+            Long rowLimit) {
         Single<Range<Long>> result = fetchCountQuery(conn::query, query, itemLimit, rowLimit);
         return result;
     }
-    
+
     public static Single<Range<Long>> fetchCountQuery(
-    		Function<? super Query, ? extends QueryExecution> qef,
-    		Query query,
-    		Long itemLimit,
-    		Long rowLimit) {
+            Function<? super Query, ? extends QueryExecution> qef,
+            Query query,
+            Long itemLimit,
+            Long rowLimit) {
         Single<Range<Long>> result = fetchCountQueryPartition(qef, query, null, itemLimit, rowLimit);
         return result;
     }
@@ -772,6 +772,15 @@ public class SparqlRx {
 
         return SparqlRx.execSelect(qeSupp)
             .map(qs -> qs.get(varName));
+    }
+
+    public static Flowable<Node> execConceptRaw(Callable<QueryExecution> qeSupp, Var var) {
+        return SparqlRx.execSelectRaw(qeSupp)
+            .map(binding -> binding.get(var));
+    }
+
+    public static Flowable<Node> execConceptRaw(SparqlQueryConnection conn, Query query, Var var) {
+        return execConceptRaw(() -> conn.query(query), var);
     }
 
 }

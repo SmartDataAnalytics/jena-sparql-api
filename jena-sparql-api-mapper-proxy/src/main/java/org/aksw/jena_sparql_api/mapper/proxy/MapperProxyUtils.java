@@ -2119,7 +2119,7 @@ public class MapperProxyUtils {
         m.add(res.listProperties());
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         RDFDataMgr.write(baos, m, RDFFormat.TURTLE_BLOCKS);
-        String r = baos.toString();
+        String r = res.asNode() + ": [" + baos.toString() + "]";
         return r;
 
 //    	StringBuilder sb = new StringBuilder();
@@ -2146,6 +2146,33 @@ public class MapperProxyUtils {
         getHashId(root, cxt);
 
         return cxt;
+    }
+
+    /**
+     * Convenience function that runs skolemization on a the given resource
+     * and prepends an iri prefix to the generated hashes.
+     * This convenience function does not allow for accessing all ocurred renamings.
+     *
+     * Modifies the model in-place.
+     *
+     * Example:
+     * {@code newResource = skolemize("http://www.example.org/", oldResource};
+     *
+     * @param iriPrefix
+     * @param root The 'root' resource from which to start the skolemization process
+     * @return The resource that is the skolemization of 'root' in the same model as 'root'
+     */
+    public static Resource skolemize(String iriPrefix, Resource root) {
+        HashIdCxt hashIdCxt = MapperProxyUtils.getHashId(root);
+
+        // The mapping of RDFNodes to string IDs (not IRIs at this point) is obtained via
+        Map<RDFNode, String> renames = hashIdCxt.getStringIdMapping();
+
+        // Get a mapping from the original resources to the renamed ones.
+        Map<Resource, Resource> map = ResourceUtils.renameResources(iriPrefix, renames);
+
+        Resource result = map.get(root);
+        return result;
     }
 
     public static HashCode getHashId(RDFNode root, HashIdCxt cxt) {

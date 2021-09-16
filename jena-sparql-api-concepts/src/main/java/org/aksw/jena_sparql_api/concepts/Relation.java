@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api.concepts;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
@@ -10,11 +11,14 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.utils.ElementUtils;
+import org.aksw.jena_sparql_api.utils.ExprUtils;
 import org.aksw.jena_sparql_api.utils.VarUtils;
 import org.apache.jena.query.Query;
 import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.graph.NodeTransform;
 import org.apache.jena.sparql.syntax.Element;
+import org.apache.jena.sparql.syntax.ElementFilter;
 
 import com.google.common.collect.Sets;
 
@@ -205,6 +209,32 @@ public interface Relation
 
     default Relation project(Var ... vars) {
         return project(Arrays.asList(vars));
+    }
+
+
+    default Relation filter(Expr ... exprs) {
+        return filter(Arrays.asList(exprs));
+    }
+
+    default Relation filter(Iterable<Expr> exprs) {
+        Relation result = !exprs.iterator().hasNext()
+            ? this
+            : filter(ExprUtils.andifyBalanced(exprs));
+
+        return result;
+    }
+
+
+    default Relation filter(Expr expr) {
+        List<Element> elts = new ArrayList<>();
+        elts.addAll(getElements());
+        elts.add(new ElementFilter(expr));
+        Element newElt = ElementUtils.groupIfNeeded(elts);
+
+        List<Var> vars = getVars();
+        Relation result = new RelationImpl(newElt, vars);
+        return result;
+
     }
 
     default Query toQuery() {

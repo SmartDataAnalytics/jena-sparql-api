@@ -12,12 +12,12 @@ import java.util.stream.Collectors;
 
 import org.aksw.commons.io.syscall.SysCalls;
 import org.aksw.commons.io.syscall.sort.SysSort;
+import org.aksw.commons.rx.op.RxOps;
 import org.aksw.jena_sparql_api.io.json.TypeAdapterDataset;
 import org.aksw.jena_sparql_api.io.json.TypeAdapterNode;
 import org.aksw.jena_sparql_api.rx.DatasetFactoryEx;
 import org.aksw.jena_sparql_api.rx.RDFDataMgrRx;
 import org.aksw.jena_sparql_api.rx.RDFDataMgrRx.ConsecutiveNamedGraphMerger;
-import org.aksw.jena_sparql_api.rx.io.resultset.RxOps;
 import org.aksw.jena_sparql_api.rx.io.resultset.SPARQLResultExProcessor;
 import org.aksw.jena_sparql_api.rx.io.resultset.SPARQLResultExProcessorBuilder;
 import org.aksw.jena_sparql_api.rx.io.resultset.SparqlMappers;

@@ -1,0 +1,11 @@
+# Probe up to 10M result rows
+SELECT (1000000 * ?x6 + 100000 * ?x5 + 10000 * ?x4 + 1000 * ?x3 + 100 * ?x2 + 10 * ?x1 + ?x0 AS ?y) {
+  VALUES ?x0 { 0 1 2 3 4 5 6 7 8 9 }
+  VALUES ?x1 { 0 1 2 3 4 5 6 7 8 9 }
+  VALUES ?x2 { 0 1 2 3 4 5 6 7 8 9 }
+  VALUES ?x3 { 0 1 2 3 4 5 6 7 8 9 }
+  VALUES ?x4 { 0 1 2 3 4 5 6 7 8 9 }
+  VALUES ?x5 { 0 1 2 3 4 5 6 7 8 9 }
+  VALUES ?x6 { 0 1 2 3 4 5 6 7 8 9 }
+}
+

@@ -4,7 +4,6 @@ import java.util.function.Supplier;
 
 import org.apache.jena.irix.IRIxResolver;
 import org.apache.jena.query.Syntax;
-import org.apache.jena.riot.system.IRIResolver;
 import org.apache.jena.shared.impl.PrefixMappingImpl;
 import org.apache.jena.sparql.core.Prologue;
 import org.apache.jena.update.UpdateFactory;
@@ -35,7 +34,7 @@ public class SparqlUpdateParserImpl
     }
 
     public static SparqlUpdateParserImpl create(SparqlParserConfig config) {
-        SparqlUpdateParserImpl result = create(config.getSyntax(), config.getPrologue());
+        SparqlUpdateParserImpl result = create(config.getSyntax(), config.getPrologue(), config.getBaseURI());
         return result;
     }
 
@@ -53,10 +52,20 @@ public class SparqlUpdateParserImpl
     }
 
     public static SparqlUpdateParserImpl create(Syntax syntax, Prologue prologue) {
-        Supplier<UpdateRequest> updateSupplier = new UpdateSupplierImpl(prologue);
+        return create(syntax, prologue, "");
+    }
+
+    public static SparqlUpdateParserImpl create(Syntax syntax, Prologue prologue, String baseURI) {
+        Supplier<UpdateRequest> updateSupplier = new UpdateSupplierImpl(prologue, baseURI);
 
         SparqlUpdateParserImpl result = new SparqlUpdateParserImpl(updateSupplier, syntax, null);
         return result;
     }
 
+    /** Return a parser without base url that retains relative IRIs */
+    public static SparqlUpdateParserImpl createAsGiven() {
+        return create(SparqlParserConfig.newInstance().parseAsGiven().applyDefaults());
+    }
+
 }
+
