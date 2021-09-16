@@ -6,7 +6,7 @@ import java.nio.file.Path;
 import java.util.Iterator;
 
 import org.apache.commons.io.input.BoundedInputStream;
-import org.apache.jena.atlas.iterator.IteratorResourceClosing;
+import org.apache.jena.atlas.iterator.IteratorOnClose;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.riot.Lang;
@@ -73,9 +73,16 @@ public class E_ProbeRdf
         // Special case N-Triples, because the RIOT reader has a pull interface
         // Special case N-Quads, because the RIOT reader has a pull interface
         if ( RDFLanguages.sameLang(RDFLanguages.NTRIPLES, lang) || RDFLanguages.sameLang(RDFLanguages.NQUADS, lang)) {
-            return new IteratorResourceClosing<>(
+            return IteratorOnClose.atEnd(
                     RiotParsers.createIteratorNQuads(input, null, RiotLib.dftProfile()),
-                    input);
+					() -> {
+						try {
+							if (input != null)
+								input.close();
+						} catch (Exception e) {
+
+						}
+					});
         }
 
         // Otherwise, we have to spin up a thread to deal with it

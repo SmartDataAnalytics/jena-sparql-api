@@ -29,7 +29,7 @@ import org.aksw.jena_sparql_api.utils.DatasetGraphUtils;
 import org.aksw.jena_sparql_api.utils.DatasetUtils;
 import org.aksw.jena_sparql_api.utils.QuadPatternUtils;
 import org.aksw.jena_sparql_api.utils.QuadUtils;
-import org.apache.jena.atlas.iterator.IteratorResourceClosing;
+import org.apache.jena.atlas.iterator.IteratorOnClose;
 import org.apache.jena.atlas.web.ContentType;
 import org.apache.jena.atlas.web.TypedInputStream;
 import org.apache.jena.ext.com.google.common.base.Predicate;
@@ -312,9 +312,17 @@ public class RDFDataMgrRx {
 
         // Special case N-Quads, because the RIOT reader has a pull interface
         if ( RDFLanguages.sameLang(RDFLanguages.NQUADS, lang) ) {
-            return new RDFIteratorFromIterator<Quad>(new IteratorResourceClosing<>(
+            return new RDFIteratorFromIterator<Quad>(IteratorOnClose.atEnd(
                 RiotParsers.createIteratorNQuads(input, null, RDFDataMgrRx.dftProfile()),
-                input), baseIRI);
+                    () -> {
+                        try {
+                            if (input != null)
+                                input.close();
+                        } catch (Exception e) {
+
+                        }
+
+                    }), baseIRI);
         }
         // Otherwise, we have to spin up a thread to deal with it
         RDFIteratorFromPipedRDFIterator<Quad> it = new RDFIteratorFromPipedRDFIterator<>(bufferSize, fair, pollTimeout, maxPolls);
@@ -416,10 +424,18 @@ public class RDFDataMgrRx {
             Consumer<Thread> th,
             UncaughtExceptionHandler eh) {
         // Special case N-Quads, because the RIOT reader has a pull interface
-        if ( RDFLanguages.sameLang(RDFLanguages.NTRIPLES, lang) ) {
-            return new RDFIteratorFromIterator<Triple>(new IteratorResourceClosing<>(
-                RiotParsers.createIteratorNTriples(input, null, RDFDataMgrRx.dftProfile()),
-                input), baseIRI);
+        if (RDFLanguages.sameLang(RDFLanguages.NTRIPLES, lang)) {
+            return new RDFIteratorFromIterator<Triple>(IteratorOnClose.atEnd(
+                    RiotParsers.createIteratorNTriples(input, null, RDFDataMgrRx.dftProfile()),
+                    () -> {
+                        try {
+                            if (input != null)
+                                input.close();
+                        } catch (Exception e) {
+
+                        }
+
+                    }), baseIRI);
         }
         // Otherwise, we have to spin up a thread to deal with it
         RDFIteratorFromPipedRDFIterator<Triple> it = new RDFIteratorFromPipedRDFIterator<>(bufferSize, fair, pollTimeout, maxPolls);
