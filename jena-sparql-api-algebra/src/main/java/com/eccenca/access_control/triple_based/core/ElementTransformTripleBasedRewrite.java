@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import org.aksw.commons.collections.ValueSet;
+import org.aksw.commons.collections.PolaritySet;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.ExprListUtils;
 import org.apache.jena.ext.com.google.common.collect.Iterables;
@@ -60,7 +60,7 @@ public abstract class ElementTransformTripleBasedRewrite
 
     // An element over the variables g, s, p, o
 
-    public static Expr valueSetToExpr(ValueSet<Node> valueSet, Var var) {
+    public static Expr valueSetToExpr(PolaritySet<Node> valueSet, Var var) {
     	ExprList el = ExprListUtils.nodesToExprs(valueSet.getValue());
     	
     	Expr core = new E_OneOf(new ExprVar(var), el);
