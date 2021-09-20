@@ -29,7 +29,7 @@ import org.aksw.jena_sparql_api.utils.DatasetGraphUtils;
 import org.aksw.jena_sparql_api.utils.DatasetUtils;
 import org.aksw.jena_sparql_api.utils.QuadPatternUtils;
 import org.aksw.jena_sparql_api.utils.QuadUtils;
-import org.apache.jena.atlas.iterator.IteratorResourceClosing;
+import org.apache.jena.atlas.iterator.Iter;
 import org.apache.jena.atlas.web.ContentType;
 import org.apache.jena.atlas.web.TypedInputStream;
 import org.apache.jena.ext.com.google.common.base.Predicate;
@@ -39,7 +39,6 @@ import org.apache.jena.graph.GraphUtil;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
-import org.apache.jena.irix.IRIs;
 import org.apache.jena.irix.IRIxResolver;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
@@ -318,7 +317,7 @@ public class RDFDataMgrRx {
 
         // Special case N-Quads, because the RIOT reader has a pull interface
         if ( RDFLanguages.sameLang(RDFLanguages.NQUADS, lang) ) {
-            return new RDFIteratorFromIterator<Quad>(new IteratorResourceClosing<>(
+            return new RDFIteratorFromIterator<Quad>(Iter.onCloseIO(
                 RiotParsers.createIteratorNQuads(input, null, RDFDataMgrRx.dftProfile()),
                 input), baseIRI);
         }
@@ -434,7 +433,7 @@ public class RDFDataMgrRx {
             UncaughtExceptionHandler eh) {
         // Special case N-Quads, because the RIOT reader has a pull interface
         if ( RDFLanguages.sameLang(RDFLanguages.NTRIPLES, lang) ) {
-            return new RDFIteratorFromIterator<Triple>(new IteratorResourceClosing<>(
+            return new RDFIteratorFromIterator<Triple>(Iter.onCloseIO(
                 RiotParsers.createIteratorNTriples(input, null, RDFDataMgrRx.dftProfile()),
                 input), baseIRI);
         }

@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api.util.sparql.syntax.path;
 
+import org.apache.jena.sparql.graph.NodeTransform;
 import org.apache.jena.sparql.path.Path;
 import org.apache.jena.sparql.path.PathVisitor;
 
@@ -9,6 +10,14 @@ public class PathTransformer {
     /** Transform an algebra expression */
     public static Path transform(Path path, PathTransform pathTransform) {
         PathVisitorApplyTransform pathVisitor = new PathVisitorApplyTransform(pathTransform, null);
+        Path result = applyTransformation(pathVisitor, path, null, null);
+        return result;
+    }
+
+    /** Transform an algebra expression */
+    public static Path transform(Path path, NodeTransform nodeTransform) {
+        PathTransformCopyBase pathTransform = new PathTransformCopyBase();
+        PathVisitorApplyTransform pathVisitor = new PathVisitorApplyTransform(pathTransform, nodeTransform);
         Path result = applyTransformation(pathVisitor, path, null, null);
         return result;
     }

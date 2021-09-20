@@ -46,12 +46,12 @@ public class NodeMapperOpContainment
     }
 
     @Override
-    public Entry<BiMap<Var, Var>, ResidualMatching> apply(Op viewOp, Op userOp, TreeMapping<Op, Op, BiMap<Var, Var>, ResidualMatching> tm) {
+    public Entry<BiMap<Var, Var>, ResidualMatching> apply(Op xviewOp, Op xuserOp, TreeMapping<Op, Op, BiMap<Var, Var>, ResidualMatching> tm) {
 //        Class<?> viewOpClass = viewOp == null ? null : viewOp.getClass();
 //        Class<?> userOpClass = userOp == null ? null : userOp.getClass();
 
-        viewOp = OpUtils.substitute(viewOp, false, (op) -> tm.getNodeMappings().containsRow(op) ? OpNull.create() : op);
-        userOp = OpUtils.substitute(userOp, false, (op) -> tm.getNodeMappings().containsColumn(op) ? OpNull.create() : op);
+        Op viewOp = OpUtils.substitute(xviewOp, false, (op) -> tm.getNodeMappings().containsRow(op) ? OpNull.create() : op);
+        Op userOp = OpUtils.substitute(xuserOp, false, (op) -> tm.getNodeMappings().containsColumn(op) ? OpNull.create() : op);
 
         Class<?> viewOpClass = viewOp.getClass();
         Class<?> userOpClass = userOp.getClass();

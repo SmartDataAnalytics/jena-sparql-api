@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api.lookup;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -12,6 +13,10 @@ import io.reactivex.rxjava3.core.Single;
 public interface LookupService<K, V>
     extends Function<Iterable<K>, Flowable<Entry<K, V>>> //CompletableFuture<Map<K, V>>>
 {
+    default V fetchItem(K k) {
+        return fetchMap(Collections.singleton(k)).get(k);
+    }
+
     default LookupService<K, V> partition(int k) {
         return LookupServicePartition.create(this, k);
     }

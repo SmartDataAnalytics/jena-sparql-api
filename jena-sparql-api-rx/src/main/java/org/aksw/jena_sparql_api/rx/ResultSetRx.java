@@ -9,6 +9,7 @@ import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.engine.QueryIterator;
 import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.syntax.Template;
 
@@ -25,6 +26,11 @@ import io.reactivex.rxjava3.disposables.Disposable;
 public interface ResultSetRx {
     List<Var> getVars();
     Flowable<Binding> getBindings();
+
+    default QueryIterator asQueryIterator() {
+        Flowable<Binding> bindingFlow = getBindings();
+        return QueryIteratorUtils.createFromFlowable(bindingFlow);
+    }
 
     /**
      * Returns a QueryExecution with only support for execSelect, abort and close

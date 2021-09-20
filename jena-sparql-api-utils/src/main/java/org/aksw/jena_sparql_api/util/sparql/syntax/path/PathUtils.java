@@ -1,8 +1,10 @@
 package org.aksw.jena_sparql_api.util.sparql.syntax.path;
 
 import java.util.List;
+import java.util.Set;
 
 import org.aksw.jena_sparql_api.utils.ExprUtils;
+import org.aksw.jena_sparql_api.utils.transform.NodeTransformCollectNodes;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.sparql.path.P_Link;
@@ -19,6 +21,15 @@ import com.google.common.collect.Streams;
 public class PathUtils {
 
     public static final Path nullPath = new P_Link(org.aksw.jena_sparql_api.utils.NodeUtils.nullUriNode);
+
+
+    /** Return the set of nodes mentioned in a path */
+    public static Set<Node> collectNodes(Path path) {
+        NodeTransformCollectNodes nodeTransform = new NodeTransformCollectNodes();
+        PathTransformer.transform(path, nodeTransform);
+        Set<Node> result = nodeTransform.getNodes();
+        return result;
+    }
 
     public static boolean isNull(Path path) {
         boolean result = nullPath.equals(path);

@@ -7,7 +7,7 @@ import java.util.Iterator;
 
 import org.aksw.jena_sparql_api.arq.service.vfs.ServiceExecutorFactoryVfsUtils;
 import org.apache.commons.io.input.BoundedInputStream;
-import org.apache.jena.atlas.iterator.IteratorResourceClosing;
+import org.apache.jena.atlas.iterator.Iter;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.riot.Lang;
@@ -74,7 +74,7 @@ public class E_ProbeRdf
         // Special case N-Triples, because the RIOT reader has a pull interface
         // Special case N-Quads, because the RIOT reader has a pull interface
         if ( RDFLanguages.sameLang(RDFLanguages.NTRIPLES, lang) || RDFLanguages.sameLang(RDFLanguages.NQUADS, lang)) {
-            return new IteratorResourceClosing<>(
+            return Iter.onCloseIO(
                     RiotParsers.createIteratorNQuads(input, null, RiotLib.dftProfile()),
                     input);
         }

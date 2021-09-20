@@ -16,13 +16,11 @@ import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.riot.RDFDataMgr;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.core.io.Resource;
 
 import com.google.common.base.Stopwatch;
 import com.google.common.cache.Cache;
@@ -37,9 +35,7 @@ public class SparqlViewMatcherCacheTests {
     public void test() throws Exception {
         JenaExtensionViewMatcher.register();
 
-        Resource r = new ClassPathResource("data-lorenz.nt");
-        Model model = ModelFactory.createDefaultModel();
-        model.read(r.getInputStream(), "http://ex.org/", "NTRIPLES");
+        Model model = RDFDataMgr.loadModel("data-lorenz.nt");
 
         // Create an implemetation of the view matcher - i.e. an object that supports
         // - registering (Op, value) entries
