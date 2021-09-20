@@ -150,6 +150,7 @@ public class TestSparqlExtJson {
         JsonPath.read(tmp, "$.baz");
     }
 
+/* TODO Either adapt or remove test
     @Test
     public void testCSV() {
         Query q = parser.apply("PREFIX url: <http://jsa.aksw.org/fn/url/>\n" +
@@ -173,4 +174,5 @@ public class TestSparqlExtJson {
             System.out.println(ResultSetFormatter.asText(qe.execSelect()));
         }
     }
+*/
 }
