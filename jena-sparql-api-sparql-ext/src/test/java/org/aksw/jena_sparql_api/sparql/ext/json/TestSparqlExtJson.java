@@ -149,4 +149,28 @@ public class TestSparqlExtJson {
         Object tmp = gson.fromJson("{\"foo\": \"bar\"}", Object.class);
         JsonPath.read(tmp, "$.baz");
     }
+
+    @Test
+    public void testCSV() {
+        Query q = parser.apply("PREFIX url: <http://jsa.aksw.org/fn/url/>\n" +
+                "PREFIX json: <http://jsa.aksw.org/fn/json/>\n" +
+                "PREFIX csv: <http://jsa.aksw.org/fn/csv/>" +
+                "PREFIX user: <http://e-vita-project.org/wp5/user/>" +
+                "SELECT ?id ?age ?o  WHERE {\n" +
+                "\n" +
+                "\t<file:///home/user/work/projects/eVITA/WP5/datasets/HIS/data/users2.csv> csv:parse (?o \"excel -h\")\n" +
+                "\t\n" +
+                "\tBIND(json:path(?o, \"$.Age\") AS ?age)\n" +
+                "\tBIND(json:path(?o, \"$.id\") AS ?id)\n" +
+                "\tBIND(json:path(?o, \"$.Gender\") AS ?gender)\n" +
+                "\n" +
+                "\tBIND(IRI(concat(str(user:), ?id)) as ?user)\n" +
+                "\n" +
+                "\n" +
+                "}");
+        Model m = ModelFactory.createDefaultModel();
+        try(QueryExecution qe = QueryExecutionFactory.create(q, m)) {
+            System.out.println(ResultSetFormatter.asText(qe.execSelect()));
+        }
+    }
 }

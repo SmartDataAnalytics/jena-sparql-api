@@ -1,24 +1,5 @@
 package org.aksw.jena_sparql_api.stmt;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Objects;
-import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-
 import org.aksw.jena_sparql_api.backports.syntaxtransform.ExprTransformNodeElement;
 import org.aksw.jena_sparql_api.http.HttpExceptionUtils;
 import org.aksw.jena_sparql_api.syntax.UpdateRequestUtils;
@@ -35,11 +16,7 @@ import org.apache.jena.ext.com.google.common.base.Charsets;
 import org.apache.jena.ext.com.google.common.io.CharStreams;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
-import org.apache.jena.query.Query;
-import org.apache.jena.query.QueryExecution;
-import org.apache.jena.query.QueryFactory;
-import org.apache.jena.query.ResultSet;
-import org.apache.jena.query.Syntax;
+import org.apache.jena.query.*;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.riot.WebContent;
 import org.apache.jena.riot.system.stream.StreamManager;
@@ -62,6 +39,18 @@ import org.apache.jena.sparql.util.Context;
 import org.apache.jena.sparql.util.Symbol;
 import org.apache.jena.update.Update;
 import org.apache.jena.update.UpdateRequest;
+
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Utility methods for processing sources of SparqlStmts
@@ -129,8 +118,8 @@ public class SparqlStmtUtils {
      * In-place optimize an update request's prefixes to only used prefixes
      * The global prefix map may be null.
      *
-     * @param query
-     * @param pm
+     * @param stmt
+     * @param globalPm
      * @return
      */
     public static SparqlStmt optimizePrefixes(SparqlStmt stmt, PrefixMapping globalPm) {
