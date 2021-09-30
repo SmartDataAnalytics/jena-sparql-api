@@ -89,7 +89,9 @@ public class QueryToGraph {
 
         op = OpUtils.substitute(op, false, (o) -> AlgebraUtils.tryCreateCqfp(o, generatorCache));
         if(normalizeUnaryOps) {
-            op = Transformer.transform(new OpTransformNormalizeUnaryOps(), op);
+            // throw new RuntimeException("normalizeUnaryOps code is broken");
+            System.err.println("Normalize unary ops is broken - option ignored");
+            // op = Transformer.transform(new OpTransformNormalizeUnaryOps(), op);
         }
 
 

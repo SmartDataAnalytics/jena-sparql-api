@@ -3,9 +3,10 @@ package org.aksw.jena_sparql_api.algebra.utils;
 import java.util.Collections;
 import java.util.List;
 
-import org.aksw.commons.graph.index.jena.transform.OpDistinctExtendFilter;
 import org.apache.jena.atlas.io.IndentedWriter;
 import org.apache.jena.sparql.algebra.Op;
+import org.apache.jena.sparql.algebra.Transform;
+import org.apache.jena.sparql.algebra.Transformer;
 import org.apache.jena.sparql.algebra.op.OpExt;
 import org.apache.jena.sparql.engine.ExecutionContext;
 import org.apache.jena.sparql.engine.QueryIterator;
@@ -61,10 +62,25 @@ public class OpExtConjunctiveQuery
     }
 
     @Override
+    public Op apply(Transform transform) {
+        Op before = conjunctiveQuery.toOp();
+        Op after = Transformer.transform(transform, before);
+
+        try {
+            ConjunctiveQuery newCq = AlgebraUtils.tryExtractConjunctiveQuery(after, null);
+            return new OpExtConjunctiveQuery(newCq);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException(e);
+        }
+    }
+
+
+    @Override
     public int hashCode() {
         final int prime = 31;
-    	int result = prime * effectiveOp().hashCode();
-    	return result;
+        int result = prime * effectiveOp().hashCode();
+        return result;
     }
 
     @Override
@@ -78,8 +94,8 @@ public class OpExtConjunctiveQuery
         Op b = other.effectiveOp();
         boolean result = a.equalTo(b, labelMap);
         return result;
-        
-        
+
+
     }
 
     @Override

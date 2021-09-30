@@ -13,6 +13,7 @@ import org.aksw.jena_sparql_api.utils.NodeUtils;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.riot.RiotException;
+import org.apache.jena.riot.lang.LabelToNode;
 import org.apache.jena.riot.out.NodeFmtLib;
 import org.apache.jena.riot.tokens.Token;
 import org.apache.jena.riot.tokens.Tokenizer;
@@ -120,12 +121,20 @@ public class PathOpsNode
 
 
     public static <C extends Collection<? super Node>> C parseNodes(String str, C segments) {
+        // NodeFmtLib.strNodes encodes labels - so we need to decode them
+        LabelToNode decoder = LabelToNode.createUseLabelEncoded();
+
         Tokenizer tokenizer = TokenizerText.create().fromString(str).build();
         while (tokenizer.hasNext()) {
             Token token = tokenizer.next() ;
             Node node = token.asNode() ;
             if ( node == null )
                 throw new RiotException("Bad RDF Term: " + str) ;
+
+            if (node.isBlank()) {
+                String label = node.getBlankNodeLabel();
+                node = decoder.get(null, label);
+            }
 
             segments.add(node);
         }

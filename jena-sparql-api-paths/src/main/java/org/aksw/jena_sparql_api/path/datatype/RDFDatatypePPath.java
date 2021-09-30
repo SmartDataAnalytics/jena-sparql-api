@@ -2,6 +2,7 @@ package org.aksw.jena_sparql_api.path.datatype;
 
 import org.apache.jena.datatypes.BaseDatatype;
 import org.apache.jena.datatypes.DatatypeFormatException;
+import org.apache.jena.graph.Node;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.expr.ExprEvalException;
 import org.apache.jena.sparql.path.Path;
@@ -14,17 +15,17 @@ import org.apache.jena.sparql.path.PathWriter;
  * @author Claus Stadler
  *
  */
-public class RDFDatatypePath
+public class RDFDatatypePPath
     extends BaseDatatype
 {
     public static final String IRI = "http://jsa.aksw.org/dt/sparql/path";
-    public static final RDFDatatypePath INSTANCE = new RDFDatatypePath();
+    public static final RDFDatatypePPath INSTANCE = new RDFDatatypePPath();
 
-    public RDFDatatypePath() {
+    public RDFDatatypePPath() {
         this(IRI);
     }
 
-    public RDFDatatypePath(String uri) {
+    public RDFDatatypePPath(String uri) {
         super(uri);
     }
 
@@ -61,4 +62,25 @@ public class RDFDatatypePath
         }
         return result;
     }
+
+    /**
+     * Extract a path from a given node..
+     *
+     * @return The extracted path or null if none could be extracted.
+     *
+     */
+    public static Path extractPath(Node node) {
+        Path p = null;
+
+        if (node.isLiteral()) {
+            Object o = node.getLiteralValue();
+            if (o instanceof Path) {
+                p = (Path)o;
+            }
+        }
+
+        return p;
+    }
+
+
 }

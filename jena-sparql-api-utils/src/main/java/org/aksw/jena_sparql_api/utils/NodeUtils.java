@@ -67,17 +67,17 @@ public class NodeUtils {
 
     /**
      * Create a logical conjunction of two nodes:
-     * - Node.ANY or null matches everything
+     * - Node.ANY, null or a variable matches everything
      * - If any argument matches everything return the other argument (convert null to ANY)
      * - if both arguments are concrete nodes then return one if them if they are equal
      * - otherwise return null
      *
      */
-    public static Node logicalAnd(Node a, Node b) {
-        Node result = NodeUtils.isNullOrAny(a)
+    public static Node logicalAnd(Node pattern, Node b) {
+        Node result = NodeUtils.isNullOrAny(pattern) || pattern.isVariable()
                 ? nullToAny(b)
-                : NodeUtils.isNullOrAny(b) || Objects.equals(a, b)
-                    ? nullToAny(a)
+                : NodeUtils.isNullOrAny(b) || Objects.equals(pattern, b)
+                    ? nullToAny(pattern)
                     : null;
 
         return result;

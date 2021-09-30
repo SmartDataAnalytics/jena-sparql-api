@@ -76,6 +76,8 @@ public class DistinctExtendFilter {
     //protected boolean distinct; // whether the set of visible vars according to the varToDef is declared distinct
     protected ExprHolder filter;
 
+    
+    
 
     public Op toOp(Op result) {
         if(filter.getExpr().equals(NodeValue.TRUE)) {

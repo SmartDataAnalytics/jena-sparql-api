@@ -6,10 +6,15 @@ import java.util.List;
 import java.util.Set;
 
 import org.aksw.jena_sparql_api.algebra.analysis.DistinctExtendFilter;
+import org.aksw.jena_sparql_api.algebra.utils.AlgebraUtils;
+import org.aksw.jena_sparql_api.algebra.utils.ConjunctiveQuery;
 import org.aksw.jena_sparql_api.algebra.utils.OpCopyable;
+import org.aksw.jena_sparql_api.algebra.utils.OpExtConjunctiveQuery;
 import org.apache.jena.atlas.io.IndentedWriter;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.OpVars;
+import org.apache.jena.sparql.algebra.Transform;
+import org.apache.jena.sparql.algebra.Transformer;
 import org.apache.jena.sparql.algebra.op.OpExt;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.ExecutionContext;
@@ -50,6 +55,21 @@ public class OpDistinctExtendFilter
     public QueryIterator eval(QueryIterator input, ExecutionContext execCxt) {
         return null;
     }
+
+//    @Override
+//    public Op apply(Transform transform) {
+//        Op before = def.toOp();
+//        Op after = Transformer.transform(transform, before);
+//
+//        try {
+//            ConjunctiveQuery newCq = AlgebraUtils.tryExtractConjunctiveQuery(after, null);
+//            return new OpExtConjunctiveQuery(newCq);
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//            throw new RuntimeException(e);
+//        }
+//    }
+//
 
     @Override
     public void outputArgs(IndentedWriter out, SerializationContext sCxt) {
