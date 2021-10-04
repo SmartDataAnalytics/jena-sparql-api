@@ -3,6 +3,7 @@ package org.aksw.jena_sparql_api.collection.observable;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.VetoableChangeListener;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map.Entry;
 
@@ -42,6 +43,12 @@ public class ObservableSetFromGraph
     public ObservableSetFromGraph(ObservableGraph graph) {
         super(graph);
     }
+
+    @Override
+    public boolean delta(Collection<? extends Triple> additions, Collection<?> removals) {
+        return getGraph().delta(additions, removals);
+    }
+
 
     @Override
     public ObservableGraph getGraph() {

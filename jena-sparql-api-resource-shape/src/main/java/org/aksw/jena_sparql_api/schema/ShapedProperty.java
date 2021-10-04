@@ -61,7 +61,8 @@ public class ShapedProperty {
         ResourceState rs = resourceCache.get(src.getSourceNode());
         Set<Node> cachedValues = rs == null ? null : rs.getFromCache(path);
 
-        return cachedValues;
+        // return cachedValues;
+        return null;
     }
 
     protected boolean isInMemory() {

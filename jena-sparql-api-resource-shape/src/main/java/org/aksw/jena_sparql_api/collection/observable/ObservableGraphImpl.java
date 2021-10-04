@@ -5,11 +5,15 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.beans.VetoableChangeListener;
 import java.beans.VetoableChangeSupport;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.aksw.commons.collection.observable.CollectionChangedEventImpl;
+import org.aksw.commons.collection.observable.ObservableCollectionOps;
+import org.aksw.commons.collection.observable.StreamOps;
 import org.aksw.jena_sparql_api.rx.GraphFactoryEx;
 import org.aksw.jena_sparql_api.util.SetFromGraph;
 import org.apache.jena.graph.Graph;
@@ -60,6 +64,20 @@ public class ObservableGraphImpl
     {
         super(delegate) ;
     }
+
+    @Override
+    public boolean delta(Collection<? extends Triple> rawAdditions, Collection<?> rawDeletions) {
+        Set<Triple> delegateAsSet = SetFromGraph.wrap(get());
+
+        return ObservableCollectionOps.delta(
+            // Wrap as a non-observable set in order to not fire events
+            // prematurely as this.asSet() would do!
+            delegateAsSet, delegateAsSet,
+            vcs, pcs,
+            false,
+            rawAdditions, rawDeletions);
+    }
+
 
 //
 //    public void postponeEvents(boolean onOrOff) {

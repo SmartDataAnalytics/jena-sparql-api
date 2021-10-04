@@ -67,4 +67,10 @@ public class MapServiceFromListService<C, T, K, V>
         LookupService<K, V> result = new LookupServiceFromMapService<>(this, keysToFilter);
         return result;
     }
+
+//    public static <C, K, V> MapServiceFromListService<K, V, K, V> createEmpty() {
+//        ListService<C, V> ls = new ListServiceFromList<>(Collections.emptyList(), (k, v) -> true);
+//        MapServiceFromListService<C, V, K, V> result = new MapServiceFromListService<>(ls, y -> null, x -> x);
+//        return result;
+//    }
 }

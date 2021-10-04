@@ -2,6 +2,7 @@ package org.aksw.jena_sparql_api.collection.observable;
 
 import java.beans.PropertyChangeListener;
 import java.beans.VetoableChangeListener;
+import java.util.Collection;
 
 import org.aksw.commons.collection.observable.ObservableCollection;
 import org.aksw.commons.collection.observable.ObservableSet;
@@ -18,6 +19,9 @@ public interface ObservableGraph
     Runnable addVetoableChangeListener(VetoableChangeListener listener);
     Runnable addPropertyChangeListener(PropertyChangeListener listener);
 
+    boolean delta(Collection<? extends Triple> rawAdditions, Collection<?> rawDeletions);
+
+//    boolean replace(Set<? extends Triple> triples);
 
     default ObservableSet<Triple> asSet() {
         return new ObservableSetFromGraph(this);

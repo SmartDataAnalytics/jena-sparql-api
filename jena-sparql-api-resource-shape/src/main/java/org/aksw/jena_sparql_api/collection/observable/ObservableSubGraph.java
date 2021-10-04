@@ -2,11 +2,16 @@ package org.aksw.jena_sparql_api.collection.observable;
 
 import java.beans.PropertyChangeListener;
 import java.beans.VetoableChangeListener;
+import java.util.Collection;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import org.aksw.commons.collection.observable.CollectionChangedEvent;
 import org.aksw.commons.collection.observable.CollectionChangedEventImpl;
+import org.aksw.commons.collection.observable.ObservableCollectionOps;
+import org.aksw.commons.collection.observable.StreamOps;
+import org.aksw.commons.collections.ConvertingCollection;
 import org.aksw.jena_sparql_api.relation.TripleConstraint;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Triple;
@@ -53,6 +58,23 @@ public class ObservableSubGraph
         return (ObservableGraph)super.get();
     }
 
+    @Override
+    public boolean delta(Collection<? extends Triple> rawAdditions, Collection<?> rawDeletions) {
+        Collection<Triple> filteredRemovals = StreamOps.<Triple>filter(rawDeletions.stream(), predicate).collect(Collectors.toSet());
+        Collection<Triple> filteredAdditions = rawAdditions.stream().filter(predicate).collect(Collectors.toSet());
+
+        return get().delta(filteredAdditions, filteredRemovals);
+    }
+
+//    @Override
+//    public boolean replace(Set<? extends Triple> triples) {
+//        Set<Triple> old = find().toSet();
+//
+//        Set<Triple> removals = Sets.difference(old, triples);
+//        Set<? extends Triple> additions = Sets.difference(triples, old);
+//
+//
+//    }
 
     public static <T> Set<T> filterSet(Set<T> set, Predicate<? super T> predicate) {
         return set == null ? null : Sets.filter(set, predicate::test);
