@@ -2,9 +2,9 @@ package org.aksw.jena_sparql_api.core.utils;
 
 import java.util.Set;
 
-import org.aksw.jena_sparql_api.utils.SetFromGraph;
-
 import com.google.common.base.Function;
+
+import org.aksw.jena_sparql_api.util.SetFromGraph;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Triple;
 

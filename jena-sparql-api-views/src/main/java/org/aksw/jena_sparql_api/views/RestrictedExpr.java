@@ -1,5 +1,7 @@
 package org.aksw.jena_sparql_api.views;
 
+import java.util.Objects;
+
 import org.aksw.jena_sparql_api.restriction.RestrictionSetImpl;
 import org.apache.jena.sparql.expr.Expr;
 
@@ -29,7 +31,7 @@ public class RestrictedExpr {
 
     public RestrictedExpr(Expr expr, RestrictionSetImpl restrictions) {
         super();
-        this.expr = expr;
+        this.expr = Objects.requireNonNull(expr);
         this.restrictions = restrictions;
     }
 

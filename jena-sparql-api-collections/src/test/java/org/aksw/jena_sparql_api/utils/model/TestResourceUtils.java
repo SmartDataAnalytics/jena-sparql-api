@@ -7,7 +7,7 @@ import java.util.Set;
 import org.aksw.jena_sparql_api.rdf.collections.NodeMapper;
 import org.aksw.jena_sparql_api.rdf.collections.NodeMappers;
 import org.aksw.jena_sparql_api.rdf.collections.SetFromMappedPropertyValues;
-import org.aksw.jena_sparql_api.utils.SetFromGraph;
+import org.aksw.jena_sparql_api.util.SetFromGraph;
 import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;

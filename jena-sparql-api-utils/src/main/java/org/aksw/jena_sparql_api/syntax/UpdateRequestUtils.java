@@ -7,11 +7,11 @@ import java.util.Set;
 import java.util.function.Function;
 
 import org.aksw.commons.collections.diff.Diff;
+import org.aksw.jena_sparql_api.util.SetFromDatasetGraph;
+import org.aksw.jena_sparql_api.util.SetFromGraph;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.PrefixUtils;
 import org.aksw.jena_sparql_api.utils.PrologueUtils;
-import org.aksw.jena_sparql_api.utils.SetFromDatasetGraph;
-import org.aksw.jena_sparql_api.utils.SetFromGraph;
 import org.aksw.jena_sparql_api.utils.transform.NodeTransformCollectNodes;
 import org.apache.jena.ext.com.google.common.collect.Iterables;
 import org.apache.jena.ext.com.google.common.collect.Lists;

@@ -9,6 +9,7 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import org.aksw.commons.rx.util.RxUtils;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
@@ -19,16 +20,22 @@ import org.apache.jena.query.SortCondition;
 import org.apache.jena.query.Syntax;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.ARQConstants;
+import org.apache.jena.sparql.algebra.Algebra;
+import org.apache.jena.sparql.algebra.Op;
+import org.apache.jena.sparql.core.DatasetGraph;
+import org.apache.jena.sparql.core.DatasetGraphFactory;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.Substitute;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.core.VarExprList;
 import org.apache.jena.sparql.engine.ExecutionContext;
+import org.apache.jena.sparql.engine.QueryIterator;
 import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.engine.binding.BindingComparator;
 import org.apache.jena.sparql.engine.binding.BindingFactory;
 import org.apache.jena.sparql.engine.binding.BindingMap;
 import org.apache.jena.sparql.engine.binding.BindingProject;
+import org.apache.jena.sparql.engine.main.QC;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprAggregator;
 import org.apache.jena.sparql.expr.ExprLib;
@@ -42,12 +49,54 @@ import org.apache.jena.sparql.util.NodeFactoryExtra;
 import org.apache.jena.util.iterator.ClosableIterator;
 import org.apache.jena.util.iterator.ExtendedIterator;
 
+import com.google.common.base.Preconditions;
+
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.FlowableTransformer;
 import io.reactivex.rxjava3.core.Maybe;
 
 public class QueryFlowOps
 {
+    /** Create a mapper for a construct query yielding triples (similar to tarql) */
+    public static FlowableTransformer<Binding, Triple> createMapperTriples(Query query) {
+        Preconditions.checkArgument(!query.isConstructType(), "Construct query expected");
+
+        Template template = query.getConstructTemplate();
+        Op op = Algebra.compile(query);
+
+        return upstream ->
+            upstream
+                .compose(createMapperBindings(op))
+                .flatMap(createMapperTriples(template)::apply);
+    }
+
+
+    /** Create a mapper for a construct query yielding quads (similar to tarql) */
+    public static FlowableTransformer<Binding, Quad> createMapperQuads(Query query) {
+        Preconditions.checkArgument(!query.isConstructType(), "Construct query expected");
+
+        Template template = query.getConstructTemplate();
+        Op op = Algebra.compile(query);
+
+        return upstream ->
+            upstream
+                .compose(createMapperBindings(op))
+                .flatMap(createMapperQuads(template)::apply);
+    }
+
+
+    public static FlowableTransformer<Binding, Binding> createMapperBindings(Op op) {
+        return upstream -> {
+            DatasetGraph ds = DatasetGraphFactory.create();
+            Context cxt = ARQ.getContext().copy();
+            ExecutionContext execCxt = new ExecutionContext(cxt, ds.getDefaultGraph(), ds, QC.getFactory(cxt));
+
+            return upstream.flatMap(binding -> RxUtils.fromIteratorSupplier(
+                    () -> QC.execute(op, binding, execCxt), QueryIterator::close));
+        };
+    }
+
+
     public static Function<Binding, Flowable<Triple>> createMapperTriples(Template template) {
         return binding -> Flowable.fromIterable(
                     () -> TemplateLib.calcTriples(template.getTriples(), Collections.singleton(binding).iterator()));

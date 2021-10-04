@@ -12,13 +12,13 @@ import org.aksw.commons.collections.SetUtils;
 import org.aksw.commons.collections.diff.Diff;
 import org.aksw.jena_sparql_api.core.QuadContainmentChecker;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
+import org.aksw.jena_sparql_api.util.SetFromDatasetGraph;
 import org.aksw.jena_sparql_api.utils.DatasetGraphDiffUtils;
 import org.aksw.jena_sparql_api.utils.GraphUtils;
 import org.aksw.jena_sparql_api.utils.QuadPatternUtils;
 import org.aksw.jena_sparql_api.utils.QuadUtils;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.aksw.jena_sparql_api.utils.ResultSetUtils;
-import org.aksw.jena_sparql_api.utils.SetFromDatasetGraph;
 
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;

@@ -9,8 +9,8 @@ import org.aksw.commons.collections.SetUtils;
 import org.aksw.commons.collections.diff.Diff;
 import org.aksw.commons.util.Pair;
 import org.aksw.jena_sparql_api.modifier.Modifier;
+import org.aksw.jena_sparql_api.util.SetFromDatasetGraph;
 import org.aksw.jena_sparql_api.utils.DatasetGraphUtils;
-import org.aksw.jena_sparql_api.utils.SetFromDatasetGraph;
 import org.springframework.batch.item.ItemProcessor;
 
 import com.google.common.collect.Sets;
