@@ -32,7 +32,6 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
-import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.lang.arq.ParseException;
 import org.apache.jena.sparql.util.Context;
@@ -119,7 +118,7 @@ public class DatasetFlowOps {
        return result;
    }
 
-    
+
     /**
      * Return a transformer that applies sorting using a system call
      *
@@ -185,7 +184,7 @@ public class DatasetFlowOps {
         };
     }
 
-    
+
     // TODO Set up the processor of type BiConsumer<RDFConnection, SPARQLResultSink>
 //    public static BiConsumer<RDFConnection, SPARQLResultSink> createProcessor(
 //            //CommandMain cliArgs,
@@ -193,7 +192,7 @@ public class DatasetFlowOps {
 //            PrefixMapping pm,
 //            boolean closeSink
 //            ) throws FileNotFoundException, IOException, ParseException {
-//    	
+//
 //    }
 
 
@@ -201,7 +200,7 @@ public class DatasetFlowOps {
      * Create a single composite mapper from a 'getter' that extracts a value,
      * a 'mapper' that transforms the value and a 'setter' that returns the final
      * value based on the initial item and the transformed value.
-     * 
+     *
      * @param <I>
      * @param <O>
      * @param <V1>
@@ -212,37 +211,37 @@ public class DatasetFlowOps {
      * @return
      */
     public static <I, O, V1, V2> Function<I, O> createItemMapper(
-    		Function<? super V1, ? extends V2> valueMapper,
-    		Function<? super I, ? extends V1> getter,
+            Function<? super V1, ? extends V2> valueMapper,
+            Function<? super I, ? extends V1> getter,
             BiFunction<? super I, ? super V2, O> setter) {
-    	return item -> {
-	        V1 before = getter.apply(item);
-	        V2 after = valueMapper.apply(before);
-	        O r = setter.apply(item, after);
-	        return r;
-    	};
+        return item -> {
+            V1 before = getter.apply(item);
+            V2 after = valueMapper.apply(before);
+            O r = setter.apply(item, after);
+            return r;
+        };
     }
 
-    
+
     public static <I, O, V1, V2> Function<I, List<O>> createItemMultiMapper(
-    		Function<? super V1, ? extends Iterable<? extends V2>> valueMapper,
-    		Function<? super I, ? extends V1> getter,
+            Function<? super V1, ? extends Iterable<? extends V2>> valueMapper,
+            Function<? super I, ? extends V1> getter,
             BiFunction<? super I, ? super V2, O> setter) {
-    	return item -> {
-	        V1 before = getter.apply(item);
-	        Iterable<? extends V2> after = valueMapper.apply(before);
-	        List<O> r = Streams.stream(after)
-	        	.map(val -> setter.apply(item, val))
-	        	.collect(Collectors.toList());
-	        return r;
-    	};
+        return item -> {
+            V1 before = getter.apply(item);
+            Iterable<? extends V2> after = valueMapper.apply(before);
+            List<O> r = Streams.stream(after)
+                .map(val -> setter.apply(item, val))
+                .collect(Collectors.toList());
+            return r;
+        };
     }
 
 //    public static <I, O, V1, V2> FlowableTransformer<I, O> mapPropertyValueInParallel(
 //    		Function<? super V1, ? extends V2> mapper,
 //    		Function<? super I, ? extends V1> getter,
 //            BiFunction<? super I, ? super V2, O> setter) {
-//    	
+//
 //        return in -> in
 //                .zipWith(() -> LongStream.iterate(0, i -> i + 1).iterator(), Maps::immutableEntry)
 //                .parallel() //Runtime.getRuntime().availableProcessors(), 8) // Prefetch only few items
@@ -258,12 +257,12 @@ public class DatasetFlowOps {
 //                .sequential()
 //                .lift(OperatorLocalOrder.forLong(0l, Entry::getValue))
 //                .map(Entry::getKey);
-//    }	
-    
+//    }
+
     /**
      * Crate a mapper that from a set of items can extract Datasets,
      * transform them, and set them back
-     * 
+     *
      * @param <T>
      * @param <X>
      * @param pm
@@ -282,19 +281,45 @@ public class DatasetFlowOps {
             Collection<? extends SparqlStmt> sparqlStmts,
             Function<? super T, ? extends Dataset> getDataset,
             BiFunction<? super T, ? super Dataset, X> setDataset,
-            Supplier<? extends DatasetGraph> datasetGraphSupplier,
-            Consumer<Context> contextHandler) {
+            Supplier<? extends DatasetGraph> datasetGraphSupplier) {
 
-    	SPARQLResultExProcessor resultProcessor = SPARQLResultExProcessorBuilder.createForQuadOutput().build();
-    	
-    	Function<RDFConnection, Iterable<Dataset>> connectionBasedMapper = SparqlMappers.createMapperDataset(sparqlStmts, resultProcessor, datasetGraphSupplier);
-    	Function<Dataset, Iterable<Dataset>> datasetBasedMapper = SparqlMappers.mapDatasetToConnection(connectionBasedMapper);
-    	
-    	Function<T, List<X>> itemMapper = createItemMultiMapper(datasetBasedMapper, getDataset, setDataset);
-    	
-    	return RxOps.createParallelFlatMapperOrdered(itemMapper);
+        SPARQLResultExProcessor resultProcessor = SPARQLResultExProcessorBuilder.createForQuadOutput().build();
+
+        Function<RDFConnection, Iterable<Dataset>> connectionBasedMapper = SparqlMappers.createMapperDataset(
+                sparqlStmts, resultProcessor, datasetGraphSupplier);
+        Function<Dataset, Iterable<Dataset>> datasetBasedMapper = SparqlMappers.mapDatasetToConnection(connectionBasedMapper);
+
+        Function<T, List<X>> itemMapper = createItemMultiMapper(datasetBasedMapper, getDataset, setDataset);
+
+        return RxOps.createParallelFlatMapperOrdered(itemMapper);
     }
-    	
+
+
+    /**
+     * Map a dataset to a new dataset by running a sequence of sparql statements.
+     *
+     *
+     * @param sparqlStmts
+     * @param datasetGraphSupplier
+     * @param contextHandler
+     * @return
+     */
+    public static FlowableTransformer<Dataset, Dataset> createMapperDataset(
+            Collection<? extends SparqlStmt> sparqlStmts,
+            Supplier<? extends DatasetGraph> datasetGraphSupplier,
+            Consumer<Context> contextMutator) {
+
+        // FIXME wrap the connection with the context mutator
+
+        SPARQLResultExProcessor resultProcessor = SPARQLResultExProcessorBuilder.createForQuadOutput().build();
+
+        Function<RDFConnection, Iterable<Dataset>> connectionBasedMapper = SparqlMappers.createMapperDataset(
+                sparqlStmts, resultProcessor, datasetGraphSupplier);
+        Function<Dataset, Iterable<Dataset>> datasetBasedMapper = SparqlMappers.mapDatasetToConnection(connectionBasedMapper);
+
+        return upstream -> upstream.flatMap(dataset -> Flowable.fromIterable(datasetBasedMapper.apply(dataset)));
+    }
+
 //        BiConsumer<RDFConnection, SPARQLResultSink> coreProcessor =
 //                DatasetFlowOps.createProcessor(sparqlStmts, pm, true);
 

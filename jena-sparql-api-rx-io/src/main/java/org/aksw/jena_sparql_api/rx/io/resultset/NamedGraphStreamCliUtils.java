@@ -199,7 +199,7 @@ public class NamedGraphStreamCliUtils {
             String outFormat,
             long deferCount) {
 
-        Consumer<Context> contextHandler = cxt -> {
+        Consumer<Context> contextMutator = cxt -> {
             if (!Strings.isNullOrEmpty(timeoutSpec)) {
                 cxt.set(Service.queryTimeout, timeoutSpec);
             }
@@ -243,7 +243,7 @@ public class NamedGraphStreamCliUtils {
                         // Map the dataset to a connection
                         SparqlMappers.mapDatasetToConnection(
                                 // Set context attributes on the connection, e.g. timeouts
-                                SparqlMappers.applyContextHandler(contextHandler)
+                                SparqlMappers.applyContextHandler(contextMutator)
                                     // Finally invoke the mapper
                                     .andThen(mapper))));
 

@@ -8,7 +8,6 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import org.aksw.commons.collector.domain.Accumulator;
 import org.aksw.commons.collector.domain.ParallelAggregator;
 import org.aksw.commons.rx.op.RxOps;
 import org.aksw.jena_sparql_api.core.connection.RDFConnectionFactoryEx;
@@ -163,7 +162,18 @@ public class SparqlMappers {
                 });
     }
 
-    
+
+    /**
+     * Create a mapper that executes a sequence of sparql statements on a
+     * provided connection in order to create quads. The output generating
+     * sparql statements thus need to be construct queries. Triples and quads are supported.
+     *
+     * Insert statements can be used to run operations on the connected dataset.
+     *
+     * @param stmts
+     * @param sparqlResultVisitor
+     * @return
+     */
     public static Function<RDFConnection, Flowable<Quad>> createMapperQuad(
             Collection<? extends SparqlStmt> stmts,
             SPARQLResultExVisitor<?> sparqlResultVisitor) {
@@ -194,9 +204,9 @@ public class SparqlMappers {
 
     /**
      * Create a function that runs the given statements on a connection
-     * and yields a flow of datasets whereas each dataset only contains a single
-     * named graph.
-     * 
+     * and yields a flow of datasets whereas each dataset corresponds to a single
+     * named graph (and thus only contains a single named graph).
+     *
      * @param stmts
      * @param sparqlResultVisitor
      * @param datasetGraphSupplier
@@ -206,21 +216,21 @@ public class SparqlMappers {
             Collection<? extends SparqlStmt> stmts,
             SPARQLResultExVisitor<?> sparqlResultVisitor,
             Supplier<? extends DatasetGraph> datasetGraphSupplier) {
-    	
-    	ParallelAggregator<Quad, Map<Node, Dataset>, ?> agg = AggBuilderDataset.groupQuadsToDatasetCore(datasetGraphSupplier::get, Quad::getGraph);
-    	
-    	return createMapperQuad(stmts, sparqlResultVisitor)
-    			.andThen(quadFlow -> {
-					Map<Node, Dataset> groupedDatasets = quadFlow
-    					.reduceWith(agg::createAccumulator, (acc, item) -> { acc.accumulate(item); return acc; })
-    					//.map(Accumulator::getValue)
-    					// ^ this aboveraises  "Invalid receiver type class java.lang.Object; not a subtype of implementation type interface org.aksw.commons.collector.domain.Accumulator"
-    					// See also: https://stackoverflow.com/questions/33929304/weird-exception-invalid-receiver-type-class-java-lang-object-not-a-subtype-of
-    					.map(acc -> acc.getValue())
-    					.blockingGet();
-					
-					return groupedDatasets.values();
-    			});
+
+        ParallelAggregator<Quad, Map<Node, Dataset>, ?> agg = AggBuilderDataset.groupQuadsToDatasetCore(datasetGraphSupplier::get, Quad::getGraph);
+
+        return createMapperQuad(stmts, sparqlResultVisitor)
+                .andThen(quadFlow -> {
+                    Map<Node, Dataset> groupedDatasets = quadFlow
+                        .reduceWith(agg::createAccumulator, (acc, item) -> { acc.accumulate(item); return acc; })
+                        //.map(Accumulator::getValue)
+                        // ^ this aboveraises  "Invalid receiver type class java.lang.Object; not a subtype of implementation type interface org.aksw.commons.collector.domain.Accumulator"
+                        // See also: https://stackoverflow.com/questions/33929304/weird-exception-invalid-receiver-type-class-java-lang-object-not-a-subtype-of
+                        .map(acc -> acc.getValue())
+                        .blockingGet();
+
+                    return groupedDatasets.values();
+                });
     }
 
     /*
@@ -229,16 +239,16 @@ public class SparqlMappers {
             Collection<? extends SparqlStmt> stmts,
             SPARQLResultExVisitor<?> sparqlResultVisitor,
             Supplier<? extends DatasetGraph> datasetGraphSupplier) {
-    	
-    	// Create the grouping transformer / operator
-    	FlowableTransformer<Quad, Dataset> transformer =
-    		DatasetGraphOpsRx.datasetsFromConsecutiveQuads(datasetGraphSupplier);
-    	
-    	return createMapperQuad(stmts, sparqlResultVisitor)
-    			.andThen(quadFlow -> quadFlow.compose(transformer));
+
+        // Create the grouping transformer / operator
+        FlowableTransformer<Quad, Dataset> transformer =
+            DatasetGraphOpsRx.datasetsFromConsecutiveQuads(datasetGraphSupplier);
+
+        return createMapperQuad(stmts, sparqlResultVisitor)
+                .andThen(quadFlow -> quadFlow.compose(transformer));
     }
     */
-    
+
     public static Function<RDFConnection, Flowable<JsonObject>> createMapperJson(
             Collection<? extends SparqlStmt> stmts,
             SPARQLResultExVisitor<?> sparqlResultVisitor) {
