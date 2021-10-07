@@ -9,7 +9,7 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import org.aksw.commons.rx.util.RxUtils;
+import org.aksw.commons.rx.util.FlowableEx;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
@@ -57,6 +57,7 @@ import io.reactivex.rxjava3.core.Maybe;
 
 public class QueryFlowOps
 {
+
     /** Create a mapper for a construct query yielding triples (similar to tarql) */
     public static FlowableTransformer<Binding, Triple> createMapperTriples(Query query) {
         Preconditions.checkArgument(!query.isConstructType(), "Construct query expected");
@@ -73,7 +74,7 @@ public class QueryFlowOps
 
     /** Create a mapper for a construct query yielding quads (similar to tarql) */
     public static FlowableTransformer<Binding, Quad> createMapperQuads(Query query) {
-        Preconditions.checkArgument(!query.isConstructType(), "Construct query expected");
+        Preconditions.checkArgument(query.isConstructType(), "Construct query expected");
 
         Template template = query.getConstructTemplate();
         Op op = Algebra.compile(query);
@@ -91,7 +92,7 @@ public class QueryFlowOps
             Context cxt = ARQ.getContext().copy();
             ExecutionContext execCxt = new ExecutionContext(cxt, ds.getDefaultGraph(), ds, QC.getFactory(cxt));
 
-            return upstream.flatMap(binding -> RxUtils.fromIteratorSupplier(
+            return upstream.flatMap(binding -> FlowableEx.fromIteratorSupplier(
                     () -> QC.execute(op, binding, execCxt), QueryIterator::close));
         };
     }

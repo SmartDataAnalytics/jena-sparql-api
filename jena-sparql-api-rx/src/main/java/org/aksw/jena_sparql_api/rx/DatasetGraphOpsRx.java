@@ -7,7 +7,9 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import org.aksw.commons.rx.op.FlowableOperatorSequentialGroupBy;
+import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
+import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.sparql.core.DatasetGraph;
@@ -24,6 +26,18 @@ public class DatasetGraphOpsRx {
                 (list, item) -> list.add(item)
            ).transformer();
     }
+
+    public static FlowableTransformer<Quad, Entry<Node, Graph>> groupConsecutiveQuadsToGraph(
+            Function<Quad, Node> grouper,
+            Function<Quad, Triple> toTriple,
+            Supplier<? extends Graph> graphSupplier) {
+
+        return FlowableOperatorSequentialGroupBy.<Quad, Node, Graph>create(
+                grouper::apply,
+                groupKey -> graphSupplier.get(),
+                (graph, quad) -> graph.add(toTriple.apply(quad))).transformer();
+    }
+
 
     public static FlowableTransformer<Quad, Entry<Node, DatasetGraph>> groupConsecutiveQuadsRaw(
             Function<Quad, Node> grouper,

@@ -6,9 +6,11 @@ import java.beans.VetoableChangeListener;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.aksw.commons.collection.observable.CollectionChangedEvent;
 import org.aksw.commons.collection.observable.CollectionChangedEventImpl;
+import org.aksw.commons.collection.observable.ForwardingDeltaCollectionBase;
 import org.aksw.commons.collection.observable.ObservableMap;
 import org.aksw.commons.collection.observable.ObservableMapImpl;
 import org.aksw.commons.collection.observable.ObservableSet;
@@ -34,14 +36,16 @@ import org.apache.jena.vocabulary.RDFS;
  * @param <T>
  */
 public class ObservableSetFromGraph
-    extends SetFromGraph
+    //extends SetFromGraph
+    extends ForwardingDeltaCollectionBase<Triple, Set<Triple>>
     implements ObservableSet<Triple>
 //    implements RdfBackedCollection<Node>
 {
-//    protected ObservableGraph graph;
+    protected ObservableGraph graph;
 
     public ObservableSetFromGraph(ObservableGraph graph) {
-        super(graph);
+        super(SetFromGraph.wrap(graph));
+        this.graph = graph;
     }
 
     @Override
@@ -50,10 +54,15 @@ public class ObservableSetFromGraph
     }
 
 
-    @Override
     public ObservableGraph getGraph() {
-        return (ObservableGraph)super.getGraph();
+        return graph;
     }
+
+//    @Override
+//    public ObservableGraph getGraph() {
+//        return graph;
+//        // return (ObservableGraph)((SetFromGraph)super.getGraph();
+//    }
 
 //    @Override
 //    public boolean add(Triple t) {
@@ -66,14 +75,15 @@ public class ObservableSetFromGraph
 //        }
 //        return result;
 //    }
-
+//
     protected PropertyChangeEvent convertEvent(PropertyChangeEvent ev) {
         CollectionChangedEvent<Triple> oldEvent = (CollectionChangedEvent<Triple>)ev;
 
         return new CollectionChangedEventImpl<Triple>(
             this,
             this,
-            new SetFromGraph((Graph)oldEvent.getNewValue()),
+            // (SetFromGraph)oldEvent.getNewValue(), //
+            SetFromGraph.wrap((Graph)oldEvent.getNewValue()),
             oldEvent.getAdditions(),
             oldEvent.getDeletions(),
             oldEvent.getRefreshes()

@@ -3,11 +3,13 @@ package org.aksw.jena_sparql_api.collection.observable;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.beans.PropertyVetoException;
 import java.beans.VetoableChangeListener;
 import java.beans.VetoableChangeSupport;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -17,6 +19,7 @@ import org.aksw.commons.collection.observable.StreamOps;
 import org.aksw.jena_sparql_api.rx.GraphFactoryEx;
 import org.aksw.jena_sparql_api.util.SetFromGraph;
 import org.apache.jena.graph.Graph;
+import org.apache.jena.graph.GraphUtil;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.graph.compose.Difference;
@@ -26,6 +29,8 @@ import org.apache.jena.sparql.graph.GraphFactory;
 import org.apache.jena.sparql.graph.GraphWrapper;
 import org.apache.jena.util.iterator.ExtendedIterator;
 import org.apache.jena.util.iterator.WrappedIterator;
+
+import com.google.common.collect.Sets;
 
 
 /**
@@ -67,15 +72,108 @@ public class ObservableGraphImpl
 
     @Override
     public boolean delta(Collection<? extends Triple> rawAdditions, Collection<?> rawDeletions) {
-        Set<Triple> delegateAsSet = SetFromGraph.wrap(get());
-
-        return ObservableCollectionOps.delta(
+        return applyDeltaGraph(
             // Wrap as a non-observable set in order to not fire events
             // prematurely as this.asSet() would do!
-            delegateAsSet, delegateAsSet,
+            this, get(),
             vcs, pcs,
             false,
             rawAdditions, rawDeletions);
+    }
+
+
+
+    public static boolean applyDeltaGraph(
+            Graph self,
+            Graph backend,
+            VetoableChangeSupport vcs,
+            PropertyChangeSupport pcs,
+            boolean clearIntersection,
+            Collection<? extends Triple> rawAdditions, Collection<?> rawRemovals) {
+
+        Set<Triple> backendAsSet = SetFromGraph.wrap(backend);
+
+        // Set up the physical removals / additions that will be sent to the backend
+        // This may include overlapping items
+        Set<Triple> physRemovals = rawRemovals == self
+            ? rawRemovals.stream().map(x -> (Triple)x).collect(Collectors.toCollection(LinkedHashSet::new))
+            : rawRemovals.stream().filter(backendAsSet::contains).map(x -> (Triple)x).collect(Collectors.toCollection(LinkedHashSet::new));
+
+        Set<Triple> physAdditions = rawAdditions.stream()
+                .filter(x -> !backend.contains(x) || physRemovals.contains(x))
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+
+        Set<Triple> intersection = new LinkedHashSet<>(Sets.intersection(physAdditions, physRemovals));
+
+        Set<Triple> as;
+        Set<Triple> rs;
+
+        if (clearIntersection || intersection.isEmpty()) {
+            physRemovals.removeAll(intersection);
+            physAdditions.removeAll(intersection);
+            as = physAdditions;
+            rs = physRemovals;
+        } else {
+            // Set up the change sets
+            as = new LinkedHashSet<>(physAdditions);
+            rs = new LinkedHashSet<>(physRemovals);
+
+            as.removeAll(intersection);
+            rs.removeAll(intersection);
+        }
+
+        Graph gas = GraphFactory.createDefaultGraph();
+        Graph grs = GraphFactory.createDefaultGraph();
+
+        GraphUtil.add(gas, as.iterator());
+        GraphUtil.add(grs, rs.iterator());
+
+        // FIXME additions and removals may have common items! those should be removed in
+        // the event's additions / removals sets
+
+        boolean result = false;
+
+        {
+            Graph oldValue = self;
+            Graph newValue = rawRemovals == self
+                    ? gas
+                    : new Union(new Difference(backend, grs), gas);
+
+            try {
+                vcs.fireVetoableChange(new CollectionChangedEventImpl<>(
+                        self, oldValue, newValue,
+                        as, rs, Collections.emptySet()));
+            } catch (PropertyVetoException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        boolean changeByRemoval;
+        if (rawRemovals == self) {
+            changeByRemoval = !backend.isEmpty();
+            if (changeByRemoval) {
+                // Only invoke clear if we have to; prevent triggering anything
+                backend.clear();
+            }
+        } else {
+            changeByRemoval = backendAsSet.removeAll(physRemovals);
+        }
+
+        boolean changeByAddition = backendAsSet.addAll(physAdditions);
+        result = changeByRemoval || changeByAddition;
+
+        {
+            Graph oldValue = rawRemovals == self
+                    ? grs
+                    : new Union(new Difference(backend, gas), grs);
+            Graph newValue = self;
+
+            pcs.firePropertyChange(new CollectionChangedEventImpl<>(
+                    self, oldValue, newValue,
+                    as, rs, Collections.emptySet()));
+        }
+
+        return result;
     }
 
 
