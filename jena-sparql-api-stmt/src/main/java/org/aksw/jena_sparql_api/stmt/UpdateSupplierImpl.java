@@ -4,15 +4,15 @@ import java.util.function.Supplier;
 
 import org.aksw.jena_sparql_api.util.iri.PrefixMappingTrie;
 import org.aksw.jena_sparql_api.util.iri.PrologueUtils;
+import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.core.Prologue;
+import org.apache.jena.sparql.util.PrefixMapping2;
 import org.apache.jena.update.UpdateRequest;
 
 public class UpdateSupplierImpl
+    extends StmtSupplierBase
     implements Supplier<UpdateRequest>
 {
-    protected Prologue prologue;
-    protected String baseURI;
-
     public UpdateSupplierImpl() {
         this(null);
     }
@@ -22,16 +22,23 @@ public class UpdateSupplierImpl
     }
 
     public UpdateSupplierImpl(Prologue prologue, String baseURI) {
-        super();
-        this.prologue = prologue;
-        this.baseURI = baseURI;
+        this(prologue, baseURI, null);
+    }
+
+    public UpdateSupplierImpl(Prologue prologue, String baseURI, PrefixMapping sharedPrefixes) {
+        super(prologue, baseURI, sharedPrefixes);
     }
 
 
     @Override
     public UpdateRequest get() {
+        PrefixMapping prefixMapping = new PrefixMappingTrie();
+        if (sharedPrefixes != null) {
+            prefixMapping = new PrefixMapping2(sharedPrefixes, prefixMapping);
+        }
+
         UpdateRequest result = new UpdateRequest();
-        result.setPrefixMapping(new PrefixMappingTrie());
+        result.setPrefixMapping(prefixMapping);
 
         if (prologue != null) {
             PrologueUtils.configure(result, prologue, baseURI);

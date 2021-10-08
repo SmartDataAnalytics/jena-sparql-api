@@ -130,6 +130,13 @@ public class SparqlStmtParserImpl
         return result;
     }
 
+    public static SparqlStmtParserImpl create(Syntax syntax, PrefixMapping prefixMapping, PrefixMapping sharedPrefixes, boolean actAsClassifier) {
+        SparqlStmtParserImpl result = create(SparqlParserConfig.newInstance()
+                .setSyntax(syntax).setPrefixMapping(prefixMapping)
+                .setSharedPrefixes(sharedPrefixes).applyDefaults(), actAsClassifier);
+        return result;
+    }
+
     public static SparqlStmtParserImpl create(Syntax syntax, Prologue prologue, boolean actAsClassifier) {
         SparqlStmtParserImpl result = create(SparqlParserConfig.newInstance().setSyntax(syntax).setPrologue(prologue).applyDefaults(), actAsClassifier);
         return result;

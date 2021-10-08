@@ -8,6 +8,7 @@ import java.util.stream.Stream;
 import org.apache.jena.graph.Node;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.shared.impl.PrefixMappingImpl;
+import org.apache.jena.sparql.util.PrefixMapping2;
 
 public class PrefixUtils {
     public static  void usedPrefixes(PrefixMapping in, Stream<Node> node, PrefixMapping out) {
@@ -43,16 +44,28 @@ public class PrefixUtils {
 
     /**
      * Finds the longest prefix.
-     * For {@link PrefixMappingTrie} lookups are optimized - otherwise all entries will be scanned.
+     * Performance depends on the provided prefix mapping type:
+     * Lookups on {@link PrefixMapping2} are recursively delegated to the inner local/global prefix mappings.
+     * Lookups on {@link PrefixMappingTrie} are optimized - otherwise all entries will be scanned.
+     *
      * @param pm
      * @param uri
      * @return
      */
     public static Entry<String, String> findLongestPrefix(PrefixMapping pm, String uri) {
         Entry<String, String> result;
-        if (pm instanceof PrefixMappingTrie) {
+        if (pm == null) {
+            result = null;
+        } else if (pm instanceof PrefixMappingTrie) {
             PrefixMappingTrie pmt = (PrefixMappingTrie)pm;
-            result = pmt.findMapping(uri, false).orElse(null);
+            result = pmt.findMapping(uri, true).orElse(null);
+        } else if (pm instanceof PrefixMapping2) {
+            PrefixMapping2 pm2 = (PrefixMapping2)pm;
+
+            result = findLongestPrefix(pm2.getLocalPrefixMapping(), uri);
+            if (result == null) {
+                result = findLongestPrefix(pm2.getGlobalPrefixMapping(), uri);
+            }
         } else {
             result = findLongestPrefixCore(pm, uri);
         }

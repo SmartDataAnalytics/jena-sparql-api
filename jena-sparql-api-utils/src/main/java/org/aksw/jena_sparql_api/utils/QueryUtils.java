@@ -50,6 +50,8 @@ import org.apache.jena.sparql.syntax.PatternVars;
 import org.apache.jena.sparql.syntax.Template;
 import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransform;
 import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransformCopyBase;
+import org.apache.jena.sparql.syntax.syntaxtransform.QueryShallowCopyWithPresetPrefixes;
+import org.apache.jena.sparql.syntax.syntaxtransform.QueryTransformOps;
 import org.apache.jena.sparql.util.ExprUtils;
 import org.apache.jena.sparql.util.PrefixMapping2;
 
@@ -494,7 +496,9 @@ public class QueryUtils {
     public static PrefixMapping usedReferencePrefixes(Query query, PrefixMapping pm) {
         NodeTransformCollectNodes nodeUsageCollector = new NodeTransformCollectNodes();
 
-        applyNodeTransform(query, nodeUsageCollector);
+        Query shallowCopy = QueryShallowCopyWithPresetPrefixes.shallowCopy(query, null);
+
+        applyNodeTransform(shallowCopy, nodeUsageCollector);
         Set<Node> nodes = nodeUsageCollector.getNodes();
 
         PrefixMapping result = PrefixUtils.usedPrefixes(pm, nodes);

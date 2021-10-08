@@ -4,6 +4,7 @@ import java.util.function.Supplier;
 
 import org.apache.jena.irix.IRIxResolver;
 import org.apache.jena.query.Syntax;
+import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.shared.impl.PrefixMappingImpl;
 import org.apache.jena.sparql.core.Prologue;
 import org.apache.jena.update.UpdateFactory;
@@ -34,7 +35,7 @@ public class SparqlUpdateParserImpl
     }
 
     public static SparqlUpdateParserImpl create(SparqlParserConfig config) {
-        SparqlUpdateParserImpl result = create(config.getSyntax(), config.getPrologue(), config.getBaseURI());
+        SparqlUpdateParserImpl result = create(config.getSyntax(), config.getPrologue(), config.getBaseURI(), config.getSharedPrefixes());
         return result;
     }
 
@@ -52,11 +53,11 @@ public class SparqlUpdateParserImpl
     }
 
     public static SparqlUpdateParserImpl create(Syntax syntax, Prologue prologue) {
-        return create(syntax, prologue, "");
+        return create(syntax, prologue, "", null);
     }
 
-    public static SparqlUpdateParserImpl create(Syntax syntax, Prologue prologue, String baseURI) {
-        Supplier<UpdateRequest> updateSupplier = new UpdateSupplierImpl(prologue, baseURI);
+    public static SparqlUpdateParserImpl create(Syntax syntax, Prologue prologue, String baseURI, PrefixMapping sharedPrefixes) {
+        Supplier<UpdateRequest> updateSupplier = new UpdateSupplierImpl(prologue, baseURI, sharedPrefixes);
 
         SparqlUpdateParserImpl result = new SparqlUpdateParserImpl(updateSupplier, syntax, null);
         return result;

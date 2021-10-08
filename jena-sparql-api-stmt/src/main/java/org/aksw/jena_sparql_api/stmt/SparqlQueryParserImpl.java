@@ -37,7 +37,7 @@ public class SparqlQueryParserImpl
     }
 
     public static SparqlQueryParserImpl create(SparqlParserConfig config) {
-        SparqlQueryParserImpl result = create(config.getSyntax(), config.getPrologue(), config.getBaseURI());
+        SparqlQueryParserImpl result = create(config.getSyntax(), config.getPrologue(), config.getBaseURI(), config.getSharedPrefixes());
         return result;
     }
 
@@ -57,17 +57,19 @@ public class SparqlQueryParserImpl
     }
 
     public static SparqlQueryParserImpl create(Syntax syntax, Prologue prologue) {
-        SparqlQueryParserImpl result = create(syntax, prologue, "");
+        SparqlQueryParserImpl result = create(syntax, prologue, "", null);
         return result;
     }
 
-    public static SparqlQueryParserImpl create(Syntax syntax, Prologue prologue, String baseURI) {
-        Supplier<Query> querySupplier = new QuerySupplierImpl(prologue, baseURI);
+    public static SparqlQueryParserImpl create(Syntax syntax, Prologue prologue, String baseURI, PrefixMapping sharedPrefixes) {
+        Supplier<Query> querySupplier = new QuerySupplierImpl(prologue, baseURI, sharedPrefixes);
 
         SparqlQueryParserImpl result = new SparqlQueryParserImpl(querySupplier, syntax, null);
         return result;
     }
 
+
+    /** Create a parser that leaves relative IRIs untouched */
     public static SparqlQueryParserImpl createAsGiven() {
         return create(SparqlParserConfig.newInstance().parseAsGiven().applyDefaults());
     }
