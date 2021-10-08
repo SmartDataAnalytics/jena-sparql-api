@@ -2,7 +2,8 @@ package org.aksw.jena_sparql_api.stmt;
 
 import java.util.function.Supplier;
 
-import org.aksw.jena_sparql_api.utils.PrologueUtils;
+import org.aksw.jena_sparql_api.util.iri.PrefixMappingTrie;
+import org.aksw.jena_sparql_api.util.iri.PrologueUtils;
 import org.apache.jena.sparql.core.Prologue;
 import org.apache.jena.update.UpdateRequest;
 
@@ -30,6 +31,7 @@ public class UpdateSupplierImpl
     @Override
     public UpdateRequest get() {
         UpdateRequest result = new UpdateRequest();
+        result.setPrefixMapping(new PrefixMappingTrie());
 
         if (prologue != null) {
             PrologueUtils.configure(result, prologue, baseURI);

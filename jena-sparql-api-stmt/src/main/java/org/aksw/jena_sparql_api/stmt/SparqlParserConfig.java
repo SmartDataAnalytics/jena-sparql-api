@@ -1,7 +1,7 @@
 package org.aksw.jena_sparql_api.stmt;
 
-import org.aksw.jena_sparql_api.utils.IRIxResolverUtils;
-import org.aksw.jena_sparql_api.utils.PrologueUtils;
+import org.aksw.jena_sparql_api.util.iri.IRIxResolverUtils;
+import org.aksw.jena_sparql_api.util.iri.PrologueUtils;
 import org.apache.jena.irix.IRIxResolver;
 import org.apache.jena.query.Syntax;
 import org.apache.jena.shared.PrefixMapping;

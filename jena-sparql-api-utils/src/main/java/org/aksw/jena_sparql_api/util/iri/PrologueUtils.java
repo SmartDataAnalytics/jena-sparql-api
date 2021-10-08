@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.utils;
+package org.aksw.jena_sparql_api.util.iri;
 
 import java.lang.reflect.Field;
 

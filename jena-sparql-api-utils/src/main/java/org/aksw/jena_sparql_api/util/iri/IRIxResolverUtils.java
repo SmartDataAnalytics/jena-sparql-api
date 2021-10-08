@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.utils;
+package org.aksw.jena_sparql_api.util.iri;
 
 import org.apache.jena.irix.IRIProviderJDK;
 import org.apache.jena.irix.IRIProviderJenaIRI.IRIxJena;

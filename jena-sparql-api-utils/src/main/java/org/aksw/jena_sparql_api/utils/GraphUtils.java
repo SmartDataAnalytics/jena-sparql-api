@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Stream;
 
+import org.aksw.jena_sparql_api.util.iri.PrefixUtils;
 import org.aksw.jena_sparql_api.utils.graph.GraphWrapperTransform;
 import org.aksw.jena_sparql_api.utils.io.NTripleUtils;
 import org.apache.jena.atlas.web.TypedInputStream;

@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-import org.aksw.jena_sparql_api.utils.PrefixUtils;
+import org.aksw.jena_sparql_api.util.iri.PrefixUtils;
 import org.aksw.jena_sparql_api.utils.QuadUtils;
 import org.aksw.jena_sparql_api.utils.model.PrefixMapAdapter;
 import org.apache.jena.graph.Node;

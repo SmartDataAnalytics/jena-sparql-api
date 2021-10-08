@@ -7,8 +7,8 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.aksw.jena_sparql_api.util.iri.PrefixUtils;
 import org.aksw.jena_sparql_api.utils.GraphUtils;
-import org.aksw.jena_sparql_api.utils.PrefixUtils;
 import org.aksw.jena_sparql_api.utils.io.StreamRDFDeferred;
 import org.apache.jena.ext.com.google.common.collect.Iterators;
 import org.apache.jena.ext.com.google.common.collect.Streams;

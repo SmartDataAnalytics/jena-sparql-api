@@ -16,7 +16,7 @@ import java.util.Objects;
 
 import org.aksw.jena_sparql_api.rx.entity.EntityInfo;
 import org.aksw.jena_sparql_api.rx.entity.EntityInfoImpl;
-import org.aksw.jena_sparql_api.utils.IRIxResolverUtils;
+import org.aksw.jena_sparql_api.util.iri.IRIxResolverUtils;
 import org.aksw.jena_sparql_api.utils.io.StreamRDFWriterEx;
 import org.aksw.jena_sparql_api.utils.io.WriterStreamRDFBaseUtils;
 import org.apache.commons.compress.compressors.CompressorException;

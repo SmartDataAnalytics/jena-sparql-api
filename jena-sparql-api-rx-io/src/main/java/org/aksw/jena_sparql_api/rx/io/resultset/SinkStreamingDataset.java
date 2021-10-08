@@ -4,8 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.aksw.jena_sparql_api.rx.DatasetGraphFactoryEx;
+import org.aksw.jena_sparql_api.util.iri.PrefixUtils;
 import org.aksw.jena_sparql_api.utils.DatasetGraphUtils;
-import org.aksw.jena_sparql_api.utils.PrefixUtils;
 import org.aksw.jena_sparql_api.utils.QuadUtils;
 import org.aksw.jena_sparql_api.utils.TripleUtils;
 import org.aksw.jena_sparql_api.utils.model.PrefixMapAdapter;
