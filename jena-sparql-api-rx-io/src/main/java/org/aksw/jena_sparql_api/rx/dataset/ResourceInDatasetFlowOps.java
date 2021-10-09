@@ -15,16 +15,17 @@ import java.util.stream.Collectors;
 import org.aksw.commons.io.syscall.SysCalls;
 import org.aksw.commons.io.syscall.sort.SysSort;
 import org.aksw.commons.rx.op.FlowableOperatorSequentialGroupBy;
+import org.aksw.jena_sparql_api.rdf.model.ext.dataset.api.NodesInDataset;
+import org.aksw.jena_sparql_api.rdf.model.ext.dataset.api.ResourceInDataset;
+import org.aksw.jena_sparql_api.rdf.model.ext.dataset.impl.GraphNameAndNode;
+import org.aksw.jena_sparql_api.rdf.model.ext.dataset.impl.NodesInDatasetImpl;
+import org.aksw.jena_sparql_api.rdf.model.ext.dataset.impl.ResourceInDatasetImpl;
 import org.aksw.jena_sparql_api.rx.RDFDataMgrRx.ConsecutiveNamedGraphMergerCore;
 import org.aksw.jena_sparql_api.rx.op.ResultSetMappers;
 import org.aksw.jena_sparql_api.stmt.SparqlQueryParser;
 import org.aksw.jena_sparql_api.utils.CannedQueryUtils;
 import org.aksw.jena_sparql_api.utils.DatasetUtils;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
-import org.aksw.jena_sparql_api.utils.dataset.GraphNameAndNode;
-import org.aksw.jena_sparql_api.utils.dataset.GroupedResourceInDataset;
-import org.aksw.jena_sparql_api.utils.model.ResourceInDataset;
-import org.aksw.jena_sparql_api.utils.model.ResourceInDatasetImpl;
 import org.apache.jena.ext.com.google.common.base.Strings;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
@@ -42,11 +43,11 @@ import io.reactivex.rxjava3.core.Maybe;
 
 
 class ConsecutiveGraphMergerMergerForResourceInDataset
-    extends ConsecutiveNamedGraphMergerCore<GroupedResourceInDataset>
+    extends ConsecutiveNamedGraphMergerCore<NodesInDatasetImpl>
 {
     protected Map<Node, List<Node>> graphToNodes= new HashMap<>();
 
-    public Optional<GroupedResourceInDataset> accept(GroupedResourceInDataset grid) {
+    public Optional<NodesInDatasetImpl> accept(NodesInDataset grid) {
         Dataset dataset = grid.getDataset();
 
         for(GraphNameAndNode e : grid.getGraphNameAndNodes()) {
@@ -63,12 +64,12 @@ class ConsecutiveGraphMergerMergerForResourceInDataset
             }
         }
 
-        Optional<GroupedResourceInDataset> result = super.accept(dataset);
+        Optional<NodesInDatasetImpl> result = super.accept(dataset);
         return result;
     }
 
     @Override
-    protected GroupedResourceInDataset mapResult(Set<Node> readyGraphs, Dataset dataset) {
+    protected NodesInDataset mapResult(Set<Node> readyGraphs, Dataset dataset) {
         Set<GraphNameAndNode> gans = readyGraphs.stream()
             .flatMap(g -> graphToNodes.getOrDefault(g, Collections.emptyList())
                     .stream().map(n -> new GraphNameAndNode(g.getURI(), n)))
@@ -78,7 +79,7 @@ class ConsecutiveGraphMergerMergerForResourceInDataset
             graphToNodes.remove(node);
         }
 
-        GroupedResourceInDataset result = new GroupedResourceInDataset(dataset, gans);
+        NodesInDataset result = new NodesInDatasetImpl(dataset, gans);
 
         return result;
     }
@@ -130,7 +131,7 @@ public class ResourceInDatasetFlowOps {
      * @param nodeSelector
      * @return
      */
-    public static Function<Dataset, GroupedResourceInDataset> mapToGroupedResourceInDataset(Query nodeSelector) {
+    public static Function<Dataset, NodesInDatasetImpl> mapToGroupedResourceInDataset(Query nodeSelector) {
 
         // TODO Ensure that the query result has two columns
         Function<? super SparqlQueryConnection, Collection<List<Node>>> mapper = ResultSetMappers.createTupleMapper(nodeSelector);
@@ -150,7 +151,7 @@ public class ResourceInDatasetFlowOps {
                     })
                     .collect(Collectors.toSet());
 
-                GroupedResourceInDataset r = new GroupedResourceInDataset(dataset, gan);
+                NodesInDatasetImpl r = new NodesInDatasetImpl(dataset, gan);
                 return r;
             }
         };
@@ -164,7 +165,7 @@ public class ResourceInDatasetFlowOps {
 
      * @return
      */
-    public static FlowableTransformer<ResourceInDataset, GroupedResourceInDataset> groupedResourceInDataset() {
+    public static FlowableTransformer<ResourceInDataset, NodesInDatasetImpl> groupedResourceInDataset() {
         return upstream -> upstream
                 .lift(FlowableOperatorSequentialGroupBy.<ResourceInDataset, Dataset, List<ResourceInDataset>>create(
                         ResourceInDataset::getDataset,
@@ -189,11 +190,11 @@ public class ResourceInDatasetFlowOps {
                             .map(r -> new GraphNameAndNode(r.getGraphName(), r.asNode()))
                             .collect(Collectors.toSet());
 
-                    return new GroupedResourceInDataset(ds, nodes);
+                    return new NodesInDatasetImpl(ds, nodes);
                 });
     }
 
-    public static List<ResourceInDataset> ungroupResourceInDataset(GroupedResourceInDataset grid) {
+    public static List<ResourceInDataset> ungroupResourceInDataset(NodesInDataset grid) {
         List<ResourceInDataset> result = grid.getGraphNameAndNodes().stream()
                 .map(gan -> new ResourceInDatasetImpl(grid.getDataset(), gan.getGraphName(), gan.getNode()))
                 .collect(Collectors.toList());
@@ -209,12 +210,12 @@ public class ResourceInDatasetFlowOps {
      * @param grid
      * @return
      */
-    public static Flowable<ResourceInDataset> ungrouperResourceInDataset(GroupedResourceInDataset grid) {
+    public static Flowable<ResourceInDataset> ungrouperResourceInDataset(NodesInDataset grid) {
         return Flowable.fromIterable(ungroupResourceInDataset(grid));
     }
 
 
-    public static FlowableTransformer<GroupedResourceInDataset, GroupedResourceInDataset> sysCallSort(
+    public static FlowableTransformer<NodesInDatasetImpl, NodesInDatasetImpl> sysCallSort(
             Function<? super SparqlQueryConnection, Node> keyMapper,
             List<String> sysCallArgs) {
 
@@ -222,7 +223,7 @@ public class ResourceInDatasetFlowOps {
                 gid -> ResultSetMappers.wrapForDataset(keyMapper).apply(gid.getDataset()),
                 sysCallArgs,
                 (key, data) -> DatasetFlowOps.serializeForSort(DatasetFlowOps.GSON, key, data),
-                line -> DatasetFlowOps.deserializeFromSort(DatasetFlowOps.GSON, line, GroupedResourceInDataset.class)
+                line -> DatasetFlowOps.deserializeFromSort(DatasetFlowOps.GSON, line, NodesInDatasetImpl.class)
                 );
     }
 
@@ -247,7 +248,7 @@ public class ResourceInDatasetFlowOps {
     }
 
 
-    public static FlowableTransformer<GroupedResourceInDataset, GroupedResourceInDataset> createSystemSorter(
+    public static FlowableTransformer<NodesInDatasetImpl, NodesInDatasetImpl> createSystemSorter(
             SysSort cmdSort,
             SparqlQueryParser keyQueryParser) {
         String keyArg = cmdSort.key;
@@ -269,7 +270,7 @@ public class ResourceInDatasetFlowOps {
         return sysCallSort(keyMapper, sortArgs);
     }
 
-    public static Flowable<GroupedResourceInDataset> mergeConsecutiveResourceInDatasets(Flowable<GroupedResourceInDataset> in) {
+    public static Flowable<NodesInDatasetImpl> mergeConsecutiveResourceInDatasets(Flowable<NodesInDatasetImpl> in) {
         // FIXME This will break if we reuse the flow
         // The merger has to be created on subscription
         ConsecutiveGraphMergerMergerForResourceInDataset merger = new ConsecutiveGraphMergerMergerForResourceInDataset();
@@ -308,12 +309,12 @@ public class ResourceInDatasetFlowOps {
 
 
     /**
-     * Adapter to create a transformed for {@link ResourceInDataset} based on one for {@link GroupedResourceInDataset}.
+     * Adapter to create a transformed for {@link ResourceInDataset} based on one for {@link NodesInDatasetImpl}.
      *
      * @param innerTransform
      * @return
      */
-    public static FlowableTransformer<ResourceInDataset, ResourceInDataset> createTransformerFromGroupedTransform(FlowableTransformer<GroupedResourceInDataset, GroupedResourceInDataset> innerTransform) {
+    public static FlowableTransformer<ResourceInDataset, ResourceInDataset> createTransformerFromGroupedTransform(FlowableTransformer<NodesInDatasetImpl, NodesInDatasetImpl> innerTransform) {
         return upstream -> upstream
             .compose(ResourceInDatasetFlowOps.groupedResourceInDataset())
             .compose(innerTransform)

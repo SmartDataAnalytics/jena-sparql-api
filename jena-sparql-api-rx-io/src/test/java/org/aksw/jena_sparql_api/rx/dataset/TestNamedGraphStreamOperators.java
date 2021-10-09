@@ -3,9 +3,9 @@ package org.aksw.jena_sparql_api.rx.dataset;
 import java.util.Iterator;
 
 import org.aksw.commons.io.syscall.sort.SysSort;
+import org.aksw.jena_sparql_api.rdf.model.ext.dataset.impl.NodesInDatasetImpl;
 import org.aksw.jena_sparql_api.rx.DatasetFactoryEx;
 import org.aksw.jena_sparql_api.rx.RDFDataMgrRx;
-import org.aksw.jena_sparql_api.utils.dataset.GroupedResourceInDataset;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Dataset;
@@ -137,7 +137,7 @@ public class TestNamedGraphStreamOperators {
         .map(ResourceInDatasetFlowOps
                 .mapToGroupedResourceInDataset(QueryFactory.create("SELECT DISTINCT ?g ?s { GRAPH ?g { ?s ?p ?o } }"))::apply)
         .map(grid -> DatasetFlowOps.serializeForSort(DatasetFlowOps.GSON, grid.getDataset().asDatasetGraph().listGraphNodes().next(), grid))
-        .map(line -> DatasetFlowOps.deserializeFromSort(DatasetFlowOps.GSON, line, GroupedResourceInDataset.class))
+        .map(line -> DatasetFlowOps.deserializeFromSort(DatasetFlowOps.GSON, line, NodesInDatasetImpl.class))
         .blockingForEach(x -> {
             System.out.println("Grouped " + x);
         });

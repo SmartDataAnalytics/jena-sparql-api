@@ -26,6 +26,8 @@ import org.apache.jena.sys.JenaSystem;
  */
 public class RDFLanguagesEx {
 
+    static { JenaSystem.init(); }
+
     // public static Collection<Lang> basicQuadLangs = Arrays.asList(Lang.TRIG, Lang.NQUADS)
 
     /**

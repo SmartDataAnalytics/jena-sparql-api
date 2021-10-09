@@ -10,8 +10,8 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.aksw.jena_sparql_api.utils.model.ResourceInDataset;
-import org.aksw.jena_sparql_api.utils.model.ResourceInDatasetImpl;
+import org.aksw.jena_sparql_api.rdf.model.ext.dataset.api.ResourceInDataset;
+import org.aksw.jena_sparql_api.rdf.model.ext.dataset.impl.ResourceInDatasetImpl;
 import org.apache.jena.ext.com.google.common.collect.Iterators;
 import org.apache.jena.ext.com.google.common.collect.Lists;
 import org.apache.jena.ext.com.google.common.collect.Streams;

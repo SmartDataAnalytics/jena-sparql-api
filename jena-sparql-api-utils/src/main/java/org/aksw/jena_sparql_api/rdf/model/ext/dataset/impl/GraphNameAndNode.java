@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.utils.dataset;
+package org.aksw.jena_sparql_api.rdf.model.ext.dataset.impl;
 
 import java.util.Objects;
 

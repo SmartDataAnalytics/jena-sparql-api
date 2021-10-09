@@ -6,8 +6,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 
-import org.aksw.jena_sparql_api.utils.model.ResourceInDataset;
-import org.aksw.jena_sparql_api.utils.model.ResourceInDatasetImpl;
+import org.aksw.jena_sparql_api.rdf.model.ext.dataset.api.ResourceInDataset;
+import org.aksw.jena_sparql_api.rdf.model.ext.dataset.impl.ResourceInDatasetImpl;
 import org.apache.jena.atlas.iterator.Iter;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;

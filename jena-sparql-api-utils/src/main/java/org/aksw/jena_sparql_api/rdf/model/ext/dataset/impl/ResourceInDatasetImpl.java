@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.utils.model;
+package org.aksw.jena_sparql_api.rdf.model.ext.dataset.impl;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
+import org.aksw.jena_sparql_api.rdf.model.ext.dataset.api.ResourceInDataset;
 import org.aksw.jena_sparql_api.utils.DatasetUtils;
 import org.aksw.jena_sparql_api.utils.NodeTransformLib2;
 import org.apache.jena.enhanced.EnhGraph;
@@ -231,6 +232,11 @@ public class ResourceInDatasetImpl
     @Override
     public Dataset getDataset() {
         return dataset;
+    }
+
+    @Override
+    public ResourceInDatasetImpl asResource() {
+        return this;
     }
 
     @Override

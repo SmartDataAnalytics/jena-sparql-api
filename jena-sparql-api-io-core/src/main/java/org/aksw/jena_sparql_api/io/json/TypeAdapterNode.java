@@ -2,8 +2,9 @@ package org.aksw.jena_sparql_api.io.json;
 
 import java.io.IOException;
 
-import org.aksw.jena_sparql_api.utils.dataset.GraphNameAndNode;
-import org.aksw.jena_sparql_api.utils.dataset.GroupedResourceInDataset;
+import org.aksw.jena_sparql_api.rdf.model.ext.dataset.api.NodesInDataset;
+import org.aksw.jena_sparql_api.rdf.model.ext.dataset.impl.GraphNameAndNode;
+import org.aksw.jena_sparql_api.rdf.model.ext.dataset.impl.NodesInDatasetImpl;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
@@ -39,13 +40,13 @@ public class TypeAdapterNode
 				.create();
 		
 		
-		GroupedResourceInDataset r = new GroupedResourceInDataset(DatasetFactory.create());
+		NodesInDataset r = new NodesInDatasetImpl(DatasetFactory.create());
 		r.getDataset().getNamedModel("http://foobar").add(RDF.type, RDF.type, RDF.Property);
 		r.getGraphNameAndNodes().add(new GraphNameAndNode("http://foobar", RDF.type.asNode()));
 		
 		String str = gson.toJson(r);
 		
-		GroupedResourceInDataset roundtrip = gson.fromJson(str, GroupedResourceInDataset.class);
+		NodesInDataset roundtrip = gson.fromJson(str, NodesInDatasetImpl.class);
 		
 		System.out.println(str);
 		System.out.println(roundtrip);
