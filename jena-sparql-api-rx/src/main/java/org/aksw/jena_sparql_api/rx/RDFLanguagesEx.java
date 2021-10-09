@@ -16,6 +16,7 @@ import org.apache.jena.riot.RDFWriterRegistry;
 import org.apache.jena.riot.resultset.ResultSetLang;
 import org.apache.jena.riot.resultset.ResultSetReaderRegistry;
 import org.apache.jena.riot.resultset.ResultSetWriterRegistry;
+import org.apache.jena.sys.JenaSystem;
 
 /**
  * Convenience methods related to Jena's {@link RDFLanguages} class.
