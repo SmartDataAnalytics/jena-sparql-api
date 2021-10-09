@@ -30,6 +30,12 @@ public interface RDFNodeInDataset
 
     RDFNodeInDataset inDataset(Dataset other);
 
+    @Override
+    LiteralInDataset asLiteral();
+
+    @Override
+    ResourceInDataset asResource();
+
     /**
      * Pass itself to a consumer and return this.
      * Useful for retaining the type when adding properties to a ResourceInDataset:

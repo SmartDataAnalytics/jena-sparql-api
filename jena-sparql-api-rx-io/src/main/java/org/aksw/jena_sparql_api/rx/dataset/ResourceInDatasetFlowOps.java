@@ -309,7 +309,7 @@ public class ResourceInDatasetFlowOps {
 
 
     /**
-     * Adapter to create a transformed for {@link ResourceInDataset} based on one for {@link NodesInDatasetImpl}.
+     * Adapter to create a transformed for {@link ResourceInDataset} based on one for {@link NodesInDataset}.
      *
      * @param innerTransform
      * @return

@@ -1,6 +1,7 @@
 package org.aksw.jena_sparql_api.rdf.model.ext.dataset.impl;
 
 import org.aksw.jena_sparql_api.rdf.model.ext.dataset.api.LiteralInDataset;
+import org.aksw.jena_sparql_api.rdf.model.ext.dataset.api.ResourceInDataset;
 import org.aksw.jena_sparql_api.utils.DatasetUtils;
 import org.apache.jena.enhanced.EnhGraph;
 import org.apache.jena.graph.Node;
@@ -39,5 +40,11 @@ public class LiteralInDatasetImpl
     @Override
     public LiteralInDatasetImpl inDataset(Dataset other) {
         return new LiteralInDatasetImpl(other, graphName, node);
+    }
+
+    @Override
+    public ResourceInDataset asResource() {
+        super.asResource(); // Raises an exception
+        return null;
     }
 }

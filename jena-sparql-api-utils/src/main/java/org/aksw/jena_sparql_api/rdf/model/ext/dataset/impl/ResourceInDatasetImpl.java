@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
+import org.aksw.jena_sparql_api.rdf.model.ext.dataset.api.LiteralInDataset;
 import org.aksw.jena_sparql_api.rdf.model.ext.dataset.api.ResourceInDataset;
 import org.aksw.jena_sparql_api.utils.DatasetUtils;
 import org.aksw.jena_sparql_api.utils.NodeTransformLib2;
@@ -242,5 +243,11 @@ public class ResourceInDatasetImpl
     @Override
     public ResourceInDataset inDataset(Dataset other) {
         return new ResourceInDatasetImpl(other, graphName, node); // graphNameNode);
+    }
+
+    @Override
+    public LiteralInDataset asLiteral() {
+        super.asLiteral(); // Raises an exception
+        return null;
     }
 }
