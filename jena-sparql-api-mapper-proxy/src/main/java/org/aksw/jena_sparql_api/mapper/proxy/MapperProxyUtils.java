@@ -2278,17 +2278,18 @@ public class MapperProxyUtils {
         }
     }
 
-    private static LoadingCache<Class<?>, ClassDescriptor> classDescriptorCache = CacheBuilder.newBuilder()
-            .build(new CacheLoader<Class<?>, ClassDescriptor>() {
-                public ClassDescriptor load(Class<?> key) {
-                    return MapperProxyUtils.getClassDescriptor(key);
+    private static LoadingCache<Class<?>, Optional<ClassDescriptor>> classDescriptorCache = CacheBuilder.newBuilder()
+
+            .build(new CacheLoader<Class<?>, Optional<ClassDescriptor>>() {
+                public Optional<ClassDescriptor> load(Class<?> key) {
+                    return Optional.ofNullable(MapperProxyUtils.getClassDescriptor(key));
                 }
             });
 
     public static ClassDescriptor getClassDescriptorCached(Class<?> clazz) {
         ClassDescriptor result;
         try {
-            result = classDescriptorCache.get(clazz);
+            result = classDescriptorCache.get(clazz).orElse(null);
         } catch (ExecutionException e) {
             throw new RuntimeException(e);
         }
