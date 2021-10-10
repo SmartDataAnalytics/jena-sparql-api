@@ -1,11 +1,30 @@
 package org.aksw.jena_sparql_api.stmt;
 
+import java.io.Serializable;
+
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryParseException;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.update.UpdateRequest;
 
-public interface SparqlStmt {
+/**
+ * SparqlStmt is a unified interface for query and update statements.
+ * For cases where a stmt does not fall into these two categories,
+ * a special {@link SparqlStmtUnknown} exists.
+ *
+ * SparqlStmt's are default serializable: Only the string form is serialized
+ * and upon deserialization an attempt with the default parser is made to restore the statement.
+ *
+ * Note, that exceptions are thus not actually serialized - instead an attempt is made to recreate them.
+ * While typically this yields the same exception type, the orginal stack trace will be lost.
+ *
+ *
+ * @author raven
+ *
+ */
+public interface SparqlStmt
+    extends Serializable
+{
     boolean isQuery();
     boolean isUpdateRequest();
 

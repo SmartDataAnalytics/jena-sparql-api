@@ -15,7 +15,7 @@ import org.aksw.jena_sparql_api.json.RdfJsonUtils;
 import org.aksw.jena_sparql_api.rx.ResultSetRx;
 import org.aksw.jena_sparql_api.rx.ResultSetRxImpl;
 import org.aksw.jena_sparql_api.rx.SparqlRx;
-import org.aksw.jena_sparql_api.rx.dataset.AggBuilderDataset;
+import org.aksw.jena_sparql_api.rx.op.AggBuilderDataset;
 import org.aksw.jena_sparql_api.stmt.SPARQLResultEx;
 import org.aksw.jena_sparql_api.stmt.SparqlStmt;
 import org.aksw.jena_sparql_api.stmt.SparqlStmtUtils;
@@ -88,7 +88,7 @@ public class SparqlMappers {
         // Wrap the core processor with modifiers for the context
         return conn -> (contextHandler == null
             ? conn
-            : RDFConnectionFactoryEx.wrapWithContext(conn, contextHandler));
+            : RDFConnectionFactoryEx.wrapWithContextMutator(conn, contextHandler));
     }
 
 

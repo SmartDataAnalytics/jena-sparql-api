@@ -5,6 +5,8 @@ import org.apache.jena.query.QueryParseException;
 public abstract class SparqlStmtBase
     implements SparqlStmt
 {
+    private static final long serialVersionUID = 1L;
+
     protected String originalString;
     protected QueryParseException parseException;
 

@@ -1,6 +1,5 @@
 package org.aksw.jena_sparql_api.stmt;
 
-import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryParseException;
 import org.apache.jena.shared.PrefixMapping;
@@ -8,7 +7,13 @@ import org.apache.jena.shared.PrefixMapping;
 public class SparqlStmtQuery
     extends SparqlStmtBase
 {
-    protected Query query;
+    private static final long serialVersionUID = 1L;
+
+    protected transient Query query;
+
+    public SparqlStmtQuery() {
+        super(null);
+    }
 
     public SparqlStmtQuery(Query query) {
         this(query, query.toString());
@@ -30,6 +35,18 @@ public class SparqlStmtQuery
         super(queryString, parseException);
         this.query = query;
     }
+
+    private Object readResolve() {
+        Query query = null;
+        QueryParseException parseException = null;
+        try {
+            query = SparqlQueryParserImpl.createAsGiven().apply(originalString);
+        } catch (QueryParseException e) {
+            parseException = e;
+        }
+        return new SparqlStmtQuery(query, originalString, parseException);
+    }
+
 
     @Override
     public SparqlStmtQuery clone() {

@@ -25,6 +25,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import org.aksw.jena_sparql_api.rx.op.FlowOfQuadsOps;
 import org.aksw.jena_sparql_api.utils.DatasetGraphUtils;
 import org.aksw.jena_sparql_api.utils.DatasetUtils;
 import org.aksw.jena_sparql_api.utils.QuadPatternUtils;
@@ -524,7 +525,7 @@ public class RDFDataMgrRx {
 //            .compose(Transformers.<Quad>toListWhile(
 //                    (list, t) -> list.isEmpty()
 //                                 || list.get(0).getGraph().equals(t.getGraph())))
-            .compose(DatasetGraphOpsRx.groupToList())
+            .compose(FlowOfQuadsOps.groupToList())
             .map(Entry::getValue)
             .map(list -> list.stream().map(RDFDataMgrRx::decodeDistinguished)
             .collect(Collectors.toList()))
@@ -591,7 +592,7 @@ public class RDFDataMgrRx {
      */
     public static Flowable<Dataset> createFlowableDatasets(Callable<InputStream> inSupplier, Lang lang, String baseIRI) {
         Flowable<Dataset> result = createFlowableQuads(inSupplier, lang, baseIRI)
-            .compose(DatasetGraphOpsRx.datasetsFromConsecutiveQuads(
+            .compose(FlowOfQuadsOps.datasetsFromConsecutiveQuads(
                     Quad::getGraph,
                     DatasetGraphFactoryEx::createInsertOrderPreservingDatasetGraph))
             ;
@@ -610,7 +611,7 @@ public class RDFDataMgrRx {
 //                        eh,
 //                        th))
         Flowable<Dataset> result = createFlowableQuads(inSupplier)
-                .compose(DatasetGraphOpsRx.datasetsFromConsecutiveQuads(
+                .compose(FlowOfQuadsOps.datasetsFromConsecutiveQuads(
                         Quad::getGraph,
                         DatasetGraphFactoryEx::createInsertOrderPreservingDatasetGraph))
                 ;

@@ -9,6 +9,8 @@ import org.apache.jena.update.UpdateRequest;
 public class SparqlStmtUpdate
     extends SparqlStmtBase
 {
+    private static final long serialVersionUID = 1L;
+
     protected UpdateRequest updateRequest;
 
     public SparqlStmtUpdate(Update update) {
@@ -34,6 +36,17 @@ public class SparqlStmtUpdate
     public SparqlStmtUpdate(UpdateRequest updateRequest, String updateRequestStr, QueryParseException parseException) {
         super(updateRequestStr, parseException);
         this.updateRequest = updateRequest;
+    }
+
+    private Object readResolve() {
+        UpdateRequest update = null;
+        QueryParseException parseException = null;
+        try {
+            update = SparqlUpdateParserImpl.createAsGiven().apply(originalString);
+        } catch (QueryParseException e) {
+            parseException = e;
+        }
+        return new SparqlStmtUpdate(update, originalString, parseException);
     }
 
     @Override

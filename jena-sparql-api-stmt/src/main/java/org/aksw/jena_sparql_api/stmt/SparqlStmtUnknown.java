@@ -6,9 +6,21 @@ import org.apache.jena.shared.PrefixMapping;
 public class SparqlStmtUnknown
     extends SparqlStmtBase
 {
+    private static final long serialVersionUID = 1L;
+
+    public SparqlStmtUnknown() {
+        super(null);
+    }
+
     public SparqlStmtUnknown(String originalString, QueryParseException parseException) {
         super(originalString, parseException);
     }
+
+    private Object readResolve() {
+        SparqlStmt tmp = SparqlStmtParserImpl.createAsGiven(true).apply(originalString);
+        return new SparqlStmtUnknown(originalString, tmp.getParseException());
+    }
+
 
     @Override
     public boolean isUnknown() {

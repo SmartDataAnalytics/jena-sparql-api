@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.BiFunction;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -34,7 +33,6 @@ import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.lang.arq.ParseException;
-import org.apache.jena.sparql.util.Context;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -292,32 +290,6 @@ public class DatasetFlowOps {
         Function<T, List<X>> itemMapper = createItemMultiMapper(datasetBasedMapper, getDataset, setDataset);
 
         return RxOps.createParallelFlatMapperOrdered(itemMapper);
-    }
-
-
-    /**
-     * Map a dataset to a new dataset by running a sequence of sparql statements.
-     *
-     *
-     * @param sparqlStmts
-     * @param datasetGraphSupplier
-     * @param contextHandler
-     * @return
-     */
-    public static FlowableTransformer<Dataset, Dataset> createMapperDataset(
-            Collection<? extends SparqlStmt> sparqlStmts,
-            Supplier<? extends DatasetGraph> datasetGraphSupplier,
-            Consumer<Context> contextMutator) {
-
-        // FIXME wrap the connection with the context mutator
-
-        SPARQLResultExProcessor resultProcessor = SPARQLResultExProcessorBuilder.createForQuadOutput().build();
-
-        Function<RDFConnection, Iterable<Dataset>> connectionBasedMapper = SparqlMappers.createMapperDataset(
-                sparqlStmts, resultProcessor, datasetGraphSupplier);
-        Function<Dataset, Iterable<Dataset>> datasetBasedMapper = SparqlMappers.mapDatasetToConnection(connectionBasedMapper);
-
-        return upstream -> upstream.flatMap(dataset -> Flowable.fromIterable(datasetBasedMapper.apply(dataset)));
     }
 
 //        BiConsumer<RDFConnection, SPARQLResultSink> coreProcessor =

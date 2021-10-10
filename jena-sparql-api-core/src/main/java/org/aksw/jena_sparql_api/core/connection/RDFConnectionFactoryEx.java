@@ -6,7 +6,6 @@ import java.util.function.Function;
 
 import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.SparqlServiceReference;
-import org.aksw.jena_sparql_api.core.connection.SparqlQueryConnectionJsa;
 import org.aksw.jena_sparql_api.stmt.SparqlStmt;
 import org.aksw.jena_sparql_api.utils.Symbols;
 import org.apache.jena.query.Dataset;
@@ -246,8 +245,8 @@ public class RDFConnectionFactoryEx {
     }
 
 
-    public static RDFConnection wrapWithContext(RDFConnection rawConn) {
-        return wrapWithContext(rawConn, cxt -> {});
+    public static RDFConnection wrapWithContextMutator(RDFConnection rawConn) {
+        return wrapWithContextMutator(rawConn, cxt -> {});
     }
 
 
@@ -262,8 +261,10 @@ public class RDFConnectionFactoryEx {
      * @param rawConn
      * @return
      */
-    @Deprecated // Use wrapWithPostProcessor
-    public static RDFConnection wrapWithContext(RDFConnection rawConn, Consumer<Context> contextHandler) {
+    // Ideally replace with wrapWithPostProcessor
+    // ISSUE: With the connection interface we cannot mutate the context of update requests
+    // Hence the existance of this method is still justified
+    public static RDFConnection wrapWithContextMutator(RDFConnection rawConn, Consumer<Context> contextMutator) {
         RDFConnection[] result = {null};
 
         SparqlUpdateConnection tmp = unwrapUpdateConnection(rawConn);
@@ -298,7 +299,7 @@ public class RDFConnectionFactoryEx {
                     Context cxt = qe.getContext();
                     if(cxt != null) {
                         cxt.set(Symbols.symConnection, result[0]);
-                        contextHandler.accept(cxt);
+                        contextMutator.accept(cxt);
                     }
 
                     return qe;
@@ -308,7 +309,7 @@ public class RDFConnectionFactoryEx {
                     Context cxt = qe.getContext();
                     if(cxt != null) {
                         cxt.set(Symbols.symConnection, result[0]);
-                        contextHandler.accept(cxt);
+                        contextMutator.accept(cxt);
                     }
 
                     return qe;
