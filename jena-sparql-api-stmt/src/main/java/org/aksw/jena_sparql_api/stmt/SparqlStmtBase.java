@@ -10,6 +10,10 @@ public abstract class SparqlStmtBase
     protected String originalString;
     protected QueryParseException parseException;
 
+    /* For (de)serialization */
+    SparqlStmtBase() {
+    }
+
     public SparqlStmtBase(String originalString) {
         this(originalString, null);
     }

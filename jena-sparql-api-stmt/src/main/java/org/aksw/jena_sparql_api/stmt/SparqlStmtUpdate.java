@@ -11,7 +11,7 @@ public class SparqlStmtUpdate
 {
     private static final long serialVersionUID = 1L;
 
-    protected UpdateRequest updateRequest;
+    protected transient UpdateRequest updateRequest;
 
     public SparqlStmtUpdate(Update update) {
         this(new UpdateRequest(update));

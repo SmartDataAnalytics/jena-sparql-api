@@ -23,6 +23,7 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -96,6 +97,9 @@ import org.slf4j.LoggerFactory;
 import com.google.common.base.Converter;
 import com.google.common.base.Defaults;
 import com.google.common.base.Strings;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Lists;
 import com.google.common.hash.HashCode;
 import com.google.common.hash.HashFunction;
@@ -2238,7 +2242,7 @@ public class MapperProxyUtils {
                 result = hashFn.hashString(NodeFmtLib.str(n), StandardCharsets.UTF_8);//Objects.toString(rdfNode);
             }
         } else {
-            ClassDescriptor cd = getClassDescriptor(root.getClass());
+            ClassDescriptor cd = getClassDescriptorCached(root.getClass());
 
             if(cd != null) {
                 // NOTE Do not call root.asResource() as this may unproxy proxied resources!
@@ -2264,7 +2268,7 @@ public class MapperProxyUtils {
         cxt.declarePending(root);
 
         // If there is a class descriptor, root is implicitly a resource
-        ClassDescriptor cd = getClassDescriptor(root.getClass());
+        ClassDescriptor cd = getClassDescriptorCached(root.getClass());
 
         if(cd != null) {
             // NOTE Do not call root.asResource() as this may unproxy proxied resources!
@@ -2274,6 +2278,22 @@ public class MapperProxyUtils {
         }
     }
 
+    private static LoadingCache<Class<?>, ClassDescriptor> classDescriptorCache = CacheBuilder.newBuilder()
+            .build(new CacheLoader<Class<?>, ClassDescriptor>() {
+                public ClassDescriptor load(Class<?> key) {
+                    return MapperProxyUtils.getClassDescriptor(key);
+                }
+            });
+
+    public static ClassDescriptor getClassDescriptorCached(Class<?> clazz) {
+        ClassDescriptor result;
+        try {
+            result = classDescriptorCache.get(clazz);
+        } catch (ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+        return result;
+    }
 
     public static ClassDescriptor getClassDescriptor(Class<?> clazz) {
         Metamodel metamodel = Metamodel.get();

@@ -51,13 +51,21 @@ public class FlowOfDatasetOps {
 
         // FIXME wrap the connection with the context mutator
 
-        SPARQLResultExProcessor resultProcessor = SPARQLResultExProcessorBuilder.createForQuadOutput().build();
+        RxFunction<Dataset, Dataset> mapper = upstream -> {
+            SPARQLResultExProcessor resultProcessor = SPARQLResultExProcessorBuilder.createForQuadOutput().build();
 
-        Function<RDFConnection, Iterable<Dataset>> connectionBasedMapper = SparqlMappers.createMapperDataset(
-                sparqlStmts, resultProcessor, datasetGraphSupplier);
-        Function<Dataset, Iterable<Dataset>> datasetBasedMapper = SparqlMappers.mapDatasetToConnection(connectionBasedMapper);
+            Function<RDFConnection, Iterable<Dataset>> connectionBasedMapper = SparqlMappers.createMapperDataset(
+                    sparqlStmts, resultProcessor, datasetGraphSupplier);
+            Function<Dataset, Iterable<Dataset>> datasetBasedMapper = SparqlMappers.mapDatasetToConnection(connectionBasedMapper);
 
-        return upstream -> upstream.flatMap(dataset -> Flowable.fromIterable(datasetBasedMapper.apply(dataset)));
+            return upstream.flatMap(dataset -> {
+                Iterable<Dataset> datasets = datasetBasedMapper.apply(dataset);
+                return Flowable.fromIterable(datasets);
+            });
+        };
+
+
+        return mapper;
     }
 
     /**

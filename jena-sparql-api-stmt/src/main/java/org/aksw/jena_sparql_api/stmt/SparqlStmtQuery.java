@@ -11,10 +11,6 @@ public class SparqlStmtQuery
 
     protected transient Query query;
 
-    public SparqlStmtQuery() {
-        super(null);
-    }
-
     public SparqlStmtQuery(Query query) {
         this(query, query.toString());
     }

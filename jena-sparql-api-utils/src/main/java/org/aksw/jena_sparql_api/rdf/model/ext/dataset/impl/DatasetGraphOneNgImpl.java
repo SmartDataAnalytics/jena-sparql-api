@@ -105,7 +105,7 @@ public class DatasetGraphOneNgImpl
 
     @Override
     public boolean containsGraph(Node graphNode) {
-        if ( isDefaultGraph(graphNode) )
+        if ( graphName.equals(graphNode) )
             return true;
         return false;
     }

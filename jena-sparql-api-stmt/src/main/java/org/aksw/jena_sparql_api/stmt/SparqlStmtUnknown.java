@@ -8,10 +8,6 @@ public class SparqlStmtUnknown
 {
     private static final long serialVersionUID = 1L;
 
-    public SparqlStmtUnknown() {
-        super(null);
-    }
-
     public SparqlStmtUnknown(String originalString, QueryParseException parseException) {
         super(originalString, parseException);
     }
