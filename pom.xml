@@ -53,6 +53,7 @@
 
 		<module>jena-sparql-api-rdf-view</module>
 		<module>jena-sparql-api-views</module>
+		<module>jena-sparql-api-constraints</module>
 
 		<module>jena-sparql-api-concepts</module>
 

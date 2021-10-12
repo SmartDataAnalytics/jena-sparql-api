@@ -16,9 +16,17 @@
 	</parent>
 
 	<dependencies>
+	
+	
+	
 		<dependency>
 			<groupId>org.aksw.commons</groupId>
 			<artifactId>subgraph-isomorphism-index-jena</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.aksw.commons</groupId>
+			<artifactId>aksw-commons-paths</artifactId>
 		</dependency>
 
 		<dependency>
