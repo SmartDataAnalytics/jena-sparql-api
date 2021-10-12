@@ -1,12 +1,18 @@
 package org.aksw.jena_sparql_api.collection.observable;
 
 import org.aksw.commons.collection.observable.ObservableCollection;
-import org.aksw.commons.collection.observable.ObservableSet;
 import org.aksw.jena_sparql_api.relation.DirectedFilteredTriplePattern;
 import org.aksw.jena_sparql_api.schema.PropertySchema;
 import org.apache.jena.graph.Node;
 
 
+/**
+ * An observable field over the subgraph formed by the triples of another
+ * graph matching the given DirectedFilteredTriplePattern.
+ *
+ * @author raven
+ *
+ */
 public class RdfFieldForSubGraph
     implements RdfField
 {
@@ -62,13 +68,13 @@ public class RdfFieldForSubGraph
      * If the field is set to deleted, then the returned set is empty
      *
      */
-    @Override
-    public ObservableCollection<Node> getBaseAsSet() {
-        ObservableGraph baseGraph = graph.getBaseGraph();
-        ObservableCollection<Node> result = SetOfNodesFromGraph.create(baseGraph, dftp);
-
-        return result;
-    }
+//    @Override
+//    public ObservableCollection<Node> getBaseAsSet() {
+//        ObservableGraph baseGraph = graph.getBaseGraph();
+//        ObservableCollection<Node> result = SetOfNodesFromGraph.create(baseGraph, dftp);
+//
+//        return result;
+//    }
 
     @Override
     public ObservableCollection<Node> getEffectiveAsSet() {
@@ -100,13 +106,13 @@ public class RdfFieldForSubGraph
     }
 
 
-    public ObservableCollection<Node> getEffectiveValuesAsSet() {
-        ObservableCollection<Node> a = getBaseAsSet();
-        ObservableCollection<Node> b = getAddedAsSet();
-
-        ObservableSet<Node> result = null; //ObservableSetUnion<
-        return result;
-    }
+//    public ObservableCollection<Node> getEffectiveValuesAsSet() {
+//        ObservableCollection<Node> a = getBaseAsSet();
+//        ObservableCollection<Node> b = getAddedAsSet();
+//
+//        ObservableSet<Node> result = null; //ObservableSetUnion<
+//        return result;
+//    }
 
 //    public ObservableValue<Node> getAsValue() {
 //

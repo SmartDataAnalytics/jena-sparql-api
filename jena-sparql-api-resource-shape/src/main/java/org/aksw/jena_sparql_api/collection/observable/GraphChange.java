@@ -2,11 +2,11 @@ package org.aksw.jena_sparql_api.collection.observable;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -17,44 +17,48 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.aksw.commons.collection.observable.ObservableCollection;
 import org.aksw.commons.collection.observable.ObservableMap;
 import org.aksw.commons.collection.observable.ObservableMapImpl;
 import org.aksw.commons.collection.observable.ObservableSet;
 import org.aksw.commons.collection.observable.ObservableSetImpl;
 import org.aksw.commons.collection.observable.ObservableValue;
-import org.aksw.commons.collection.observable.ObservableValueFromObservableCollection;
 import org.aksw.commons.collections.CartesianProduct;
 import org.aksw.commons.collections.SetUtils;
 import org.aksw.jena_sparql_api.relation.DirectedFilteredTriplePattern;
-import org.aksw.jena_sparql_api.util.SetFromGraph;
+import org.aksw.jena_sparql_api.util.tuple.TupleAccessorTriple;
+import org.aksw.jena_sparql_api.utils.ElementUtils;
+import org.aksw.jena_sparql_api.utils.NodeTransformRenameMap;
 import org.aksw.jena_sparql_api.utils.TripleUtils;
+import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.ext.com.google.common.collect.HashMultimap;
 import org.apache.jena.ext.com.google.common.collect.Multimap;
-import org.apache.jena.ext.com.google.common.collect.Multimaps;
-import org.apache.jena.ext.com.google.common.collect.Streams;
-import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
-import org.apache.jena.graph.impl.GraphBase;
+import org.apache.jena.query.Query;
+import org.apache.jena.sparql.algebra.Table;
+import org.apache.jena.sparql.algebra.TableFactory;
+import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.engine.binding.Binding;
+import org.apache.jena.sparql.engine.binding.BindingFactory;
 import org.apache.jena.sparql.graph.GraphFactory;
 import org.apache.jena.sparql.graph.NodeTransform;
 import org.apache.jena.sparql.graph.NodeTransformLib;
-import org.apache.jena.util.iterator.ExtendedIterator;
-import org.apache.jena.util.iterator.WrappedIterator;
+import org.apache.jena.sparql.modify.request.QuadDataAcc;
+import org.apache.jena.sparql.modify.request.UpdateDataDelete;
+import org.apache.jena.sparql.modify.request.UpdateDataInsert;
+import org.apache.jena.sparql.modify.request.UpdateDeleteInsert;
+import org.apache.jena.sparql.syntax.ElementData;
+import org.apache.jena.sparql.syntax.ElementSubQuery;
+import org.apache.jena.update.Update;
+import org.apache.jena.update.UpdateRequest;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
 
-class FieldId {
-}
-
-class FieldState {
-}
-
 public class GraphChange
-//    extends GraphBase
 {
     /** A set of blank that were newly created and must thus not clash with existing resources */
     // protected Set<Node> newNodes;
@@ -78,7 +82,6 @@ public class GraphChange
 
 //    protected ObservableGraph delta;
 
-    protected ObservableGraph baseGraph;
 
     /** Explicitly added triples - does not include the values of {@link #renamedNodes} */
     protected ObservableGraph additionGraph;
@@ -116,17 +119,15 @@ public class GraphChange
     }
 
     public GraphChange() {
-        this(ObservableMapImpl.decorate(new HashMap<>()), ObservableMapImpl.decorate(new HashMap<>()), ObservableGraphImpl.decorate(GraphFactory.createPlainGraph()));
+        this(ObservableMapImpl.decorate(new HashMap<>()), ObservableMapImpl.decorate(new HashMap<>()));
         //new Delta(GraphFactory.createPlainGraph()));
     }
 
-    public GraphChange(ObservableMap<Node, Node> renamedNodes, ObservableMap<Triple, Triple> tripleReplacements, ObservableGraph baseGraph) {
+    public GraphChange(ObservableMap<Node, Node> renamedNodes, ObservableMap<Triple, Triple> tripleReplacements) {
         super();
         this.renamedNodes = renamedNodes;
         this.tripleReplacements = tripleReplacements;
-        this.baseGraph = baseGraph;
-//        this.delta = ObservableGraphImpl.decorate(new DeltaWithFixedIterator(this.baseGraph));
-        //this.effectiveGraph = ObservableGraph
+
         this.additionGraph = ObservableGraphImpl.decorate(GraphFactory.createDefaultGraph());
         this.deletionGraph = ObservableGraphImpl.decorate(GraphFactory.createDefaultGraph());
 
@@ -135,11 +136,10 @@ public class GraphChange
         this.effectiveDeletionGraph = ObservableGraphImpl.decorate(GraphFactory.createDefaultGraph());
 
 
-        tripleReplacements.addPropertyChangeListener(ev -> refreshDeletions());
-        additionGraph.addPropertyChangeListener(ev -> refreshDeletions());
-        deletionGraph.addPropertyChangeListener(ev -> refreshDeletions());
-        baseGraph.addPropertyChangeListener(ev -> refreshDeletions());
-        renamedNodes.addPropertyChangeListener(ev -> refreshDeletions());
+//        tripleReplacements.addPropertyChangeListener(ev -> refreshDeletions());
+//        additionGraph.addPropertyChangeListener(ev -> refreshDeletions());
+//        deletionGraph.addPropertyChangeListener(ev -> refreshDeletions());
+//        renamedNodes.addPropertyChangeListener(ev -> refreshDeletions());
     }
 
     /**
@@ -250,11 +250,6 @@ public class GraphChange
 //        return createFieldForPredicate(source, predicate, isForward, null);
 //    }
 
-    public ObservableValue<Node> createValueField(Node sourceNode, DirectedFilteredTriplePattern dftp) {
-        ObservableCollection<Node> set = createSetField(sourceNode, dftp);
-        ObservableValue<Node> result = ObservableValueFromObservableCollection.decorate(set);
-        return result;
-    }
 
     public RdfField createSetField(Node sourceNode, Node predicate, boolean isForward) {
         DirectedFilteredTriplePattern dftp = DirectedFilteredTriplePattern.create(sourceNode, predicate, isForward);
@@ -263,23 +258,6 @@ public class GraphChange
         return result;
     }
 
-    public ObservableCollection<Node> createSetField(Node sourceNode, DirectedFilteredTriplePattern dftp) {
-
-        ObservableCollection<Node> set = SetOfNodesFromGraph.create(baseGraph, dftp);
-        return set;
-    }
-
-
-    /** Return a set view over the values of a given predicate.
-     * Adding items to the set creates new triples.
-     *
-     * TODO Maybe the result should not be an ObservableSet directly but a GraphNode that supports
-     * the set view and e.g. a triple based view
-     **/
-    public ObservableCollection<Node> createSetForPredicate(Node source, Node predicate, boolean isForward) {
-        DirectedFilteredTriplePattern dftp = DirectedFilteredTriplePattern.create(source, predicate, isForward);
-        return createSetField(source, dftp);
-    }
 
 
     public ObservableMap<Triple, Triple> getTripleReplacements() {
@@ -290,9 +268,6 @@ public class GraphChange
         return renamedNodes;
     }
 
-    public ObservableGraph getBaseGraph() {
-        return baseGraph;
-    }
 
 //    public Delta getDelta() {
 //        Delta d = (Delta)((ObservableGraphImpl)delta).get();
@@ -324,236 +299,8 @@ public class GraphChange
                 : Collections.singleton(item);
     }
 
-    /**
-     * A graph view of the final state:
-     * - Nodes that were renamed are no longer visible.
-     *
-     * @return
-     */
-    public Graph getEffectiveGraphView() {
-        return new GraphBase() {
-            @Override
-            protected ExtendedIterator<Triple> graphBaseFind(Triple triplePattern) {
-
-                // If there is a request for x but x was renamed to y
-                // then rephrase the express in terms of y.
-
-                Map<Node, Node> nodeToCluster = new HashMap<>(renamedNodes);
-                // For each value that is not mapped to by a key map it to itself
-                for (Node v : renamedNodes.values()) {
-                    Node newV = renamedNodes.get(v);
-
-                    if (newV == null) {
-                        nodeToCluster.put(v,  v);
-                    }
-                }
-                Multimap<Node, Node> clusterToMembers = nodeToCluster.entrySet().stream()
-                        .collect(Multimaps.toMultimap(Entry::getValue, Entry::getKey, HashMultimap::create));
-
-//                Multimap<Node, Node> fwdMap = Multimaps.forMap(renamedNodes);
-
-                // If a node was renamed it ceases to exist
-                Stream<Triple> expandedLookups = expand(triplePattern, Triple.createMatch(null, null, null),
-                        x -> {
-                            Collection<Node> sources = clusterToMembers.get(x);
-                            Collection<Node> r = !sources.isEmpty()
-                                    ? sources
-                                    : renamedNodes.containsKey(x)
-                                        ? sources
-                                        : Collections.singleton(x);
-                            return r;
-                        });
-//                        x -> renamedNodes.get(x) != null ? Collections.emptySet() : clusterToMembers.get(x));
 
 
-                List<Triple> tmpX = expandedLookups.collect(Collectors.toList());
-                expandedLookups = tmpX.stream();
-//                System.out.println("Expanded " + triplePattern + " to " + tmpX);
-
-                Stream<Triple> rawTriples = expandedLookups
-                        .flatMap(pattern -> Streams.stream(baseGraph.find(pattern)));
-
-                Stream<Triple> stream = rawTriples
-                    .flatMap(triple -> {
-
-                        Stream<Triple> r;
-
-                        boolean isRemapped = tripleReplacements.containsKey(triple);
-                        if (isRemapped) {
-                            Triple replacement = tripleReplacements.get(triple);
-                            r = replacement == null
-                                    ? Stream.empty()
-                                    : Stream.of(replacement);
-                        } else {
-                            r = Stream.of(triple);
-                        }
-
-                        return r;
-                    })
-                    .flatMap(triple -> {
-                        return expand(triple, triplePattern,
-                                x -> nullableSingleton(renamedNodes.getOrDefault(x, x)));
-                    });
-
-                List<Triple> tmp = stream.collect(Collectors.toList());
-                stream = tmp.stream();
-
-//                System.out.println("Lookup for " + triplePattern);
-//                System.out.println("Returned: " + tmp);
-
-                ExtendedIterator<Triple> result = WrappedIterator.create(stream.iterator());
-                return result;
-            }
-        };
-    }
-
-    /**
-     * Return a graph view where all attributes of resources that are renamed
-     * to the same final resource appear on all involved resources.
-     *
-     * This graph view differs from the effective graph view where the resources
-     * that are the source of renaming do no longer exist (as they have been renamed)
-     *
-     * @return
-     */
-    public Graph getSameAsInferredGraphView() {
-        return new GraphBase() {
-            @Override
-            protected ExtendedIterator<Triple> graphBaseFind(Triple triplePattern) {
-
-                Map<Node, Node> nodeToCluster = new HashMap<>(renamedNodes);
-                // For each value that is not mapped to by a key map it to itself
-                for (Node v : renamedNodes.values()) {
-                    Node newV = renamedNodes.get(v);
-
-                    if (newV == null) {
-                        nodeToCluster.put(v,  v);
-                    }
-                }
-
-
-                Multimap<Node, Node> clusterToMembers = nodeToCluster.entrySet().stream()
-                        .collect(Multimaps.toMultimap(Entry::getValue, Entry::getKey, HashMultimap::create));
-
-//                Multimap<Node, Node> fwdMap = Multimaps.forMap(map);
-
-                // For each value that is not mapped to by a key map it to itself
-//                for (Node v : renamedNodes.values()) {
-//                    Node newV = renamedNodes.get(v);
-//
-//                    if (newV == null) {
-//                        fwdMap.put(v,  v);
-//                    }
-//                }
-
-                Stream<Triple> expandedLookups = expand(triplePattern, Triple.createMatch(null, null, null),  node -> clusterToMembers.get(nodeToCluster.get(node)));
-
-//                Stream<Triple> expandedLookups = Streams.concat(
-//                    Stream.of(triplePattern),
-//                    extraLookups);
-
-                List<Triple> tmpX = expandedLookups.collect(Collectors.toList());
-                expandedLookups = tmpX.stream();
-//                System.out.println("Expanded " + triplePattern + " to " + tmpX);
-
-                Stream<Triple> rawTriples = expandedLookups
-                        .flatMap(pattern -> Streams.stream(baseGraph.find(pattern)));
-
-                Stream<Triple> stream = rawTriples
-                    .flatMap(triple -> {
-
-                        Stream<Triple> r;
-
-                        boolean isRemapped = tripleReplacements.containsKey(triple);
-                        if (isRemapped) {
-                            Triple replacement = tripleReplacements.get(triple);
-                            r = replacement == null
-                                    ? Stream.empty()
-                                    : Stream.of(replacement);
-                        } else {
-                            r = Stream.of(triple);
-                        }
-
-                        return r;
-                    })
-                    .flatMap(triple -> {
-                        return expand(triple, triplePattern, node -> clusterToMembers.get(nodeToCluster.get(node)));
-                    });
-
-                List<Triple> tmp = stream.collect(Collectors.toList());
-                stream = tmp.stream();
-
-//                System.out.println("Lookup for " + triplePattern);
-//                System.out.println("Returned: " + tmp);
-
-                ExtendedIterator<Triple> result = WrappedIterator.create(stream.iterator());
-                return result;
-            }
-        };
-    }
-
-
-    protected void refreshDeletions() {
-        Set<Triple> additions = new LinkedHashSet<>();
-        Set<Triple> deletions = new LinkedHashSet<>();
-//        SetDiff<Triple> diff = new SetDiff<>(new HashSet<>(), new HashSet<>());
-
-        deletionGraph.find().forEachRemaining(deletions::add);
-
-        {
-            Iterator<Triple> itTriple = baseGraph.find();
-            while (itTriple.hasNext()) {
-                Triple t = itTriple.next();
-
-                for (RdfField field : sourceNodeToField.values()) {
-                    if (field.isIntensional() && field.isDeleted()) {
-                        if (field.matchesTriple(t)) {
-                            deletions.add(t);
-                        }
-                    }
-                }
-            }
-        }
-
-        Set<Triple> keys = tripleReplacements.keySet();
-        deletions.addAll(keys);
-
-        Set<Triple> valueSet = new HashSet<>(tripleReplacements.values());
-        deletions.removeAll(valueSet);
-
-
-        additionGraph.find().forEachRemaining(additions::add);
-        valueSet.stream()
-            .filter(item -> item != null && !baseGraph.contains(item))
-            .forEach(additions::add);
-
-        NodeTransform xform = n -> {
-            Node r = renamedNodes.get(n);
-            return r == null ? n : r;
-        };
-        additions = additions.stream().map(t -> NodeTransformLib.transform(xform, t)).collect(Collectors.toSet());
-
-        makeSetEqual(new SetFromGraph(effectiveDeletionGraph), deletions);
-        makeSetEqual(new SetFromGraph(effectiveAdditionGraph), additions);
-
-
-//        {
-//            NodeTransform xform = new NodeTransformRenameMap(renamedNodes);
-//            Iterator<Triple> itTriple = baseGraph.find();
-//            while (itTriple.hasNext()) {
-//                Triple t = itTriple.next();
-//                Triple remapped = NodeTransformLib.transform(xform, t);
-//
-//
-//
-//
-//            }
-//        }
-//
-//        Collection<Triple> values = tripleReplacements.values();
-//        values.stream().filter(Objects::nonNull).forEach(delta::add);
-
-    }
 
     /** Make the set of items contained in target equal to those contained in reference
      *  thereby calling .add() and .remove() only on items that differ.
@@ -711,4 +458,147 @@ public class GraphChange
 //    protected ExtendedIterator<Triple> graphBaseFind(Triple triplePattern) {
 //        return null;
 //    }
+
+
+
+
+    public static Table createTableFromEnties(
+            Var keyVar,
+            Var valueVar,
+            Collection<? extends Entry<? extends Node, ? extends Node>> entrySet) {
+        Table result = TableFactory.create(Arrays.asList(keyVar, valueVar));
+
+        for (Entry<? extends Node, ? extends Node> e : entrySet) {
+            Binding binding = BindingFactory.builder()
+                    .add(keyVar, e.getKey())
+                    .add(valueVar, e.getValue())
+                    .build();
+
+            result.addBinding(binding);
+        }
+
+        return result;
+    }
+
+    public static UpdateDeleteInsert createUpdateRenameComponent(
+            int componentIdx,
+            Collection<? extends Entry<? extends Node, ? extends Node>> renamedNodes
+    ) {
+        // INSERT { ?x ?p ?o } DELETE {?s ?p ?o } WHERE { SELECT DISTINCT ?s ?x { VALUES (?s ?x) { ... } ?s ?p ?o } }
+
+
+        Node[] nodes = new Node[] { Vars.s, Vars.p, Vars.o };
+        Var oldVar = (Var)nodes[componentIdx];
+        Var newVar = Vars.x;
+
+        Table renameTable = createTableFromEnties(oldVar, newVar, renamedNodes);
+        Triple oldTp = TripleUtils.fromArray(nodes);
+
+        nodes[componentIdx] = newVar;
+        Triple newTp = TripleUtils.fromArray(nodes);
+
+        Query subQuery = new Query();
+        subQuery.setQuerySelectType();
+        subQuery.setDistinct(true);
+        subQuery.addResultVar(oldVar);
+        subQuery.addResultVar(newVar);
+        subQuery.setQueryPattern(ElementUtils.groupIfNeeded(
+            new ElementData(renameTable.getVars(), Lists.newArrayList(renameTable.rows())),
+            ElementUtils.createElement(oldTp)));
+
+        UpdateDeleteInsert renameUpdate = new UpdateDeleteInsert();
+        renameUpdate.getInsertAcc().addTriple(newTp);
+        renameUpdate.getDeleteAcc().addTriple(oldTp);
+        renameUpdate.setElement(new ElementSubQuery(subQuery));
+
+        return renameUpdate;
+    }
+
+
+    /**
+     * Creates a SPARQL update request from the state of this object as follows:
+     *
+     * <ol>
+     *   <li>Pre-rename deletes: Delete the concrete triples (without renaming)</li>
+     *   <li>Resource renaming: Rename subjects/predicate/objects</li>
+     *   <li>Post-rename updates: Apply the triple replacements after renaming; unchanged components are subject to renaming / those that differ not</li>
+     *   <li>Add the concrete triples</li>
+     * </ol>
+     *
+     *
+     * @return
+     */
+    public UpdateRequest toUpdateRequest() {
+
+        UpdateRequest result = new UpdateRequest();
+
+        // Delete triples marked for deletion
+        if (!deletionGraph.isEmpty()) {
+            QuadDataAcc acc = new QuadDataAcc();
+            deletionGraph.find().forEach(acc::addTriple);
+            result.add(new UpdateDataDelete(acc));
+        }
+
+
+        // Apply renaming to resources (skip renaming of newly added blank nodes)
+        // TODO We also skip renaming of blank nodes - raise an exception?
+        Map<Node, Node> effectiveRenames = Maps.filterEntries(this.renamedNodes, e -> !Objects.equals(e.getKey(), e.getValue()));
+        Map<Node, Node> existingRenames = Maps.filterKeys(effectiveRenames, key -> !newNodes.contains(key) && !key.isBlank());
+
+        if (!existingRenames.isEmpty()) {
+            Update renameS = createUpdateRenameComponent(0, existingRenames.entrySet());
+            Update renameP = createUpdateRenameComponent(1, existingRenames.entrySet());
+            Update renameO = createUpdateRenameComponent(2, existingRenames.entrySet());
+
+            result.add(renameS);
+            result.add(renameP);
+            result.add(renameO);
+        }
+
+        // UpdateDeleteInsert postRenameUpdates = new UpdateDeleteInsert();
+        QuadDataAcc postRenameDeletes = new QuadDataAcc();
+        QuadDataAcc postRenameInserts = new QuadDataAcc();
+
+
+        Map<Triple, Triple> effectiveTripleReplacements = Maps.filterEntries(this.tripleReplacements, e -> !Objects.equals(e.getKey(), e.getValue()));
+        NodeTransform nodeTransform = new NodeTransformRenameMap(effectiveRenames);
+
+        if (!effectiveTripleReplacements.isEmpty()) {
+
+            for (Entry<Triple, Triple> e : this.tripleReplacements.entrySet()) {
+                // Apply renaming to all components that are unchanged
+                Triple before = e.getKey();
+                Triple after = e.getValue();
+
+                Triple toDelete = NodeTransformLib.transform(nodeTransform, before);
+                postRenameDeletes.addTriple(toDelete);
+
+                Node[] nodes = new Node[3];
+                for (int i = 0; i < 3; ++i) {
+                    Node b = TupleAccessorTriple.getComponent(before, i);
+                    Node a = TupleAccessorTriple.getComponent(after, i);
+                    nodes[i] = Objects.equals(b, a)
+                        ? effectiveRenames.getOrDefault(b, b)
+                        : a;
+                }
+                Triple toAdd = TripleUtils.fromArray(nodes);
+                postRenameInserts.addTriple(toAdd);
+            }
+
+        }
+
+        additionGraph.find()
+            .mapWith(t -> NodeTransformLib.transform(nodeTransform, t))
+            .forEach(postRenameInserts::addTriple);
+
+        if (!postRenameDeletes.getQuads().isEmpty()) {
+            result.add(new UpdateDataDelete(postRenameDeletes));
+        }
+
+        if (!postRenameInserts.getQuads().isEmpty()) {
+            result.add(new UpdateDataInsert(postRenameInserts));
+        }
+
+        return result;
+    }
 }

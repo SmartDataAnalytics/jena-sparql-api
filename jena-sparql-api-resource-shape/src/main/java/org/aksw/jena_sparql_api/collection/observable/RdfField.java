@@ -22,7 +22,7 @@ public interface RdfField {
     /**
      * A field is based on a specific node in the RDF graph.
      * Depending on the property schema the values are obtained from ingoing and/or outgoing triples (or quads).
-     * 
+     *
      * @return
      */
     Node getSourceNode();
@@ -44,7 +44,7 @@ public interface RdfField {
     void setDeleted(boolean onOrOff);
     boolean isDeleted();
 
-    ObservableCollection<Node> getBaseAsSet();
+//    ObservableCollection<Node> getBaseAsSet();
     ObservableCollection<Node> getAddedAsSet();
 
     ObservableCollection<Node> getEffectiveAsSet();
