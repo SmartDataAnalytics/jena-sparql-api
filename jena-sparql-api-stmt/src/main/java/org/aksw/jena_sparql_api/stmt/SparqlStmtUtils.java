@@ -35,6 +35,7 @@ import org.apache.jena.ext.com.google.common.base.Charsets;
 import org.apache.jena.ext.com.google.common.io.CharStreams;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
+import org.apache.jena.http.HttpOp;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QueryFactory;
@@ -43,7 +44,6 @@ import org.apache.jena.query.Syntax;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.riot.WebContent;
 import org.apache.jena.riot.system.stream.StreamManager;
-import org.apache.jena.riot.web.HttpOp;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
@@ -129,8 +129,8 @@ public class SparqlStmtUtils {
      * In-place optimize an update request's prefixes to only used prefixes
      * The global prefix map may be null.
      *
-     * @param query
-     * @param pm
+     * @param stmt
+     * @param globalPm
      * @return
      */
     public static SparqlStmt optimizePrefixes(SparqlStmt stmt, PrefixMapping globalPm) {
@@ -262,7 +262,7 @@ public class SparqlStmtUtils {
             HttpClient httpClient = null;
             String acceptHeader =
                 ( httpClient == null ) ? WebContent.defaultRDFAcceptHeader : null;
-            in = HttpOpAHC.execHttpGet(urlStr, acceptHeader, httpClient, null);
+            in = HttpOp.httpGet(urlStr, acceptHeader);
         } else {
             in = streamManager.open(urlStr);
         }
@@ -426,18 +426,18 @@ public class SparqlStmtUtils {
         return result;
     }
 
-    /**
-     * Create a sink that for line based format
-     * streams directly to the output stream or collects quads in memory and emits them
-     * all at once in the given format when flushing the sink.
-     *
-     * @param r
-     * @param format
-     * @param out
-     * @param dataset The dataset implementation to use for non-streaming data.
-     *                Allows for use of insert-order preserving dataset implementations.
-     * @return
-     */
+//    /**
+//     * Create a sink that for line based format
+//     * streams directly to the output stream or collects quads in memory and emits them
+//     * all at once in the given format when flushing the sink.
+//     *
+//     * @param r
+//     * @param format
+//     * @param out
+//     * @param dataset The dataset implementation to use for non-streaming data.
+//     *                Allows for use of insert-order preserving dataset implementations.
+//     * @return
+//     */
 //    public static Sink<Quad> createSinkQuads(RDFFormat format, OutputStream out, PrefixMapping pm, Supplier<Dataset> datasetSupp) {
 //        boolean useStreaming = format == null ||
 //                Arrays.asList(Lang.NTRIPLES, Lang.NQUADS).contains(format.getLang());

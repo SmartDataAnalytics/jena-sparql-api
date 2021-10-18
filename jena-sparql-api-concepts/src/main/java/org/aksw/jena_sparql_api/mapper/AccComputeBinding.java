@@ -1,12 +1,12 @@
 package org.aksw.jena_sparql_api.mapper;
 
-import java.util.Map;
-import java.util.function.Function;
-
 import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.binding.Binding;
-import org.apache.jena.sparql.engine.binding.BindingHashMap;
+import org.apache.jena.sparql.engine.binding.BindingBuilder;
+
+import java.util.Map;
+import java.util.function.Function;
 
 public class AccComputeBinding<B, T>
 	implements Accumulator<B, T>
@@ -23,14 +23,14 @@ public class AccComputeBinding<B, T>
 
 	@Override
 	public void accumulate(B input) {
-		BindingHashMap binding = new BindingHashMap();
+		BindingBuilder builder = BindingBuilder.create();
 
-		varToNodeFn.entrySet().forEach(e -> {
-			Node node = e.getValue().apply(input);
-			binding.add(e.getKey(), node);
+		varToNodeFn.forEach((key, value) -> {
+			Node node = value.apply(input);
+			builder.add(key, node);
 		});
 
-		delegate.accumulate(binding);
+		delegate.accumulate(builder.build());
 	}
 
 	@Override

@@ -1,30 +1,14 @@
 package org.aksw.jena_sparql_api.concepts;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
-
+import com.google.common.collect.Range;
+import com.google.common.collect.Sets;
+import com.google.common.collect.Streams;
 import org.aksw.commons.collections.MapUtils;
 import org.aksw.commons.collections.SetUtils;
 import org.aksw.commons.collections.generator.Generator;
 import org.aksw.commons.collections.generator.GeneratorBlacklist;
 import org.aksw.jena_sparql_api.syntax.QueryGenerationUtils;
-import org.aksw.jena_sparql_api.utils.ElementUtils;
-import org.aksw.jena_sparql_api.utils.ExprListUtils;
-import org.aksw.jena_sparql_api.utils.QueryUtils;
-import org.aksw.jena_sparql_api.utils.Triples;
-import org.aksw.jena_sparql_api.utils.VarExprListUtils;
-import org.aksw.jena_sparql_api.utils.VarGeneratorBlacklist;
-import org.aksw.jena_sparql_api.utils.VarGeneratorImpl2;
-import org.aksw.jena_sparql_api.utils.VarUtils;
-import org.aksw.jena_sparql_api.utils.Vars;
+import org.aksw.jena_sparql_api.utils.*;
 import org.apache.jena.ext.com.google.common.collect.Iterables;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
@@ -39,27 +23,15 @@ import org.apache.jena.sparql.algebra.op.OpBGP;
 import org.apache.jena.sparql.core.BasicPattern;
 import org.apache.jena.sparql.core.Substitute;
 import org.apache.jena.sparql.core.Var;
-import org.apache.jena.sparql.engine.binding.BindingHashMap;
-import org.apache.jena.sparql.expr.E_Equals;
-import org.apache.jena.sparql.expr.E_OneOf;
-import org.apache.jena.sparql.expr.Expr;
-import org.apache.jena.sparql.expr.ExprList;
-import org.apache.jena.sparql.expr.ExprVar;
-import org.apache.jena.sparql.expr.NodeValue;
+import org.apache.jena.sparql.engine.binding.Binding;
+import org.apache.jena.sparql.engine.binding.BindingBuilder;
+import org.apache.jena.sparql.expr.*;
 import org.apache.jena.sparql.expr.aggregate.AggCount;
-import org.apache.jena.sparql.syntax.Element;
-import org.apache.jena.sparql.syntax.ElementData;
-import org.apache.jena.sparql.syntax.ElementFilter;
-import org.apache.jena.sparql.syntax.ElementGroup;
-import org.apache.jena.sparql.syntax.ElementOptional;
-import org.apache.jena.sparql.syntax.ElementSubQuery;
-import org.apache.jena.sparql.syntax.ElementTriplesBlock;
-import org.apache.jena.sparql.syntax.PatternVars;
+import org.apache.jena.sparql.syntax.*;
 import org.apache.jena.vocabulary.RDF;
 
-import com.google.common.collect.Range;
-import com.google.common.collect.Sets;
-import com.google.common.collect.Streams;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class ConceptUtils {
     public static final Concept subjectConcept = createSubjectConcept();
@@ -157,13 +129,15 @@ public class ConceptUtils {
 
         Generator<Var> generator = GeneratorBlacklist.create(VarGeneratorImpl2.create("v"), combinedVarNames);
 
-        BindingHashMap binding = new BindingHashMap();
+        BindingBuilder builder = BindingBuilder.create();
         for(String varName : commonVarNames) {
             Var oldVar = Var.alloc(varName);
             Var newVar = Var.alloc(generator.next());
 
-            binding.add(oldVar, newVar);
+            builder.add(oldVar, newVar);
         }
+
+        Binding binding = builder.build();
 
         Op op = Algebra.compile(a.getElement());
         Op substOp = Substitute.substitute(op, binding);
@@ -219,10 +193,11 @@ public class ConceptUtils {
     public static Concept createConcept(Iterable<? extends Node> nodes) {
         ElementData data = new ElementData();
         data.add(Vars.s);
+        BindingBuilder builder = BindingBuilder.create();
         for(Node node : nodes) {
-            BindingHashMap binding = new BindingHashMap();
-            binding.add(Vars.s, node);
-            data.add(binding);
+            builder.reset();
+            builder.add(Vars.s, node);
+            data.add(builder.build());
         }
 
         Concept result = new Concept(data, Vars.s);
