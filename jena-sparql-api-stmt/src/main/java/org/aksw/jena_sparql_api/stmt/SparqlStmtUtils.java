@@ -262,7 +262,7 @@ public class SparqlStmtUtils {
             HttpClient httpClient = null;
             String acceptHeader =
                 ( httpClient == null ) ? WebContent.defaultRDFAcceptHeader : null;
-            in = HttpOp.execHttpGet(urlStr, acceptHeader, httpClient, null);
+            in = HttpOpAHC.execHttpGet(urlStr, acceptHeader, httpClient, null);
         } else {
             in = streamManager.open(urlStr);
         }

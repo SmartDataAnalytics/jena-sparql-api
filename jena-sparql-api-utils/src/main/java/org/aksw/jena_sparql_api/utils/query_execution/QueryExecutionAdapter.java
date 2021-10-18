@@ -59,6 +59,11 @@ public class QueryExecutionAdapter
     }
 
     @Override
+    public String getQueryString() {
+        return null;
+    }
+
+    @Override
     public ResultSet execSelect() {
         throw new UnsupportedOperationException("Not Implemented.");
     }

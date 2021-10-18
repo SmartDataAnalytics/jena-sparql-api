@@ -1,19 +1,5 @@
 package org.aksw.jena_sparql_api.utils;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.function.Supplier;
-import java.util.stream.Stream;
-
 import org.aksw.commons.collections.MapUtils;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
@@ -21,12 +7,17 @@ import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.QuadPattern;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.binding.Binding;
-import org.apache.jena.sparql.engine.binding.BindingHashMap;
+import org.apache.jena.sparql.engine.binding.BindingBuilder;
 import org.apache.jena.sparql.graph.NodeTransform;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementGroup;
 import org.apache.jena.sparql.syntax.ElementNamedGraph;
 import org.apache.jena.sparql.syntax.ElementTriplesBlock;
+
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 public class QuadUtils {
 
@@ -34,12 +25,12 @@ public class QuadUtils {
         return Stream.of(q.getGraph(), q.getSubject(), q.getPredicate(), q.getObject());
     }
 
-    /**
-     * Replace all variable names with the same variable (?a in this case).
-     * Useful for checking whether two expressions are structurally equivalent.
-     *
-     * @param expr
-     */
+//    /**
+//     * Replace all variable names with the same variable (?a in this case).
+//     * Useful for checking whether two expressions are structurally equivalent.
+//     *
+//     * @param expr
+//     */
 //    public static QuadPattern signaturize(Quad quad) {
 //        NodeTransform nodeTransform = new NodeTransformSignaturize();
 //        QuadPattern result = NodeTransformLib.transform(nodeTransform, quad);
@@ -143,14 +134,14 @@ public class QuadUtils {
     public static final List<Var> quadVars = Arrays.asList(vg, vs, vp, vo);
 
     public static Binding quadToBinding(Quad quad) {
-        BindingHashMap result = new BindingHashMap();
+        BindingBuilder result = BindingBuilder.create();
 
         result.add(vg, quad.getGraph());
         result.add(vs, quad.getSubject());
         result.add(vp, quad.getPredicate());
         result.add(vo, quad.getObject());
 
-        return result;
+        return result.build();
     }
 
     /**

@@ -1,13 +1,5 @@
 package org.aksw.jena_sparql_api.utils;
 
-import java.io.ByteArrayOutputStream;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Stream;
-
 import org.aksw.commons.util.strings.StringUtils;
 import org.aksw.jena_sparql_api.util.tuple.TupleAccessorTriple;
 import org.aksw.jena_sparql_api.util.tuple.TupleUtils;
@@ -15,8 +7,12 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.riot.writer.NTriplesWriter;
 import org.apache.jena.sparql.engine.binding.Binding;
-import org.apache.jena.sparql.engine.binding.BindingHashMap;
+import org.apache.jena.sparql.engine.binding.BindingBuilder;
 import org.apache.jena.sparql.path.P_Path0;
+
+import java.io.ByteArrayOutputStream;
+import java.util.*;
+import java.util.stream.Stream;
 
 public class TripleUtils {
 
@@ -124,19 +120,20 @@ public class TripleUtils {
     }
 
     public static Binding tripleToBinding(Triple triple) {
-        BindingHashMap result = new BindingHashMap();
+        Binding result = BindingBuilder.create().build();
 
         tripleToBinding(triple, result);
 
         return result;
     }
 
-    public static Binding tripleToBinding(Triple triple, BindingHashMap result) {
+    public static Binding tripleToBinding(Triple triple, Binding parent) {
+        BindingBuilder result = BindingBuilder.create(parent);
         result.add(Vars.s, triple.getSubject());
         result.add(Vars.p, triple.getPredicate());
         result.add(Vars.o, triple.getObject());
 
-        return result;
+        return result.build();
     }
 
 

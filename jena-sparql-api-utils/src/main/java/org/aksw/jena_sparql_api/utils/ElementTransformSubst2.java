@@ -30,6 +30,7 @@ import org.apache.jena.sparql.algebra.Table;
 import org.apache.jena.sparql.core.TriplePath ;
 import org.apache.jena.sparql.core.Var ;
 import org.apache.jena.sparql.engine.binding.Binding;
+import org.apache.jena.sparql.engine.binding.BindingBuilder;
 import org.apache.jena.sparql.engine.binding.BindingFactory;
 import org.apache.jena.sparql.engine.binding.BindingMap;
 import org.apache.jena.sparql.graph.NodeTransform ;
@@ -141,7 +142,7 @@ public class ElementTransformSubst2 extends ElementTransformCopyBase {
     }
 
     public static Binding transform(Binding b, NodeTransform transform) {
-        BindingMap b2 = BindingFactory.create() ;
+        BindingBuilder b2 = BindingBuilder.create();
         List<Var> vars = Iter.toList(b.vars()) ;
         for ( Var v : vars ) {
             Node n = b.get(v);
@@ -149,7 +150,7 @@ public class ElementTransformSubst2 extends ElementTransformCopyBase {
             Node n2 = transform.apply(n);
             b2.add(v2, n2);
         }
-        return b2 ;
+        return b2.build();
     }
 
     @Override

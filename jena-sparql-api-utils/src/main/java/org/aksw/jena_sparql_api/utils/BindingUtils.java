@@ -11,8 +11,8 @@ import java.util.Map.Entry;
 import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.binding.Binding;
+import org.apache.jena.sparql.engine.binding.BindingBuilder;
 import org.apache.jena.sparql.engine.binding.BindingFactory;
-import org.apache.jena.sparql.engine.binding.BindingHashMap;
 import org.apache.jena.sparql.engine.binding.BindingMap;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.graph.NodeTransform;
@@ -24,40 +24,40 @@ public class BindingUtils {
 //    }
 
     public static Binding project(Binding binding, Iterable<Var> vars) {
-        BindingHashMap result = new BindingHashMap();
+        BindingBuilder builder = BindingBuilder.create();
 
         for(Var var : vars) {
             Node node = binding.get(var);
             if (node != null) {
-            	result.add(var, node);
+                builder.add(var, node);
             }
         }
 
-        return result;
+        return builder.build();
     }
 
     public static Binding fromMap(Map<? extends Var, ? extends Node> map) {
-        BindingMap result = BindingFactory.create();
+        BindingBuilder builder = BindingBuilder.create();
         for(Entry<? extends Var, ? extends Node> e : map.entrySet()) {
-            result.add(e.getKey(), e.getValue());
+            builder.add(e.getKey(), e.getValue());
         }
-        return result;
+        return builder.build();
     }
 
     public static Binding transformKeys(Binding binding, NodeTransform transform) {
         Iterator<Var> it = binding.vars();
 
-        BindingHashMap result = new BindingHashMap();
+        BindingBuilder builder = BindingBuilder.create();
         while(it.hasNext()) {
             Var o = it.next();
             Node node = binding.get(o);
 
             Var n = (Var)transform.apply(o);
 
-            result.add(n, node);
+            builder.add(n, node);
         }
 
-        return result;
+        return builder.build();
     }
 
     public static Map<Var, Node> toMap(Binding binding) {
@@ -75,18 +75,21 @@ public class BindingUtils {
     public static List<Binding> addRowIds(Collection<Binding> bindings, Var rowId) {
         List<Binding> result = new ArrayList<Binding>(bindings.size());
         long i = 0;
+        BindingBuilder builder = BindingBuilder.create();
         for(Binding parent : bindings) {
-            BindingHashMap b = new BindingHashMap(parent);
+            builder.reset();
+            builder.addAll(parent);
             Node node = NodeValue.makeInteger(i).asNode();
-            b.add(rowId, node);
+            builder.add(rowId, node);
             ++i;
+            result.add(builder.build());
         }
 
         return result;
     }
 
     public static Binding rename(Binding binding, Map<Var, Var> varMap) {
-        BindingHashMap result = new BindingHashMap();
+        BindingBuilder builder = BindingBuilder.create();
 
         Iterator<Var> itVars = binding.vars();
         while(itVars.hasNext()) {
@@ -99,10 +102,10 @@ public class BindingUtils {
                 targetVar = sourceVar;
             }
 
-            result.add(targetVar, node);
+            builder.add(targetVar, node);
         }
 
-        return result;
+        return builder.build();
     }
 
 }

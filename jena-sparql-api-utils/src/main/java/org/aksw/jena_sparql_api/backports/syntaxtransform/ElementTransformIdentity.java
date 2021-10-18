@@ -23,6 +23,7 @@ import java.util.List ;
 import org.apache.jena.graph.Node ;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query ;
+import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.Var ;
 import org.apache.jena.sparql.expr.Expr ;
 import org.apache.jena.sparql.syntax.Element;
@@ -98,6 +99,11 @@ public final class ElementTransformIdentity implements ElementTransform
     @Override
     public Triple transform(Triple triple) {
         return triple;
+    }
+
+    @Override
+    public Quad transform(Quad quad) {
+        return quad;
     }
 }
 

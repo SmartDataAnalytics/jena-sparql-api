@@ -18,6 +18,7 @@ import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.core.VarExprList;
 import org.apache.jena.sparql.engine.ExecutionContext;
 import org.apache.jena.sparql.engine.binding.Binding;
+import org.apache.jena.sparql.engine.binding.BindingBuilder;
 import org.apache.jena.sparql.engine.binding.BindingFactory;
 import org.apache.jena.sparql.engine.binding.BindingMap;
 import org.apache.jena.sparql.expr.Expr;
@@ -38,7 +39,7 @@ public class VarExprListUtils {
     public static Binding copyProject(VarExprList vars, Binding binding, ExecutionContext execCxt) {
         // No group vars (implicit or explicit) => working on whole result set.
         // Still need a BindingMap to assign to later.
-        BindingMap x = BindingFactory.create();
+        BindingBuilder x = BindingBuilder.create();
         for ( Var var : vars.getVars() ) {
             Node node = vars.get(var, binding, execCxt);
             // Null returned for unbound and error.
@@ -46,7 +47,7 @@ public class VarExprListUtils {
                 x.add(var, node);
             }
         }
-        return x;
+        return x.build();
     }
 
 

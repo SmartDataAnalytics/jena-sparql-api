@@ -744,7 +744,7 @@ public class QueryUtils {
         Range<Long> parent = makeClosedOpen(_parent, DiscreteDomain.longs());
         Range<Long> child = makeClosedOpen(_child, DiscreteDomain.longs());
 
-        Range<Long> shiftedChild = org.aksw.commons.util.range.RangeUtils.transform(child, e -> e + parent.lowerEndpoint());
+        Range<Long> shiftedChild = org.aksw.commons.util.range.RangeUtils.map(child, e -> e + parent.lowerEndpoint());
 
         Range<Long> result = shiftedChild.intersection(parent);
 //        long newMin = parent.lowerEndpoint() + child.lowerEndpoint();
